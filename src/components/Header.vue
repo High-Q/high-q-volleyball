@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar coler="grey lighten-5" app>
+  <v-app-bar color="primary" app>
     <v-toolbar-title class="header-title">High Q</v-toolbar-title>
   </v-app-bar>
 </template>
@@ -11,7 +11,7 @@ export default {
 </script>
 <style lang="scss" scoped>
 .header-title {
-  color: black;
+  color: white;
   text-align: center;
   font-size: 28px;
   font-weight: bold;
