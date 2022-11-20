@@ -1,37 +1,36 @@
 <template>
-  <v-img
-    src="../assets/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg"
-    width="1440"
-    height="605"
-  >
-    <v-container fluid fill-height class="main_image_container">
-      <v-row no-gutters>
-        <v-col cols="8"> </v-col>
-        <v-col cols="4">
-          <p class="main-visual-title">High Q</p>
-          <p class="main-visual-text">
-            江東区を中心に活動している<br />
-            バレーボールサークルです！
-          </p>
-        </v-col>
-      </v-row>
-      <v-row no-gutters>
-        <v-col cols="8"> </v-col>
-        <v-col cols="4">
-          <p class="main-visual-text">
-            立ち上げに伴って、メンバーを募集しています<br />
-            20代〜30代の男女、<br />
-            がちがちの初心者の方から経験者の方まで<br />
-            幅広くメンバー募集中です
-          </p>
-        </v-col>
-      </v-row>
-      <v-row></v-row>
-      <v-row></v-row>      
-      <v-row></v-row>
-      <v-row></v-row>
-    </v-container>
-  </v-img>
+  <v-container fluid fill-height class="main_image_content">
+    <v-row> </v-row>
+    <v-row class="white--text">
+      <v-col class="main_image-text" align="center">
+        <p class="text-h5 font-weight-bold">
+          江東区
+          <br />
+          バレーボールサークル
+        </p>
+        <p class="text-h4 font-weight-bold">High Q</p>
+      </v-col>
+    </v-row>
+    <v-row class="white--text">
+      <v-col class="main_image-text" align="center">
+        <p class="body-1 font-weight-bold">
+          江東区を中心に活動を予定している
+          <br />
+          バレーボールサークルです！
+          <br />
+          立ち上げに伴って、
+          <br />
+          メンバーを募集しています。
+          <br />
+          20代〜30代男女、
+          <br />
+          がちがちの初心者の方から経験者の方まで
+          <br />
+          幅広くメンバー募集中です。
+        </p>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 <script>
 export default {
@@ -40,20 +39,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.main_image_container {
-  background: rgba(106, 150, 164, 0.3);
-  backdrop-filter: blur(3.5px);
-}
-.main-visual-title {
-  color: white;
-  text-align: left;
-  font-size: 84px;
-  font-weight: bold;
-}
-.main-visual-text {
-  color: white;
-  text-align: left;
-  font-size: 16px;
-  font-weight: bold;
+.main_image_content {
+  background: url("../assets/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg");
+  background-size: cover;
+  background-position: center;
+  width: 100%;
+  height: 75vh;
 }
 </style>

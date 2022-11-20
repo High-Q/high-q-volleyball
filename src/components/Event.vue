@@ -3,9 +3,25 @@
     <v-row justify="center" class="pa-md-16">
       <SubTitle title="Event"></SubTitle>
     </v-row>
-    <v-row class="px-md-16">
-      <v-container>
-        <v-sheet height="64">
+    <!-- <v-row justify="center" class="pa-md-16"> -->
+    <!-- <p class="text-h6 font-weight-bold">第7回バレーボールイベント</p> -->
+    <!-- </v-row> -->
+    <!-- <v-row justify="center" class="pa-md-16">
+      <p class="body-1">
+        Comming Soon
+        <br />
+        日時： 2021年X月X日(X) XX:XX〜XX:XX
+        <br />
+        場所： XXX
+        <br />
+        持ち物： 運動できる服、シューズ、タオル、飲み物
+        <br />
+        参加費： XXX 円
+      </p>
+    </v-row> -->
+    <v-row justify="center" class="pa-md-16">
+      <v-col>
+        <!-- <v-sheet height="64"> -->
           <v-toolbar flat>
             <v-btn
               outlined
@@ -15,26 +31,12 @@
             >
               Today
             </v-btn>
-            <v-btn
-              fab
-              text
-              small
-              class="pa-0"
-              color="grey darken-2"
-              @click="prev"
-            >
+            <v-btn fab text small class="pa-0" color="grey darken-2" @click="prev">
               <v-icon small>
                 mdi-chevron-left
               </v-icon>
             </v-btn>
-            <v-btn
-              fab
-              text
-              smal
-              class="pa-0"
-              color="grey darken-2"
-              @click="next"
-            >
+            <v-btn fab text smal class="pa-0" color="grey darken-2" @click="next">
               <v-icon small>
                 mdi-chevron-right
               </v-icon>
@@ -45,14 +47,7 @@
             <v-spacer></v-spacer>
             <v-menu bottom right>
               <template v-slot:activator="{ on, attrs }">
-                <v-btn
-                  outlined
-                  small
-                  class="pa-0"
-                  color="grey darken-2"
-                  v-bind="attrs"
-                  v-on="on"
-                >
+                <v-btn outlined small class="pa-0" color="grey darken-2" v-bind="attrs" v-on="on">
                   <span>{{ typeToLabel[type] }}</span>
                   <v-icon right>
                     mdi-menu-down
@@ -72,7 +67,7 @@
               </v-list>
             </v-menu>
           </v-toolbar>
-        </v-sheet>
+        <!-- </v-sheet> -->
         <v-sheet height="600">
           <v-calendar
             ref="calendar"
@@ -86,8 +81,29 @@
             @click:date="viewDay"
             @change="updateRange"
           ></v-calendar>
+          <v-menu
+            v-model="selectedOpen"
+            :close-on-content-click="false"
+            :activator="selectedElement"
+            offset-x
+          >
+            <v-card color="grey lighten-4" min-width="350px" flat>
+              <v-toolbar :color="selectedEvent.color" dark>
+                <v-toolbar-title v-html="selectedEvent.name"></v-toolbar-title>
+                <v-spacer></v-spacer>
+              </v-toolbar>
+              <v-card-text>
+                <span v-html="selectedEvent.details"></span>
+              </v-card-text>
+              <v-card-actions>
+                <v-btn text color="secondary" @click="selectedOpen = false">
+                  Close
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-menu>
         </v-sheet>
-      </v-container>
+      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -128,36 +144,35 @@ export default {
     next() {
       this.$refs.calendar.next();
     },
+    showEvent({ nativeEvent, event }) {
+      const open = () => {
+        this.selectedEvent = event;
+        this.selectedElement = nativeEvent.target;
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => (this.selectedOpen = true))
+        );
+      };
+
+      if (this.selectedOpen) {
+        this.selectedOpen = false;
+        requestAnimationFrame(() => requestAnimationFrame(() => open()));
+      } else {
+        open();
+      }
+
+      nativeEvent.stopPropagation();
+    },
     updateRange() {
       const events = [];
-      for (let i = 0; i < 1; i++) {
-        //Eventの数だけループを回す
-        events.push(
-          {
-            name: "バレー会",
-            start: new Date("2023-01-14T09:00:00"), // 開始時刻
-            end: new Date("2023-01-14T12:00:00"), // 終了時刻
-            color: "blue",
-            details: new Date("2023-01-14T09:00:00"),
-            timed: true, // 終日ならfalse
-          },
-          {
-            name: "バレー会",
-            start: new Date("2023-02-05T18:00:00"), // 開始時刻
-            end: new Date("2023-02-05T21:30:00"), // 終了時刻
-            color: "blue",
-            details: new Date("2023-02-05T18:00:00"),
-            timed: true, // 終日ならfalse
-          },
-          {
-            name: "バレー会",
-            start: new Date("2023-02-18T09:00:00"), // 開始時刻
-            end: new Date("2023-02-18T12:00:00"), // 終了時刻
-            color: "blue",
-            details: new Date("2023-02-18T09:00:00"),
-            timed: true, // 終日ならfalse
-          }
-        );
+      for (let i = 0; i < 1; i++) {//Eventの数だけループを回す
+        events.push({
+          name: "バレー会",
+          start: new Date("2021-12-11T18:00:00"), // 開始時刻
+          end: new Date("2021-12-11T20:00:00"), // 終了時刻
+          color: "blue",
+          details: new Date("2021-11-01T00:00:00"),
+          timed: false, // 終日ならfalse
+        });
       }
       this.events = events;
     },
