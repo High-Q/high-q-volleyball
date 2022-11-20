@@ -1,6 +1,6 @@
 <template>
   <v-app-bar color="primary" app>
-    <v-toolbar-title class="header-title">High Q</v-toolbar-title>
+    <v-toolbar-title class="header-title text-h5 text-md-h5">High Q</v-toolbar-title>
     <div style="height: 40px">
       <v-divider vertical class="mx-2" dark></v-divider>
     </div>
@@ -47,14 +47,14 @@ export default {
 .header-title {
   color: white;
   text-align: center;
-  font-size: 24px;
-  font-weight: bold;
+  // font-size: 24px;
+  font-weight: 700;
 }
 .header-sub-title {
   color: white;
   text-align: center;
   font-size: 8px;
-  font-weight: bold;
+  font-weight: 700;
   margin: 0px;
   text-align: left;
 }
