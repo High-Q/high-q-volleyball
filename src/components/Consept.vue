@@ -16,6 +16,7 @@
       </v-col>
       <v-col align="center" class="mt-13" cols="12" md="4">
         <concept-card
+          class="secondary-card"
           icon="fas fa-circle-notch"
           title="・・・！！！！上ッ！"
           text="・・・突然の視力検査ッ
@@ -51,4 +52,7 @@ export default {
 };
 </script>
 <style>
+.secondary-card{
+  border-left: 14px solid #182F43 !important;
+}
 </style>
