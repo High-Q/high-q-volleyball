@@ -43,14 +43,11 @@ export default {
 }
 .main-visual-title {
   color: white;
-  // text-align: left;
-  // font-size: 48px;
   font-weight: bold;
 }
 .main-visual-text {
   color: white;
   text-align: left;
-  // font-size: 14px;
   font-weight: bold;
 }
 </style>
