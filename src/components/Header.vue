@@ -32,22 +32,14 @@
 </template>
 
 <script>
-// import Icons from "./Icons.vue";
 export default {
-  // components: { Icons },
   name: "Header",
-  // data: () => {
-  //   return {
-  //     icons: ["mdi-twitter"],
-  //   };
-  // },
 };
 </script>
 <style lang="scss" scoped>
 .header-title {
   color: white;
   text-align: center;
-  // font-size: 24px;
   font-weight: 700;
 }
 .header-sub-title {
