@@ -135,6 +135,14 @@ export default {
         events.push(
           {
             name: "バレー会",
+            start: new Date("2022-10-30T18:00:00"), // 開始時刻
+            end: new Date("2022-10-30T21:30:00"), // 終了時刻
+            color: "blue",
+            details: new Date("2022-10-30T18:00:00"),
+            timed: true, // 終日ならfalse
+          },
+          {
+            name: "バレー会",
             start: new Date("2023-01-14T09:00:00"), // 開始時刻
             end: new Date("2023-01-14T12:00:00"), // 終了時刻
             color: "blue",
