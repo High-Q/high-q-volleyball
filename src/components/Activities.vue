@@ -6,7 +6,7 @@
     <v-row class="px-md-16">
       <v-container>
         <v-row>
-          <v-col cols="6">
+          <v-col cols="12" md="6">
             <p class="body-1">
               月に1回程度東京都内にてコートを借りて練習します！
               <br />
@@ -28,7 +28,7 @@
               <v-icon color="white">mdi-twitter</v-icon>
             </v-btn>
           </v-col>
-          <v-col cols="6">
+          <v-col cols="12" md="6">
             <v-img src="../assets/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg">
             </v-img>
           </v-col>
