@@ -1,6 +1,6 @@
 <template>
   <!-- <v-card height="400px"> -->
-  <v-footer padless height="400" color="white">
+  <v-footer padless color="white">
     <v-row no-gutters>
       <v-col cols="4">
         <v-img src="../assets/footer.png">

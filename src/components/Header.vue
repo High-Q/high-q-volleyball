@@ -2,7 +2,7 @@
   <v-app-bar color="primary" app>
     <v-toolbar-title class="header-title">High Q</v-toolbar-title>
     <div style="height: 40px">
-      <v-divider vertical class="mx-7" dark></v-divider>
+      <v-divider vertical class="mx-2" dark></v-divider>
     </div>
     <p class="header-sub-title">江東区<br />バレーボールサークル</p>
     <v-spacer></v-spacer>
@@ -47,13 +47,13 @@ export default {
 .header-title {
   color: white;
   text-align: center;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: bold;
 }
 .header-sub-title {
   color: white;
   text-align: center;
-  font-size: 13px;
+  font-size: 8px;
   font-weight: bold;
   margin: 0px;
   text-align: left;
