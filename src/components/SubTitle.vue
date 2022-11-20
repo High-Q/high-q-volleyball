@@ -1,6 +1,6 @@
 <template>
   <v-container class="mt-16">
-    <h1 class="text-h3 primary--text font-weight-bold">{{ title }}</h1>
+    <h1 class="text-h5 text-md-h3 primary--text font-weight-bold">{{ title }}</h1>
     <hr class="first_border" />
     <hr class="second_border"/>
   </v-container>

@@ -1,37 +1,34 @@
 <template>
-  <v-img
-    src="../assets/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg"
-    width="1440"
-    height="605"
-  >
-    <v-container fluid fill-height class="main_image_container">
-      <v-row no-gutters>
-        <v-col cols="8"> </v-col>
-        <v-col cols="4">
-          <p class="main-visual-title">High Q</p>
-          <p class="main-visual-text">
-            江東区を中心に活動している<br />
-            バレーボールサークルです！
-          </p>
-        </v-col>
-      </v-row>
-      <v-row no-gutters>
-        <v-col cols="8"> </v-col>
-        <v-col cols="4">
-          <p class="main-visual-text">
-            立ち上げに伴って、メンバーを募集しています<br />
-            20代〜30代の男女、<br />
-            がちがちの初心者の方から経験者の方まで<br />
-            幅広くメンバー募集中です
-          </p>
-        </v-col>
-      </v-row>
-      <v-row></v-row>
-      <v-row></v-row>      
-      <v-row></v-row>
-      <v-row></v-row>
-    </v-container>
-  </v-img>
+  <v-container fluid pa-0>
+    <v-img
+      height="605"
+      src="../assets/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg"
+    >
+      <v-container fluid fill-height class="main_image_container">
+        <v-row no-gutters align-content="center" justify="space-around">
+          <v-col cols="12" md="8"> </v-col>
+          <v-col cols="12" md="4">
+            <p class="main-visual-title text-center text-h3 text-md-h1">
+              High Q
+            </p>
+            <p class="main-visual-text text-center text-subtitle-2 text-md-subtitle-1">
+              江東区を中心に活動している<br />
+              バレーボールサークルです！
+            </p>
+          </v-col>
+          <v-col cols="12" md="8"> </v-col>
+          <v-col cols="12" md="4">
+            <p class="main-visual-text text-center text-subtitle-2 text-md-subtitle-1">
+              立ち上げに伴って、メンバーを募集しています<br />
+              20代〜30代の男女、<br />
+              がちがちの初心者の方から経験者の方まで<br />
+              幅広くメンバー募集中です
+            </p>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-img>
+  </v-container>
 </template>
 <script>
 export default {
@@ -46,14 +43,11 @@ export default {
 }
 .main-visual-title {
   color: white;
-  text-align: left;
-  font-size: 84px;
   font-weight: bold;
 }
 .main-visual-text {
   color: white;
   text-align: left;
-  font-size: 16px;
   font-weight: bold;
 }
 </style>
