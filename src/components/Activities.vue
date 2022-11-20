@@ -1,45 +1,39 @@
 <template>
   <v-container fluid fill-height>
-    <v-row justify="center" class="pa-md-16">
+    <v-row justify="start" class="px-md-16">
       <SubTitle title="Activities"></SubTitle>
     </v-row>
-    <v-row justify="center">
-      <p class="body-1">
-        月に1回程度東京都内にて
-        <br />
-        コートを借りて練習します！
-        <br />
-        人数に合わせて活動回数も
-        <br />
-        増やしていく予定です。
-        <br />
-        参加希望者や気になった方は
-        <br />
-        公式TwitterにてDMで問い合わせください！
-      </p>
-    </v-row>
-    <v-row justify="center">
-      <v-col cols="10" md="4">
-        <v-card class="mx-auto" max-height="200">
-          <v-container
-            id="scroll-target"
-            style="max-height: 200px"
-            class="overflow-y-auto"
-          >
-            <v-row
-              v-scroll:#scroll-target="onScroll"
-              align="top"
-              justify="center"
+    <v-row class="px-md-16">
+      <v-container>
+        <v-row>
+          <v-col cols="6">
+            <p class="body-1">
+              月に1回程度東京都内にてコートを借りて練習します！
+              <br />
+              人数に合わせて活動回数も増やしていく予定です。
+              <br />
+              参加希望者や気になった方は
+              <br />
+              公式TwitterにてDMで問い合わせください！
+            </p>
+            <v-btn
+              class="mr-4"
+              width="30"
+              height="30"
+              min-width="30"
+              min-height="30"
+              color="#6A96A4"
+              href="https://twitter.com/c8w5y"
             >
-              <a
-                class="twitter-timeline"
-                href="https://twitter.com/c8w5y?ref_src=twsrc%5Etfw"
-                >Tweets by c8w5y</a
-              >
-            </v-row>
-          </v-container>
-        </v-card>
-      </v-col>
+              <v-icon color="white">mdi-twitter</v-icon>
+            </v-btn>
+          </v-col>
+          <v-col cols="6">
+            <v-img src="../assets/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg">
+            </v-img>
+          </v-col>
+        </v-row>
+      </v-container>
     </v-row>
   </v-container>
 </template>
@@ -48,18 +42,7 @@ import SubTitle from "./SubTitle.vue";
 export default {
   name: "Activities",
   components: {
-      SubTitle,
-  },
-  mounted() {
-    setTimeout(() => {
-      let tweetScript = document.createElement("script");
-      tweetScript.setAttribute(
-        "src",
-        "https://platform.twitter.com/widgets.js"
-      );
-      tweetScript.setAttribute("async", "true");
-      document.head.appendChild(tweetScript);
-    }, 100);
+    SubTitle,
   },
 };
 </script>
