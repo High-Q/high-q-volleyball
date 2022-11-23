@@ -3,7 +3,7 @@
   <v-footer padless color="white">
     <v-container fluid>
       <v-row no-gutters>
-        <v-col cols="4">
+        <v-col cols="12" md="4">
           <v-img height="180" src="../assets/footer.png">
             <v-container fluid fill-height>
               <v-row align-content="center" justify="center">
@@ -21,7 +21,7 @@
                 >
                   <v-icon size="44" color="white" large>mdi-twitter</v-icon>
                 </v-btn>
-                <v-btn
+                <!-- <v-btn
                   class="mr-4"
                   width="44"
                   height="44"
@@ -32,7 +32,7 @@
                   href="https://www.instagram.com/hiyori0104/"
                 >
                   <v-icon size="58">mdi-instagram</v-icon>
-                </v-btn>
+                </v-btn> -->
               </v-row>
             </v-container>
           </v-img>

@@ -17,7 +17,7 @@
     >
       <v-icon color="primary">mdi-twitter</v-icon>
     </v-btn>
-    <v-btn
+    <!-- <v-btn
       class="mr-4"
       width="30"
       height="30"
@@ -27,7 +27,7 @@
       href="https://www.instagram.com/hiyori0104/"
     >
       <v-icon color="primary">mdi-instagram</v-icon>
-    </v-btn>
+    </v-btn> -->
   </v-app-bar>
 </template>
 
