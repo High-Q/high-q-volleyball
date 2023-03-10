@@ -165,13 +165,28 @@ export default {
             details: new Date("2023-02-18T09:00:00"),
             timed: true, // 終日ならfalse
           },
-
           {
             name: "バレー会",
             start: new Date("2023-03-26T18:00:00"), // 開始時刻
             end: new Date("2023-03-26T21:00:00"), // 終了時刻
             color: "blue",
             details: new Date("2023-03-26T18:00:00"),
+            timed: true, // 終日ならfalse
+          },
+          {
+            name: "バレー会",
+            start: new Date("2023-04-23T13:00:00"), // 開始時刻
+            end: new Date("2023-04-23T17:00:00"), // 終了時刻
+            color: "blue",
+            details: new Date("2023-04-23T13:00:00"),
+            timed: true, // 終日ならfalse
+          },
+          {
+            name: "バレー会",
+            start: new Date("2023-05-27T16:00:00"), // 開始時刻
+            end: new Date("2023-05-27T18:00:00"), // 終了時刻
+            color: "blue",
+            details: new Date("2023-05-27T16:00:00"),
             timed: true, // 終日ならfalse
           }
         );
