@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid fill-height>
+  <v-container>
     <v-row>
       <v-col>
         <v-sheet>
