@@ -1,5 +1,8 @@
 <template>
   <v-container>
+    <v-row justify="center" class="pa-md-16">
+      <SubTitle title="Event"></SubTitle>
+    </v-row>
     <v-row>
       <v-col>
         <v-sheet>
@@ -27,8 +30,8 @@
             </v-toolbar-title>
             <v-spacer></v-spacer>
           </v-toolbar>
-          </v-sheet>
-          <v-sheet height="450">
+        </v-sheet>
+        <v-sheet height="450">
           <v-calendar
             ref="calendar"
             v-model="focus"
@@ -65,8 +68,12 @@
 </template>
 
 <script>
+import SubTitle from "./SubTitle.vue";
 import axios from "axios";
 export default {
+  components: {
+    SubTitle,
+  },
   data() {
     return {
       focus: "",
