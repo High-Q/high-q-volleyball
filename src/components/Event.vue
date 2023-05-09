@@ -1,8 +1,8 @@
 <template>
-  <v-container>
+  <v-container fluid fill-height>
     <v-row>
       <v-col>
-        <v-sheet height="450">
+        <v-sheet>
           <v-toolbar flat>
             <v-btn
               outlined
@@ -27,6 +27,8 @@
             </v-toolbar-title>
             <v-spacer></v-spacer>
           </v-toolbar>
+          </v-sheet>
+          <v-sheet height="450">
           <v-calendar
             ref="calendar"
             v-model="focus"
@@ -36,6 +38,7 @@
             @click:event="showEvent"
             @click:more="viewDay"
             @click:date="viewDay"
+            pa-0
           ></v-calendar>
         </v-sheet>
       </v-col>
@@ -50,7 +53,7 @@
           <div>
             <strong>終了時間:</strong> {{ formatDate(selectedEvent.end) }}
           </div>
-          <div><strong>詳細:</strong> {{ selectedEvent.details }}</div>
+          <!-- <div><strong>詳細:</strong> {{ selectedEvent.details }}</div> -->
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
