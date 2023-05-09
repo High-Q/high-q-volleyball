@@ -1,7 +1,7 @@
 <template>
   <v-card class="ma-0" rounded="sm" color="#ECF2F3" width="374" height="374" outlined>
     <v-container fluid fill-height>
-      <v-row align="strech" align-content="center" justify="center">
+      <v-row align-content="center" justify="center">
         <v-col cols="12">
           <v-icon size="100">{{ icon }}</v-icon>
         </v-col>
