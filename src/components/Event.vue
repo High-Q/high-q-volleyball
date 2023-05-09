@@ -2,7 +2,31 @@
   <v-container>
     <v-row>
       <v-col>
-        <v-sheet>
+        <v-sheet height="450">
+          <v-toolbar flat>
+            <v-btn
+              outlined
+              class="mr-4"
+              color="grey darken-2"
+              @click="setToday"
+            >
+              Today
+            </v-btn>
+            <v-btn fab text small color="grey darken-2" @click="prev">
+              <v-icon small>
+                mdi-chevron-left
+              </v-icon>
+            </v-btn>
+            <v-btn fab text small color="grey darken-2" @click="next">
+              <v-icon small>
+                mdi-chevron-right
+              </v-icon>
+            </v-btn>
+            <v-toolbar-title v-if="$refs.calendar">
+              {{ $refs.calendar.title }}
+            </v-toolbar-title>
+            <v-spacer></v-spacer>
+          </v-toolbar>
           <v-calendar
             ref="calendar"
             v-model="focus"
@@ -45,34 +69,12 @@ export default {
       focus: "",
       dialog: false,
       selectedEvent: {},
-      events: [
-        {
-          name: "ワークショップ",
-          start: "2023-05-15T10:00:00",
-          end: "2023-05-15T12:00:00",
-          details: "ワークショップの説明がここに入ります。",
-          color: "blue",
-        },
-        {
-          name: "セミナー",
-          start: "2023-05-20T14:00:00",
-          end: "2023-05-20T16:00:00",
-          details: "セミナーの説明がここに入ります。",
-          color: "green",
-        },
-        {
-          name: "ネットワーキングイベント",
-          start: "2023-05-25T18:00:00",
-          end: "2023-05-25T21:00:00",
-          details: "ネットワーキングイベントの説明がここに入ります。",
-          color: "red",
-        },
-      ],
+      events: [],
     };
   },
-  // mounted() {
-  //   this.fetchEvents();
-  // },
+  mounted() {
+    this.fetchEvents();
+  },
   methods: {
     getEventColor(event) {
       return event.color;
@@ -88,8 +90,22 @@ export default {
     },
     async fetchEvents() {
       try {
-        const response = await axios.get("YOUR_API_URL");
-        this.events = response.data.events;
+        const response = await axios.get(
+          "https://ptfomh71x9.execute-api.ap-northeast-1.amazonaws.com/beta/event"
+        );
+        const parsedData = JSON.parse(response.data.body);
+        const events = parsedData.map((event) => {
+          return {
+            id: event.id,
+            name: event.title,
+            start: new Date(event.start_time),
+            end: new Date(event.end_time),
+            location: event.location,
+            color: "blue", // 青色に固定設定
+          };
+        });
+        this.events = events;
+        console.log(this.events);
       } catch (error) {
         console.error("Error fetching events:", error);
       }
@@ -103,6 +119,15 @@ export default {
         minute: "2-digit",
       };
       return new Date(date).toLocaleString("ja-JP", options);
+    },
+    setToday() {
+      this.focus = "";
+    },
+    prev() {
+      this.$refs.calendar.prev();
+    },
+    next() {
+      this.$refs.calendar.next();
     },
   },
 };
