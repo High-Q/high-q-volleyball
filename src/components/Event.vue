@@ -38,6 +38,7 @@
             color="primary"
             :events="events"
             :event-color="getEventColor"
+            v-hammer:swipe="onSwipe"
             @click:event="showEvent"
             @click:more="viewDay"
             @click:date="viewDay"
@@ -138,6 +139,15 @@ export default {
     },
     next() {
       this.$refs.calendar.next();
+    },
+    onSwipe(event) {
+      if (event.direction === 4) {
+        // Swipe right: previous month
+        this.prev();
+      } else if (event.direction === 2) {
+        // Swipe left: next month
+        this.next();
+      }
     },
   },
 };

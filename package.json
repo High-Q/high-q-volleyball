@@ -15,6 +15,7 @@
     "express": "^4.17.1",
     "vue": "^2.6.11",
     "vue-gtm": "^3.0.0-vue2",
+    "vue2-hammer": "^2.1.2",
     "vuetify": "^2.4.0"
   },
   "devDependencies": {
