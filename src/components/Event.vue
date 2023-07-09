@@ -57,6 +57,9 @@
           <div>
             <strong>終了時間:</strong> {{ formatDate(selectedEvent.end) }}
           </div>
+          <div>
+            <strong>場所:</strong> {{ selectedEvent.location }}
+          </div>
           <!-- <div><strong>詳細:</strong> {{ selectedEvent.details }}</div> -->
         </v-card-text>
         <v-card-actions>
