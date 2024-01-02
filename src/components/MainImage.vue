@@ -2,7 +2,7 @@
   <v-container fluid pa-0>
     <v-img
       height="605"
-      src="../assets/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg"
+      src="/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg"
     >
       <v-container fluid fill-height class="main_image_container">
         <v-row no-gutters align-content="center" justify="space-around">

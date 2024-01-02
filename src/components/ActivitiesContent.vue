@@ -29,7 +29,7 @@
             </v-btn>
           </v-col>
           <v-col cols="12" md="6">
-            <v-img src="../assets/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg">
+            <v-img src="/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg">
             </v-img>
           </v-col>
         </v-row>

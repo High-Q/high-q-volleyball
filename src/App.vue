@@ -13,9 +13,9 @@
 </template>
 
 <script>
-import HeaderLine from "./components/HeaderLine";
-import FooterLine from "./components/FooterLine";
-import HomePage from "./pages/HomePage";
+import HeaderLine from "./components/HeaderLine.vue";
+import FooterLine from "./components/FooterLine.vue";
+import HomePage from "./pages/HomePage.vue";
 
 export default {
   // name: 'App',

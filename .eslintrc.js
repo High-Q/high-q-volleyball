@@ -4,8 +4,9 @@ module.exports = {
       "node": true
     },
     "parser": "vue-eslint-parser",
-    "parserOptions": {
-        "parser": "@babel/eslint-parser"
+    "env": {
+        "node": true,
+        "es2022": true,
     },
     "extends": [
       "plugin:vue/essential",

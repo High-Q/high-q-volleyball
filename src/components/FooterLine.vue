@@ -27,7 +27,7 @@
 </template>
 
 <script>
-// import Icons from "./Icons";
+// import Icons from "./Icons.vue";
 export default {
   name: "FooterLine",
   components: {
