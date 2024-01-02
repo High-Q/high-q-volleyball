@@ -1,10 +1,10 @@
 <template>
-  <v-container>
+  <v-container fluid fill-height>
     <v-row justify="center" class="pa-md-16">
-      <SubTitle title="Event"></SubTitle>
+      <SubTitle title="EventContents"></SubTitle>
     </v-row>
     <v-row>
-      <v-col>
+      <v-container>
         <v-sheet>
           <v-toolbar flat>
             <v-btn
@@ -45,7 +45,7 @@
             pa-0
           ></v-calendar>
         </v-sheet>
-      </v-col>
+    </v-container>
     </v-row>
     <v-dialog v-model="dialog" max-width="290">
       <v-card>

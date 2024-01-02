@@ -1,7 +1,7 @@
 <template>
   <v-container fluid fill-height>
     <v-row justify="start" class="px-md-16">
-      <SubTitle title="Activities"></SubTitle>
+      <SubTitle title="Content"></SubTitle>
     </v-row>
     <v-row class="px-md-16">
       <v-container>
@@ -40,7 +40,7 @@
 <script>
 import SubTitle from "./SubTitle.vue";
 export default {
-  name: "Activities",
+  name: "ActivitiesContent",
   components: {
     SubTitle,
   },

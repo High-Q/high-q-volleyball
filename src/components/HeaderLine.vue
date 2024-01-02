@@ -33,7 +33,7 @@
 
 <script>
 export default {
-  name: "Header",
+  name: "HeaderLine",
 };
 </script>
 <style lang="scss" scoped>

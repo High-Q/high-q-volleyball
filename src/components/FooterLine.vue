@@ -29,7 +29,7 @@
 <script>
 // import Icons from "./Icons";
 export default {
-  name: "Footer",
+  name: "FooterLine",
   components: {
     // Icons,
   },
