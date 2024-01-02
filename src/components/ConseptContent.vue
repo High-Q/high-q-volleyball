@@ -44,7 +44,7 @@
 import ConceptCard from "./ConceptCard.vue";
 import SubTitle from "./SubTitle.vue";
 export default {
-  name: "Concept",
+  name: "ConceptContents",
   components: {
     SubTitle,
     ConceptCard,

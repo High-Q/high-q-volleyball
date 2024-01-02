@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row justify="center" class="pa-md-16">
-      <SubTitle title="Event"></SubTitle>
+      <SubTitle title="EventContents"></SubTitle>
     </v-row>
     <v-row>
       <v-col>

@@ -4,26 +4,26 @@
       href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
       rel="stylesheet"
     />
-    <Header></Header>
+    <HeaderLine></HeaderLine>
     <v-content>
-      <Home></Home>
+      <HomePage></HomePage>
     </v-content>
-    <Footer></Footer>
+    <FooterLine></FooterLine>
   </v-app>
 </template>
 
 <script>
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import Home from "./pages/Home";
+import HeaderLine from "./components/HeaderLine";
+import FooterLine from "./components/FooterLine";
+import HomePage from "./pages/HomePage";
 
 export default {
   // name: 'App',
 
   components: {
-    Header,
-    Home,
-    Footer,
+    HeaderLine,
+    HomePage,
+    FooterLine,
   },
 
   data: () => ({
