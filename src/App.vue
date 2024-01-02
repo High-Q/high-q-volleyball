@@ -5,9 +5,9 @@
       rel="stylesheet"
     />
     <HeaderLine></HeaderLine>
-    <v-content>
+    <v-main>
       <HomePage></HomePage>
-    </v-content>
+    </v-main>
     <FooterLine></FooterLine>
   </v-app>
 </template>
