@@ -3,25 +3,25 @@
     <v-row justify="center" class="pa-md-16">
       <SubTitle title="EventContents"></SubTitle>
     </v-row>
-    <v-row>
+    <!-- <v-row>
       <v-container>
         <v-sheet>
           <v-toolbar flat>
             <v-btn
-              outlined
+              variant="outlined"
               class="mr-4"
-              color="grey darken-2"
+              color="grey-darken-2"
               @click="setToday"
             >
               Today
             </v-btn>
-            <v-btn fab text small color="grey darken-2" @click="prev">
-              <v-icon small>
+            <v-btn variant="text" size="small" color="grey-darken-2" @click="prev">
+              <v-icon size="small">
                 mdi-chevron-left
               </v-icon>
             </v-btn>
-            <v-btn fab text small color="grey darken-2" @click="next">
-              <v-icon small>
+            <v-btn variant="text" size="small" color="grey-darken-2" @click="next">
+              <v-icon size="small">
                 mdi-chevron-right
               </v-icon>
             </v-btn>
@@ -45,11 +45,11 @@
             pa-0
           ></v-calendar>
         </v-sheet>
-    </v-container>
-    </v-row>
+    </v-container> -->
+    <!-- </v-row>
     <v-dialog v-model="dialog" max-width="290">
       <v-card>
-        <v-card-title class="headline">{{ selectedEvent.name }}</v-card-title>
+        <v-card-title class="text-h5">{{ selectedEvent.name }}</v-card-title>
         <v-card-text>
           <div>
             <strong>開始時間:</strong> {{ formatDate(selectedEvent.start) }}
@@ -59,15 +59,15 @@
           </div>
           <div>
             <strong>場所:</strong> {{ selectedEvent.location }}
-          </div>
+          </div> -->
           <!-- <div><strong>詳細:</strong> {{ selectedEvent.details }}</div> -->
-        </v-card-text>
+        <!-- </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" text @click="dialog = false">Close</v-btn>
+          <v-btn color="primary" variant="text" @click="dialog = false">Close</v-btn>
         </v-card-actions>
       </v-card>
-    </v-dialog>
+    </v-dialog> -->
   </v-container>
 </template>
 

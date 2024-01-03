@@ -1,6 +1,6 @@
 <template>
   <!-- <v-card height="400px"> -->
-  <v-footer min-height="280" class="footer" height="" padless color="white">
+  <v-footer class="footer" height="" color="white">
     <v-container fluid>
       <v-row align-content="center" justify="center" justify-md="start">
         <v-col cols="12" md="4">
@@ -27,11 +27,11 @@
 </template>
 
 <script>
-// import Icons from "./Icons.vue";
+// import IconButtons from "./IconButtons.vue";
 export default {
   name: "FooterLine",
   components: {
-    // Icons,
+    // IconButtons,
   },
   data: () => {
     return {

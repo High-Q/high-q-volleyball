@@ -10,7 +10,7 @@
 
 <script>
 export default {
-  name: "Icons",
+  name: "IconButtons",
   props: {
     icons: {
       type: Array,

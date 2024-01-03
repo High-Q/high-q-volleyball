@@ -1,15 +1,27 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue2'
-import { VuetifyResolver } from 'unplugin-vue-components/resolvers'
-import Components from 'unplugin-vue-components/vite'
+// Plugins
+import Components from "unplugin-vue-components/vite";
+import Vue from "@vitejs/plugin-vue";
+import Vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
+import { VuetifyResolver } from "unplugin-vue-components/resolvers";
 
+// Utilities
+import { defineConfig } from "vite";
+import { fileURLToPath, URL } from "node:url";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    vue(),
+    Vue({
+      template: { transformAssetUrls },
+    }),
+    Vuetify(),
     Components({
-        resolvers: [VuetifyResolver()],
-      }),
-    ],
-})
+      resolvers: [VuetifyResolver()],
+    }),
+  ],
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
+});

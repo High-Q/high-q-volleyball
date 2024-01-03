@@ -7,7 +7,7 @@
       <v-container>
         <v-row>
           <v-col cols="12" md="6">
-            <p class="body-1">
+            <p class="text-body-1">
               月に1回程度東京都内にてコートを借りて練習します！
               <br />
               人数に合わせて活動回数も増やしていく予定です。

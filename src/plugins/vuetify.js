@@ -1,10 +1,10 @@
-import Vue from 'vue';
-import Vuetify from 'vuetify/lib';
+import { createVuetify } from 'vuetify'
+import { VCalendar } from 'vuetify/labs/VCalendar'
 
-Vue.use(Vuetify);
-
-export default new Vuetify({
-
+export default createVuetify({
+  components: {
+    VCalendar,
+  },
     theme: {
         themes: {
           light: {

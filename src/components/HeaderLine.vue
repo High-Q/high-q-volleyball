@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar color="primary" app>
+  <v-app-bar color="primary">
     <v-toolbar-title class="header-title text-h5 text-md-h5">High Q</v-toolbar-title>
     <div style="height: 40px">
       <v-divider vertical class="mx-2" dark></v-divider>
