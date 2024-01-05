@@ -2,7 +2,7 @@
 import Components from "unplugin-vue-components/vite";
 import Vue from "@vitejs/plugin-vue";
 import Vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
-import { VuetifyResolver } from "unplugin-vue-components/resolvers";
+// import { VuetifyResolver } from "unplugin-vue-components/resolvers";
 
 // Utilities
 import { defineConfig } from "vite";
@@ -16,7 +16,7 @@ export default defineConfig({
     }),
     Vuetify(),
     Components({
-      resolvers: [VuetifyResolver()],
+    //   resolvers: [VuetifyResolver()],
     }),
   ],
   resolve: {

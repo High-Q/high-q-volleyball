@@ -1,14 +1,10 @@
 <template>
   <v-app>
-    <link
-      href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
-      rel="stylesheet"
-    />
     <HeaderLine></HeaderLine>
-    <v-main>
+    <!-- <v-main>
       <HomePage></HomePage>
     </v-main>
-    <FooterLine></FooterLine>
+    <FooterLine></FooterLine> -->
   </v-app>
 </template>
 

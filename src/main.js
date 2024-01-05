@@ -4,25 +4,20 @@
  * Bootstraps Vuetify and other plugins then mounts the App`
  */
 
-// Plugins
-import { registerPlugins } from "@/plugins";
 // Components
 import App from "./App.vue";
 // Composables
 import { createApp } from "vue";
 import "vuetify/styles";
 import { createVuetify } from "vuetify";
-import * as components from "vuetify/components";
-import * as directives from "vuetify/directives";
+// Plugins
+import { registerPlugins } from "@/plugins";
 
 const app = createApp(App);
 // Vuetify
-const vuetify = createVuetify({
-  components,
-  directives,
-});
+const vuetify = createVuetify({});
 app.use(vuetify);
-// registerPlugins(app)
+registerPlugins(app);
 app.mount("#app");
 
 /* ここより以下の箇所は回収が必要*/

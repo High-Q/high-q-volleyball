@@ -22,6 +22,7 @@
     "vue2-hammer": "^2.1.2"
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-free": "^6.5.1",
     "eslint": "^8.56.0",
     "eslint-plugin-vue": "^9.19.2",
     "eslint-plugin-vuetify": "^2.1.1",

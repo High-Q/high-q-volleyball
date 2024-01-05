@@ -1,34 +1,18 @@
 <template>
-  <v-app-bar color="primary">
-    <v-toolbar-title class="header-title text-h5 text-md-h5">High Q</v-toolbar-title>
-    <div style="height: 40px">
-      <v-divider vertical class="mx-2" dark></v-divider>
-    </div>
-    <p class="header-sub-title">江東区<br />バレーボールサークル</p>
+  <v-toolbar color="primary">
+    <template v-slot:prepend>
+      <div class="text-h5 header-title">High Q</div>
+    </template>
+
+    <v-divider class="ms-3" inset vertical></v-divider>
+
+    <v-toolbar-title class="header-sub-title"
+      >江東区<br />バレーボールサークル</v-toolbar-title
+    >
+
     <v-spacer></v-spacer>
-    <v-btn
-      class="mr-4"
-      width="30"
-      height="30"
-      min-width="30"
-      min-height="30"
-      color="#9EC9D6"
-      href="https://twitter.com/c8w5y"
-    >
-      <v-icon color="primary">mdi-twitter</v-icon>
-    </v-btn>
-    <!-- <v-btn
-      class="mr-4"
-      width="30"
-      height="30"
-      min-width="30"
-      min-height="30"
-      color="#9EC9D6"
-      href="https://www.instagram.com/hiyori0104/"
-    >
-      <v-icon color="primary">mdi-instagram</v-icon>
-    </v-btn> -->
-  </v-app-bar>
+      <v-btn icon="fa-brands fa-square-x-twitter" />
+  </v-toolbar>
 </template>
 
 <script>
@@ -47,7 +31,7 @@ export default {
   text-align: center;
   font-size: 8px;
   font-weight: 700;
-  margin: 0px;
   text-align: left;
+  line-height: 12px;
 }
 </style>
