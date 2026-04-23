@@ -1,10 +1,10 @@
 <template>
   <v-app>
     <HeaderLine></HeaderLine>
-    <!-- <v-main>
+    <v-main>
       <HomePage></HomePage>
     </v-main>
-    <FooterLine></FooterLine> -->
+    <!-- <FooterLine></FooterLine> -->
   </v-app>
 </template>
 

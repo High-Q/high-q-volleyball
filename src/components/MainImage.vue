@@ -1,24 +1,25 @@
 <template>
   <v-container fluid pa-0>
-    <v-img
-      height="605"
-      src="/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg"
-    >
-      <v-container fluid fill-height class="main_image_container">
+    <v-img max-height="605" cover src="/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg" class="main-image">
+      <v-container fluid class="main_image_container fill-height">
         <v-row no-gutters align-content="center" justify="space-around">
           <v-col cols="12" md="8"> </v-col>
           <v-col cols="12" md="4">
             <p class="main-visual-title text-center text-h3 text-md-h1">
               High Q
             </p>
-            <p class="main-visual-text text-center text-subtitle-2 text-md-subtitle-1">
+            <p
+              class="main-visual-text text-center text-subtitle-2 text-md-subtitle-1"
+            >
               江東区を中心に活動している<br />
               バレーボールサークルです！
             </p>
           </v-col>
           <v-col cols="12" md="8"> </v-col>
           <v-col cols="12" md="4">
-            <p class="main-visual-text text-center text-subtitle-2 text-md-subtitle-1">
+            <p
+              class="main-visual-text text-center text-subtitle-2 text-md-subtitle-1"
+            >
               立ち上げに伴って、メンバーを募集しています<br />
               20代〜30代の男女、<br />
               がちがちの初心者の方から経験者の方まで<br />
@@ -40,6 +41,11 @@ export default {
 .main_image_container {
   background: rgba(106, 150, 164, 0.3);
   backdrop-filter: blur(3.5px);
+  height: 100%;
+  position: absolute;
+}
+.main-image{
+  background-position: center, center;
 }
 .main-visual-title {
   color: white;
