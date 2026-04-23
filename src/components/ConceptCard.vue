@@ -1,5 +1,5 @@
 <template>
-  <v-card class="ma-0" rounded="sm" color="#ECF2F3" width="374" height="374" outlined>
+  <v-card class="ma-0" rounded="sm" color="#ECF2F3" width="374" height="374" variant="outlined">
     <v-container fluid fill-height>
       <v-row align-content="center" justify="center">
         <v-col cols="12">
