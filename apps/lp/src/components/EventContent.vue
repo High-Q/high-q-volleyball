@@ -9,11 +9,11 @@
       <v-sheet rounded="xl" elevation="1" class="calendar-sheet">
         <!-- 月ナビゲーション -->
         <div class="cal-toolbar">
-          <v-btn icon variant="text" color="primary" size="small" @click="prev">
+          <v-btn icon variant="text" color="secondary" size="small" @click="prev">
             <v-icon>mdi-chevron-left</v-icon>
           </v-btn>
           <span class="cal-month">{{ calendarTitle }}</span>
-          <v-btn icon variant="text" color="primary" size="small" @click="next">
+          <v-btn icon variant="text" color="secondary" size="small" @click="next">
             <v-icon>mdi-chevron-right</v-icon>
           </v-btn>
           <v-spacer />
@@ -24,12 +24,11 @@
 
         <v-divider />
 
-        <v-sheet height="440" rounded="b-xl">
+        <v-sheet height="440" rounded="b-xl" @click="handleCalendarClick">
           <v-calendar
             v-model="viewDate"
             :events="calendarEvents"
             view-mode="month"
-            @click:event="showEvent"
           />
         </v-sheet>
       </v-sheet>
@@ -111,16 +110,14 @@ export default {
       d.setMonth(d.getMonth() + 1);
       this.viewDate = d;
     },
-    showEvent(payload) {
-      const ev = payload?.event ?? payload;
-      if (!ev) return;
-      this.selectedEvent = {
-        name: ev.name ?? ev.title ?? '',
-        start: ev.start,
-        end: ev.end,
-        location: ev.location ?? '',
-      };
-      if (this.selectedEvent.name) this.dialog = true;
+    handleCalendarClick(nativeEvent) {
+      const summaryEl = nativeEvent.target.closest('.v-event-summary')
+        ?? nativeEvent.composedPath().find(el => el?.classList?.contains('v-event-summary'));
+      if (!summaryEl) return;
+      const name = summaryEl.textContent?.trim();
+      if (!name) return;
+      const event = this.events.find(e => e.name === name);
+      if (event) { this.selectedEvent = event; this.dialog = true; }
     },
     async fetchEvents() {
       try {
@@ -180,7 +177,11 @@ export default {
   overflow: hidden;
 }
 
-/* 今日の日付の丸: underlay を薄い青に、テキストを前面に */
+/* 今日の日付の丸 */
+:deep(.v-icon-btn--active) {
+  border: none !important;
+  outline: none !important;
+}
 :deep(.v-icon-btn--active .v-icon-btn__underlay) {
   background-color: #85BBCC !important;
   opacity: 1 !important;
