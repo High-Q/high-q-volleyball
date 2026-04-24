@@ -1,6 +1,5 @@
 import { createVuetify } from "vuetify";
-import "@fortawesome/fontawesome-free/css/all.css";
-import { aliases, fa } from "vuetify/iconsets/fa";
+import { aliases, mdi } from "vuetify/iconsets/mdi";
 
 const myCustomTheme = {
   dark: false,
@@ -12,13 +11,10 @@ const myCustomTheme = {
 };
 
 export default createVuetify({
-  components: {},
   icons: {
-    defaultSet: "fa",
+    defaultSet: "mdi",
     aliases,
-    sets: {
-      fa,
-    },
+    sets: { mdi },
   },
   theme: {
     defaultTheme: "myCustomTheme",

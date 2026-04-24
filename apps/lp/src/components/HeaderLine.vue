@@ -1,37 +1,23 @@
 <template>
-  <v-toolbar color="primary">
-    <template v-slot:prepend>
-      <div class="text-h5 header-title">High Q</div>
+  <v-app-bar color="primary" elevation="0" flat>
+    <v-app-bar-title>
+      <span class="text-h6 font-weight-bold text-white">High Q</span>
+    </v-app-bar-title>
+    <template #append>
+      <v-btn
+        icon
+        variant="text"
+        color="white"
+        href="https://twitter.com/c8w5y"
+        target="_blank"
+        aria-label="X (Twitter)"
+      >
+        <v-icon>mdi-twitter</v-icon>
+      </v-btn>
     </template>
-
-    <v-divider class="ms-3" inset vertical></v-divider>
-
-    <v-toolbar-title class="header-sub-title"
-      >江東区<br />バレーボールサークル</v-toolbar-title
-    >
-
-    <v-spacer></v-spacer>
-      <v-btn icon="fa-brands fa-square-x-twitter" />
-  </v-toolbar>
+  </v-app-bar>
 </template>
 
 <script>
-export default {
-  name: "HeaderLine",
-};
+export default { name: "HeaderLine" };
 </script>
-<style lang="scss" scoped>
-.header-title {
-  color: white;
-  text-align: center;
-  font-weight: 700;
-}
-.header-sub-title {
-  color: white;
-  text-align: center;
-  font-size: 8px;
-  font-weight: 700;
-  text-align: left;
-  line-height: 12px;
-}
-</style>

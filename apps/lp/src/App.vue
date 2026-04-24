@@ -4,7 +4,7 @@
     <v-main>
       <HomePage></HomePage>
     </v-main>
-    <!-- <FooterLine></FooterLine> -->
+    <FooterLine></FooterLine>
   </v-app>
 </template>
 
