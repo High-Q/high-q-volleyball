@@ -192,10 +192,13 @@ export default {
   color: #182F43 !important;
 }
 
-/* イベントバーのテキスト色 */
+/* イベントバーのテキスト */
 :deep(.v-event-summary) {
   color: #182F43 !important;
-  font-weight: 600;
+  font-weight: normal !important;
+  text-align: center;
+  display: block;
+  font-size: 0.75rem;
 }
 
 .cal-toolbar {
