@@ -76,7 +76,7 @@ export default {
   name: "EventContents",
   data() {
     return {
-      viewDate: [new Date()],
+      viewDate: new Date(),
       dialog: false,
       selectedEvent: {},
       events: [],
@@ -84,7 +84,7 @@ export default {
   },
   computed: {
     calendarTitle() {
-      const d = this.viewDate[0];
+      const d = this.viewDate;
       return `${d.getFullYear()}年${String(d.getMonth() + 1).padStart(2, "0")}月`;
     },
     calendarEvents() {
@@ -100,16 +100,16 @@ export default {
     this.fetchEvents();
   },
   methods: {
-    setToday() { this.viewDate = [new Date()]; },
+    setToday() { this.viewDate = new Date(); },
     prev() {
-      const d = new Date(this.viewDate[0]);
+      const d = new Date(this.viewDate);
       d.setMonth(d.getMonth() - 1);
-      this.viewDate = [d];
+      this.viewDate = d;
     },
     next() {
-      const d = new Date(this.viewDate[0]);
+      const d = new Date(this.viewDate);
       d.setMonth(d.getMonth() + 1);
-      this.viewDate = [d];
+      this.viewDate = d;
     },
     showEvent({ event }) {
       const original = this.events.find((e) => e.name === event.title);
