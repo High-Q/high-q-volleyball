@@ -24,12 +24,18 @@
 
         <v-divider />
 
-        <v-sheet height="440" rounded="b-xl" @click="handleCalendarClick">
+        <v-sheet height="440" rounded="b-xl">
           <v-calendar
             v-model="viewDate"
             :events="calendarEvents"
             view-mode="month"
-          />
+          >
+            <template #event="{ event }">
+              <div class="event-item" @click.stop="openEventDialog(event)">
+                {{ event.name }}
+              </div>
+            </template>
+          </v-calendar>
         </v-sheet>
       </v-sheet>
     </v-container>
@@ -110,14 +116,14 @@ export default {
       d.setMonth(d.getMonth() + 1);
       this.viewDate = d;
     },
-    handleCalendarClick(nativeEvent) {
-      const summaryEl = nativeEvent.target.closest('.v-event-summary')
-        ?? nativeEvent.composedPath().find(el => el?.classList?.contains('v-event-summary'));
-      if (!summaryEl) return;
-      const name = summaryEl.textContent?.trim();
-      if (!name) return;
-      const event = this.events.find(e => e.name === name);
-      if (event) { this.selectedEvent = event; this.dialog = true; }
+    openEventDialog(calEvent) {
+      this.selectedEvent = {
+        name: calEvent.name ?? calEvent.title ?? '',
+        start: calEvent.start,
+        end: calEvent.end,
+        location: calEvent.location ?? '',
+      };
+      if (this.selectedEvent.name) this.dialog = true;
     },
     async fetchEvents() {
       try {
@@ -192,13 +198,18 @@ export default {
   color: #182F43 !important;
 }
 
-/* イベントバーのテキスト */
-:deep(.v-event-summary) {
-  color: #182F43 !important;
-  font-weight: normal !important;
-  text-align: center;
-  display: block;
+/* #event スロット経由のイベントバー */
+.event-item {
+  background-color: #85BBCC;
+  color: #182F43;
   font-size: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  padding: 0 2px;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cal-toolbar {
