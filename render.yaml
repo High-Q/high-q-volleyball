@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: high-q-lp
+    env: static
+    rootDir: apps/lp
+    buildCommand: pnpm install && pnpm build
+    staticPublishPath: dist
+    branch: master
+    pullRequestPreviewsEnabled: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
