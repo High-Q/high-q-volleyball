@@ -13,8 +13,6 @@
     "axios": "^1.6.3",
     "vite": "^5.0.10",
     "vue": "^3.4.3",
-    "vue-gtm": "^2.0.0-vue2",
-    "vue2-hammer": "^2.1.2",
     "vuetify": "^3.4.0"
   },
   "devDependencies": {

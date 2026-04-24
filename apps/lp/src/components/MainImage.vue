@@ -1,59 +1,83 @@
 <template>
-  <v-container fluid pa-0>
-    <v-img max-height="605" cover src="/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg" class="main-image">
-      <v-container fluid class="main_image_container fill-height">
-        <v-row no-gutters align-content="center" justify="space-around">
-          <v-col cols="12" md="8"> </v-col>
-          <v-col cols="12" md="4">
-            <p class="main-visual-title text-center text-h3 text-md-h1">
-              High Q
-            </p>
-            <p
-              class="main-visual-text text-center text-subtitle-2 text-md-subtitle-1"
-            >
-              江東区を中心に活動している<br />
-              バレーボールサークルです！
-            </p>
-          </v-col>
-          <v-col cols="12" md="8"> </v-col>
-          <v-col cols="12" md="4">
-            <p
-              class="main-visual-text text-center text-subtitle-2 text-md-subtitle-1"
-            >
-              立ち上げに伴って、メンバーを募集しています<br />
-              20代〜30代の男女、<br />
-              がちがちの初心者の方から経験者の方まで<br />
-              幅広くメンバー募集中です
-            </p>
-          </v-col>
-        </v-row>
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <v-container>
+        <p class="hero-title">High Q</p>
+        <p class="hero-sub">
+          江東区を中心に活動している<br />
+          バレーボールサークルです！
+        </p>
+        <p class="hero-body">
+          立ち上げに伴って、メンバーを募集しています<br />
+          20代〜30代の男女、<br />
+          がちがちの初心者の方から経験者の方まで<br />
+          幅広くメンバー募集中です
+        </p>
       </v-container>
-    </v-img>
-  </v-container>
+    </div>
+  </div>
 </template>
+
 <script>
-export default {
-  name: "MainImage",
-};
+export default { name: "MainImage" };
 </script>
 
-<style lang="scss" scoped>
-.main_image_container {
-  background: rgba(106, 150, 164, 0.3);
-  backdrop-filter: blur(3.5px);
-  height: 100%;
+<style scoped>
+.hero {
+  position: relative;
+  height: 480px;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* ぼかした背景画像 */
+.hero-bg {
   position: absolute;
+  inset: -8px;
+  background: url("/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg") center / cover no-repeat;
+  filter: blur(5px);
 }
-.main-image{
-  background-position: center, center;
+
+/* 読みやすさのための暗いオーバーレイ */
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(24, 47, 67, 0.58);
 }
-.main-visual-title {
-  color: white;
-  font-weight: bold;
+
+/* テキストはぼかしの上に表示 */
+.hero-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
 }
-.main-visual-text {
-  color: white;
-  text-align: left;
-  font-weight: bold;
+
+.hero-title {
+  color: #fff;
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 900;
+  margin: 0 0 12px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+.hero-sub {
+  color: #fff;
+  font-size: clamp(0.9rem, 2.5vw, 1.15rem);
+  font-weight: 700;
+  margin: 0 0 16px;
+  line-height: 1.7;
+}
+
+.hero-body {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: clamp(0.75rem, 2vw, 0.9rem);
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.8;
 }
 </style>

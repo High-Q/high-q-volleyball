@@ -1,28 +1,22 @@
 <template>
-  <v-container class="mt-16">
-    <h1 class="text-h5 text-md-h3 text-primary font-weight-bold">{{ title }}</h1>
-    <hr class="first_border" />
-    <hr class="second_border"/>
-  </v-container>
+  <div class="section-title mb-10">
+    <h2 class="text-h4 text-sm-h3 font-weight-bold text-primary mb-3">{{ title }}</h2>
+    <div class="title-bar"></div>
+  </div>
 </template>
+
 <script>
 export default {
   name: "SubTitle",
   props: ["title"],
 };
 </script>
-<style lang="scss">
-hr.first_border {
-  border-width: 2px 0px 0px 0px; /* 太さ */
-  border-style: solid; /* 線種 */
-  border-color: #182F43; /* 線色 */
-  height: 2px; /* 高さ(※古いIE用) */
-  margin:16px 0px 5px;
-}
-hr.second_border {
-  border-width: 2px 0px 0px 0px; /* 太さ */
-  border-style: solid; /* 線種 */
-  background-color: #85BBCC; /* 線色 */
-  height: 2px; /* 高さ(※古いIE用) */
+
+<style scoped>
+.title-bar {
+  width: 52px;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #182F43, #85BBCC);
 }
 </style>
