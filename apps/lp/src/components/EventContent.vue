@@ -92,6 +92,7 @@ export default {
         start: e.start,
         end: e.end,
         color: "#85BBCC",
+        location: e.location,
       }));
     },
   },
@@ -110,9 +111,16 @@ export default {
       d.setMonth(d.getMonth() + 1);
       this.viewDate = d;
     },
-    showEvent({ event }) {
-      const original = this.events.find((e) => e.name === (event.name ?? event.title));
-      if (original) { this.selectedEvent = original; this.dialog = true; }
+    showEvent(payload) {
+      const ev = payload?.event ?? payload;
+      if (!ev) return;
+      this.selectedEvent = {
+        name: ev.name ?? ev.title ?? '',
+        start: ev.start,
+        end: ev.end,
+        location: ev.location ?? '',
+      };
+      if (this.selectedEvent.name) this.dialog = true;
     },
     async fetchEvents() {
       try {
@@ -172,7 +180,18 @@ export default {
   overflow: hidden;
 }
 
-/* イベントテキスト */
+/* 今日の日付の丸: underlay を薄い青に、テキストを前面に */
+:deep(.v-icon-btn--active .v-icon-btn__underlay) {
+  background-color: #85BBCC !important;
+  opacity: 1 !important;
+}
+:deep(.v-icon-btn--active .v-icon-btn__content) {
+  position: relative;
+  z-index: 1;
+  color: #182F43 !important;
+}
+
+/* イベントバーのテキスト色 */
 :deep(.v-event-summary) {
   color: #182F43 !important;
   font-weight: 600;
