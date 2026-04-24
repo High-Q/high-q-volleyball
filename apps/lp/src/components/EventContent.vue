@@ -92,7 +92,7 @@ export default {
         title: e.name,
         start: e.start,
         end: e.end,
-        color: "primary",
+        color: "#85BBCC",
       }));
     },
   },
@@ -170,6 +170,11 @@ export default {
 
 .calendar-sheet {
   overflow: hidden;
+}
+
+:deep(.v-calendar-month__event) {
+  color: #182F43 !important;
+  font-weight: 600;
 }
 
 .cal-toolbar {
