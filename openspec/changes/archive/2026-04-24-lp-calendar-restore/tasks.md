@@ -13,9 +13,9 @@
 
 ## 3. PR・マージ・デプロイ
 
-- [ ] 3.1 変更をコミットし、`feature/93-lp-calendar-restore` → `master` の PR を作成する
-- [ ] 3.2 ローカルで `pnpm --filter @high-q/lp dev` を起動してカレンダー表示を目視確認する
-- [ ] 3.3 PR をマージする
-- [ ] 3.4 Render ダッシュボードの設定を monorepo 用に戻す（Root Directory: `apps/lp`、Build Command: `pnpm install && pnpm build`）
-- [ ] 3.5 `master` → `production` にマージし Render の自動デプロイが成功することを確認する
-- [ ] 3.6 LP 本番サイトでカレンダーと色が正しく表示されることを確認する
+- [x] 3.1 変更をコミットし、`feature/93-lp-calendar-restore` → `master` の PR を作成する
+- [x] 3.2 ローカルで `pnpm --filter @high-q/lp dev` を起動してカレンダー表示を目視確認する
+- [x] 3.3 PR をマージする
+- [x] 3.4 Render ダッシュボードの設定を monorepo 用に戻す（Root Directory: `apps/lp`、Build Command: `pnpm install && pnpm build`）
+- [x] 3.5 `master` → Render の自動デプロイが成功することを確認する
+- [x] 3.6 LP 本番サイトでカレンダーと色が正しく表示されることを確認する

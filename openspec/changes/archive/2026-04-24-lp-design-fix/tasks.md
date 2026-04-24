@@ -18,4 +18,4 @@
 ## 4. ビルド確認・コミット
 
 - [x] 4.1 `pnpm --filter @high-q/lp build` が通ることを確認する
-- [ ] 4.2 変更を `feature/93-lp-calendar-restore` ブランチにコミットする
+- [x] 4.2 変更を master にコミット・デプロイ済み

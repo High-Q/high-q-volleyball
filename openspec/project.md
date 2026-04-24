@@ -31,22 +31,38 @@
 
 詳細: `docs/03-アーキテクチャ/03-インフラ・CICD構成.md`
 
+## アーキテクチャ
+
+**Feature Sliced Design（FSD）** を全アプリで採用。
+ADR: `docs/09-決定記録/ADR-0006-FSD採用.md`
+詳細: `docs/03-アーキテクチャ/04-開発・コーディング規約.md`
+
+```
+app → pages → widgets → features → entities → shared
+```
+
+- 各スライスは `index.ts`（Public API）を持ち、外部から直接パスで import 禁止
+- Supabase client は `shared/api/` のみに存在
+- ESLint（`eslint-plugin-boundaries`）でレイヤー境界を自動検証
+
 ## 開発プロセス（openspec ワークフロー）
 
 ```
-/opsx:propose "<変更内容>"
-  → proposal.md / design.md / tasks.md を生成
-  → 内容を確認・合意
-  → /opsx:apply で TDD 実装
-  → PR → CI 通過 → マージ
-  → /opsx:archive でアーカイブ・specs/ 更新
+/opsx:propose → Proposal + Design + Task 同時生成
+  → [承認] → /opsx:apply（TDD・1タスク1コミット）
+  → [ローカル確認・承認] → PR作成 → Renderプレビュー確認
+  → masterマージ（本番デプロイ） → Sync & Archive
 ```
+
+詳細: `docs/03-アーキテクチャ/05-開発ワークフロー.md`
 
 ## ブランチ戦略
 
-- `main`: 本番（保護・PR必須・CI通過必須）
+- `master`: 本番（保護・PR必須・CI通過必須・直接push禁止）
 - `feature/<番号>-<概要>`: 機能開発
 - `fix/<番号>-<概要>`: バグ修正
+
+GitHub ブランチ保護設定: `docs/03-アーキテクチャ/03-インフラ・CICD構成.md`
 
 ## テスト戦略
 
@@ -57,6 +73,16 @@
 | E2E | Playwright | 主要フローのみ |
 
 詳細: `docs/07-テスト/01-テスト戦略・方針.md`
+
+## UI 設計
+
+| アプリ | UIライブラリ |
+|--------|------------|
+| `apps/lp` | Vuetify 3 |
+| `apps/admin` | shadcn/ui + Tailwind |
+| `apps/reservation` | shadcn/ui + Tailwind |
+
+詳細: `docs/05-インターフェース/01-UI設計方針.md`
 
 ## ドキュメント構成
 

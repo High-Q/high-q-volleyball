@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: 月ナビゲーションでカレンダー表示が切り替わる
 カレンダーの「＜」「＞」ボタンを押すと、表示月が前月・翌月に切り替わらなければならない（SHALL）。
