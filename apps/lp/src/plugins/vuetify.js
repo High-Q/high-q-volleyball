@@ -1,7 +1,6 @@
 import { createVuetify } from "vuetify";
 import "@fortawesome/fontawesome-free/css/all.css";
 import { aliases, fa } from "vuetify/iconsets/fa";
-import { VCalendar } from "vuetify/labs/VCalendar";
 
 const myCustomTheme = {
   dark: false,
@@ -13,9 +12,7 @@ const myCustomTheme = {
 };
 
 export default createVuetify({
-  components: {
-    VCalendar,
-  },
+  components: {},
   icons: {
     defaultSet: "fa",
     aliases,
