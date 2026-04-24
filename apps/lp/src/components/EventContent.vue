@@ -70,8 +70,6 @@
 </template>
 
 <script>
-import axios from "axios";
-
 export default {
   name: "EventContents",
   data() {
@@ -117,10 +115,11 @@ export default {
     },
     async fetchEvents() {
       try {
-        const res = await axios.get(
+        const res = await fetch(
           "https://ptfomh71x9.execute-api.ap-northeast-1.amazonaws.com/beta/event"
         );
-        const data = JSON.parse(res.data.body);
+        const json = await res.json();
+        const data = JSON.parse(json.body);
         this.events = data.map((e) => ({
           id: e.id,
           name: e.title,
