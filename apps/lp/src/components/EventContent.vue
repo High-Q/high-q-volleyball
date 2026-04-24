@@ -171,7 +171,23 @@ export default {
   overflow: hidden;
 }
 
-:deep(.v-calendar-month__event) {
+/* 今日の日付の丸: 明るいアクセントカラーに変更 */
+:deep(.v-calendar-month__day--today .v-btn) {
+  background-color: #85BBCC !important;
+  color: #182F43 !important;
+}
+:deep(.v-calendar-month__day--today .v-btn__overlay) {
+  opacity: 0 !important;
+}
+:deep(.v-calendar-month__day--today .v-btn__content) {
+  color: #182F43 !important;
+}
+
+/* イベントのテキストを強制的に濃い色に */
+:deep(.v-calendar-month__event),
+:deep(.v-calendar-month__event *),
+:deep(.v-event),
+:deep(.v-event *) {
   color: #182F43 !important;
   font-weight: 600;
 }
