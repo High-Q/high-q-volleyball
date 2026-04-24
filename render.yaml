@@ -3,7 +3,7 @@ services:
     name: high-q-lp
     env: static
     rootDir: apps/lp
-    buildCommand: pnpm install && pnpm build
+    buildCommand: pnpm install --ignore-scripts && pnpm build
     staticPublishPath: dist
     branch: master
     pullRequestPreviewsEnabled: true
