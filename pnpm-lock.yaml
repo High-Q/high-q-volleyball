@@ -47,9 +47,6 @@ importers:
       vue-gtm:
         specifier: ^2.0.0-vue2
         version: 2.3.4
-      vue2-hammer:
-        specifier: ^2.1.2
-        version: 2.1.2
       vuetify:
         specifier: ^3.4.0
         version: 3.12.5(vite-plugin-vuetify@2.1.3)(vue@3.5.33)
@@ -542,9 +539,6 @@ packages:
   axios@1.15.2:
     resolution: {integrity: sha512-wLrXxPtcrPTsNlJmKjkPnNPK2Ihe0hn0wGSaTEiHRPxwjvJwT3hKmXF4dpqxmPO9SoNb2FsYXj/xEo0gHN+D5A==}
 
-  babel-runtime@6.26.0:
-    resolution: {integrity: sha512-ITKNuq2wKlW1fJg9sSW52eepoYgZBggvOAHC0u/CYu/qxQ9EVzThCgR69BnSXLHjy2f7SY5zaQ4yt7H9ZVxY2g==}
-
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
@@ -594,10 +588,6 @@ packages:
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
-
-  core-js@2.6.12:
-    resolution: {integrity: sha512-Kb2wC0fvsWfQrgk8HU5lW6U/Lcs8+9aaYcy4ZFc6DDlo4nZ7n70dEgE5rtR0oG6ufKDUnrwfWL1mXR5ljDatrQ==}
-    deprecated: core-js@<3.23.3 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Some versions have web compatibility issues. Please, upgrade your dependencies to the actual version of core-js.
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -816,10 +806,6 @@ packages:
 
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
-
-  hammerjs@2.0.8:
-    resolution: {integrity: sha512-tSQXBXS/MWQOn/RKckawJ61vvsDpCom87JgxiYdGwHdOa0ht0vzUWDlfioofFCRU0L+6NGDt6XzbgoJvZkMeRQ==}
-    engines: {node: '>=0.8.0'}
 
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
@@ -1044,9 +1030,6 @@ packages:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
     engines: {node: '>=8.10.0'}
 
-  regenerator-runtime@0.11.1:
-    resolution: {integrity: sha512-MguG95oij0fC3QV3URf4V2SDYGJhJnJGqvIIgdECeODCT98wSWDAJ94SSuVpYQUoTcGUIL6L4yNB7j1DFFHSBg==}
-
   requireindex@1.2.0:
     resolution: {integrity: sha512-L9jEkOi3ASd9PYit2cwRfyppc9NoABujTP8/5gFcbERmo5jUoAKovIC3fsF17pkTnGsrByysqX+Kxd2OTNI1ww==}
     engines: {node: '>=0.10.5'}
@@ -1208,9 +1191,6 @@ packages:
   vue-gtm@2.3.4:
     resolution: {integrity: sha512-09e5XMxnkqDt33lonKW0q2KCageK3d0vN5aA+IAMi4c3TKtpat86Y/DllhIeKWeLBoUT4elz+S+bVDHUGzUA2A==}
     deprecated: moved to @gtm-support/vue-gtm and @gtm-support/vue2-gtm
-
-  vue2-hammer@2.1.2:
-    resolution: {integrity: sha512-IgA7MhGsc1twUgMyxaOM2xc5YMF+aWJP0YC174dc51glbO99VltrV/uTBd/OUR5gk87MheJi97mhTcMm5kiQUQ==}
 
   vue@3.5.33:
     resolution: {integrity: sha512-1AgChhx5w3ALgT4oK3acm2Es/7jyZhWSVUfs3rOBlGQC0rjEDkS7G4lWlJJGGNQD+BV3reCwbQrOe1mPNwKHBQ==}
@@ -1583,11 +1563,6 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  babel-runtime@6.26.0:
-    dependencies:
-      core-js: 2.6.12
-      regenerator-runtime: 0.11.1
-
   balanced-match@1.0.2: {}
 
   binary-extensions@2.3.0: {}
@@ -1642,8 +1617,6 @@ snapshots:
       delayed-stream: 1.0.0
 
   concat-map@0.0.1: {}
-
-  core-js@2.6.12: {}
 
   cross-spawn@7.0.6:
     dependencies:
@@ -1923,8 +1896,6 @@ snapshots:
 
   graphemer@1.4.0: {}
 
-  hammerjs@2.0.8: {}
-
   has-flag@4.0.0: {}
 
   has-symbols@1.1.0: {}
@@ -2110,8 +2081,6 @@ snapshots:
     dependencies:
       picomatch: 2.3.2
 
-  regenerator-runtime@0.11.1: {}
-
   requireindex@1.2.0: {}
 
   resolve-from@4.0.0: {}
@@ -2274,11 +2243,6 @@ snapshots:
   vue-gtm@2.3.4:
     dependencies:
       url-search-params-polyfill: 8.2.5
-
-  vue2-hammer@2.1.2:
-    dependencies:
-      babel-runtime: 6.26.0
-      hammerjs: 2.0.8
 
   vue@3.5.33:
     dependencies:

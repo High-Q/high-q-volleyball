@@ -1,106 +1,103 @@
 <template>
-  <v-container fluid fill-height>
+  <v-container fluid>
     <v-row justify="center" class="pa-md-16">
       <SubTitle title="EventContents"></SubTitle>
     </v-row>
-    <!-- <v-row>
+    <v-row>
       <v-container>
         <v-sheet>
           <v-toolbar flat>
-            <v-btn
-              variant="outlined"
-              class="mr-4"
-              color="grey-darken-2"
-              @click="setToday"
-            >
+            <v-btn variant="outlined" class="mr-4" color="grey-darken-2" @click="setToday">
               Today
             </v-btn>
             <v-btn variant="text" size="small" color="grey-darken-2" @click="prev">
-              <v-icon size="small">
-                mdi-chevron-left
-              </v-icon>
+              <v-icon size="small">fas fa-chevron-left</v-icon>
             </v-btn>
             <v-btn variant="text" size="small" color="grey-darken-2" @click="next">
-              <v-icon size="small">
-                mdi-chevron-right
-              </v-icon>
+              <v-icon size="small">fas fa-chevron-right</v-icon>
             </v-btn>
-            <v-toolbar-title v-if="$refs.calendar">
-              {{ $refs.calendar.title }}
-            </v-toolbar-title>
+            <v-toolbar-title>{{ calendarTitle }}</v-toolbar-title>
             <v-spacer></v-spacer>
           </v-toolbar>
         </v-sheet>
         <v-sheet height="450">
           <v-calendar
-            ref="calendar"
-            v-model="focus"
-            color="primary"
-            :events="events"
-            :event-color="getEventColor"
-            v-hammer:swipe="onSwipe"
+            v-model="viewDate"
+            :events="calendarEvents"
+            view-mode="month"
             @click:event="showEvent"
-            @click:more="viewDay"
-            @click:date="viewDay"
-            pa-0
-          ></v-calendar>
+          />
         </v-sheet>
-    </v-container> -->
-    <!-- </v-row>
-    <v-dialog v-model="dialog" max-width="290">
-      <v-card>
-        <v-card-title class="text-h5">{{ selectedEvent.name }}</v-card-title>
-        <v-card-text>
-          <div>
-            <strong>開始時間:</strong> {{ formatDate(selectedEvent.start) }}
-          </div>
-          <div>
-            <strong>終了時間:</strong> {{ formatDate(selectedEvent.end) }}
-          </div>
-          <div>
-            <strong>場所:</strong> {{ selectedEvent.location }}
-          </div> -->
-          <!-- <div><strong>詳細:</strong> {{ selectedEvent.details }}</div> -->
-        <!-- </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="dialog = false">Close</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog> -->
+        <v-dialog v-model="dialog" max-width="290">
+          <v-card>
+            <v-card-title class="text-h5">{{ selectedEvent.name }}</v-card-title>
+            <v-card-text>
+              <div><strong>開始時間:</strong> {{ formatDate(selectedEvent.start) }}</div>
+              <div><strong>終了時間:</strong> {{ formatDate(selectedEvent.end) }}</div>
+              <div><strong>場所:</strong> {{ selectedEvent.location }}</div>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="primary" variant="text" @click="dialog = false">Close</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-container>
+    </v-row>
   </v-container>
 </template>
 
 <script>
 import SubTitle from "./SubTitle.vue";
 import axios from "axios";
+
 export default {
-  components: {
-    SubTitle,
-  },
+  components: { SubTitle },
   data() {
     return {
-      focus: "",
+      viewDate: [new Date()],
       dialog: false,
       selectedEvent: {},
       events: [],
     };
   },
+  computed: {
+    calendarTitle() {
+      const d = this.viewDate[0];
+      return `${d.getFullYear()}年${String(d.getMonth() + 1).padStart(2, "0")}月`;
+    },
+    calendarEvents() {
+      return this.events.map((e) => ({
+        title: e.name,
+        start: e.start,
+        end: e.end,
+        color: e.color,
+      }));
+    },
+  },
   mounted() {
     this.fetchEvents();
   },
   methods: {
-    getEventColor(event) {
-      return event.color;
+    setToday() {
+      this.viewDate = [new Date()];
+    },
+    prev() {
+      const d = new Date(this.viewDate[0]);
+      d.setMonth(d.getMonth() - 1);
+      this.viewDate = [d];
+    },
+    next() {
+      const d = new Date(this.viewDate[0]);
+      d.setMonth(d.getMonth() + 1);
+      this.viewDate = [d];
     },
     showEvent({ event }) {
-      console.log(event.start);
-      this.selectedEvent = event;
-      this.dialog = true;
-    },
-    viewDay({ date }) {
-      this.focus = date;
-      this.$refs.calendar.checkChange();
+      const original = this.events.find((e) => e.name === event.title);
+      if (original) {
+        this.selectedEvent = original;
+        this.dialog = true;
+      }
     },
     async fetchEvents() {
       try {
@@ -108,49 +105,27 @@ export default {
           "https://ptfomh71x9.execute-api.ap-northeast-1.amazonaws.com/beta/event"
         );
         const parsedData = JSON.parse(response.data.body);
-        const events = parsedData.map((event) => {
-          return {
-            id: event.id,
-            name: event.title,
-            start: new Date(event.start_time),
-            end: new Date(event.end_time),
-            location: event.location,
-            color: "blue", // 青色に固定設定
-          };
-        });
-        this.events = events;
-        console.log(this.events);
+        this.events = parsedData.map((event) => ({
+          id: event.id,
+          name: event.title,
+          start: new Date(event.start_time),
+          end: new Date(event.end_time),
+          location: event.location,
+          color: "blue",
+        }));
       } catch (error) {
         console.error("Error fetching events:", error);
       }
     },
     formatDate(date) {
-      const options = {
+      if (!date) return "";
+      return new Date(date).toLocaleString("ja-JP", {
         year: "numeric",
         month: "long",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      };
-      return new Date(date).toLocaleString("ja-JP", options);
-    },
-    setToday() {
-      this.focus = "";
-    },
-    prev() {
-      this.$refs.calendar.prev();
-    },
-    next() {
-      this.$refs.calendar.next();
-    },
-    onSwipe(event) {
-      if (event.direction === 4) {
-        // Swipe right: previous month
-        this.prev();
-      } else if (event.direction === 2) {
-        // Swipe left: next month
-        this.next();
-      }
+      });
     },
   },
 };
