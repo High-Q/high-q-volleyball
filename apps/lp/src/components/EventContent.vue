@@ -88,6 +88,7 @@ export default {
     calendarEvents() {
       return this.events.map((e) => ({
         title: e.name,
+        name: e.name,
         start: e.start,
         end: e.end,
         color: "#85BBCC",
@@ -110,7 +111,7 @@ export default {
       this.viewDate = d;
     },
     showEvent({ event }) {
-      const original = this.events.find((e) => e.name === event.title);
+      const original = this.events.find((e) => e.name === (event.name ?? event.title));
       if (original) { this.selectedEvent = original; this.dialog = true; }
     },
     async fetchEvents() {
@@ -171,23 +172,8 @@ export default {
   overflow: hidden;
 }
 
-/* 今日の日付の丸: 明るいアクセントカラーに変更 */
-:deep(.v-calendar-month__day--today .v-btn) {
-  background-color: #85BBCC !important;
-  color: #182F43 !important;
-}
-:deep(.v-calendar-month__day--today .v-btn__overlay) {
-  opacity: 0 !important;
-}
-:deep(.v-calendar-month__day--today .v-btn__content) {
-  color: #182F43 !important;
-}
-
-/* イベントのテキストを強制的に濃い色に */
-:deep(.v-calendar-month__event),
-:deep(.v-calendar-month__event *),
-:deep(.v-event),
-:deep(.v-event *) {
+/* イベントテキスト */
+:deep(.v-event-summary) {
   color: #182F43 !important;
   font-weight: 600;
 }
