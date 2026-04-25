@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 44 / 57 タスク
+- 完了: 47 / 57 タスク（15.3/15.5 は手動確認・PR レビュー時）
 
 ---
 
@@ -117,11 +117,11 @@
 
 ## 15. アクセシビリティ確認
 
-- [ ] 15.1 全 SNS ボタン・CTA に `aria-label` が付与されている
-- [ ] 15.2 アンカーリンクが Tab キーで順序通りフォーカスできる
-- [ ] 15.3 `prefers-reduced-motion: reduce` でアニメーションが停止することを Chrome DevTools で確認
-- [ ] 15.4 `XIcon` SVG に `aria-hidden="true"` が付与されている
-- [ ] 15.5 主要テキストのコントラスト比 AA（4.5:1）以上を Lighthouse で確認
+- [x] 15.1 全 SNS ボタン・CTA に `aria-label` が付与されている（grep 確認済）
+- [x] 15.2 アンカーリンクが Tab キーで順序通りフォーカスできる（`<a href="#...">` / `v-btn href="#..."` を使用、Vuetify default の outline を保持）
+- [ ] 15.3 `prefers-reduced-motion: reduce` でアニメーションが停止することを Chrome DevTools で確認（手動・PR 時）
+- [x] 15.4 `XIcon` SVG に `aria-hidden="true"` が付与されている（grep 確認済）
+- [ ] 15.5 主要テキストのコントラスト比 AA（4.5:1）以上を Lighthouse で確認（手動・PR 時。design 時試算では primary on white = 12.6:1）
 
 ## 16. 動作確認・PR
 
