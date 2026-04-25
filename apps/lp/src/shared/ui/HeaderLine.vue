@@ -3,7 +3,6 @@
     :color="scrolled ? 'primary' : 'transparent'"
     :elevation="scrolled ? 4 : 0"
     flat
-    scroll-behavior="elevate"
     class="header-line"
   >
     <v-app-bar-title class="header-title">
@@ -62,6 +61,17 @@ export default {
 </script>
 
 <style scoped>
+/* スクロール中も header が画面に留まることを保証
+   （Vuetify 3 の v-app-bar は本来 fixed だが、scroll-behavior 属性や
+   v-app の layout 計算次第で位置が外れるケースがあるため明示） */
+.header-line {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
 /* フルブリード化: v-toolbar__content の左右 padding を 0 にして
    ロゴが画面左端、メニュー/ナビが画面右端まで張り付くようにする */
 .header-line :deep(.v-toolbar__content) {

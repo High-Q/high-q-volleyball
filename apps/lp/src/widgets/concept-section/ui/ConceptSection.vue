@@ -78,11 +78,14 @@ export default {
   }
 }
 
-/* CSS Grid で確実に3列 */
+/* CSS Grid で確実に3列。max-width + margin auto でスクロールバー幅補正
+   による右寄り（v-container の左右 padding が見た目で対称にならない事象）を解消 */
 .concept-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+  max-width: 100%;
+  margin-inline: auto;
 }
 
 /* スマホは1列 */

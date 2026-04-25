@@ -143,24 +143,27 @@ const myCustomTheme = {
 - ナビ: `CONCEPT` / `ACTIVITIES` / `EVENT` の3アンカーリンク（テキストボタン）
 - スクロール量に応じて変化: `scrollY === 0 → background: transparent` / `scrollY > 0 → background: primary + elevation`
 - モバイル（xs）はナビをドロップダウンメニュー（`v-menu` + `v-list`）に集約
-- X アイコン → 新規 `XIcon` コンポーネント
+- ~~X アイコン → 新規 `XIcon` コンポーネント~~ → **【T-17 で削除】**
+- **【T-17 追加】フルブリード化**: `<v-app-bar>` の左右 padding 0、ロゴ左 16px / append 右 8px の最小余白のみ
+- **【T-18 修正】sticky 保証**: `scroll-behavior="elevate"` 属性を削除（Vuetify 3 で内部 layout に副作用がありスクロール時に header が画面外へ消える事象を確認）。`position: fixed; top: 0; left: 0; right: 0; z-index: 1000` を CSS で明示的に保証し、elevation 切替は `:elevation` バインドで継続
 
 ### Concept カード再設計
 
 | 項目 | 変更前 | 変更後 |
 |------|-------|-------|
 | 構造 | border-left + 角張りカード | フルシャドウカード + 角丸 16px |
-| ホバー | なし | `transform: translateY(-4px)` + シャドウ強化（200ms） |
+| ホバー | なし | ~~`transform` + シャドウ強化~~ → **【T-18 で撤回】静的（ホバー/クリックの視覚効果なし）** |
 | アイコン | 80px | 56px に縮小、上部背景に丸い surface-alt のチップを敷く |
 | タイトル/本文 | 中央寄せ | 中央寄せ（変更なし） |
-| 中央カード強調 | border-left navy のみ | 全体を primary 反転（背景 primary, 文字 white） |
+| 中央カード強調 | border-left navy のみ | ~~primary 反転~~ → **【T-18 修正】カード全体背景を `secondary`（水色）に。chip 背景は white、アイコン・タイトル・本文は `primary`（navy）でコントラスト確保**（白カード→水色カード→白カードのサンドイッチ強調） |
+| **【T-18 追加】アクセントバー** | なし | **全 3 カード上端に高さ 4px のアクセントバー**（通常: `secondary` 水色 / 中央: `primary` navy で反転）でカード形状の統一感を強化 |
 
 ### Activities セクション再設計
 
 - import 修復: `import SubTitle from "@shared/ui/SubTitle.vue"`
 - 残存ハードコード（`#F5F8FA`・`#6A96A4`）→ `surface-alt` / `text-muted` トークンへ
-- X SNS ボタン → 新規 `XIcon` コンポーネント
-- 構造維持（左テキスト・右画像の2カラム、xs では縦積み）
+- ~~X SNS ボタン → 新規 `XIcon` コンポーネント~~ → **【T-17 で削除】「準備中」案内カードに置換**
+- ~~構造維持（左テキスト・右画像の2カラム、xs では縦積み）~~ → **【T-18 で変更】画像を撤去し、テキスト + 準備中カードの 1 カラム構成に変更**（v-row/v-col 撤廃で左右ズレも同時解消）
 
 ### Footer 再設計
 
@@ -209,7 +212,7 @@ X 公式アカウント凍結中につき、以下を実施:
 |------|-------|-------|
 | Hero CTA | 「X でお問い合わせ」+「イベントを見る」 | 「イベントを見る」のみ。サブに「メンバー受付窓口は準備中です」テキスト |
 | Header | X アイコンボタン（右上） | 削除（ナビとロゴのみ） |
-| Footer | SNS カラム（X リンク） | 削除。ブランド + ナビの 2 カラム構成 |
+| Footer | SNS カラム（X リンク） | 削除。**【T-18 修正】MENU カラムも撤去し、ブランド + 1 行紹介文の 1 カラム構成に変更**（`<br>` 削除） |
 | Activities | 「X でお問い合わせ」ボタン | 「メンバー受付窓口は準備中です」テキスト表示 |
 
 **XIcon コンポーネント自体は保持**（X 復活時に再利用するため）。各ファイルからの import のみ削除。

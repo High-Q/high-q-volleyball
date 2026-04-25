@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 62 / 70 タスク（残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 71 / 79 タスク（T-18 9件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -159,6 +159,22 @@
 - [x] 17.11 セクション左右余白の差を v-container の使い方で統一（ActivitiesSection の v-row に no-gutters を付与し、Vuetify v-row の negative margin による左右ズレを解消）
 - [x] 17.12 `grep -rn "XIcon" apps/lp/src/` で残存箇所を確認（XIcon.vue と XIcon.spec.js のみ残存。X 復活時の再利用用に保持）
 - [x] 17.13 vitest run (19/19 GREEN) + pnpm build:lp (成功・CSS 102KB/JS 349KB) + grep 検証 (ハードコード/mdi-twitter/stray XIcon すべて0件) で最終確認
+
+---
+
+## 18. UI フィードバック対応 #2（追加）
+
+> **背景**: ユーザーローカル確認で 5 件の追加指摘を受領。全タスクをまとめて 1 コミットで実施（CLAUDE.md の新ルール「1 PR = 1 コミット」例外適用）。
+
+- [x] 18.1 design.md §5 を更新（Header sticky 仕様、ConceptCard 静的化＋アクセントバー、Activities 画像撤去、Footer 1カラム化）
+- [x] 18.2 HeaderLine: `scroll-behavior="elevate"` を削除し、`position: fixed; top: 0; z-index: 1000` を CSS で明示
+- [x] 18.3 ConceptCard: hover の `transform/box-shadow` 強化を撤廃して静的化
+- [x] 18.4 ConceptCard secondary: 中央カード**全体の背景を `secondary`（水色）に変更**。chip 背景は white、アイコン・文字は `primary`（navy）に統一してコントラスト確保（白→水色→白のサンドイッチ強調）
+- [x] 18.5 ConceptCard 全カードに上端アクセントバー（高さ 4px）追加。通常: `secondary` / 中央: white
+- [x] 18.6 ConceptSection: `.concept-grid` に `max-width: 100%; margin-inline: auto` を追加し、スクロールバー幅補正による右寄り解消
+- [x] 18.7 ActivitiesSection: v-img 削除、v-row/v-col 撤廃して 1 カラム構成（テキスト + 準備中カード）に変更
+- [x] 18.8 FooterLine: MENU カラム削除、ブランド + 1 行紹介文の 1 カラム構成に変更（紹介文の `<br>` 撤去）
+- [x] 18.9 最終確認（vitest + build + grep）→ 全タスクまとめて 1 コミット
 
 ---
 

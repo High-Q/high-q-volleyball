@@ -1,28 +1,12 @@
 <template>
   <v-footer color="primary" class="py-10">
     <v-container>
-      <v-row>
-        <!-- カラム1: ブランド -->
-        <v-col cols="12" md="6">
-          <div class="footer-brand text-h5 font-weight-black text-white mb-3">
-            High Q
-          </div>
-          <p class="footer-desc">
-            東京都江東区を中心に活動する<br />
-            社会人バレーボールサークル
-          </p>
-        </v-col>
-
-        <!-- カラム2: ナビ -->
-        <v-col cols="12" md="6">
-          <div class="footer-heading">MENU</div>
-          <ul class="footer-nav">
-            <li><a href="#concept">CONCEPT</a></li>
-            <li><a href="#activities">ACTIVITIES</a></li>
-            <li><a href="#event">EVENT</a></li>
-          </ul>
-        </v-col>
-      </v-row>
+      <div class="footer-brand text-h5 font-weight-black text-white mb-2">
+        High Q
+      </div>
+      <p class="footer-desc">
+        東京都江東区を中心に活動する社会人バレーボールサークル
+      </p>
 
       <v-divider class="my-6" color="white" opacity="0.2" />
 
@@ -49,35 +33,6 @@ export default {
   font-size: 0.85rem;
   line-height: 1.7;
   margin: 0;
-}
-
-.footer-heading {
-  color: rgb(var(--v-theme-secondary));
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  margin-bottom: 12px;
-}
-
-.footer-nav {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.footer-nav li {
-  margin-bottom: 8px;
-}
-
-.footer-nav a {
-  color: #fff;
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 150ms ease-out;
-}
-
-.footer-nav a:hover {
-  color: rgb(var(--v-theme-secondary));
 }
 
 .footer-copyright {

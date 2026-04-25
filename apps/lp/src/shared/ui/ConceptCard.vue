@@ -1,11 +1,8 @@
 <template>
   <div class="vcard" :class="{ 'vcard--secondary': secondary }">
+    <div class="vcard-accent" />
     <div class="vcard-icon-chip">
-      <v-icon
-        :icon="icon"
-        size="32"
-        :color="secondary ? 'white' : 'primary'"
-      />
+      <v-icon :icon="icon" size="32" color="primary" />
     </div>
     <div class="vcard-body">
       <p class="vcard-title">{{ title }}</p>
@@ -34,6 +31,7 @@ export default {
 
 <style scoped>
 .vcard {
+  position: relative;
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -42,22 +40,27 @@ export default {
   align-items: center;
   height: 100%;
   padding: 32px 20px 28px;
-  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+  overflow: hidden;
 }
 
-.vcard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-
-/* 中央カードは primary 反転で強調 */
+/* 中央カードは secondary（水色）背景でサンドイッチ強調 */
 .vcard--secondary {
-  background: rgb(var(--v-theme-primary));
+  background: rgb(var(--v-theme-secondary));
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
 }
 
-.vcard--secondary:hover {
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+/* 全カード上端のアクセントバー（通常: secondary / 中央: primary で反転） */
+.vcard-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgb(var(--v-theme-secondary));
+}
+
+.vcard--secondary .vcard-accent {
+  background: rgb(var(--v-theme-primary));
 }
 
 .vcard-icon-chip {
@@ -72,7 +75,7 @@ export default {
 }
 
 .vcard--secondary .vcard-icon-chip {
-  background: rgba(255, 255, 255, 0.16);
+  background: #fff;
 }
 
 .vcard-body {
@@ -92,19 +95,5 @@ export default {
   color: rgb(var(--v-theme-primary));
   margin: 0;
   line-height: 1.8;
-}
-
-.vcard--secondary .vcard-title,
-.vcard--secondary .vcard-text {
-  color: #fff;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .vcard {
-    transition: none;
-  }
-  .vcard:hover {
-    transform: none;
-  }
 }
 </style>
