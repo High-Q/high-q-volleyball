@@ -6,8 +6,7 @@
     :class="{ 'is-visible': isVisible }"
   >
     <v-container>
-      <h2 class="section-title">ADVANTAGES</h2>
-      <div class="section-hr"></div>
+      <SectionDivider title="ADVANTAGES" />
 
       <div class="concept-grid">
         <ConceptCard
@@ -25,11 +24,12 @@
 
 <script>
 import ConceptCard from "@shared/ui/ConceptCard.vue";
+import SectionDivider from "@shared/ui/SectionDivider.vue";
 import { useFadeInOnScroll } from "@shared/lib/useFadeInOnScroll";
 
 export default {
   name: "ConceptSection",
-  components: { ConceptCard },
+  components: { ConceptCard, SectionDivider },
   setup() {
     const { el, isVisible } = useFadeInOnScroll();
     return { el, isVisible };
@@ -76,21 +76,6 @@ export default {
     transform: none;
     transition: none;
   }
-}
-
-.section-title {
-  font-size: 2rem;
-  font-weight: 900;
-  color: rgb(var(--v-theme-primary));
-  letter-spacing: 0.06em;
-  margin: 0 0 14px;
-}
-
-.section-hr {
-  width: 100%;
-  height: 2px;
-  background: rgb(var(--v-theme-primary));
-  margin-bottom: 40px;
 }
 
 /* CSS Grid で確実に3列 */
