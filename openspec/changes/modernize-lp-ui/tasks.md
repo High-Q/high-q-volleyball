@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 104 / 112 タスク（T-27 2件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 106 / 114 タスク（T-28 2件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -285,6 +285,17 @@
 - [x] 27.2 build 成功確認
 
 > **トレードオフ**: デスクトップで縦スクロール出現時に ~15px のレイアウトシフトが一瞬起こる可能性があるが、Hero / Content セクションを viewport 全幅で表示することを優先（モダン LP では一般的な妥協点）。
+
+---
+
+## 28. body default margin リセットで Hero/Content を真の全幅に（追加）
+
+> **背景**: T-27 で scrollbar-gutter を撤去しても Hero/Content の左右余白が変わらなかった。原因はブラウザ default の `body { margin: 8px }` が残っていたこと。`apps/lp/src/plugins/vuetify.js` で `vuetify/styles` を import していないため Vuetify の base reset が適用されず、body の余白が viewport から差し引かれていた。
+
+- [x] 28.1 App.vue: `html, body { margin: 0; padding: 0 }` を global style に追加
+- [x] 28.2 build 成功確認
+
+> **設計判断**: Vuetify base styles を import すると既存スタイルへの広範な影響リスクがあるため、最小限の reset を App.vue に直接書くアプローチを採用
 
 ---
 
