@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 79 / 87 タスク（T-19 8件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 83 / 91 タスク（T-20 4件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -198,6 +198,17 @@
 - [x] 19.7 ConceptSection の謎の上線を実装側に存在しないことを確認
        （DevTools での確認が必要なら、ユーザーに確認依頼として残す）
 - [x] 19.8 最終確認（vitest + build + grep）→ 全タスクまとめて 1 コミット
+
+---
+
+## 20. スマホ Header の wrap / はみ出し対策（追加）
+
+> **背景**: ユーザーローカル確認で「スマホで High Q が 2 行になる」「navbar もはみ出ている」と指摘。flex layout の縮小・wrap 防止対策を追加。
+
+- [x] 20.1 HeaderLine: `.header-brand` に `white-space: nowrap; flex-shrink: 0` を追加して wrap 防止
+- [x] 20.2 HeaderLine: `.header-menu-btn` に `flex-shrink: 0` を追加してハンバーガー縮小防止
+- [x] 20.3 HeaderLine: `.header-inner` に `overflow: hidden` を追加して子要素のはみ出し防止
+- [x] 20.4 build 成功確認
 
 ---
 

@@ -76,6 +76,8 @@ export default {
   height: 100%;
   padding-inline: 16px 8px;
   gap: 16px;
+  /* 子要素のはみ出しを防止（特に xs で nav-btn と brand の衝突対策） */
+  overflow: hidden;
 }
 
 .header-brand {
@@ -84,6 +86,9 @@ export default {
   font-size: 1.25rem;
   text-decoration: none;
   letter-spacing: 0.04em;
+  /* xs/sm で wrap して 2 行になるのを防ぐ */
+  white-space: nowrap;
+  flex-shrink: 0;
   /* 透明時の Hero 画像の明るい部分と同化しないよう輪郭を保証 */
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   transition: text-shadow 200ms ease-out;
@@ -119,8 +124,9 @@ export default {
   background-color: rgba(255, 255, 255, 0.12);
 }
 
-/* xs/sm: ハンバーガーボタンを右端に */
+/* xs/sm: ハンバーガーボタンを右端に。flex-shrink: 0 で縮小防止 */
 .header-menu-btn {
   margin-left: auto;
+  flex-shrink: 0;
 }
 </style>
