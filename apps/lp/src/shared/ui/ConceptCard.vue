@@ -41,11 +41,12 @@ export default {
   height: 100%;
   padding: 32px 20px 28px;
   overflow: hidden;
-  border: 2px solid transparent;
+  /* 通常カードはアクセントバーと同じ secondary（水色）の枠線 */
+  border: 2px solid rgb(var(--v-theme-secondary));
   box-sizing: border-box;
 }
 
-/* 中央カードはボーダー + 影で強調（背景は白のまま） */
+/* 中央カードは枠線をアクセントバーと同じ primary（navy）に変更 + 影濃いめで強調 */
 .vcard--secondary {
   border-color: rgb(var(--v-theme-primary));
   box-shadow: 0 8px 24px rgba(24, 47, 67, 0.16);
