@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 14 / 57 タスク
+- 完了: 18 / 57 タスク
 
 ---
 
@@ -51,12 +51,12 @@
 
 ## 6. Hero セクションに CTA とスクロールヒント追加
 
-- [ ] 6.1 `apps/lp/src/widgets/hero-section/ui/HeroSection.vue` に CTA エリアを追加
+- [x] 6.1 `apps/lp/src/widgets/hero-section/ui/HeroSection.vue` に CTA エリアを追加
   - 「X でお問い合わせ」ボタン（`color="secondary" variant="flat"` + `XIcon` prepend、`href="https://twitter.com/c8w5y" target="_blank"`、`aria-label`）
   - 「イベントを見る」ボタン（`color="white" variant="outlined"`、`href="#event"`）
-- [ ] 6.2 Hero 下部中央に `<v-icon icon="mdi-chevron-double-down" aria-hidden="true">` のスクロールヒントを追加（`@keyframes bounce` で上下に揺れるアニメーション）
-- [ ] 6.3 CTA レイアウト: xs は縦積み、sm 以上は横並び（gap 16px）
-- [ ] 6.4 高さを sm 以下 480px / md 以上 560px に変更（メディアクエリ）
+- [x] 6.2 Hero 下部中央に `<v-icon icon="mdi-chevron-double-down" aria-hidden="true">` のスクロールヒントを追加（`@keyframes bounce` で上下に揺れるアニメーション）
+- [x] 6.3 CTA レイアウト: xs は縦積み、sm 以上は横並び（gap 16px）
+- [x] 6.4 高さを sm 以下 480px / md 以上 560px に変更（メディアクエリ）
 
 ## 7. Header の刷新（アンカーナビ・スクロール反応・X アイコン）
 

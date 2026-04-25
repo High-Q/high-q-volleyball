@@ -15,13 +15,44 @@
           がちがちの初心者の方から経験者の方まで<br />
           幅広くメンバー募集中です
         </p>
+        <div class="hero-cta">
+          <v-btn
+            color="secondary"
+            variant="flat"
+            size="large"
+            href="https://twitter.com/c8w5y"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="X (Twitter) でお問い合わせ"
+          >
+            <XIcon :size="18" color="white" />
+            <span class="ml-2">X でお問い合わせ</span>
+          </v-btn>
+          <v-btn
+            color="white"
+            variant="outlined"
+            size="large"
+            href="#event"
+            aria-label="イベント一覧へスクロール"
+          >
+            イベントを見る
+          </v-btn>
+        </div>
       </v-container>
     </div>
+    <a class="hero-scroll-hint" href="#concept" aria-label="次のセクションへスクロール">
+      <v-icon icon="mdi-chevron-double-down" size="32" aria-hidden="true" />
+    </a>
   </div>
 </template>
 
 <script>
-export default { name: "MainImage" };
+import XIcon from "@shared/ui/XIcon.vue";
+
+export default {
+  name: "HeroSection",
+  components: { XIcon },
+};
 </script>
 
 <style scoped>
@@ -30,6 +61,12 @@ export default { name: "MainImage" };
   height: 480px;
   overflow: hidden;
   width: 100%;
+}
+
+@media (min-width: 960px) {
+  .hero {
+    height: 560px;
+  }
 }
 
 /* ぼかした背景画像 */
@@ -79,5 +116,41 @@ export default { name: "MainImage" };
   font-weight: 400;
   margin: 0;
   line-height: 1.8;
+}
+
+.hero-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+@media (min-width: 600px) {
+  .hero-cta {
+    flex-direction: row;
+    gap: 16px;
+  }
+}
+
+.hero-scroll-hint {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  color: #fff;
+  text-decoration: none;
+  animation: hero-bounce 1.6s ease-in-out infinite;
+}
+
+@keyframes hero-bounce {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-scroll-hint {
+    animation: none;
+  }
 }
 </style>
