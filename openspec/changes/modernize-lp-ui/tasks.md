@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 3 / 57 タスク
+- 完了: 14 / 57 タスク
 
 ---
 
@@ -43,11 +43,11 @@
 
 ## 5. ActivitiesSection の修復と整備（バグ修正）
 
-- [ ] 5.1 `apps/lp/src/widgets/activities-section/ui/ActivitiesSection.vue`: `import SubTitle from "./SubTitle.vue"` を `import SubTitle from "@shared/ui/SubTitle.vue"` に修正
-- [ ] 5.2 同ファイルの `style="background-color: #F5F8FA;"` を `class="bg-surface-alt"`（または scoped CSS でトークン参照）に置換
-- [ ] 5.3 `<v-btn color="#6A96A4">` を `<v-btn color="third">` に置換
-- [ ] 5.4 SNS ボタンの `<v-icon>mdi-twitter</v-icon>` を `<XIcon :size="18" color="white" />` に置換し、`aria-label="X (Twitter) でお問い合わせ"` 付与
-- [ ] 5.5 `<section>` ルート要素に `id="activities"` を追加
+- [x] 5.1 `apps/lp/src/widgets/activities-section/ui/ActivitiesSection.vue`: `import SubTitle from "./SubTitle.vue"` を `import SubTitle from "@shared/ui/SubTitle.vue"` に修正
+- [x] 5.2 同ファイルの `style="background-color: #F5F8FA;"` を `class="bg-surface-alt"`（または scoped CSS でトークン参照）に置換
+- [x] 5.3 `<v-btn color="#6A96A4">` を `<v-btn color="third">` に置換
+- [x] 5.4 SNS ボタンの `<v-icon>mdi-twitter</v-icon>` を `<XIcon :size="18" color="white" />` に置換し、`aria-label="X (Twitter) でお問い合わせ"` 付与
+- [x] 5.5 `<section>` ルート要素に `id="activities"` を追加
 
 ## 6. Hero セクションに CTA とスクロールヒント追加
 
@@ -85,8 +85,8 @@
 
 ## 10. ActivitiesSection の追加調整（モダン化）
 
-- [ ] 10.1 `useFadeInOnScroll` を組み込み・フェードイン CSS を追加
-- [ ] 10.2 セクションルートを `<section id="activities" class="bg-surface-alt">` 形式に統一
+- [x] 10.1 `useFadeInOnScroll` を組み込み・フェードイン CSS を追加
+- [x] 10.2 セクションルートを `<section id="activities" class="bg-surface-alt">` 形式に統一
 
 ## 11. EventCalendar セクションの ID 付与とフェードイン
 

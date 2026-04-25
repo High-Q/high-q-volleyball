@@ -1,5 +1,5 @@
 <template>
-  <section class="py-16" style="background-color: #F5F8FA;">
+  <section ref="el" id="activities" class="activities-section bg-surface-alt" :class="{ 'is-visible': isVisible }">
     <v-container>
       <SubTitle title="Content" />
       <v-row class="mt-4">
@@ -11,19 +11,19 @@
             <br />
             参加希望者や気になった方は
             <br />
-            公式TwitterにてDMで問い合わせください！
+            公式 X にて DM で問い合わせください！
           </p>
           <v-btn
-            class="mr-4"
-            width="30"
-            height="30"
-            min-width="30"
-            min-height="30"
-            color="#6A96A4"
+            class="mt-4"
+            color="third"
+            size="large"
             href="https://twitter.com/c8w5y"
             target="_blank"
+            rel="noopener noreferrer"
+            aria-label="X (Twitter) でお問い合わせ"
           >
-            <v-icon color="white">mdi-twitter</v-icon>
+            <XIcon :size="18" color="white" />
+            <span class="ml-2 text-white">X でお問い合わせ</span>
           </v-btn>
         </v-col>
         <v-col cols="12" md="6">
@@ -32,6 +32,7 @@
             rounded="lg"
             cover
             height="280"
+            alt="バレーボール活動の様子"
           />
         </v-col>
       </v-row>
@@ -40,10 +41,39 @@
 </template>
 
 <script>
-import SubTitle from "./SubTitle.vue";
+import SubTitle from "@shared/ui/SubTitle.vue";
+import XIcon from "@shared/ui/XIcon.vue";
+import { useFadeInOnScroll } from "@shared/lib/useFadeInOnScroll";
 
 export default {
-  name: "ActivitiesContent",
-  components: { SubTitle },
+  name: "ActivitiesSection",
+  components: { SubTitle, XIcon },
+  setup() {
+    const { el, isVisible } = useFadeInOnScroll();
+    return { el, isVisible };
+  },
 };
 </script>
+
+<style scoped>
+.activities-section {
+  padding: 56px 0;
+  scroll-margin-top: 64px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+
+.activities-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activities-section {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+</style>
