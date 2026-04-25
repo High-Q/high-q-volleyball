@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 29 / 57 タスク
+- 完了: 32 / 57 タスク
 
 ---
 
@@ -79,9 +79,9 @@
 
 ## 9. ConceptSection の調整
 
-- [ ] 9.1 `<section>` ルート要素に `id="concept"` を追加
-- [ ] 9.2 `useFadeInOnScroll` を組み込み、ルート要素で `ref` バインド・`is-visible` クラス切替
-- [ ] 9.3 フェードイン用 CSS（`opacity: 0 → 1`、`translateY(24px) → 0`、600ms transition、reduced-motion 例外）を追加
+- [x] 9.1 `<section>` ルート要素に `id="concept"` を追加
+- [x] 9.2 `useFadeInOnScroll` を組み込み、ルート要素で `ref` バインド・`is-visible` クラス切替
+- [x] 9.3 フェードイン用 CSS（`opacity: 0 → 1`、`translateY(24px) → 0`、600ms transition、reduced-motion 例外）を追加
 
 ## 10. ActivitiesSection の追加調整（モダン化）
 

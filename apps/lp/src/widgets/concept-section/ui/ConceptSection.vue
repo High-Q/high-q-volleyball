@@ -1,5 +1,10 @@
 <template>
-  <section class="advantages-section">
+  <section
+    ref="el"
+    id="concept"
+    class="advantages-section"
+    :class="{ 'is-visible': isVisible }"
+  >
     <v-container>
       <h2 class="section-title">ADVANTAGES</h2>
       <div class="section-hr"></div>
@@ -20,10 +25,15 @@
 
 <script>
 import ConceptCard from "@shared/ui/ConceptCard.vue";
+import { useFadeInOnScroll } from "@shared/lib/useFadeInOnScroll";
 
 export default {
-  name: "ConceptContents",
+  name: "ConceptSection",
   components: { ConceptCard },
+  setup() {
+    const { el, isVisible } = useFadeInOnScroll();
+    return { el, isVisible };
+  },
   data: () => ({
     cards: [
       {
@@ -50,6 +60,22 @@ export default {
 .advantages-section {
   padding: 56px 0 64px;
   background: #fff;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+
+.advantages-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .advantages-section {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 .section-title {
