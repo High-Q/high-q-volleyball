@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 34 / 57 タスク
+- 完了: 38 / 57 タスク
 
 ---
 
@@ -95,13 +95,13 @@
 
 ## 12. Footer の3カラム化
 
-- [ ] 12.1 `apps/lp/src/shared/ui/FooterLine.vue` を3カラム構成に再設計
+- [x] 12.1 `apps/lp/src/shared/ui/FooterLine.vue` を3カラム構成に再設計
   - カラム1: サークル名 + 紹介文（江東区バレーボールサークル）
   - カラム2: アンカーナビ（CONCEPT / ACTIVITIES / EVENT）
   - カラム3: SNS（X リンク + `XIcon`）
-- [ ] 12.2 レスポンシブ: lg 3列 / md 2列 / sm 以下 1列
-- [ ] 12.3 `style="color: #6A96A4"` を `class="text-muted"` または `text-color: rgb(var(--v-theme-text-muted))` に置換
-- [ ] 12.4 `<v-icon>mdi-twitter</v-icon>` を `<XIcon :size="20" color="white" />` に置換
+- [x] 12.2 レスポンシブ: lg 3列 / md 2列 / sm 以下 1列
+- [x] 12.3 `style="color: #6A96A4"` を `class="text-muted"` または `text-color: rgb(var(--v-theme-text-muted))` に置換
+- [x] 12.4 `<v-icon>mdi-twitter</v-icon>` を `<XIcon :size="20" color="white" />` に置換
 
 ## 13. HomePage の組み立て
 
