@@ -12,14 +12,21 @@
   → [承認待ち: 3ファイルをすべてレビュー後に「承認」]
   → /opsx:apply で実装開始
   → [承認待ち: ローカル確認後に「承認」]
-  → PR作成 → プレビュー確認 → 本番マージ
-  → Sync & Archive
+  → PR 作成
+  → ユーザー確認（Render プレビュー）  ← レイアウト・動作の最終確認
+  → /opsx:sync (specs / docs 更新)     ← マージ前にやる
+  → /opsx:archive (change を archive へ移動)
+  → sync / archive のコミットを push   ← PR に追加コミットとして反映
+  → master へマージ
+  → ブランチ削除 + Issue を Done       ← 後始末まで含めて完了
 ```
 
 - Proposal / Design / Task は**同一セッションで同時生成**する（分割しない）
 - 3ファイルすべての承認を受けてから Apply を開始する
 - Apply 中は Task リスト順に 1 件ずつ完遂し、チェックを更新しながら進める
 - Apply 内でのタスク順序変更・スキップは禁止
+- **Sync / Archive は必ずマージ前に行い、その差分も同じ PR に含めて push する**（マージ後に別 PR を作らない）
+- マージ後は **ブランチを削除し、関連 Issue をクローズ（Done）** するまでが 1 サイクル。ここを忘れない
 
 ---
 
@@ -39,19 +46,25 @@ docs/03-アーキテクチャ/05-開発ワークフロー.md       ← 人間×C
 
 ### フェーズ定義
 
-| フェーズ | 目的 | 成果物 |
-|---|---|---|
-| **Propose** | Why・What・How・Task を同時設計 | `proposal.md` + `design.md` + `tasks.md` |
-| **Apply** | TDD 実装。1タスク＝1コミット | コード + テスト |
-| **Sync** | 実装仕様を docs に反映 | `openspec/specs/` 更新・関連 docs 更新 |
-| **Archive** | Change のアーカイブ・Issue クローズ | archived change |
+| 順 | フェーズ | 目的 | 成果物 | 備考 |
+|---|---|---|---|---|
+| 1 | **Propose** | Why・What・How・Task を同時設計 | `proposal.md` + `design.md` + `tasks.md` | 3 点同時生成・3 点同時承認 |
+| 2 | **Apply** | TDD 実装。1 タスク＝1 コミット（UI フィードバック等の小粒修正は 1 PR=1 コミット可） | コード + テスト | 全 task 完了後にまとめてテスト・build |
+| 3 | **PR 作成** | feature ブランチを master 向けに PR 化 | GitHub PR | base=master、Closes #N で Issue 連携 |
+| 4 | **ユーザー確認** | Render PR プレビューで実環境確認 | レビュー結果 | OK が出るまで Apply に戻る場合あり |
+| 5 | **Sync** | 実装仕様を docs / specs に反映 | `openspec/specs/` 更新・関連 docs 更新 | **マージ前に実施**、PR に追加コミット |
+| 6 | **Archive** | Change を `archive/` に移動 | archived change | Sync と連続コミット可 |
+| 7 | **push** | sync / archive のコミットをリモートへ | 更新済み PR | 同じ PR に追加コミットとして反映 |
+| 8 | **Merge** | master へマージ（CI 全パス前提） | マージ済 master | squash/merge はプロジェクト方針に従う |
+| 9 | **後始末** | feature ブランチ削除 + Issue クローズ（Done） | クリーンな状態 | ここを忘れず 1 サイクル完了 |
 
 ### openspec コマンド
 
 ```bash
 /opsx:propose   # Proposal + Design + Task を同時生成
 /opsx:apply     # 承認済み Task を 1 件ずつ TDD 実装
-/opsx:archive   # Sync 完了後に Change をアーカイブ
+/opsx:sync      # 実装内容を openspec/specs / docs に反映（マージ前）
+/opsx:archive   # change を archive/ へ移動（Sync 後）
 ```
 
 ### Issue & ブランチ命名
@@ -59,6 +72,18 @@ docs/03-アーキテクチャ/05-開発ワークフロー.md       ← 人間×C
 ```bash
 gh issue create --title "feat: ..." --label "enhancement"
 git checkout -b feature/<issue番号>-<kebab-case-summary>
+```
+
+### マージ後の後始末（必須）
+
+```bash
+# master 同期
+git checkout master && git pull
+# feature ブランチ削除（local + remote）
+git branch -d feature/<issue番号>-<...>
+git push origin --delete feature/<issue番号>-<...>
+# Issue クローズ
+gh issue close <issue番号> --comment "Done in #<PR番号>"
 ```
 
 ### Apply 中のテスト・ビルド実行ルール
