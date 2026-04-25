@@ -6,12 +6,12 @@
     scroll-behavior="elevate"
     class="header-line"
   >
-    <v-app-bar-title>
+    <v-app-bar-title class="header-title">
       <a href="#top" class="header-brand">High Q</a>
     </v-app-bar-title>
 
     <!-- md 以上はテキストナビ横並び（v-app-bar の default 配置） -->
-    <div class="d-none d-md-flex align-center ga-2 mr-2">
+    <div class="d-none d-md-flex align-center ga-2">
       <v-btn variant="text" color="white" href="#concept">CONCEPT</v-btn>
       <v-btn variant="text" color="white" href="#activities">ACTIVITIES</v-btn>
       <v-btn variant="text" color="white" href="#event">EVENT</v-btn>
@@ -62,6 +62,21 @@ export default {
 </script>
 
 <style scoped>
+/* フルブリード化: v-toolbar__content の左右 padding を 0 にして
+   ロゴが画面左端、メニュー/ナビが画面右端まで張り付くようにする */
+.header-line :deep(.v-toolbar__content) {
+  padding-inline: 0;
+}
+
+/* 端から離さず、ロゴと右端要素に最低限の内側余白だけ確保 */
+.header-title {
+  padding-inline-start: 16px;
+}
+
+.header-line :deep(.v-toolbar__append) {
+  padding-inline-end: 8px;
+}
+
 .header-brand {
   color: #fff;
   font-weight: 700;
