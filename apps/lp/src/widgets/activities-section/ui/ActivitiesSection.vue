@@ -1,7 +1,7 @@
 <template>
   <section ref="el" id="activities" class="activities-section bg-surface-alt" :class="{ 'is-visible': isVisible }">
     <v-container>
-      <SubTitle title="Content" />
+      <SectionDivider title="CONTENT" />
       <v-row class="mt-4">
         <v-col cols="12" md="6">
           <p class="text-body-1">
@@ -41,13 +41,13 @@
 </template>
 
 <script>
-import SubTitle from "@shared/ui/SubTitle.vue";
+import SectionDivider from "@shared/ui/SectionDivider.vue";
 import XIcon from "@shared/ui/XIcon.vue";
 import { useFadeInOnScroll } from "@shared/lib/useFadeInOnScroll";
 
 export default {
   name: "ActivitiesSection",
-  components: { SubTitle, XIcon },
+  components: { SectionDivider, XIcon },
   setup() {
     const { el, isVisible } = useFadeInOnScroll();
     return { el, isVisible };
