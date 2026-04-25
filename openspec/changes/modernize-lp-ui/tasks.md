@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 49 / 57 タスク（残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 50 / 70 タスク（T-17 13件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 + T-17.2〜17.13）
 
 ---
 
@@ -138,6 +138,27 @@
 - [x] 16.4 `pnpm build:lp` でビルド成功（CSS 101.70 kB / JS 350.24 kB）
 - [ ] 16.5 PR を作成（base: master、本 change と issue #107 を関連付け）
 - [ ] 16.6 Render PR プレビューで本番ドメイン以外でもレイアウトと動作を確認（ユーザー手動）
+
+---
+
+## 17. X 凍結対応・セクション見出し統一・Header フルブリード化（追加）
+
+> **背景**: X 公式アカウントが凍結中につき、SNS リンクと X 経由 CTA を全撤廃。
+> あわせてセクション見出しデザインの不統一と Header の左右余白を整理する。
+
+- [x] 17.1 design.md §2/§5/§11 を更新（X 撤廃方針、SectionDivider、Header フルブリード）
+- [ ] 17.2 `apps/lp/src/shared/ui/SectionDivider.vue` を新規作成（タイトル + 下線の共通コンポーネント）
+- [ ] 17.3 ConceptSection の section-title + section-hr を SectionDivider に置換
+- [ ] 17.4 ActivitiesSection の SubTitle を SectionDivider に置換
+- [ ] 17.5 EventCalendar の section-header (section-title + section-bar) を SectionDivider に置換
+- [ ] 17.6 Hero CTA「X でお問い合わせ」を削除、「イベントを見る」のみ。サブに「メンバー受付窓口は準備中です」テキスト追加
+- [ ] 17.7 HeaderLine の X アイコンボタンを削除（XIcon import も削除）
+- [ ] 17.8 HeaderLine をフルブリード化（v-app-bar の左右 padding 0）
+- [ ] 17.9 FooterLine の SNS カラムを削除、ブランド + ナビの 2 カラム構成に変更（XIcon import 削除）
+- [ ] 17.10 ActivitiesSection の X ボタンを「メンバー受付窓口は準備中です」テキストに置換（XIcon import 削除）
+- [ ] 17.11 セクション左右余白の差を v-container の使い方で統一
+- [ ] 17.12 `grep -rn "XIcon" apps/lp/src/` で残存箇所を確認（XIcon.vue と spec のみ残っていれば OK）
+- [ ] 17.13 vitest run + pnpm build:lp + grep 検証で最終確認、PR 作成
 
 ---
 

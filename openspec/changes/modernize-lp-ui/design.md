@@ -34,10 +34,12 @@
 
 **Goals**
 - 第一印象を「2018年風」→「2025年トレンドに乗ったLP」に引き上げる
-- 「メンバー応募 → X DM」の動線を Hero CTA で明確化（CV最優先）
+- ~~「メンバー応募 → X DM」の動線を Hero CTA で明確化（CV最優先）~~
+- **【T-17 で方針変更】X 公式アカウントが凍結中のため、SNS リンク・X 経由 CTA を全て撤廃。メンバー受付窓口は「準備中」表示で復活待ち（CV 動線は X 復活 or 別手段整備まで保留）**
 - ナビゲーション欠落を解消（アンカーリンクで全セクションを案内）
 - 壊れている `ActivitiesSection` を表示・整備
 - 残存ハードコード値（`#F5F8FA`・`#6A96A4`・`mdi-twitter`）を完全撤廃
+- **セクション見出しデザインを共通 `SectionDivider` で統一、Header をフルブリード化**
 
 **Non-Goals**
 - カレンダーUI刷新／ダークモード／写真素材調達／WebP化／OGP整備／TS化
@@ -176,6 +178,41 @@ const myCustomTheme = {
 - 3カラム（lg+）／2カラム（md）／1カラム（sm 以下）
 - text-muted トークンで著作権表記
 - X アイコン置換
+
+### SectionDivider コンポーネント（T-17 追加）
+
+3 セクション（Concept / Activities / Event）で異なっていた見出しデザインを共通化する。
+
+```vue
+<!-- shared/ui/SectionDivider.vue -->
+<template>
+  <div class="section-divider">
+    <h2 class="section-divider__title">{{ title }}</h2>
+    <div class="section-divider__bar" />
+  </div>
+</template>
+```
+
+- props: `title`（String, required）
+- スタイル: タイトルは大見出し（`primary` カラー、letter-spacing 0.08em、margin-bottom 12px）+ 下線 44px グラデーション（primary→secondary）
+- 各セクションの section-hr / section-bar / SubTitle は撤廃して本コンポーネントに統一
+
+### Header フルブリード化（T-17 追加）
+
+`<v-app-bar>` の左右内側 padding を 0 にし、ロゴが画面左端、SNS/メニューが画面右端に張り付くモダン LP スタイル。`<v-container fluid class="px-4">` 等で内側調整。
+
+### X 撤廃方針（T-17 追加）
+
+X 公式アカウント凍結中につき、以下を実施:
+
+| 箇所 | 変更前 | 変更後 |
+|------|-------|-------|
+| Hero CTA | 「X でお問い合わせ」+「イベントを見る」 | 「イベントを見る」のみ。サブに「メンバー受付窓口は準備中です」テキスト |
+| Header | X アイコンボタン（右上） | 削除（ナビとロゴのみ） |
+| Footer | SNS カラム（X リンク） | 削除。ブランド + ナビの 2 カラム構成 |
+| Activities | 「X でお問い合わせ」ボタン | 「メンバー受付窓口は準備中です」テキスト表示 |
+
+**XIcon コンポーネント自体は保持**（X 復活時に再利用するため）。各ファイルからの import のみ削除。
 
 ### XIcon コンポーネント
 
@@ -342,8 +379,9 @@ PR レビュー → Render PR プレビューで目視確認 → master マー�
 ## 11. Open Questions
 
 - **Hero の背景画像**: 現行 `chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg` を継続使用で OK か？（バレーボールっぽくないが、画像差し替えは別 issue とした）→ **継続**
-- **CTA 1 の遷移先**: X プロフィール直リンクで OK か、それとも DM 直リンク URL を使うか？ → **プロフィール直リンク**（DM 直リンクはフォロー外で使えない場合あり）
+- ~~**CTA 1 の遷移先**: X プロフィール直リンクで OK か、それとも DM 直リンク URL を使うか？~~ → **【T-17 で X 撤廃】CTA 1 自体を削除**
 - **Header の表示順**: `CONCEPT / ACTIVITIES / EVENT` の順序で固定 → **OK**
+- **【T-17 追加】メンバー応募の代替動線**: メール公開・Google フォーム等の選択肢があるが、当面は **「準備中」表示で待機**（オーナー判断 / X 復活待ち）
 
 ---
 
