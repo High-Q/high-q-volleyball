@@ -61,6 +61,10 @@ export default {
   right: 0;
   z-index: 1000;
   height: 64px;
+  /* viewport 幅を絶対に超えないことを保証（スクロールバー幅問題対策） */
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
   background: transparent;
   transition: background-color 200ms ease-out, box-shadow 200ms ease-out;
 }

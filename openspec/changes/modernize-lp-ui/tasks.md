@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 83 / 91 タスク（T-20 4件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 86 / 94 タスク（T-21 3件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -209,6 +209,16 @@
 - [x] 20.2 HeaderLine: `.header-menu-btn` に `flex-shrink: 0` を追加してハンバーガー縮小防止
 - [x] 20.3 HeaderLine: `.header-inner` に `overflow: hidden` を追加して子要素のはみ出し防止
 - [x] 20.4 build 成功確認
+
+---
+
+## 21. ヘッダーが画面幅をはみ出す問題の根本対策（追加）
+
+> **背景**: T-19 で追加した `html { overflow-y: scroll }` により body 幅がスクロールバー分縮んだ一方、`<header position: fixed>` は viewport 100vw 基準で広がるため、body より広くなり横スクロールが発生して header が画面右端を超えて見える事象。
+
+- [x] 21.1 App.vue: `html { overflow-y: scroll }` を `scrollbar-gutter: stable` に置換 + `html, body { overflow-x: hidden }` 追加
+- [x] 21.2 HeaderLine: `.header` に `width: 100%; max-width: 100vw; box-sizing: border-box` を明示してガード
+- [x] 21.3 build 成功確認
 
 ---
 

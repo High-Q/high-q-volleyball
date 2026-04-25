@@ -23,9 +23,16 @@ export default {
 </script>
 
 <style>
-/* スクロールバー出現/消失による幅変動を防ぐ（カードのはみ出し対策） */
+/* スクロールバー出現/消失による幅変動を防ぐ（カードのはみ出し対策）
+   modern browsers: scrollbar-gutter で viewport 内に scrollbar 領域を予約
+   レガシー fallback: overflow-y: auto + body の overflow-x: hidden で横はみ出し抑止 */
 html {
-  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
 }
 
 /* HeaderLine を独自 fixed header に切替たため、v-main の自動 padding-top を打ち消す。
