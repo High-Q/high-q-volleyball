@@ -41,14 +41,14 @@
 
 ## 7. デザイントークン適用
 
-- [ ] 7.1 `src/widgets/event-calendar/ui/EventCalendar.vue` のインライン色値（`#182F43`・`#85BBCC`）を Vuetify トークンに置き換える
-- [ ] 7.2 その他の移動済みコンポーネントを `grep -r "#182F43\|#85BBCC" src/` で検索し、残存するハードコード値をすべて置き換える
+- [x] 7.1 `src/widgets/event-calendar/ui/EventCalendar.vue` のインライン色値（`#182F43`・`#85BBCC`）を Vuetify トークンに置き換える
+- [x] 7.2 その他の移動済みコンポーネントを `grep -r "#182F43\|#85BBCC" src/` で検索し、残存するハードコード値をすべて置き換える
 
 ## 8. App.vue の更新と旧ファイル削除
 
-- [ ] 8.1 `src/App.vue` の import パスを `@shared/ui/HeaderLine`・`@shared/ui/FooterLine`・`@pages/home` へ更新する
-- [ ] 8.2 `src/components/HeaderLine_ori.vue` を削除する（未使用の旧ファイル）
-- [ ] 8.3 `src/components/` 配下の移動済みファイルをすべて削除し、ディレクトリを削除する
+- [x] 8.1 `src/App.vue` の import パスを `@shared/ui/HeaderLine`・`@shared/ui/FooterLine`・`@pages/home` へ更新する
+- [x] 8.2 `src/components/HeaderLine_ori.vue` を削除する（未使用の旧ファイル）
+- [x] 8.3 `src/components/` 配下の移動済みファイルをすべて削除し、ディレクトリを削除する
 
 ## 9. 動作確認・PR
 

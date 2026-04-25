@@ -17,6 +17,6 @@ export default {
   width: 52px;
   height: 4px;
   border-radius: 2px;
-  background: linear-gradient(to right, #182F43, #85BBCC);
+  background: linear-gradient(to right, rgb(var(--v-theme-primary)), rgb(var(--v-theme-secondary)));
 }
 </style>
