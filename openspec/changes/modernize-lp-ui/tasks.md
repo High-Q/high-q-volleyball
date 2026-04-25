@@ -147,7 +147,7 @@
 > あわせてセクション見出しデザインの不統一と Header の左右余白を整理する。
 
 - [x] 17.1 design.md §2/§5/§11 を更新（X 撤廃方針、SectionDivider、Header フルブリード）
-- [ ] 17.2 `apps/lp/src/shared/ui/SectionDivider.vue` を新規作成（タイトル + 下線の共通コンポーネント）
+- [x] 17.2 `apps/lp/src/shared/ui/SectionDivider.vue` を新規作成（タイトル + 下線の共通コンポーネント）
 - [ ] 17.3 ConceptSection の section-title + section-hr を SectionDivider に置換
 - [ ] 17.4 ActivitiesSection の SubTitle を SectionDivider に置換
 - [ ] 17.5 EventCalendar の section-header (section-title + section-bar) を SectionDivider に置換
