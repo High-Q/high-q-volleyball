@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 50 / 70 タスク（T-17 13件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 + T-17.2〜17.13）
+- 完了: 62 / 70 タスク（残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -157,8 +157,8 @@
 - [x] 17.9 FooterLine の SNS カラムを削除、ブランド + ナビの 2 カラム構成に変更（XIcon import 削除）
 - [x] 17.10 ActivitiesSection の X ボタンを「メンバー受付窓口は準備中です」テキストに置換（XIcon import 削除）
 - [x] 17.11 セクション左右余白の差を v-container の使い方で統一（ActivitiesSection の v-row に no-gutters を付与し、Vuetify v-row の negative margin による左右ズレを解消）
-- [ ] 17.12 `grep -rn "XIcon" apps/lp/src/` で残存箇所を確認（XIcon.vue と spec のみ残っていれば OK）
-- [ ] 17.13 vitest run + pnpm build:lp + grep 検証で最終確認、PR 作成
+- [x] 17.12 `grep -rn "XIcon" apps/lp/src/` で残存箇所を確認（XIcon.vue と XIcon.spec.js のみ残存。X 復活時の再利用用に保持）
+- [x] 17.13 vitest run (19/19 GREEN) + pnpm build:lp (成功・CSS 102KB/JS 349KB) + grep 検証 (ハードコード/mdi-twitter/stray XIcon すべて0件) で最終確認
 
 ---
 
