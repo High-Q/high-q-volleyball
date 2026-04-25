@@ -30,12 +30,12 @@
 
 ## 4. shared/lib/useFadeInOnScroll composable 新規作成
 
-- [ ] 4.1 `apps/lp/src/shared/lib/useFadeInOnScroll.js` を作成
+- [x] 4.1 `apps/lp/src/shared/lib/useFadeInOnScroll.js` を作成
   - IntersectionObserver で要素到達検知
   - `prefers-reduced-motion: reduce` のとき即時 `isVisible = true`
   - `IntersectionObserver === undefined` のとき即時 `isVisible = true`
   - `onBeforeUnmount` で `observer.disconnect()`
-- [ ] 4.2 `apps/lp/src/shared/lib/useFadeInOnScroll.spec.js` を作成（IntersectionObserver mock）
+- [x] 4.2 `apps/lp/src/shared/lib/useFadeInOnScroll.spec.js` を作成（7テスト GREEN）
   - 通常: observer 発火後 `isVisible.value === true`
   - reduced-motion: 初期から `true`
   - undefined フォールバック: 初期から `true`
