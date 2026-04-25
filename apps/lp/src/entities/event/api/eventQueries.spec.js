@@ -36,4 +36,12 @@ describe('eventQueryOptions', () => {
 
     await expect(eventQueryOptions.list().queryFn()).rejects.toThrow('HTTP 500')
   })
+
+  it('CORS/ネットワークエラー時は空配列を返す', async () => {
+    global.fetch.mockRejectedValue(new TypeError('Failed to fetch'))
+
+    const result = await eventQueryOptions.list().queryFn()
+
+    expect(result).toEqual([])
+  })
 })

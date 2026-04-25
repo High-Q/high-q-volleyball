@@ -6,7 +6,14 @@ const API_URL = import.meta.env.DEV
   : 'https://ptfomh71x9.execute-api.ap-northeast-1.amazonaws.com/beta/event'
 
 async function fetchEvents() {
-  const res = await fetch(API_URL)
+  let res
+  try {
+    res = await fetch(API_URL)
+  } catch {
+    // CORS ブロックやネットワーク不達の場合は空配列で代替
+    // （本番ドメイン以外の Render プレビュー等で発生する）
+    return []
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json()
   const data = JSON.parse(json.body)
