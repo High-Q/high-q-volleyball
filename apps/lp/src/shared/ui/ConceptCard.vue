@@ -1,9 +1,9 @@
 <template>
   <div class="vcard" :class="{ 'vcard--secondary': secondary }">
-    <div class="vcard-icon">
-      <v-icon :icon="icon" size="80" color="primary"></v-icon>
+    <div class="vcard-accent" />
+    <div class="vcard-icon-chip">
+      <v-icon :icon="icon" size="32" color="primary" />
     </div>
-    <div class="vcard-divider"></div>
     <div class="vcard-body">
       <p class="vcard-title">{{ title }}</p>
       <p class="vcard-text" v-html="htmlText(text)"></p>
@@ -31,38 +31,60 @@ export default {
 
 <style scoped>
 .vcard {
-  background: #ECF2F3;
-  border-left: 10px solid rgb(var(--v-theme-secondary));
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(24, 47, 67, 0.08);
   display: flex;
   flex-direction: column;
+  align-items: center;
   height: 100%;
+  padding: 32px 20px 28px;
+  overflow: hidden;
+  /* 通常カードはアクセントバーと同じ secondary（水色）の枠線 */
+  border: 2px solid rgb(var(--v-theme-secondary));
+  box-sizing: border-box;
 }
 
-/* 中央カードは濃い navy ボーダー */
+/* 中央カードは枠線をアクセントバーと同じ primary（navy）に変更 + 影濃いめで強調 */
 .vcard--secondary {
-  border-left-color: rgb(var(--v-theme-primary));
+  border-color: rgb(var(--v-theme-primary));
+  box-shadow: 0 8px 24px rgba(24, 47, 67, 0.16);
 }
 
-.vcard-icon {
+/* 全カード上端のアクセントバー */
+.vcard-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgb(var(--v-theme-secondary));
+}
+
+/* 中央カードはアクセントバーを倍増 + navy で強調 */
+.vcard--secondary .vcard-accent {
+  height: 8px;
+  background: rgb(var(--v-theme-primary));
+}
+
+.vcard-icon-chip {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgb(var(--v-theme-surface-alt));
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 36px 24px 28px;
-}
-
-.vcard-divider {
-  height: 2px;
-  background: rgb(var(--v-theme-primary));
-  margin: 0 16px;
+  margin-bottom: 16px;
 }
 
 .vcard-body {
-  padding: 20px 20px 28px;
   text-align: center;
 }
 
 .vcard-title {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: rgb(var(--v-theme-primary));
   margin: 0 0 10px;
@@ -70,7 +92,7 @@ export default {
 }
 
 .vcard-text {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: rgb(var(--v-theme-primary));
   margin: 0;
   line-height: 1.8;

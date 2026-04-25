@@ -1,49 +1,77 @@
 <template>
-  <section class="py-16" style="background-color: #F5F8FA;">
+  <section ref="el" id="activities" class="activities-section bg-surface-alt" :class="{ 'is-visible': isVisible }">
     <v-container>
-      <SubTitle title="Content" />
-      <v-row class="mt-4">
-        <v-col cols="12" md="6">
-          <p class="text-body-1">
-            月に1回程度東京都内にてコートを借りて練習します！
-            <br />
-            人数に合わせて活動回数も増やしていく予定です。
-            <br />
-            参加希望者や気になった方は
-            <br />
-            公式TwitterにてDMで問い合わせください！
-          </p>
-          <v-btn
-            class="mr-4"
-            width="30"
-            height="30"
-            min-width="30"
-            min-height="30"
-            color="#6A96A4"
-            href="https://twitter.com/c8w5y"
-            target="_blank"
-          >
-            <v-icon color="white">mdi-twitter</v-icon>
-          </v-btn>
-        </v-col>
-        <v-col cols="12" md="6">
-          <v-img
-            src="/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg"
-            rounded="lg"
-            cover
-            height="280"
-          />
-        </v-col>
-      </v-row>
+      <SectionDivider title="CONTENT" />
+      <p class="text-body-1 mt-4">
+        月に1回程度東京都内にてコートを借りて練習します！
+        <br />
+        人数に合わせて活動回数も増やしていく予定です。
+      </p>
+      <div class="contact-notice mt-6">
+        <p class="contact-notice__title">メンバー受付窓口は準備中です</p>
+        <p class="contact-notice__sub">
+          現在、お問い合わせ窓口を整備中です。<br />
+          準備が整い次第、こちらでご案内いたします。
+        </p>
+      </div>
     </v-container>
   </section>
 </template>
 
 <script>
-import SubTitle from "./SubTitle.vue";
+import SectionDivider from "@shared/ui/SectionDivider.vue";
+import { useFadeInOnScroll } from "@shared/lib/useFadeInOnScroll";
 
 export default {
-  name: "ActivitiesContent",
-  components: { SubTitle },
+  name: "ActivitiesSection",
+  components: { SectionDivider },
+  setup() {
+    const { el, isVisible } = useFadeInOnScroll();
+    return { el, isVisible };
+  },
 };
 </script>
+
+<style scoped>
+.activities-section {
+  padding: 56px 0;
+  scroll-margin-top: 64px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+
+.contact-notice {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  border-left: 4px solid rgb(var(--v-theme-secondary));
+}
+
+.contact-notice__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgb(var(--v-theme-primary));
+  margin: 0 0 6px;
+}
+
+.contact-notice__sub {
+  font-size: 0.85rem;
+  color: rgb(var(--v-theme-text-muted));
+  margin: 0;
+  line-height: 1.7;
+}
+
+.activities-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activities-section {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+</style>

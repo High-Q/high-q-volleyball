@@ -1,8 +1,12 @@
 <template>
-  <section class="advantages-section">
+  <section
+    ref="el"
+    id="concept"
+    class="advantages-section"
+    :class="{ 'is-visible': isVisible }"
+  >
     <v-container>
-      <h2 class="section-title">ADVANTAGES</h2>
-      <div class="section-hr"></div>
+      <SectionDivider title="ADVANTAGES" />
 
       <div class="concept-grid">
         <ConceptCard
@@ -20,10 +24,16 @@
 
 <script>
 import ConceptCard from "@shared/ui/ConceptCard.vue";
+import SectionDivider from "@shared/ui/SectionDivider.vue";
+import { useFadeInOnScroll } from "@shared/lib/useFadeInOnScroll";
 
 export default {
-  name: "ConceptContents",
-  components: { ConceptCard },
+  name: "ConceptSection",
+  components: { ConceptCard, SectionDivider },
+  setup() {
+    const { el, isVisible } = useFadeInOnScroll();
+    return { el, isVisible };
+  },
   data: () => ({
     cards: [
       {
@@ -50,28 +60,32 @@ export default {
 .advantages-section {
   padding: 56px 0 64px;
   background: #fff;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
 }
 
-.section-title {
-  font-size: 2rem;
-  font-weight: 900;
-  color: rgb(var(--v-theme-primary));
-  letter-spacing: 0.06em;
-  margin: 0 0 14px;
+.advantages-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.section-hr {
-  width: 100%;
-  height: 2px;
-  background: rgb(var(--v-theme-primary));
-  margin-bottom: 40px;
+@media (prefers-reduced-motion: reduce) {
+  .advantages-section {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
-/* CSS Grid で確実に3列 */
+/* CSS Grid で確実に3列。max-width + margin auto でスクロールバー幅補正
+   による右寄り（v-container の左右 padding が見た目で対称にならない事象）を解消 */
 .concept-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+  max-width: 100%;
+  margin-inline: auto;
 }
 
 /* スマホは1列 */

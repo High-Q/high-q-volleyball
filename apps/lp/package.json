@@ -21,6 +21,7 @@
     "eslint": "^8.56.0",
     "eslint-plugin-vue": "^9.19.2",
     "eslint-plugin-vuetify": "^2.1.1",
+    "jsdom": "^29.0.2",
     "sass": "~1.69.6",
     "unplugin-vue-components": "^0.26.0",
     "vite-plugin-vuetify": "^2.0.1",

@@ -12,14 +12,21 @@
   → [承認待ち: 3ファイルをすべてレビュー後に「承認」]
   → /opsx:apply で実装開始
   → [承認待ち: ローカル確認後に「承認」]
-  → PR作成 → プレビュー確認 → 本番マージ
-  → Sync & Archive
+  → PR 作成
+  → ユーザー確認（Render プレビュー）  ← レイアウト・動作の最終確認
+  → /opsx:sync (specs / docs 更新)     ← マージ前にやる
+  → /opsx:archive (change を archive へ移動)
+  → sync / archive のコミットを push   ← PR に追加コミットとして反映
+  → master へマージ
+  → ブランチ削除 + Issue を Done       ← 後始末まで含めて完了
 ```
 
 - Proposal / Design / Task は**同一セッションで同時生成**する（分割しない）
 - 3ファイルすべての承認を受けてから Apply を開始する
 - Apply 中は Task リスト順に 1 件ずつ完遂し、チェックを更新しながら進める
 - Apply 内でのタスク順序変更・スキップは禁止
+- **Sync / Archive は必ずマージ前に行い、その差分も同じ PR に含めて push する**（マージ後に別 PR を作らない）
+- マージ後は **ブランチを削除し、関連 Issue をクローズ（Done）** するまでが 1 サイクル。ここを忘れない
 
 ---
 
@@ -39,19 +46,25 @@ docs/03-アーキテクチャ/05-開発ワークフロー.md       ← 人間×C
 
 ### フェーズ定義
 
-| フェーズ | 目的 | 成果物 |
-|---|---|---|
-| **Propose** | Why・What・How・Task を同時設計 | `proposal.md` + `design.md` + `tasks.md` |
-| **Apply** | TDD 実装。1タスク＝1コミット | コード + テスト |
-| **Sync** | 実装仕様を docs に反映 | `openspec/specs/` 更新・関連 docs 更新 |
-| **Archive** | Change のアーカイブ・Issue クローズ | archived change |
+| 順 | フェーズ | 目的 | 成果物 | 備考 |
+|---|---|---|---|---|
+| 1 | **Propose** | Why・What・How・Task を同時設計 | `proposal.md` + `design.md` + `tasks.md` | 3 点同時生成・3 点同時承認 |
+| 2 | **Apply** | TDD 実装。1 タスク＝1 コミット（UI フィードバック等の小粒修正は 1 PR=1 コミット可） | コード + テスト | 全 task 完了後にまとめてテスト・build |
+| 3 | **PR 作成** | feature ブランチを master 向けに PR 化 | GitHub PR | base=master、Closes #N で Issue 連携 |
+| 4 | **ユーザー確認** | Render PR プレビューで実環境確認 | レビュー結果 | OK が出るまで Apply に戻る場合あり |
+| 5 | **Sync** | 実装仕様を docs / specs に反映 | `openspec/specs/` 更新・関連 docs 更新 | **マージ前に実施**、PR に追加コミット |
+| 6 | **Archive** | Change を `archive/` に移動 | archived change | Sync と連続コミット可 |
+| 7 | **push** | sync / archive のコミットをリモートへ | 更新済み PR | 同じ PR に追加コミットとして反映 |
+| 8 | **Merge** | master へマージ（CI 全パス前提） | マージ済 master | squash/merge はプロジェクト方針に従う |
+| 9 | **後始末** | feature ブランチ削除 + Issue クローズ（Done） | クリーンな状態 | ここを忘れず 1 サイクル完了 |
 
 ### openspec コマンド
 
 ```bash
 /opsx:propose   # Proposal + Design + Task を同時生成
 /opsx:apply     # 承認済み Task を 1 件ずつ TDD 実装
-/opsx:archive   # Sync 完了後に Change をアーカイブ
+/opsx:sync      # 実装内容を openspec/specs / docs に反映（マージ前）
+/opsx:archive   # change を archive/ へ移動（Sync 後）
 ```
 
 ### Issue & ブランチ命名
@@ -60,6 +73,39 @@ docs/03-アーキテクチャ/05-開発ワークフロー.md       ← 人間×C
 gh issue create --title "feat: ..." --label "enhancement"
 git checkout -b feature/<issue番号>-<kebab-case-summary>
 ```
+
+### マージ後の後始末（必須）
+
+```bash
+# master 同期
+git checkout master && git pull
+# feature ブランチ削除（local + remote）
+git branch -d feature/<issue番号>-<...>
+git push origin --delete feature/<issue番号>-<...>
+# Issue クローズ
+gh issue close <issue番号> --comment "Done in #<PR番号>"
+```
+
+### Apply 中のテスト・ビルド実行ルール
+
+**UI 変更タスクが連続するとき、各タスクごとに `pnpm exec vitest run` / `pnpm build:lp` を実行しない。** 全タスク完了後（最終確認 T-N）に 1 回まとめて実行する。
+
+- 適用対象: コンポーネントの template / style 修正、props 整理、見た目の調整など、既存テストへの影響確認のみが目的のタスク
+- 例外（各タスクで TDD を回す）:
+  - `shared/lib/` や `entities/` などにロジックを新規追加する場合
+  - `*.spec.js/ts` を新規作成する Apply タスクの場合
+  - バグ修正で再発防止テストを書くタスクの場合
+- 最終確認タスク（通常 T-16 or 類似）でテスト・ビルド・grep 検証をまとめて実施
+
+### Apply 中のコミット粒度ルール
+
+**デフォルトは「1 タスク = 1 コミット」**。ただし以下のケースは「1 PR = 1 コミット」にまとめてよい:
+
+- UI フィードバック対応など、ユーザーの 1 回の指摘から派生した小粒な修正の集合
+- ユーザーから明示的に「まとめてコミット」と指示があった場合
+- 各タスクの差分が極めて小さく、個別コミットの意味が薄い場合
+
+判断に迷ったらユーザーに確認する。1 コミットにまとめる場合も、コミットメッセージ本文で T-N.M 番号を箇条書きで列挙する（後追いで何が含まれるか分かるように）。
 
 ### コンテキスト維持ルール（長期セッション対策）
 
@@ -207,6 +253,23 @@ DB テーブル変更時は Design フェーズで以下をセットで提示す
 1. **環境軸**: Node.js バージョン・OS・CI ランナーの差異
 2. **ビルド設定軸**: `buildCommand`・`rootDir`・環境変数の設定ミス
 3. **依存関係軸**: パッケージバージョン競合・lifecycle script の問題
+
+### 不具合修正の原則（応急手当て禁止）
+
+不具合発生時は **構造全体を見て根本原因を解消する**。症状を覆い隠すだけの応急手当て的な対応（`overflow: hidden` で見切れを隠す、`!important` で強引に上書き、フレームワークの推奨 import を avoid して個別 hack を書く等）は禁止する。
+
+具体的な禁則:
+- フレームワークの前提（`vuetify/styles` import 等）を「影響範囲が広いから」と avoid して、その代わりに個別 CSS で対症療法を書くこと
+- 同じファイルに 2 回以上修正を入れても直らないとき、さらに別の hack を重ねること（一度立ち止まって構造を見直す）
+- ユーザーの「まだ直っていない」報告に対し、原因を確認せず別の修正を試すこと
+
+修正フロー:
+1. **構造全体を読む**: index.html、main.js、plugins、global style、関連 component の依存関係を把握
+2. **根本原因の仮説を立てる**: 「なぜこの症状が出るか」をフレームワークの仕様レベルまで掘り下げる
+3. **修正の影響範囲を確認**: その修正が他のどの箇所に波及するかを grep / 依存関係図で確認
+4. **影響箇所も合わせて修正**: 連鎖的な修正が必要なら、まとめて 1 PR / 1 コミットで処理する（テスト・build で副作用がないことを最終確認）
+
+判断に迷う場合は応急手当てに走らず、ユーザーに原因仮説と修正方針を提示して承認を得ること。
 
 ---
 
