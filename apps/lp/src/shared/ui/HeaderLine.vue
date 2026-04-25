@@ -10,14 +10,12 @@
       <a href="#top" class="header-brand">High Q</a>
     </v-app-bar-title>
 
-    <!-- md 以上はテキストナビ横並び -->
-    <template #default>
-      <div class="d-none d-md-flex align-center ga-2">
-        <v-btn variant="text" color="white" href="#concept">CONCEPT</v-btn>
-        <v-btn variant="text" color="white" href="#activities">ACTIVITIES</v-btn>
-        <v-btn variant="text" color="white" href="#event">EVENT</v-btn>
-      </div>
-    </template>
+    <!-- md 以上はテキストナビ横並び（v-app-bar の default 配置） -->
+    <div class="d-none d-md-flex align-center ga-2 mr-2">
+      <v-btn variant="text" color="white" href="#concept">CONCEPT</v-btn>
+      <v-btn variant="text" color="white" href="#activities">ACTIVITIES</v-btn>
+      <v-btn variant="text" color="white" href="#event">EVENT</v-btn>
+    </div>
 
     <template #append>
       <v-btn
