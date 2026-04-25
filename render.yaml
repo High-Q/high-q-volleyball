@@ -1,14 +1,15 @@
 services:
   - type: web
     name: high-q-lp
-    env: static
+    runtime: static
     rootDir: apps/lp
-    buildCommand: pnpm install && pnpm build
+    # corepack enable で root package.json の packageManager (pnpm@10.33.2) を強制。
+    # これにより pnpm.onlyBuiltDependencies (core-js, esbuild のみホワイトリスト) が
+    # 機能し、jsdom などの build script (wireit) が誤って実行されない
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
     staticPublishPath: dist
     branch: master
     pullRequestPreviewsEnabled: true
     envVars:
       - key: NODE_VERSION
         value: "22"
-      - key: NPM_CONFIG_IGNORE_SCRIPTS
-        value: "true"
