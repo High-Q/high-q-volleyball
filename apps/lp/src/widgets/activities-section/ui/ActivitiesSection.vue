@@ -8,23 +8,14 @@
             月に1回程度東京都内にてコートを借りて練習します！
             <br />
             人数に合わせて活動回数も増やしていく予定です。
-            <br />
-            参加希望者や気になった方は
-            <br />
-            公式 X にて DM で問い合わせください！
           </p>
-          <v-btn
-            class="mt-4"
-            color="third"
-            size="large"
-            href="https://twitter.com/c8w5y"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="X (Twitter) でお問い合わせ"
-          >
-            <XIcon :size="18" color="white" />
-            <span class="ml-2 text-white">X でお問い合わせ</span>
-          </v-btn>
+          <div class="contact-notice mt-4">
+            <p class="contact-notice__title">メンバー受付窓口は準備中です</p>
+            <p class="contact-notice__sub">
+              現在、お問い合わせ窓口を整備中です。<br />
+              準備が整い次第、こちらでご案内いたします。
+            </p>
+          </div>
         </v-col>
         <v-col cols="12" md="6">
           <v-img
@@ -42,12 +33,11 @@
 
 <script>
 import SectionDivider from "@shared/ui/SectionDivider.vue";
-import XIcon from "@shared/ui/XIcon.vue";
 import { useFadeInOnScroll } from "@shared/lib/useFadeInOnScroll";
 
 export default {
   name: "ActivitiesSection",
-  components: { SectionDivider, XIcon },
+  components: { SectionDivider },
   setup() {
     const { el, isVisible } = useFadeInOnScroll();
     return { el, isVisible };
@@ -62,6 +52,27 @@ export default {
   opacity: 0;
   transform: translateY(24px);
   transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+
+.contact-notice {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  border-left: 4px solid rgb(var(--v-theme-secondary));
+}
+
+.contact-notice__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgb(var(--v-theme-primary));
+  margin: 0 0 6px;
+}
+
+.contact-notice__sub {
+  font-size: 0.85rem;
+  color: rgb(var(--v-theme-text-muted));
+  margin: 0;
+  line-height: 1.7;
 }
 
 .activities-section.is-visible {
