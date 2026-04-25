@@ -13,7 +13,7 @@
   → /opsx:apply で実装開始
   → [承認待ち: ローカル確認後に「承認」]
   → PR 作成
-  → ユーザー確認（Render プレビュー）  ← レイアウト・動作の最終確認
+  → ユーザー確認(Render プレビュー)
   → /opsx:sync (specs / docs 更新)     ← マージ前にやる
   → /opsx:archive (change を archive へ移動)
   → sync / archive のコミットを push   ← PR に追加コミットとして反映
@@ -23,49 +23,52 @@
 
 - Proposal / Design / Task は**同一セッションで同時生成**する（分割しない）
 - 3ファイルすべての承認を受けてから Apply を開始する
-- Apply 中は Task リスト順に 1 件ずつ完遂し、チェックを更新しながら進める
-- Apply 内でのタスク順序変更・スキップは禁止
-- **Sync / Archive は必ずマージ前に行い、その差分も同じ PR に含めて push する**（マージ後に別 PR を作らない）
-- マージ後は **ブランチを削除し、関連 Issue をクローズ（Done）** するまでが 1 サイクル。ここを忘れない
+- Apply 中はタスクリスト順に 1 件ずつ完遂、順序変更・スキップ禁止
+- **Sync / Archive はマージ前**、同じ PR に push する（マージ後に別 PR 作らない）
+- マージ後は **ブランチ削除 + Issue クローズ** まで含めて 1 サイクル
+
+詳細フローは `docs/03-アーキテクチャ/05-開発ワークフロー.md` 参照。
+
+---
+
+## ♻️ /clear 運用ルール（コスト効率）
+
+**コンテキストを小さく保つことがコスト効率と回答精度の両方を上げる。** 以下のタイミングで `/clear` を実行:
+
+- **PR が ship 完了した時**（opsx-ship 後）
+- **大きなタスクが終わった時**（次の独立タスクに移る前）
+- **同じ問題で 2 回修正失敗した時**（汚染されたコンテキストをリセット）
+- **CLAUDE.md / 仕様を大幅変更した時**
+
+`/clear` 前に必要なら `/compact <要約指示>` で履歴を圧縮し、次セッションで参照する。
 
 ---
 
 ## セッション開始時に必ず読むこと
 
 ```
-openspec/project.md                              ← 技術スタック・制約
-openspec/specs/                                  ← 実装済み仕様
-docs/templates/                                  ← Proposal / Design / Task テンプレート
-docs/03-アーキテクチャ/04-開発・コーディング規約.md ← FSD・Value Object・ESLint設定（必読）
-docs/03-アーキテクチャ/05-開発ワークフロー.md       ← 人間×Claude 協働プロセス
+openspec/project.md                                   ← 技術スタック・制約
+openspec/specs/                                       ← 実装済み仕様
+docs/templates/                                       ← Proposal / Design / Task テンプレート
+docs/03-アーキテクチャ/04-開発・コーディング規約.md   ← FSD・Value Object・ESLint 設定
+docs/03-アーキテクチャ/05-開発ワークフロー.md         ← 人間×Claude 協働プロセス
 ```
 
 ---
 
 ## Pillar 1 — OpenSpec & ワークフロー
 
-### フェーズ定義
+### フェーズ（順序厳守）
 
-| 順 | フェーズ | 目的 | 成果物 | 備考 |
-|---|---|---|---|---|
-| 1 | **Propose** | Why・What・How・Task を同時設計 | `proposal.md` + `design.md` + `tasks.md` | 3 点同時生成・3 点同時承認 |
-| 2 | **Apply** | TDD 実装。1 タスク＝1 コミット（UI フィードバック等の小粒修正は 1 PR=1 コミット可） | コード + テスト | 全 task 完了後にまとめてテスト・build |
-| 3 | **PR 作成** | feature ブランチを master 向けに PR 化 | GitHub PR | base=master、Closes #N で Issue 連携 |
-| 4 | **ユーザー確認** | Render PR プレビューで実環境確認 | レビュー結果 | OK が出るまで Apply に戻る場合あり |
-| 5 | **Sync** | 実装仕様を docs / specs に反映 | `openspec/specs/` 更新・関連 docs 更新 | **マージ前に実施**、PR に追加コミット |
-| 6 | **Archive** | Change を `archive/` に移動 | archived change | Sync と連続コミット可 |
-| 7 | **push** | sync / archive のコミットをリモートへ | 更新済み PR | 同じ PR に追加コミットとして反映 |
-| 8 | **Merge** | master へマージ（CI 全パス前提） | マージ済 master | squash/merge はプロジェクト方針に従う |
-| 9 | **後始末** | feature ブランチ削除 + Issue クローズ（Done） | クリーンな状態 | ここを忘れず 1 サイクル完了 |
+`Propose → Apply → PR 作成 → ユーザー確認 → Sync → Archive → push → Merge → 後始末`
 
-### openspec コマンド
-
-```bash
-/opsx:propose   # Proposal + Design + Task を同時生成
-/opsx:apply     # 承認済み Task を 1 件ずつ TDD 実装
-/opsx:sync      # 実装内容を openspec/specs / docs に反映（マージ前）
-/opsx:archive   # change を archive/ へ移動（Sync 後）
-```
+| コマンド | 役割 |
+|---|---|
+| `/opsx:propose` | Proposal + Design + Task を同時生成 |
+| `/opsx:apply` | 承認済み Task を 1 件ずつ TDD 実装 |
+| `/opsx:sync` | 実装内容を openspec/specs / docs に反映（マージ前） |
+| `/opsx:archive` | change を archive/ へ移動（Sync 後） |
+| `/opsx-ship` | PR レビュー OK 後の出荷フロー（sync/archive/push/merge/後始末を一気に） |
 
 ### Issue & ブランチ命名
 
@@ -77,207 +80,81 @@ git checkout -b feature/<issue番号>-<kebab-case-summary>
 ### マージ後の後始末（必須）
 
 ```bash
-# master 同期
 git checkout master && git pull
-# feature ブランチ削除（local + remote）
 git branch -d feature/<issue番号>-<...>
-git push origin --delete feature/<issue番号>-<...>
-# Issue クローズ
+git push origin --delete feature/<issue番号>-<...>   # gh pr merge --delete-branch を使った場合は不要
 gh issue close <issue番号> --comment "Done in #<PR番号>"
 ```
 
 ### Apply 中のテスト・ビルド実行ルール
 
-**UI 変更タスクが連続するとき、各タスクごとに `pnpm exec vitest run` / `pnpm build:lp` を実行しない。** 全タスク完了後（最終確認 T-N）に 1 回まとめて実行する。
+UI 変更タスク連続時は、各タスクごとに `pnpm exec vitest run` / `pnpm build:lp` を実行せず、**全タスク完了後の最終確認タスクで 1 回まとめて実行**。
+例外（各タスクで TDD を回す）: ロジック新規追加 / spec 新規作成 / バグ修正再発防止テスト。
 
-- 適用対象: コンポーネントの template / style 修正、props 整理、見た目の調整など、既存テストへの影響確認のみが目的のタスク
-- 例外（各タスクで TDD を回す）:
-  - `shared/lib/` や `entities/` などにロジックを新規追加する場合
-  - `*.spec.js/ts` を新規作成する Apply タスクの場合
-  - バグ修正で再発防止テストを書くタスクの場合
-- 最終確認タスク（通常 T-16 or 類似）でテスト・ビルド・grep 検証をまとめて実施
+### Apply 中のコミット粒度
 
-### Apply 中のコミット粒度ルール
+デフォルトは「1 タスク = 1 コミット」。UI フィードバック対応など小粒な集合は「1 PR = 1 コミット」可。
 
-**デフォルトは「1 タスク = 1 コミット」**。ただし以下のケースは「1 PR = 1 コミット」にまとめてよい:
+### コンテキスト維持ルール
 
-- UI フィードバック対応など、ユーザーの 1 回の指摘から派生した小粒な修正の集合
-- ユーザーから明示的に「まとめてコミット」と指示があった場合
-- 各タスクの差分が極めて小さく、個別コミットの意味が薄い場合
-
-判断に迷ったらユーザーに確認する。1 コミットにまとめる場合も、コミットメッセージ本文で T-N.M 番号を箇条書きで列挙する（後追いで何が含まれるか分かるように）。
-
-### コンテキスト維持ルール（長期セッション対策）
-
-以下のタイミングで **自発的に** `project.md` と `design.md` を読み直し、現在の進捗と技術制約を宣言すること：
-
-1. **Apply 開始時**: 「project.md と design.md を読み直しました。現在の進捗: X/N タスク完了。確認した制約: [要約]」
-2. **フェーズ切り替え時**（Propose → Apply 等）
-3. **同一セッションで Apply タスクが5件を超えた時点**
-
-宣言なしに実装を継続することを禁止する。
-
-詳細プロセスは `docs/03-アーキテクチャ/05-開発ワークフロー.md` を参照。
+以下のタイミングで自発的に `project.md` と `design.md` を読み直し、進捗・制約を宣言:
+1. Apply 開始時
+2. フェーズ切替時
+3. 同一セッションで Apply タスクが 5 件超
 
 ---
 
-## Pillar 2 — アーキテクチャ（FSD）& コーディング品質
-
-### Feature Sliced Design レイヤー構造
+## Pillar 2 — アーキテクチャ（FSD）
 
 ```
 app → pages → widgets → features → entities → shared
 ```
 
-依存方向は上位 → 下位の一方向のみ。同一レイヤー間の直接 import 禁止。
+依存方向は上位 → 下位の一方向のみ。各スライスは `index.ts`（Public API）経由で外部 import。Supabase client は `shared/api/` のみ。Branded Types でドメイン識別子を表現、生の `string`/`number` 直使用禁止。エラーは `Result<T>` 型で技術エラーとビジネス異常系を区別。
 
-```
-apps/<app>/src/
-  app/       ← ルーター・プラグイン・グローバル設定
-  pages/     ← ルーティング単位（薄く保つ）
-  widgets/   ← 複合UIブロック（event-calendar, reservation-form 等）
-  features/  ← ユーザー操作単位（book-event, create-event 等）
-  entities/  ← ビジネスエンティティ（event, member, reservation, session）
-  shared/    ← 非ビジネスの汎用コード（ui, api, lib, types, schemas）
-
-packages/shared/src/  ← クロスアプリ shared（Supabase client・共通型）
-```
-
-### 外部接続の境界
-
-**Supabase client は `shared/api/` にのみ存在する。`features/entities` 層からの直接 import を禁止。**
-
-テスト時の依存差し替えは MSW + TanStack Query の `queryClient` で行う（`provide/inject` は不要）。
-
-### Public API ルール
-
-各スライスは `index.ts` を持ち、**外部からは必ず `index.ts` 経由で import する**。
-このルールは **ESLint（`eslint-plugin-boundaries` + `no-restricted-imports`）で自動検証**する。
-
-### Value Object（Branded Types）
-
-ドメイン層の型は Branded Types + Smart constructor で不変性とバリデーションを担保する。
-生の `string` / `number` をドメイン識別子に直接使用することを禁止する。
-
-```typescript
-export type EventId = Brand<string, 'EventId'>;
-export function createEventId(value: string): EventId { ... }
-```
-
-### エラー型
-
-技術エラーとビジネス異常系を区別し、UI でエラーコードに応じた具体的フィードバックを返す。
-
-```typescript
-type Result<T> = { ok: true; data: T } | { ok: false; error: AppError };
-// ErrorCode: CAPACITY_EXCEEDED | DUPLICATE_RESERVATION | NETWORK_ERROR | ...
-```
-
-「エラーが発生しました」だけの表示は禁止。「なぜ失敗したか」を具体的に伝えること。
-
-### テスト義務
-
-- **全 Apply タスクに対応するテストタスクを必須**とする
-- テストファイルはスライス内 `model/` と同じディレクトリ（`*.spec.ts`）
-- TDD（RED → GREEN → REFACTOR）を原則とする
-- ビジネス異常系テストは Design フェーズで定義した全ケースをカバーすること
-
-詳細は `docs/07-テスト/01-テスト戦略・方針.md` を参照。
-
-### ロギング
-
-- `console.log` を本番コードに残さない
-- エラーは `logger.error()` で記録し、個人情報をログに含めない
-
-詳細は `docs/06-品質・セキュリティ/07-ロギング方針.md` を参照。
+詳細は `docs/03-アーキテクチャ/04-開発・コーディング規約.md`。テスト戦略は `docs/07-テスト/01-テスト戦略・方針.md`。ロギング方針は `docs/06-品質・セキュリティ/07-ロギング方針.md`。
 
 ---
 
 ## Pillar 3 — UI 品質
 
-### スタック
-
-| アプリ | UIライブラリ |
-|--------|------------|
+| アプリ | UI ライブラリ |
+|---|---|
 | `apps/lp` | Vuetify 3 |
 | `apps/admin` | shadcn/ui + Tailwind |
 | `apps/reservation` | shadcn/ui + Tailwind |
 
-### Design フェーズで必ず適用するチェックリスト
+Design フェーズで必ずチェック: 影響レイヤー / ビジネス異常系列挙 + UI フィードバック / Loading・Empty・Error・Success 4 状態 / モバイルファースト / アクセシビリティ AA / デザイントークン使用（マジックナンバー禁止）。
 
-- [ ] 影響する FSD レイヤー・スライスを明記
-- [ ] **ビジネス異常系を全て列挙し、UIフィードバックを設計**（エラーコード対応）
-- [ ] Loading / Empty / Error / Success の4状態を定義
-- [ ] モバイルファーストのブレークポイントを明記
-- [ ] アクセシビリティ（ARIA・コントラスト比 AA・キーボード操作）
-- [ ] デザイントークン使用（マジックナンバー禁止）
-
-詳細は `docs/05-インターフェース/01-UI設計方針.md` を参照。
+詳細チェックリストは `docs/05-インターフェース/01-UI設計方針.md`。
 
 ---
 
 ## Pillar 4 — DB & セキュリティ
 
-### Supabase RLS（必須）
+**RLS なしのテーブル実装を Apply で行うことを禁止**。テーブル変更時は Design フェーズで「SQL Migration + TypeScript エンティティ型 + RLS ポリシー」をセットで提示。
 
-**テーブルの追加・変更を伴う全ての変更で、RLS ポリシーの設計を Design フェーズに含めること。**
-RLS なしのテーブルを Apply で実装することを禁止する。
-
-```sql
-ALTER TABLE table_name ENABLE ROW LEVEL SECURITY;
--- SELECT / INSERT / UPDATE / DELETE のポリシーを全て明示すること
-```
-
-### スキーマとエンティティの整合
-
-DB テーブル変更時は Design フェーズで以下をセットで提示する:
-1. SQL Migration ファイル
-2. 対応する TypeScript エンティティ型（Branded Types 含む）
-3. RLS ポリシー
+詳細は `docs/06-品質・セキュリティ/03-アクセス制御・認可設計.md`。
 
 ---
 
 ## Pillar 5 — Git & デプロイ安全性
 
-### ブランチ戦略
+- `master` への直接 push 禁止。PR は CI 全パスが必須
+- **デプロイ 3 回連続失敗時は同じ修正を繰り返さず、3 軸（環境・ビルド設定・依存関係）で根本原因分析しユーザー報告**
+- **不具合修正は応急手当て禁止**。構造全体を見て根本原因を解消し、影響範囲も合わせて修正
 
-- `master` への直接 push は**いかなる理由があっても禁止**
-- PR は CI（lint / typecheck / test / build）が全パスすることが必須条件
-- GitHub ブランチ保護の設定手順は `docs/03-アーキテクチャ/03-インフラ・CICD構成.md` 参照
+修正フロー: ①構造全体を読む → ②根本原因の仮説 → ③影響範囲を grep で確認 → ④連鎖修正は 1 PR にまとめる。
 
-### アンチループデプロイ原則
-
-デプロイが **3回連続失敗** した場合、同じ修正を繰り返すことを禁止する。
-以下の 3 軸で根本原因を分析してユーザーに報告すること:
-
-1. **環境軸**: Node.js バージョン・OS・CI ランナーの差異
-2. **ビルド設定軸**: `buildCommand`・`rootDir`・環境変数の設定ミス
-3. **依存関係軸**: パッケージバージョン競合・lifecycle script の問題
-
-### 不具合修正の原則（応急手当て禁止）
-
-不具合発生時は **構造全体を見て根本原因を解消する**。症状を覆い隠すだけの応急手当て的な対応（`overflow: hidden` で見切れを隠す、`!important` で強引に上書き、フレームワークの推奨 import を avoid して個別 hack を書く等）は禁止する。
-
-具体的な禁則:
-- フレームワークの前提（`vuetify/styles` import 等）を「影響範囲が広いから」と avoid して、その代わりに個別 CSS で対症療法を書くこと
-- 同じファイルに 2 回以上修正を入れても直らないとき、さらに別の hack を重ねること（一度立ち止まって構造を見直す）
-- ユーザーの「まだ直っていない」報告に対し、原因を確認せず別の修正を試すこと
-
-修正フロー:
-1. **構造全体を読む**: index.html、main.js、plugins、global style、関連 component の依存関係を把握
-2. **根本原因の仮説を立てる**: 「なぜこの症状が出るか」をフレームワークの仕様レベルまで掘り下げる
-3. **修正の影響範囲を確認**: その修正が他のどの箇所に波及するかを grep / 依存関係図で確認
-4. **影響箇所も合わせて修正**: 連鎖的な修正が必要なら、まとめて 1 PR / 1 コミットで処理する（テスト・build で副作用がないことを最終確認）
-
-判断に迷う場合は応急手当てに走らず、ユーザーに原因仮説と修正方針を提示して承認を得ること。
+詳細は `docs/03-アーキテクチャ/03-インフラ・CICD構成.md`。
 
 ---
 
 ## セキュリティルール
 
 - `.env` ファイルは**読まない・編集しない・コミットしない・提案しない**（絶対）
-- 環境変数の値を Claude に共有しない。Render / Supabase の管理画面で直接設定する
-- 秘密情報（APIキー・トークン）をコードにハードコードしない
+- 環境変数の値を Claude に共有しない。Render / Supabase の管理画面で直接設定
+- 秘密情報をコードにハードコードしない
 - Supabase `service_role` キーをクライアントサイドで使わない
-- マイナンバーカードの個人番号を収集・保管するコードを書かない
-- SQL インジェクション・XSS に常に注意する
+- マイナンバーカードの個人番号を収集・保管するコード禁止
+- SQL インジェクション・XSS に常に注意
