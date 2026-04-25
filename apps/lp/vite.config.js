@@ -28,4 +28,13 @@ export default defineConfig({
       "@shared":   fileURLToPath(new URL("./src/shared",    import.meta.url)),
     },
   },
+  server: {
+    proxy: {
+      "/api/event": {
+        target: "https://ptfomh71x9.execute-api.ap-northeast-1.amazonaws.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/event/, "/beta/event"),
+      },
+    },
+  },
 });

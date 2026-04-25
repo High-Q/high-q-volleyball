@@ -1,6 +1,9 @@
 import { queryOptions } from '@tanstack/vue-query'
 
-const API_URL = 'https://ptfomh71x9.execute-api.ap-northeast-1.amazonaws.com/beta/event'
+// 開発時は Vite プロキシ経由で CORS を回避（vite.config.js で /api/event → AWS にリライト）
+const API_URL = import.meta.env.DEV
+  ? '/api/event'
+  : 'https://ptfomh71x9.execute-api.ap-northeast-1.amazonaws.com/beta/event'
 
 async function fetchEvents() {
   const res = await fetch(API_URL)
