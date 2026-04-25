@@ -3,7 +3,7 @@
     <v-container>
       <v-row>
         <!-- カラム1: ブランド -->
-        <v-col cols="12" md="6" lg="4">
+        <v-col cols="12" md="6">
           <div class="footer-brand text-h5 font-weight-black text-white mb-3">
             High Q
           </div>
@@ -14,29 +14,13 @@
         </v-col>
 
         <!-- カラム2: ナビ -->
-        <v-col cols="12" md="6" lg="4">
+        <v-col cols="12" md="6">
           <div class="footer-heading">MENU</div>
           <ul class="footer-nav">
             <li><a href="#concept">CONCEPT</a></li>
             <li><a href="#activities">ACTIVITIES</a></li>
             <li><a href="#event">EVENT</a></li>
           </ul>
-        </v-col>
-
-        <!-- カラム3: SNS -->
-        <v-col cols="12" md="12" lg="4">
-          <div class="footer-heading">FOLLOW</div>
-          <v-btn
-            icon
-            variant="text"
-            color="white"
-            href="https://twitter.com/c8w5y"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="X (Twitter) でフォロー"
-          >
-            <XIcon :size="20" color="white" />
-          </v-btn>
         </v-col>
       </v-row>
 
@@ -50,11 +34,8 @@
 </template>
 
 <script>
-import XIcon from "@shared/ui/XIcon.vue";
-
 export default {
   name: "FooterLine",
-  components: { XIcon },
 };
 </script>
 

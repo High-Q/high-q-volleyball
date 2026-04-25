@@ -154,7 +154,7 @@
 - [x] 17.6 Hero CTA「X でお問い合わせ」を削除、「イベントを見る」のみ。サブに「メンバー受付窓口は準備中です」テキスト追加
 - [x] 17.7 HeaderLine の X アイコンボタンを削除（XIcon import も削除）
 - [x] 17.8 HeaderLine をフルブリード化（v-app-bar の左右 padding 0）
-- [ ] 17.9 FooterLine の SNS カラムを削除、ブランド + ナビの 2 カラム構成に変更（XIcon import 削除）
+- [x] 17.9 FooterLine の SNS カラムを削除、ブランド + ナビの 2 カラム構成に変更（XIcon import 削除）
 - [ ] 17.10 ActivitiesSection の X ボタンを「メンバー受付窓口は準備中です」テキストに置換（XIcon import 削除）
 - [ ] 17.11 セクション左右余白の差を v-container の使い方で統一
 - [ ] 17.12 `grep -rn "XIcon" apps/lp/src/` で残存箇所を確認（XIcon.vue と spec のみ残っていれば OK）
