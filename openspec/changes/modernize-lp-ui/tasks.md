@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 93 / 101 タスク（T-23 3件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 97 / 105 タスク（T-24 4件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -240,6 +240,18 @@
 - [x] 23.1 HeaderLine: v-btn icon を独自 `<button>` + 内部 `<v-icon>` の構成に置換
 - [x] 23.2 HeaderLine: `.header-menu-btn` を 40x40px 固定・透明背景・hover/focus 装飾を実装
 - [x] 23.3 build 成功確認
+
+---
+
+## 24. HeaderLine を Teleport + 独自実装で最小化（追加）
+
+> **背景**: T-19〜T-23 を経てもハンバーガーが画面右端からはみ出す事象が解消されない。原因の最有力候補は `<v-app>` 内部の transform/filter 等で fixed 要素の containing block が viewport から v-app に変わっていた可能性。
+> **方針**: HeaderLine を **`<Teleport to="body">` で body 直下に脱出**させ、v-app の影響を完全排除。Vuetify の v-menu/v-list/v-btn にも依存せず、独自 button + Transition で完全コントロール。
+
+- [x] 24.1 HeaderLine を `<Teleport to="body">` でレンダリング先を body 直下に変更
+- [x] 24.2 内部実装をシンプル化: ロゴ + nav-desktop + 独自ハンバーガー button (3 本線) を `justify-content: space-between` で配置
+- [x] 24.3 v-menu / v-list を撤廃し、独自モバイルメニューを `<Transition name="mobile-menu">` で開閉実装
+- [x] 24.4 build 成功確認
 
 ---
 
