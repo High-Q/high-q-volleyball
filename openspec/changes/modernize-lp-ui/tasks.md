@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 47 / 57 タスク（15.3/15.5 は手動確認・PR レビュー時）
+- 完了: 49 / 57 タスク（残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -125,8 +125,8 @@
 
 ## 16. 動作確認・PR
 
-- [ ] 16.1 `pnpm exec vitest run` で全テスト（既存7件 + 新規 useFadeInOnScroll/XIcon）が GREEN
-- [ ] 16.2 `pnpm dev:lp` でローカル起動し以下を確認
+- [x] 16.1 `pnpm exec vitest run` で全テスト（既存7件 + 新規 useFadeInOnScroll/XIcon）が GREEN（19/19）
+- [ ] 16.2 `pnpm dev:lp` でローカル起動し以下を確認（ユーザー手動）
   - Hero に CTA 2種が表示・クリックで遷移／アンカーが動く
   - Header アンカー3つで各セクションへスクロール
   - Header がスクロール反応で透明 → primary 切替
@@ -134,10 +134,10 @@
   - Activities が表示されている
   - Footer 3カラム構成
   - 各セクション初回スクロール到達でフェードイン
-- [ ] 16.3 Chrome DevTools で 375px / 768px / 1280px のレイアウトを目視確認
-- [ ] 16.4 `pnpm build:lp` でビルド成功
-- [ ] 16.5 PR を作成（base: master、本 change と issue を関連付け）
-- [ ] 16.6 Render PR プレビューで本番ドメイン以外でもレイアウトと動作を確認
+- [ ] 16.3 Chrome DevTools で 375px / 768px / 1280px のレイアウトを目視確認（ユーザー手動）
+- [x] 16.4 `pnpm build:lp` でビルド成功（CSS 101.70 kB / JS 350.24 kB）
+- [ ] 16.5 PR を作成（base: master、本 change と issue #107 を関連付け）
+- [ ] 16.6 Render PR プレビューで本番ドメイン以外でもレイアウトと動作を確認（ユーザー手動）
 
 ---
 
