@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import ConceptCard from "./ConceptCard.vue";
+import ConceptCard from "@shared/ui/ConceptCard.vue";
 
 export default {
   name: "ConceptContents",
@@ -55,7 +55,7 @@ export default {
 .section-title {
   font-size: 2rem;
   font-weight: 900;
-  color: #182F43;
+  color: rgb(var(--v-theme-primary));
   letter-spacing: 0.06em;
   margin: 0 0 14px;
 }
@@ -63,7 +63,7 @@ export default {
 .section-hr {
   width: 100%;
   height: 2px;
-  background: #182F43;
+  background: rgb(var(--v-theme-primary));
   margin-bottom: 40px;
 }
 
