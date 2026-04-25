@@ -23,15 +23,10 @@ export default {
 </script>
 
 <style>
-/* スクロールバー出現/消失による幅変動だけを防止（gutter のみ予約・overflow は触らない）
-   T-24 で Header を Teleport で body 直下に出したため、fixed 要素の viewport 計算が
-   正しく行われ、overflow-x: hidden の保険は不要になった。 */
-html {
-  scrollbar-gutter: stable;
-}
-
 /* HeaderLine を独自 fixed header に切替たため、v-main の自動 padding-top を打ち消す。
-   これにより Hero が画面最上部から始まり、透明 Header の背景に Hero 画像が見える */
+   これにより Hero が画面最上部から始まり、透明 Header の背景に Hero 画像が見える。
+   scrollbar-gutter / overflow-x の global hack はすべて撤去（Hero / Content section が
+   viewport 全幅で表示されるよう、html/body には何も触らない） */
 .main-no-pad.v-main {
   --v-layout-top: 0px;
   padding-top: 0 !important;

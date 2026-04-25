@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 102 / 110 タスク（T-26 2件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 104 / 112 タスク（T-27 2件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -274,6 +274,17 @@
 
 - [x] 26.1 HeroSection: hero-sub の `<br />` を撤去して 1 行に統一
 - [x] 26.2 HeroSection: hero-body を「メンバーを募集しています。」直後だけ改行する 2 行構成に変更（残りの 3 つの `<br />` を撤去）
+
+---
+
+## 27. scrollbar-gutter 撤去で Hero/Content を viewport 全幅化（追加）
+
+> **背景**: T-25 で `overflow-x: hidden` は撤去したが `scrollbar-gutter: stable` を残してしまい、html 全体に scrollbar 領域 (~15px) を予約した結果、Hero エリアと Activities (Content) セクションの背景色が viewport 幅に届かず右に余白ができていた。
+
+- [x] 27.1 App.vue: `html { scrollbar-gutter: stable }` を撤去。html/body には一切 global ルールを当てない
+- [x] 27.2 build 成功確認
+
+> **トレードオフ**: デスクトップで縦スクロール出現時に ~15px のレイアウトシフトが一瞬起こる可能性があるが、Hero / Content セクションを viewport 全幅で表示することを優先（モダン LP では一般的な妥協点）。
 
 ---
 
