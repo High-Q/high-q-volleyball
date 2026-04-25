@@ -150,7 +150,7 @@
 - [x] 17.2 `apps/lp/src/shared/ui/SectionDivider.vue` を新規作成（タイトル + 下線の共通コンポーネント）
 - [x] 17.3 ConceptSection の section-title + section-hr を SectionDivider に置換
 - [x] 17.4 ActivitiesSection の SubTitle を SectionDivider に置換
-- [ ] 17.5 EventCalendar の section-header (section-title + section-bar) を SectionDivider に置換
+- [x] 17.5 EventCalendar の section-header (section-title + section-bar) を SectionDivider に置換
 - [ ] 17.6 Hero CTA「X でお問い合わせ」を削除、「イベントを見る」のみ。サブに「メンバー受付窓口は準備中です」テキスト追加
 - [ ] 17.7 HeaderLine の X アイコンボタンを削除（XIcon import も削除）
 - [ ] 17.8 HeaderLine をフルブリード化（v-app-bar の左右 padding 0）

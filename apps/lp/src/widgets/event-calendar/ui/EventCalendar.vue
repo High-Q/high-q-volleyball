@@ -6,10 +6,7 @@
     :class="{ 'is-visible': isVisible }"
   >
     <v-container>
-      <div class="section-header">
-        <h2 class="section-title">EVENT</h2>
-        <div class="section-bar"></div>
-      </div>
+      <SectionDivider title="EVENT" />
 
       <v-sheet rounded="xl" elevation="1" class="calendar-sheet">
         <!-- 月ナビゲーション -->
@@ -70,11 +67,12 @@
 <script>
 import { useEventCalendar } from '../model/useEventCalendar'
 import EventDetailDialog from './EventDetailDialog.vue'
+import SectionDivider from '@shared/ui/SectionDivider.vue'
 import { useFadeInOnScroll } from '@shared/lib/useFadeInOnScroll'
 
 export default {
   name: 'EventCalendar',
-  components: { EventDetailDialog },
+  components: { EventDetailDialog, SectionDivider },
   setup() {
     const { calendarEvents, isPending, isError, isEmpty } = useEventCalendar()
     const { el, isVisible } = useFadeInOnScroll()
@@ -138,25 +136,6 @@ export default {
     transform: none;
     transition: none;
   }
-}
-
-.section-header {
-  margin-bottom: 32px;
-}
-
-.section-title {
-  font-size: 1.75rem;
-  font-weight: 900;
-  color: rgb(var(--v-theme-primary));
-  letter-spacing: 0.08em;
-  margin: 0 0 10px;
-}
-
-.section-bar {
-  width: 44px;
-  height: 4px;
-  border-radius: 2px;
-  background: linear-gradient(to right, rgb(var(--v-theme-primary)), rgb(var(--v-theme-secondary)));
 }
 
 .calendar-sheet {
