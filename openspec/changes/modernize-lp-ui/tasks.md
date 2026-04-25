@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 97 / 105 タスク（T-24 4件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 102 / 110 タスク（T-26 2件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -252,6 +252,28 @@
 - [x] 24.2 内部実装をシンプル化: ロゴ + nav-desktop + 独自ハンバーガー button (3 本線) を `justify-content: space-between` で配置
 - [x] 24.3 v-menu / v-list を撤廃し、独自モバイルメニューを `<Transition name="mobile-menu">` で開閉実装
 - [x] 24.4 build 成功確認
+
+---
+
+## 25. overflow-x: hidden 撤去で他コンポーネントの右見切れ解消（追加）
+
+> **背景**: T-21 で Header の見切れを `html, body { overflow-x: hidden }` で覆い隠していた。T-24 で Header を Teleport で body 直下に出し、fixed 要素の viewport 計算が正しく動くようになったため、overflow-x: hidden の保険は不要に。これがカード/カレンダーを右で切ってしまっていたため撤去。
+
+- [x] 25.1 App.vue: `html, body { overflow-x: hidden }` を撤去（`scrollbar-gutter: stable` のみ残す）
+- [x] 25.2 widgets/shared UI を grep して幅超過の元になる min-width / 大きな fixed width / 負の inset を確認 → 影響範囲は Hero の `.hero-bg { inset: -8px }`（`.hero` 内側で overflow: hidden 済み）と calendar の `min-width: 120px`（v-sheet 内）のみで、いずれも viewport は超えないことを確認
+- [x] 25.3 build 成功確認
+
+---
+
+## 26. Hero テキストの改行修正（追加）
+
+> **背景**: ユーザー指摘「サブテキスト・サブサブテキストの改行が不自然」。
+> 期待形:
+> - サブ: 「江東区を中心に活動しているバレーボールサークルです！」（改行なし1行）
+> - サブサブ: 「立ち上げに伴って、メンバーを募集しています。」 改行 「20代〜30代の男女、がちがちの初心者の方から経験者の方まで幅広くメンバー募集中です。」（2行）
+
+- [x] 26.1 HeroSection: hero-sub の `<br />` を撤去して 1 行に統一
+- [x] 26.2 HeroSection: hero-body を「メンバーを募集しています。」直後だけ改行する 2 行構成に変更（残りの 3 つの `<br />` を撤去）
 
 ---
 
