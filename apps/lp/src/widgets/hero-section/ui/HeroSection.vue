@@ -17,18 +17,6 @@
         </p>
         <div class="hero-cta">
           <v-btn
-            color="secondary"
-            variant="flat"
-            size="large"
-            href="https://twitter.com/c8w5y"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="X (Twitter) でお問い合わせ"
-          >
-            <XIcon :size="18" color="white" />
-            <span class="ml-2">X でお問い合わせ</span>
-          </v-btn>
-          <v-btn
             color="white"
             variant="outlined"
             size="large"
@@ -38,6 +26,7 @@
             イベントを見る
           </v-btn>
         </div>
+        <p class="hero-notice">メンバー受付窓口は準備中です</p>
       </v-container>
     </div>
     <a class="hero-scroll-hint" href="#concept" aria-label="次のセクションへスクロール">
@@ -47,11 +36,8 @@
 </template>
 
 <script>
-import XIcon from "@shared/ui/XIcon.vue";
-
 export default {
   name: "HeroSection",
-  components: { XIcon },
 };
 </script>
 
@@ -130,6 +116,13 @@ export default {
     flex-direction: row;
     gap: 16px;
   }
+}
+
+.hero-notice {
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
 }
 
 .hero-scroll-hint {
