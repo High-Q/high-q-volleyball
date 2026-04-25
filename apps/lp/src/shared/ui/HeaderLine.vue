@@ -1,29 +1,22 @@
 <template>
-  <v-app-bar
-    :color="scrolled ? 'primary' : 'transparent'"
-    :elevation="scrolled ? 4 : 0"
-    flat
-    class="header-line"
-  >
-    <v-app-bar-title class="header-title">
+  <header class="header" :class="{ 'header--scrolled': scrolled }">
+    <div class="header-inner">
       <a href="#top" class="header-brand">High Q</a>
-    </v-app-bar-title>
 
-    <!-- md 以上はテキストナビ横並び（v-app-bar の default 配置） -->
-    <div class="d-none d-md-flex align-center ga-2">
-      <v-btn variant="text" color="white" href="#concept">CONCEPT</v-btn>
-      <v-btn variant="text" color="white" href="#activities">ACTIVITIES</v-btn>
-      <v-btn variant="text" color="white" href="#event">EVENT</v-btn>
-    </div>
+      <nav class="header-nav d-none d-md-flex">
+        <a href="#concept">CONCEPT</a>
+        <a href="#activities">ACTIVITIES</a>
+        <a href="#event">EVENT</a>
+      </nav>
 
-    <template #append>
-      <!-- xs/sm はドロップダウンメニュー -->
       <v-menu>
         <template #activator="{ props }">
-          <v-app-bar-nav-icon
+          <v-btn
             v-bind="props"
+            icon="mdi-menu"
+            variant="text"
             color="white"
-            class="d-md-none"
+            class="d-md-none header-menu-btn"
             aria-label="ナビゲーションを開く"
           />
         </template>
@@ -33,8 +26,8 @@
           <v-list-item href="#event" title="EVENT" />
         </v-list>
       </v-menu>
-    </template>
-  </v-app-bar>
+    </div>
+  </header>
 </template>
 
 <script>
@@ -61,30 +54,28 @@ export default {
 </script>
 
 <style scoped>
-/* スクロール中も header が画面に留まることを保証
-   （Vuetify 3 の v-app-bar は本来 fixed だが、scroll-behavior 属性や
-   v-app の layout 計算次第で位置が外れるケースがあるため明示） */
-.header-line {
-  position: fixed !important;
+.header {
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
+  height: 64px;
+  background: transparent;
+  transition: background-color 200ms ease-out, box-shadow 200ms ease-out;
 }
 
-/* フルブリード化: v-toolbar__content の左右 padding を 0 にして
-   ロゴが画面左端、メニュー/ナビが画面右端まで張り付くようにする */
-.header-line :deep(.v-toolbar__content) {
-  padding-inline: 0;
+.header--scrolled {
+  background: rgb(var(--v-theme-primary));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* 端から離さず、ロゴと右端要素に最低限の内側余白だけ確保 */
-.header-title {
-  padding-inline-start: 16px;
-}
-
-.header-line :deep(.v-toolbar__append) {
-  padding-inline-end: 8px;
+.header-inner {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-inline: 16px 8px;
+  gap: 16px;
 }
 
 .header-brand {
@@ -93,5 +84,43 @@ export default {
   font-size: 1.25rem;
   text-decoration: none;
   letter-spacing: 0.04em;
+  /* 透明時の Hero 画像の明るい部分と同化しないよう輪郭を保証 */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  transition: text-shadow 200ms ease-out;
+}
+
+.header--scrolled .header-brand {
+  text-shadow: none;
+}
+
+.header-nav {
+  margin-left: auto;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 150ms ease-out, text-shadow 200ms ease-out;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.header--scrolled .header-nav a {
+  text-shadow: none;
+}
+
+.header-nav a:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* xs/sm: ハンバーガーボタンを右端に */
+.header-menu-btn {
+  margin-left: auto;
 }
 </style>

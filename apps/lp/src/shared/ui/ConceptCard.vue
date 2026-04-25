@@ -34,22 +34,24 @@ export default {
   position: relative;
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(24, 47, 67, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
   height: 100%;
   padding: 32px 20px 28px;
   overflow: hidden;
+  border: 2px solid transparent;
+  box-sizing: border-box;
 }
 
-/* 中央カードは secondary（水色）背景でサンドイッチ強調 */
+/* 中央カードはボーダー + 影で強調（背景は白のまま） */
 .vcard--secondary {
-  background: rgb(var(--v-theme-secondary));
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  border-color: rgb(var(--v-theme-primary));
+  box-shadow: 0 8px 24px rgba(24, 47, 67, 0.16);
 }
 
-/* 全カード上端のアクセントバー（通常: secondary / 中央: primary で反転） */
+/* 全カード上端のアクセントバー */
 .vcard-accent {
   position: absolute;
   top: 0;
@@ -59,7 +61,9 @@ export default {
   background: rgb(var(--v-theme-secondary));
 }
 
+/* 中央カードはアクセントバーを倍増 + navy で強調 */
 .vcard--secondary .vcard-accent {
+  height: 8px;
   background: rgb(var(--v-theme-primary));
 }
 
@@ -72,10 +76,6 @@ export default {
   align-items: center;
   justify-content: center;
   margin-bottom: 16px;
-}
-
-.vcard--secondary .vcard-icon-chip {
-  background: #fff;
 }
 
 .vcard-body {

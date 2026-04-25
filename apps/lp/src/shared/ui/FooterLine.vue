@@ -36,7 +36,7 @@ export default {
 }
 
 .footer-copyright {
-  color: rgb(var(--v-theme-text-muted));
+  color: #fff;
   font-size: 0.75rem;
 }
 </style>

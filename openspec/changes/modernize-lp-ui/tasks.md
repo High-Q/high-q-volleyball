@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 71 / 79 タスク（T-18 9件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 79 / 87 タスク（T-19 8件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -175,6 +175,29 @@
 - [x] 18.7 ActivitiesSection: v-img 削除、v-row/v-col 撤廃して 1 カラム構成（テキスト + 準備中カード）に変更
 - [x] 18.8 FooterLine: MENU カラム削除、ブランド + 1 行紹介文の 1 カラム構成に変更（紹介文の `<br>` 撤去）
 - [x] 18.9 最終確認（vitest + build + grep）→ 全タスクまとめて 1 コミット
+
+---
+
+## 19. Header 構造根本見直し・配色 A 採用・カードはみ出し修正（追加）
+
+> **背景**: design D3「透明 hero overlap」が機能していなかった原因 = `<v-app-bar>` が Vuetify app layout に組み込まれて `<v-main>` に padding-top を確保し、Hero が Header の下から始まっていた。あわせてカードのカラーバランスを案 A（ミニマル+強調アクセント）に切替、カードはみ出しと Footer © 色も修正。全タスクをまとめて 1 コミット。
+
+- [x] 19.1 design.md §5 を更新（Header 根本見直し方針、ConceptCard 配色 A 採用）
+- [x] 19.2 HeaderLine.vue を `<v-app-bar>` から **独自 `<header position: fixed>`** に書き換え
+       （ロゴ + ナビ + ハンバーガーメニュー、scroll で background 切替、`text-shadow` でタイトル可読性確保）
+- [x] 19.3 App.vue の `<v-main>` の padding-top を 0 に明示し、Hero が画面最上部から始まるよう構造調整
+- [x] 19.4 グローバルに `html { overflow-y: scroll }` を追加し、スクロールバー出現/消失による幅変動を解消
+       （カードはみ出しの原因対策）
+- [x] 19.5 ConceptCard を **案 A（ミニマル + 強調アクセント）** に書き換え
+       - 背景: 全カード白統一
+       - アクセントバー: 通常 4px `secondary` / 中央 8px `primary`
+       - アイコンチップ: 全カード `surface-alt` 背景、アイコン `primary`
+       - 中央カード: 全周 2px solid `primary` ボーダー + 影濃いめ
+       - 文字色: 全カード `primary`
+- [x] 19.6 FooterLine の © コピーライトテキストを white に変更
+- [x] 19.7 ConceptSection の謎の上線を実装側に存在しないことを確認
+       （DevTools での確認が必要なら、ユーザーに確認依頼として残す）
+- [x] 19.8 最終確認（vitest + build + grep）→ 全タスクまとめて 1 コミット
 
 ---
 

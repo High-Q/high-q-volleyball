@@ -144,8 +144,14 @@ const myCustomTheme = {
 - スクロール量に応じて変化: `scrollY === 0 → background: transparent` / `scrollY > 0 → background: primary + elevation`
 - モバイル（xs）はナビをドロップダウンメニュー（`v-menu` + `v-list`）に集約
 - ~~X アイコン → 新規 `XIcon` コンポーネント~~ → **【T-17 で削除】**
-- **【T-17 追加】フルブリード化**: `<v-app-bar>` の左右 padding 0、ロゴ左 16px / append 右 8px の最小余白のみ
-- **【T-18 修正】sticky 保証**: `scroll-behavior="elevate"` 属性を削除（Vuetify 3 で内部 layout に副作用がありスクロール時に header が画面外へ消える事象を確認）。`position: fixed; top: 0; left: 0; right: 0; z-index: 1000` を CSS で明示的に保証し、elevation 切替は `:elevation` バインドで継続
+- ~~フルブリード化~~ → **【T-19 でアプローチ変更】**
+- ~~`scroll-behavior="elevate"` 削除 + position: fixed CSS~~ → **【T-19 で根本対応】**
+- **【T-19 根本修正】v-app-bar 完全撤廃 → 独自 `<header>` ベースに置換**:
+  - 原因: `<v-app-bar>` は Vuetify 3 の app layout に組み込まれ、`<v-main>` の padding-top を確保する仕様。結果、Hero 画像が Header 領域まで届かず「透明 hero overlap」が機能していなかった（design D3 の意図と乖離）
+  - また `<v-app-bar>` 内部の transform 系挙動でスクロール時に header が画面外へ消える事象も発生
+  - 対応: `<header position: fixed; top: 0; z-index: 1000>` で独自実装。`<v-main>` の padding-top を 0 にし、Hero が画面最上部から始まるよう構造変更
+  - これにより透明 Header 時の背景に Hero 画像が確実にオーバーレイされ、固定問題も同時解消
+- **タイトル文字の同化対策**: 透明 Header 時の Hero overlay の薄い箇所と white 文字が同化しないよう、`text-shadow: 0 1px 3px rgba(0,0,0,0.5)` で輪郭を保証（scrolled 時は除去）
 
 ### Concept カード再設計
 
@@ -155,8 +161,8 @@ const myCustomTheme = {
 | ホバー | なし | ~~`transform` + シャドウ強化~~ → **【T-18 で撤回】静的（ホバー/クリックの視覚効果なし）** |
 | アイコン | 80px | 56px に縮小、上部背景に丸い surface-alt のチップを敷く |
 | タイトル/本文 | 中央寄せ | 中央寄せ（変更なし） |
-| 中央カード強調 | border-left navy のみ | ~~primary 反転~~ → **【T-18 修正】カード全体背景を `secondary`（水色）に。chip 背景は white、アイコン・タイトル・本文は `primary`（navy）でコントラスト確保**（白カード→水色カード→白カードのサンドイッチ強調） |
-| **【T-18 追加】アクセントバー** | なし | **全 3 カード上端に高さ 4px のアクセントバー**（通常: `secondary` 水色 / 中央: `primary` navy で反転）でカード形状の統一感を強化 |
+| 中央カード強調 | border-left navy のみ | ~~primary 反転~~ / ~~secondary 背景~~ → **【T-19 採用 案A: ミニマル+強調アクセント】**: 背景は全カード白で統一し、中央カードのみ「**全周 2px solid primary ボーダー + 影濃いめ + アクセントバー倍増(8px) + navy 化**」で装飾の強弱だけで差別化（モダン LP 主流のトーン統一型強調） |
+| **【T-19 修正】アクセントバー** | なし | 全カード上端 4px `secondary`（水色）。**中央のみ 8px に倍増 + `primary`（navy）に色変えで強調** |
 
 ### Activities セクション再設計
 
