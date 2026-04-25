@@ -61,6 +61,18 @@ gh issue create --title "feat: ..." --label "enhancement"
 git checkout -b feature/<issue番号>-<kebab-case-summary>
 ```
 
+### Apply 中のテスト・ビルド実行ルール
+
+**UI 変更タスクが連続するとき、各タスクごとに `pnpm exec vitest run` / `pnpm build:lp` を実行しない。** 全タスク完了後（最終確認 T-N）に 1 回まとめて実行する。
+
+- 適用対象: コンポーネントの template / style 修正、props 整理、見た目の調整など、既存テストへの影響確認のみが目的のタスク
+- 例外（各タスクで TDD を回す）:
+  - `shared/lib/` や `entities/` などにロジックを新規追加する場合
+  - `*.spec.js/ts` を新規作成する Apply タスクの場合
+  - バグ修正で再発防止テストを書くタスクの場合
+- コミット粒度は引き続き「1 タスク = 1 コミット」を維持
+- 最終確認タスク（通常 T-16 or 類似）でテスト・ビルド・grep 検証をまとめて実施
+
 ### コンテキスト維持ルール（長期セッション対策）
 
 以下のタイミングで **自発的に** `project.md` と `design.md` を読み直し、現在の進捗と技術制約を宣言すること：
