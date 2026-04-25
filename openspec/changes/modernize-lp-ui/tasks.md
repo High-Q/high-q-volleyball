@@ -4,20 +4,20 @@
 
 ## 進捗
 
-- 完了: 0 / 32 タスク
+- 完了: 3 / 57 タスク
 
 ---
 
 ## 1. セットアップ
 
-- [ ] 1.1 `feature/<issue>-modernize-lp-ui` ブランチを作成（issue 番号は GitHub で発行後に確定）
-- [ ] 1.2 既存テスト7件が GREEN（`pnpm exec vitest run`）であることを確認
-- [ ] 1.3 ローカル起動（`pnpm dev:lp`）で4セクション中3つ（Hero/Concept/Event）が表示されることを baseline 撮影
+- [x] 1.1 `feature/107-modernize-lp-ui` ブランチを作成
+- [x] 1.2 既存テスト7件が GREEN（`pnpm exec vitest run`）であることを確認
+- [x] 1.3 ローカル起動（`pnpm dev:lp`）で4セクション中3つ（Hero/Concept/Event）が表示されることを baseline 撮影（レビュー時画面確認済みのためスキップ）
 
 ## 2. デザイントークン拡張
 
-- [ ] 2.1 `apps/lp/src/plugins/vuetify.js` に `surface-alt: "#F5F8FA"` と `text-muted: "#6A96A4"` を追加
-- [ ] 2.2 既存トークン（primary / secondary / third）と並ぶ位置に追記し、コメントで用途を明記
+- [x] 2.1 `apps/lp/src/plugins/vuetify.js` に `surface-alt: "#F5F8FA"` と `text-muted: "#6A96A4"` を追加
+- [x] 2.2 既存トークン（primary / secondary / third）と並ぶ位置に追記し、コメントで用途を明記
 
 ## 3. shared/ui/XIcon コンポーネント新規作成
 
