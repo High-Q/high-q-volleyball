@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="top">
     <HeroSection />
     <ConceptSection />
     <EventCalendar />
@@ -16,3 +16,10 @@ export default {
   components: { HeroSection, ConceptSection, EventCalendar },
 }
 </script>
+
+<style>
+/* ヘッダー高さ補正（アンカースクロール時にセクション見出しが隠れないよう） */
+section[id] {
+  scroll-margin-top: 64px;
+}
+</style>

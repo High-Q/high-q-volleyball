@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 18 / 57 タスク
+- 完了: 23 / 57 タスク
 
 ---
 
@@ -60,13 +60,13 @@
 
 ## 7. Header の刷新（アンカーナビ・スクロール反応・X アイコン）
 
-- [ ] 7.1 `apps/lp/src/shared/ui/HeaderLine.vue` に `data() { return { scrolled: false } }` を追加し、`mounted/beforeUnmount` で `scroll` イベントを listen
-- [ ] 7.2 `<v-app-bar :color="scrolled ? 'primary' : 'transparent'" :elevation="scrolled ? 4 : 0">` で動的切替
-- [ ] 7.3 ナビボタン3つを追加: CONCEPT (`href="#concept"`) / ACTIVITIES (`href="#activities"`) / EVENT (`href="#event"`)
+- [x] 7.1 `apps/lp/src/shared/ui/HeaderLine.vue` に `data() { return { scrolled: false } }` を追加し、`mounted/beforeUnmount` で `scroll` イベントを listen
+- [x] 7.2 `<v-app-bar :color="scrolled ? 'primary' : 'transparent'" :elevation="scrolled ? 4 : 0">` で動的切替
+- [x] 7.3 ナビボタン3つを追加: CONCEPT (`href="#concept"`) / ACTIVITIES (`href="#activities"`) / EVENT (`href="#event"`)
   - md+ ではテキストボタン横並び
   - xs/sm では `v-app-bar-nav-icon` + `v-menu` でドロップダウン
-- [ ] 7.4 SNS ボタンの `<v-icon>mdi-twitter</v-icon>` を `<XIcon :size="20" color="white" />` に置換
-- [ ] 7.5 全セクションに `scroll-margin-top: 64px` を CSS で設定（ヘッダー高さ補正、HomePage の各 wrapper か共通スタイルに）
+- [x] 7.4 SNS ボタンの `<v-icon>mdi-twitter</v-icon>` を `<XIcon :size="20" color="white" />` に置換
+- [x] 7.5 全セクションに `scroll-margin-top: 64px` を CSS で設定（ヘッダー高さ補正、HomePage の各 wrapper か共通スタイルに）
 
 ## 8. ConceptCard の再設計（モダンカード化）
 
