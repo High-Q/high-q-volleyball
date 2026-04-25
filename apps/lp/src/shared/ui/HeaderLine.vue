@@ -18,18 +18,6 @@
     </div>
 
     <template #append>
-      <v-btn
-        icon
-        variant="text"
-        color="white"
-        href="https://twitter.com/c8w5y"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="X (Twitter)"
-      >
-        <XIcon :size="20" color="white" />
-      </v-btn>
-
       <!-- xs/sm はドロップダウンメニュー -->
       <v-menu>
         <template #activator="{ props }">
@@ -51,11 +39,8 @@
 </template>
 
 <script>
-import XIcon from "@shared/ui/XIcon.vue";
-
 export default {
   name: "HeaderLine",
-  components: { XIcon },
   data() {
     return {
       scrolled: false,
