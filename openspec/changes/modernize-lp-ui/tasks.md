@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 106 / 114 タスク（T-28 2件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 109 / 117 タスク（T-29 3件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -296,6 +296,18 @@
 - [x] 28.2 build 成功確認
 
 > **設計判断**: Vuetify base styles を import すると既存スタイルへの広範な影響リスクがあるため、最小限の reset を App.vue に直接書くアプローチを採用
+
+---
+
+## 29. vuetify/styles の正規 import で右余白も含めて根本解消（追加）
+
+> **背景**: T-28 で `body { margin: 0 }` だけ手書きリセットしたため左余白は消えたが右に余白が残った（v-application の layout が styles import なしで正しく組み立てられない事象）。ユーザー指摘の通り Vuetify base styles の import が正攻法。これにより body reset・v-app layout・v-main 計算がすべて正常化する。
+
+- [x] 29.1 `apps/lp/src/plugins/vuetify.js` の先頭に `import "vuetify/styles"` を追加
+- [x] 29.2 App.vue の手書き body reset (`html, body { margin: 0; padding: 0 }`) を撤去（vuetify/styles に任せる）
+- [x] 29.3 build 成功確認・既存 scoped style と競合しないことを確認
+
+> **教訓**: T-28 で「base styles import は影響範囲が広い」と判断したのは過剰なリスク評価だった。Vuetify component を使っている時点で base styles import は前提条件。最小限の reset だけ書くアプローチは中途半端で、結果として T-28 の左余白だけ解消、右余白を残す結果に。
 
 ---
 
