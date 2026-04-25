@@ -39,6 +39,8 @@ export default {
   flex-direction: column;
   align-items: center;
   height: 100%;
+  /* モバイル 1 列レイアウトでも 3 カードの縦幅が揃うよう最小高さを担保 */
+  min-height: 280px;
   padding: 32px 20px 28px;
   overflow: hidden;
   /* 通常カードはアクセントバーと同じ secondary（水色）の枠線 */
