@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 90 / 98 タスク（T-22 4件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 93 / 101 タスク（T-23 3件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -230,6 +230,16 @@
 - [x] 22.2 HeaderLine: `.header-inner` に `width: 100%; box-sizing: border-box` を明示
 - [x] 22.3 HeaderLine: ハンバーガー v-btn に `density="comfortable"` を追加してサイズ縮小（48→44px 程度）
 - [x] 22.4 build 成功確認
+
+---
+
+## 23. ハンバーガーを独自 button に置換（追加）
+
+> **背景**: T-22 後もハンバーガーが見切れる事象が残存。原因は v-btn の internal な min-width/padding（icon prop でも完全には消せない）が flex-shrink: 0 で縮められず溢れていた可能性。Vuetify 依存を捨てて独自 button で完全サイズコントロールに切替。
+
+- [x] 23.1 HeaderLine: v-btn icon を独自 `<button>` + 内部 `<v-icon>` の構成に置換
+- [x] 23.2 HeaderLine: `.header-menu-btn` を 40x40px 固定・透明背景・hover/focus 装飾を実装
+- [x] 23.3 build 成功確認
 
 ---
 

@@ -11,15 +11,14 @@
 
       <v-menu>
         <template #activator="{ props }">
-          <v-btn
+          <button
             v-bind="props"
-            icon="mdi-menu"
-            variant="text"
-            color="white"
-            density="comfortable"
+            type="button"
             class="d-md-none header-menu-btn"
             aria-label="ナビゲーションを開く"
-          />
+          >
+            <v-icon icon="mdi-menu" color="white" size="24" />
+          </button>
         </template>
         <v-list>
           <v-list-item href="#concept" title="CONCEPT" />
@@ -131,9 +130,31 @@ export default {
   background-color: rgba(255, 255, 255, 0.12);
 }
 
-/* xs/sm: ハンバーガーボタンを右端に。flex-shrink: 0 で縮小防止 */
+/* xs/sm: 独自ボタンでサイズを完全コントロール（v-btn の internal padding/min-width
+   による右はみ出しを回避）。40x40 の固定サイズ・透明背景・hover で薄く強調 */
 .header-menu-btn {
   margin-left: auto;
   flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: background-color 150ms ease-out;
+}
+
+.header-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.header-menu-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 </style>
