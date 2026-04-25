@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 23 / 57 タスク
+- 完了: 29 / 57 タスク
 
 ---
 
@@ -70,12 +70,12 @@
 
 ## 8. ConceptCard の再設計（モダンカード化）
 
-- [ ] 8.1 `apps/lp/src/shared/ui/ConceptCard.vue` の border-left スタイルを廃止
-- [ ] 8.2 `border-radius: 16px` + `box-shadow: 0 2px 8px rgba(0,0,0,0.08)` の elevation 表現に変更
-- [ ] 8.3 ホバー時 `transform: translateY(-4px)` + `box-shadow` 強化（200ms transition）
-- [ ] 8.4 アイコンサイズを 80px → 56px に縮小、上部に丸い `surface-alt` チップ背景を追加
-- [ ] 8.5 `secondary` prop（中央カード強調）の挙動を「primary 反転（背景 primary・文字 white）+ elevation 強化」に変更
-- [ ] 8.6 `prefers-reduced-motion: reduce` で transition 無効化
+- [x] 8.1 `apps/lp/src/shared/ui/ConceptCard.vue` の border-left スタイルを廃止
+- [x] 8.2 `border-radius: 16px` + `box-shadow: 0 2px 8px rgba(0,0,0,0.08)` の elevation 表現に変更
+- [x] 8.3 ホバー時 `transform: translateY(-4px)` + `box-shadow` 強化（200ms transition）
+- [x] 8.4 アイコンサイズを 80px → 56px に縮小、上部に丸い `surface-alt` チップ背景を追加
+- [x] 8.5 `secondary` prop（中央カード強調）の挙動を「primary 反転（背景 primary・文字 white）+ elevation 強化」に変更
+- [x] 8.6 `prefers-reduced-motion: reduce` で transition 無効化
 
 ## 9. ConceptSection の調整
 

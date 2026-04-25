@@ -1,9 +1,12 @@
 <template>
   <div class="vcard" :class="{ 'vcard--secondary': secondary }">
-    <div class="vcard-icon">
-      <v-icon :icon="icon" size="80" color="primary"></v-icon>
+    <div class="vcard-icon-chip">
+      <v-icon
+        :icon="icon"
+        size="32"
+        :color="secondary ? 'white' : 'primary'"
+      />
     </div>
-    <div class="vcard-divider"></div>
     <div class="vcard-body">
       <p class="vcard-title">{{ title }}</p>
       <p class="vcard-text" v-html="htmlText(text)"></p>
@@ -31,38 +34,53 @@ export default {
 
 <style scoped>
 .vcard {
-  background: #ECF2F3;
-  border-left: 10px solid rgb(var(--v-theme-secondary));
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
+  align-items: center;
   height: 100%;
+  padding: 32px 20px 28px;
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
 }
 
-/* 中央カードは濃い navy ボーダー */
+.vcard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* 中央カードは primary 反転で強調 */
 .vcard--secondary {
-  border-left-color: rgb(var(--v-theme-primary));
+  background: rgb(var(--v-theme-primary));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
 }
 
-.vcard-icon {
+.vcard--secondary:hover {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+}
+
+.vcard-icon-chip {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgb(var(--v-theme-surface-alt));
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 36px 24px 28px;
+  margin-bottom: 16px;
 }
 
-.vcard-divider {
-  height: 2px;
-  background: rgb(var(--v-theme-primary));
-  margin: 0 16px;
+.vcard--secondary .vcard-icon-chip {
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .vcard-body {
-  padding: 20px 20px 28px;
   text-align: center;
 }
 
 .vcard-title {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: rgb(var(--v-theme-primary));
   margin: 0 0 10px;
@@ -70,9 +88,23 @@ export default {
 }
 
 .vcard-text {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: rgb(var(--v-theme-primary));
   margin: 0;
   line-height: 1.8;
+}
+
+.vcard--secondary .vcard-title,
+.vcard--secondary .vcard-text {
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vcard {
+    transition: none;
+  }
+  .vcard:hover {
+    transform: none;
+  }
 }
 </style>
