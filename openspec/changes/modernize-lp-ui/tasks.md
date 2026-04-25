@@ -21,10 +21,10 @@
 
 ## 3. shared/ui/XIcon コンポーネント新規作成
 
-- [ ] 3.1 `apps/lp/src/shared/ui/XIcon.vue` を作成（公式 X ロゴの inline SVG）
+- [x] 3.1 `apps/lp/src/shared/ui/XIcon.vue` を作成（公式 X ロゴの inline SVG）
   - props: `size`(Number, default 24), `color`(String, default 'currentColor')
   - `aria-hidden="true"` を付与
-- [ ] 3.2 `apps/lp/src/shared/ui/XIcon.spec.js` を作成
+- [x] 3.2 `apps/lp/src/shared/ui/XIcon.spec.js` を作成（5テスト GREEN）
   - props.size が svg width/height にバインド
   - props.color が path fill にバインド
 
