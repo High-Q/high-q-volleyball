@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 41 / 57 タスク
+- 完了: 44 / 57 タスク
 
 ---
 
@@ -111,9 +111,9 @@
 
 ## 14. ハードコード撲滅検証
 
-- [ ] 14.1 `grep -rn "#F5F8FA\|#6A96A4\|#182F43\|#85BBCC" apps/lp/src/ | grep -v plugins/vuetify.js` が 0 件
-- [ ] 14.2 `grep -rn "mdi-twitter" apps/lp/src/` が 0 件
-- [ ] 14.3 残存していたら個別に置換し、再度 grep で 0 件確認
+- [x] 14.1 `grep -rn "#F5F8FA\|#6A96A4\|#182F43\|#85BBCC" apps/lp/src/ | grep -v plugins/vuetify.js` が 0 件
+- [x] 14.2 `grep -rn "mdi-twitter" apps/lp/src/` が 0 件
+- [x] 14.3 残存していたら個別に置換し、再度 grep で 0 件確認（hero overlay の rgba(24,47,67) を rgba(var(--v-theme-primary)) に置換）
 
 ## 15. アクセシビリティ確認
 

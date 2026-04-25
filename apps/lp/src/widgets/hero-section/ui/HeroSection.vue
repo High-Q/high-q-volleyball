@@ -81,7 +81,7 @@ export default {
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(24, 47, 67, 0.58);
+  background: rgba(var(--v-theme-primary), 0.58);
 }
 
 /* テキストはぼかしの上に表示 */
