@@ -1,5 +1,10 @@
 <template>
-  <section class="event-section">
+  <section
+    ref="el"
+    id="event"
+    class="event-section"
+    :class="{ 'is-visible': isVisible }"
+  >
     <v-container>
       <div class="section-header">
         <h2 class="section-title">EVENT</h2>
@@ -65,13 +70,15 @@
 <script>
 import { useEventCalendar } from '../model/useEventCalendar'
 import EventDetailDialog from './EventDetailDialog.vue'
+import { useFadeInOnScroll } from '@shared/lib/useFadeInOnScroll'
 
 export default {
   name: 'EventCalendar',
   components: { EventDetailDialog },
   setup() {
     const { calendarEvents, isPending, isError, isEmpty } = useEventCalendar()
-    return { calendarEvents, isPending, isError, isEmpty }
+    const { el, isVisible } = useFadeInOnScroll()
+    return { calendarEvents, isPending, isError, isEmpty, el, isVisible }
   },
   data() {
     return {
@@ -115,6 +122,22 @@ export default {
 .event-section {
   padding: 56px 0;
   background: #fff;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+
+.event-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-section {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 .section-header {

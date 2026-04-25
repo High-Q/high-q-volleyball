@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 32 / 57 タスク
+- 完了: 34 / 57 タスク
 
 ---
 
@@ -90,8 +90,8 @@
 
 ## 11. EventCalendar セクションの ID 付与とフェードイン
 
-- [ ] 11.1 `apps/lp/src/widgets/event-calendar/ui/EventCalendar.vue` の `<section>` に `id="event"` を追加
-- [ ] 11.2 `useFadeInOnScroll` を組み込み・フェードイン CSS を追加（既存ロジックを壊さないよう wrapper で対応）
+- [x] 11.1 `apps/lp/src/widgets/event-calendar/ui/EventCalendar.vue` の `<section>` に `id="event"` を追加
+- [x] 11.2 `useFadeInOnScroll` を組み込み・フェードイン CSS を追加（既存ロジックを壊さないよう wrapper で対応）
 
 ## 12. Footer の3カラム化
 
