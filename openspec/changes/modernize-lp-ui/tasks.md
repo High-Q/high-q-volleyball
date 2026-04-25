@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 86 / 94 タスク（T-21 3件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
+- 完了: 90 / 98 タスク（T-22 4件追加 / 残: 15.3/15.5/16.2/16.3/16.5/16.6 = 手動確認 5件 + PR 作成 1件）
 
 ---
 
@@ -219,6 +219,17 @@
 - [x] 21.1 App.vue: `html { overflow-y: scroll }` を `scrollbar-gutter: stable` に置換 + `html, body { overflow-x: hidden }` 追加
 - [x] 21.2 HeaderLine: `.header` に `width: 100%; max-width: 100vw; box-sizing: border-box` を明示してガード
 - [x] 21.3 build 成功確認
+
+---
+
+## 22. ハンバーガーボタンの右見切れ修正（追加）
+
+> **背景**: T-21 で header の幅は viewport 内に収まったが、ハンバーガーボタンが右に見切れる事象が残存。原因は `.header-inner` の右 padding が 8px しかなく、v-btn icon のデフォルトサイズ（48x48）が padding-right を超えて溢れていた。
+
+- [x] 22.1 HeaderLine: `.header-inner` の padding を `16px 8px` → 左右対称 `16px` に変更
+- [x] 22.2 HeaderLine: `.header-inner` に `width: 100%; box-sizing: border-box` を明示
+- [x] 22.3 HeaderLine: ハンバーガー v-btn に `density="comfortable"` を追加してサイズ縮小（48→44px 程度）
+- [x] 22.4 build 成功確認
 
 ---
 

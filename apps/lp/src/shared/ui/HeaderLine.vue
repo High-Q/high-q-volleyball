@@ -16,6 +16,7 @@
             icon="mdi-menu"
             variant="text"
             color="white"
+            density="comfortable"
             class="d-md-none header-menu-btn"
             aria-label="ナビゲーションを開く"
           />
@@ -78,8 +79,10 @@ export default {
   display: flex;
   align-items: center;
   height: 100%;
-  padding-inline: 16px 8px;
+  width: 100%;
+  padding-inline: 16px;
   gap: 16px;
+  box-sizing: border-box;
   /* 子要素のはみ出しを防止（特に xs で nav-btn と brand の衝突対策） */
   overflow: hidden;
 }
