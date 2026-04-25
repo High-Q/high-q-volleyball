@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 38 / 57 タスク
+- 完了: 41 / 57 タスク
 
 ---
 
@@ -105,9 +105,9 @@
 
 ## 13. HomePage の組み立て
 
-- [ ] 13.1 `apps/lp/src/pages/home/ui/HomePage.vue` の template に `<ActivitiesSection />` を Concept と Event の間に追加
-- [ ] 13.2 `import { ActivitiesSection } from '@widgets/activities-section'` を script に追加し `components` に登録
-- [ ] 13.3 マウント順: Hero → Concept → Activities → Event の順序で表示されることを確認
+- [x] 13.1 `apps/lp/src/pages/home/ui/HomePage.vue` の template に `<ActivitiesSection />` を Concept と Event の間に追加
+- [x] 13.2 `import { ActivitiesSection } from '@widgets/activities-section'` を script に追加し `components` に登録
+- [x] 13.3 マウント順: Hero → Concept → Activities → Event の順序で表示されることを確認
 
 ## 14. ハードコード撲滅検証
 
