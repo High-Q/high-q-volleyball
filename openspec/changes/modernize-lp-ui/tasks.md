@@ -156,7 +156,7 @@
 - [x] 17.8 HeaderLine をフルブリード化（v-app-bar の左右 padding 0）
 - [x] 17.9 FooterLine の SNS カラムを削除、ブランド + ナビの 2 カラム構成に変更（XIcon import 削除）
 - [x] 17.10 ActivitiesSection の X ボタンを「メンバー受付窓口は準備中です」テキストに置換（XIcon import 削除）
-- [ ] 17.11 セクション左右余白の差を v-container の使い方で統一
+- [x] 17.11 セクション左右余白の差を v-container の使い方で統一（ActivitiesSection の v-row に no-gutters を付与し、Vuetify v-row の negative margin による左右ズレを解消）
 - [ ] 17.12 `grep -rn "XIcon" apps/lp/src/` で残存箇所を確認（XIcon.vue と spec のみ残っていれば OK）
 - [ ] 17.13 vitest run + pnpm build:lp + grep 検証で最終確認、PR 作成
 

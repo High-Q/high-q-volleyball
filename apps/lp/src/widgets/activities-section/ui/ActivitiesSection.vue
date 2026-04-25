@@ -2,8 +2,8 @@
   <section ref="el" id="activities" class="activities-section bg-surface-alt" :class="{ 'is-visible': isVisible }">
     <v-container>
       <SectionDivider title="CONTENT" />
-      <v-row class="mt-4">
-        <v-col cols="12" md="6">
+      <v-row no-gutters class="mt-4 activities-row">
+        <v-col cols="12" md="6" class="activities-col">
           <p class="text-body-1">
             月に1回程度東京都内にてコートを借りて練習します！
             <br />
@@ -17,7 +17,7 @@
             </p>
           </div>
         </v-col>
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="6" class="activities-col">
           <v-img
             src="/chandan-chaurasia-tAcoHIvCtwM-unsplash.jpg"
             rounded="lg"
@@ -52,6 +52,13 @@ export default {
   opacity: 0;
   transform: translateY(24px);
   transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+
+/* md+ では2カラム間に gap を確保（no-gutters の代替） */
+@media (min-width: 960px) {
+  .activities-col + .activities-col {
+    padding-left: 24px;
+  }
 }
 
 .contact-notice {
