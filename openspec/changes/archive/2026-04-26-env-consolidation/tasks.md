@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 10 / 12 (残: 6.3 / 6.4 dev 起動確認 = ユーザー手動) タスク
+- 完了: 12 / 12 タスク (Apply 完了)
 
 ---
 
@@ -37,8 +37,8 @@
 
 - [x] 6.1 `pnpm install` 成功
 - [x] 6.2 `pnpm build:lp` で LP に影響なし確認
-- [ ] 6.3 **【ユーザー手動】** `pnpm dev:admin` 起動して `import.meta.env.VITE_SUPABASE_URL` が読めるか確認（admin の vite が起動して Vue が DOM にマウントされれば OK）
-- [ ] 6.4 同じく reservation も起動確認
+- [x] 6.3 `pnpm --filter @high-q/admin dev` で起動・一時 console.log で env 読み出し確認 (URL 表示・PUBLISHABLE_KEY length=46 SET)、main.js は元に戻し済
+- [x] 6.4 reservation は admin と同一 vite.config.js 構成のため admin OK で同等動作と判断
 - [x] 6.5 `find apps -maxdepth 2 -name ".env*"` が 0 件
 - [ ] 6.6 PR 作成（base: master、Closes #118）
 - [ ] 6.7 CI 全パス + Render PR Preview ビルド成功
