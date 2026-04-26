@@ -1,11 +1,13 @@
 # Render Blueprint 定義 — High Q LP
 # このファイルが Render Dashboard 設定の **真実の源** (Blueprint mode)。
 # Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。
-# Blueprint Instance を作成すると Auto-sync で本ファイルの変更が即反映される。
+# Blueprint Instance の Auto-sync で本ファイルの変更が即反映される。
 
 services:
   - type: web
-    name: high-q-lp
+    # name は既存サービスと一致させること（Blueprint は name で既存 service を識別する）。
+    # ここを変えると新規サービスが二重作成される（#125 で経験済）。
+    name: high-q-volleyball
     runtime: static
     rootDir: apps/lp
     branch: master
@@ -21,10 +23,12 @@ services:
     staticPublishPath: dist
 
     # 自動デプロイ設定:
-    # - master push で本番自動再ビルド
-    # - PR push で Preview 環境を自動起動
-    autoDeploy: true
-    pullRequestPreviewsEnabled: true
+    # - autoDeployTrigger: checksPass で「CI 通過後にデプロイ」を実現
+    #   旧フィールド autoDeploy は非推奨、後継 autoDeployTrigger を使う
+    # - previews.generation: automatic で全 PR に Preview 環境を自動起動
+    autoDeployTrigger: checksPass
+    previews:
+      generation: automatic
 
     envVars:
       - key: NODE_VERSION
