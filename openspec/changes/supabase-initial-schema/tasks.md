@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 5 / 31 タスク（Task 1 セットアップ完了）
+- 完了: 17 / 31 タスク（Task 1 + Task 3 完了）
 
 ---
 
@@ -23,18 +23,18 @@
 
 ## 3. SQL Migration ファイル作成
 
-- [ ] 3.1 `supabase/migrations/` ディレクトリを新規作成
-- [ ] 3.2 `supabase/migrations/<YYYYMMDDHHMMSS>_init_high_q.sql` を作成
-- [ ] 3.3 `set_updated_at()` トリガー関数を SQL に記述
-- [ ] 3.4 `is_admin()` 関数（SECURITY DEFINER）を SQL に記述
-- [ ] 3.5 events テーブル定義（列・CHECK 制約・インデックス）
-- [ ] 3.6 members テーブル定義（auth.users と 1:1 紐付け、`on_auth_user_created` トリガー）
-- [ ] 3.7 reservations テーブル定義（FK / UNIQUE / インデックス）
-- [ ] 3.8 各テーブルに `ENABLE ROW LEVEL SECURITY`
-- [ ] 3.9 events の RLS ポリシー（公開 SELECT / admin のみ書き込み）
-- [ ] 3.10 members の RLS ポリシー（自分の行のみ SELECT/UPDATE、role 自己昇格禁止）
-- [ ] 3.11 reservations の RLS ポリシー（自分の予約のみ + admin 全件）
-- [ ] 3.12 各テーブルの `BEFORE UPDATE` トリガーを `set_updated_at()` で適用
+- [x] 3.1 `supabase/migrations/` ディレクトリを新規作成
+- [x] 3.2 `supabase/migrations/<YYYYMMDDHHMMSS>_init_high_q.sql` を作成
+- [x] 3.3 `set_updated_at()` トリガー関数を SQL に記述
+- [x] 3.4 `is_admin()` 関数（SECURITY DEFINER）を SQL に記述
+- [x] 3.5 events テーブル定義（列・CHECK 制約・インデックス）
+- [x] 3.6 members テーブル定義（auth.users と 1:1 紐付け、`on_auth_user_created` トリガー）
+- [x] 3.7 reservations テーブル定義（FK / UNIQUE / インデックス）
+- [x] 3.8 各テーブルに `ENABLE ROW LEVEL SECURITY`
+- [x] 3.9 events の RLS ポリシー（公開 SELECT / admin のみ書き込み）
+- [x] 3.10 members の RLS ポリシー（自分の行のみ SELECT/UPDATE、role 自己昇格禁止）
+- [x] 3.11 reservations の RLS ポリシー（自分の予約のみ + admin 全件）
+- [x] 3.12 各テーブルの `BEFORE UPDATE` トリガーを `set_updated_at()` で適用
 
 ## 4. Migration 適用（Phase 1 は手動）
 
