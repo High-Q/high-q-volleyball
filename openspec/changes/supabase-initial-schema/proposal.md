@@ -15,7 +15,7 @@ Phase 1 リリース目標 2026-05-08 に間に合わせるため、本 change �
 - **NEW** SQL Migration ファイルをリポジトリに格納（`supabase/migrations/` ディレクトリ）
 - **NEW** Branded Types で `EventId` / `MemberId` / `ReservationId` を定義、生の string を直接使用させない
 - **NEW** Supabase client を `packages/shared/src/api/` に配置するクロスアプリ shared パッケージの初期化
-- **NEW** 環境変数管理方針: `SUPABASE_URL` と `SUPABASE_ANON_KEY` は Render 各サービスの env vars + ローカル `.env.local`（git 管理外）。`service_role` キーはサーバー用途でのみ使用（Phase 1 では未使用、admin 専用 server-side が必要になった時点で導入）
+- **NEW** 環境変数管理方針: `VITE_SUPABASE_URL` と `VITE_SUPABASE_PUBLISHABLE_KEY` は Render 各サービスの env vars + ローカル `.env.local`（git 管理外）。Supabase の **新形式 API キー（Publishable key）** を採用（旧 anon key と機能同等、命名がより明確）。`secret` key（旧 service_role 相当）はサーバー用途でのみ使用（Phase 1 では未使用、admin 専用 server-side が必要になった時点で導入）
 - **NEW** **画像・ストレージ・本人確認書類は Phase 1 では扱わない**（Issue #92 priority:medium で別途対応）
 - **NEW** Phase 1 では LP 既存の AWS API Gateway + DynamoDB は触らない（移行は別 change で）
 
@@ -40,7 +40,7 @@ Phase 1 リリース目標 2026-05-08 に間に合わせるため、本 change �
 - `apps/reservation/`（未開発）: 同上
 - `supabase/migrations/`（新規ディレクトリ）: SQL マイグレーションファイル
 - `.gitignore`: `.env.local` の除外を追加
-- Render 設定: admin / reservation サービス追加時に `SUPABASE_URL` / `SUPABASE_ANON_KEY` の env vars を設定
+- Render 設定: admin / reservation サービス追加時に `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` の env vars を設定
 
 ### 依存関係
 

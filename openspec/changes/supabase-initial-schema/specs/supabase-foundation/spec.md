@@ -12,11 +12,11 @@
 
 ### Requirement: 接続情報の環境変数管理
 
-システムはクライアントから利用する接続情報（URL / anon key）を環境変数経由でのみ取得する。`service_role` キーをクライアントコードで使用してはならない。
+システムはクライアントから利用する接続情報（URL / Publishable key）を環境変数経由でのみ取得する。Supabase 新形式 API キー（Publishable / Secret）を採用し、`secret` キー（旧 service_role 相当）をクライアントコードで使用してはならない。
 
-#### Scenario: フロントエンドで anon key を使用
+#### Scenario: フロントエンドで Publishable key を使用
 - **WHEN** apps/admin または apps/reservation が Supabase に接続する
-- **THEN** `SUPABASE_URL` と `SUPABASE_ANON_KEY` を環境変数（Render env vars / ローカル `.env.local`）から読み込み、`service_role` キーは参照しない
+- **THEN** `VITE_SUPABASE_URL` と `VITE_SUPABASE_PUBLISHABLE_KEY` を環境変数（Render env vars / ローカル `.env.local`）から読み込み、`secret` キーは参照しない
 
 #### Scenario: ローカル開発の env ファイル
 - **WHEN** 開発者がローカルで起動する

@@ -81,10 +81,10 @@ High Q プロジェクトは LP（稼働中・AWS API Gateway + DynamoDB）に�
 **代替**: 1Password / dotenv vault 等の secret manager
 **理由**: 個人開発・無料枠縛り。secret manager 導入は Phase 2 以降。`.env.example` をリポジトリに置き、必要な変数名のみ共有（値は空）。
 
-### D12. anon key の Web 公開を許容
-**選択**: anon key は HTML / JS バンドルに含めて配布
-**代替**: サーバー経由の proxy 化
-**理由**: anon key は RLS 通過のみを許可するキー。RLS が正しく設定されていれば公開しても安全（Supabase 公式推奨パターン）。proxy は Phase 1 規模では over-engineering。
+### D12. Publishable key の Web 公開を許容（新形式 API キー採用）
+**選択**: Supabase 新形式 API キーを採用し、Publishable key を HTML / JS バンドルに含めて配布。Vite の慣習に従い `VITE_SUPABASE_PUBLISHABLE_KEY` として公開
+**代替**: 旧形式 anon key、サーバー経由の proxy 化
+**理由**: Publishable key は RLS 通過のみを許可するキー（旧 anon key と機能同等、命名がより明確）。RLS が正しく設定されていれば公開しても安全（Supabase 公式推奨パターン）。新規プロジェクトには Publishable / Secret 形式が推奨されており、混乱を避けるため新形式に統一。proxy は Phase 1 規模では over-engineering。
 
 ## Risks / Trade-offs
 
@@ -111,7 +111,7 @@ High Q プロジェクトは LP（稼働中・AWS API Gateway + DynamoDB）に�
 4. `pg_class.relrowsecurity` を SELECT で全テーブル true 確認
 5. `packages/shared/` の Supabase client 初期化と Branded Types を実装
 6. 簡単な smoke test（INSERT → SELECT）を Vitest で書いて GREEN 確認
-7. Render env vars に `SUPABASE_URL` / `SUPABASE_ANON_KEY` を設定（admin / reservation 着手時に再度確認）
+7. Render env vars に `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` を設定（admin / reservation 着手時に再度確認）
 
 ### ロールバック
 

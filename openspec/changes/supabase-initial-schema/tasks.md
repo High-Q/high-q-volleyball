@@ -4,22 +4,22 @@
 
 ## 進捗
 
-- 完了: 17 / 31 タスク（Task 1 + Task 3 完了）
+- 完了: 32 / 42 タスク（Task 1 + 2 + 3 + 4 + 5 + 6 + 7.1 完了。残: Task 7.2-7.4 + Task 8）
 
 ---
 
 ## 1. セットアップ
 
 - [x] 1.1 Issue + ブランチ作成（`feature/82-supabase-initial-schema`）
-- [x] 1.2 `.env.example` を `apps/admin/`, `apps/reservation/` に用意（LP は Supabase 接続なしのためスキップ。Vite 規約に従い `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` の 2 変数）
+- [x] 1.2 `.env.example` を `apps/admin/`, `apps/reservation/` に用意（LP は Supabase 接続なしのためスキップ。Vite 規約に従い `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` の 2 変数。Apply 中に旧 `_ANON_KEY` から新 publishable key 形式へリネーム）
 - [x] 1.3 `.gitignore` の env 除外を確認（`.env.local` と `.env.*.local` が root に既に存在、サブディレクトリにも再帰適用される）
 - [x] 1.4 **【追加】** `.claude/settings.json` の deny ルールを精緻化（旧: `.env.*` で全テンプレートをブロック、新: `.env.local` / `.env.production` 等の秘密情報ファイルのみ deny。`.env.example` / `.env.template` 等のテンプレートは規制外）
 
 ## 2. Supabase プロジェクト作成（手動・1 度きり）
 
-- [ ] 2.1 Supabase Dashboard で `high-q` プロジェクトを ap-northeast-1 で新規作成
-- [ ] 2.2 プロジェクト URL / anon key を取得し、ローカル `.env.local` と Render env vars に設定（後者は admin / reservation 着手時に再確認）
-- [ ] 2.3 Supabase Auth → Providers で Email + Password を有効化
+- [x] 2.1 Supabase Dashboard で `high-q` プロジェクトを ap-northeast-1 で新規作成
+- [x] 2.2 プロジェクト URL / **Publishable key** を取得し、ローカル `.env.local` と Render env vars に設定（後者は admin / reservation 着手時に再確認）。`secret` key は Phase 1 では未取得
+- [x] 2.3 Supabase Auth → Providers で Email + Password を有効化
 
 ## 3. SQL Migration ファイル作成
 
@@ -38,24 +38,24 @@
 
 ## 4. Migration 適用（Phase 1 は手動）
 
-- [ ] 4.1 Supabase Dashboard SQL Editor に migration の中身を貼り付けて RUN
-- [ ] 4.2 `pg_class.relrowsecurity` を SELECT で全テーブル true 確認
-- [ ] 4.3 各 RLS ポリシーが想定通り適用されているか `pg_policies` を SELECT で確認
+- [x] 4.1 Supabase Dashboard SQL Editor に migration の中身を貼り付けて RUN
+- [x] 4.2 `pg_class.relrowsecurity` を SELECT で全テーブル true 確認
+- [x] 4.3 各 RLS ポリシーが想定通り適用されているか `pg_policies` を SELECT で確認
 
 ## 5. packages/shared/ パッケージ初期化
 
-- [ ] 5.1 pnpm workspace で `packages/shared` を作成（`package.json` / `tsconfig.json`）
-- [ ] 5.2 `packages/shared/src/types/ids.ts` で Branded Types（EventId / MemberId / ReservationId）と Smart constructor 実装
-- [ ] 5.3 `packages/shared/src/types/result.ts` で `Result<T>` 型と `ok()` / `err()` ヘルパー実装
-- [ ] 5.4 `packages/shared/src/types/entities.ts` で events / members / reservations の TypeScript 型定義
-- [ ] 5.5 `packages/shared/src/api/supabase.ts` で `createClient` のラッパー（環境変数バリデーション込み）
-- [ ] 5.6 `packages/shared/src/index.ts` で Public API export
+- [x] 5.1 pnpm workspace で `packages/shared` を作成（`package.json` / `tsconfig.json`）
+- [x] 5.2 `packages/shared/src/types/ids.ts` で Branded Types（EventId / MemberId / ReservationId）と Smart constructor 実装
+- [x] 5.3 `packages/shared/src/types/result.ts` で `Result<T>` 型と `ok()` / `err()` ヘルパー実装
+- [x] 5.4 `packages/shared/src/types/entities.ts` で events / members / reservations の TypeScript 型定義
+- [x] 5.5 `packages/shared/src/api/supabase.ts` で `createClient` のラッパー（環境変数バリデーション込み）
+- [x] 5.6 `packages/shared/src/index.ts` で Public API export
 
 ## 6. テスト
 
-- [ ] 6.1 `packages/shared/src/types/ids.spec.ts` で Branded Types のスマートコンストラクタテスト（UUID バリデーション、誤入力で err）
-- [ ] 6.2 `packages/shared/src/types/result.spec.ts` で `Result` 型のヘルパーテスト
-- [ ] 6.3 Supabase client のスモークテスト（`supabase.from('events').select('count')` で接続確認、CI では skip 可）
+- [x] 6.1 `packages/shared/src/types/ids.spec.ts` で Branded Types のスマートコンストラクタテスト（UUID バリデーション、誤入力で err）
+- [x] 6.2 `packages/shared/src/types/result.spec.ts` で `Result` 型のヘルパーテスト
+- [x] 6.3 Supabase client のスモークテスト（`supabase.from('events').select('count')` で接続確認、CI では skip 可）
 
 ## 7. ドキュメント更新
 
