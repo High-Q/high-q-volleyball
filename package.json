@@ -8,7 +8,9 @@
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "engines": {
     "node": ">=22.0.0",
@@ -16,6 +18,12 @@
   },
   "packageManager": "pnpm@10.33.2",
   "pnpm": {
-    "onlyBuiltDependencies": ["core-js", "esbuild"]
+    "onlyBuiltDependencies": [
+      "core-js",
+      "esbuild"
+    ]
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
   }
 }
