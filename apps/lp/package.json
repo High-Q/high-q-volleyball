@@ -6,7 +6,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src"
+    "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@tanstack/vue-query": "^5.100.1",
@@ -22,6 +24,7 @@
     "eslint-plugin-vue": "^9.19.2",
     "eslint-plugin-vuetify": "^2.1.1",
     "jsdom": "^25.0.0",
+    "msw": "^2.6.0",
     "sass": "~1.69.6",
     "unplugin-vue-components": "^0.26.0",
     "vite-plugin-vuetify": "^2.0.1",
