@@ -4,6 +4,7 @@
     id="event"
     class="event-section"
     :class="{ 'is-visible': isVisible }"
+    data-testid="event-calendar"
   >
     <v-container>
       <SectionDivider title="EVENT" />

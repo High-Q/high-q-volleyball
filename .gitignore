@@ -2,6 +2,11 @@
 node_modules
 dist
 
+# Playwright
+playwright-report/
+test-results/
+/playwright/.cache/
+
 
 # local env files
 .env.local
