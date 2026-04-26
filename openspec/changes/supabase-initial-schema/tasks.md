@@ -4,14 +4,14 @@
 
 ## 進捗
 
-- 完了: 4 / 31 タスク（7.1 論理設計を propose 段階で先行作成 / Task 1.4 追加で 31 件に）
+- 完了: 5 / 31 タスク（Task 1 セットアップ完了）
 
 ---
 
 ## 1. セットアップ
 
 - [x] 1.1 Issue + ブランチ作成（`feature/82-supabase-initial-schema`）
-- [ ] 1.2 `.env.example` を `apps/admin/`, `apps/reservation/` に用意（LP は Supabase 接続なしのためスキップ。Vite 規約に従い `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` の 2 変数）
+- [x] 1.2 `.env.example` を `apps/admin/`, `apps/reservation/` に用意（LP は Supabase 接続なしのためスキップ。Vite 規約に従い `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` の 2 変数）
 - [x] 1.3 `.gitignore` の env 除外を確認（`.env.local` と `.env.*.local` が root に既に存在、サブディレクトリにも再帰適用される）
 - [x] 1.4 **【追加】** `.claude/settings.json` の deny ルールを精緻化（旧: `.env.*` で全テンプレートをブロック、新: `.env.local` / `.env.production` 等の秘密情報ファイルのみ deny。`.env.example` / `.env.template` 等のテンプレートは規制外）
 
