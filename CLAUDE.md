@@ -124,7 +124,9 @@ app → pages → widgets → features → entities → shared
 | `apps/admin` | shadcn/ui + Tailwind |
 | `apps/reservation` | shadcn/ui + Tailwind |
 
-Design フェーズで必ずチェック: 影響レイヤー / ビジネス異常系列挙 + UI フィードバック / Loading・Empty・Error・Success 4 状態 / モバイルファースト / アクセシビリティ AA / デザイントークン使用（マジックナンバー禁止）。
+Design フェーズで必ずチェック: 影響レイヤー / ビジネス異常系列挙 + UI フィードバック / Loading・Empty・Error・Success 4 状態 / モバイルファースト / アクセシビリティ AA / デザイントークン使用（マジックナンバー禁止）/ **E2E ハッピーパス試験の対象シナリオ列挙**。
+
+新規 feature の Apply に E2E を含める際、**機能あたり 1〜2 件まで**（happy path + 主要 edge case）を上限とする。詳細バリエーションは component test に押し下げる。E2E が肥大化していると感じたら、追加でなく既存テストの component test 化を検討する。詳細は `docs/07-テスト/01-テスト戦略・方針.md` の「E2E スケーラビリティ運用ルール」を参照。
 
 詳細チェックリストは `docs/05-インターフェース/01-UI設計方針.md`。
 
