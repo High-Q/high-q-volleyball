@@ -14,46 +14,86 @@
 
 ## Render デプロイ設定（render.yaml）
 
+リポジトリルートの `render.yaml` が **真実の源（Blueprint mode）**。Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。
+
 ```yaml
 services:
   - type: web
-    name: high-q-lp
-    env: static
+    name: high-q-volleyball
+    runtime: static
     rootDir: apps/lp
-    buildCommand: pnpm install && pnpm build
-    staticPublishPath: dist
     branch: master
-    pullRequestPreviewsEnabled: true
+    buildCommand: corepack enable && pnpm install --prod --frozen-lockfile --ignore-scripts && pnpm build
+    staticPublishPath: dist
+    autoDeployTrigger: checksPass
+    previews:
+      generation: automatic
     envVars:
       - key: NODE_VERSION
         value: "22"
-      - key: NPM_CONFIG_IGNORE_SCRIPTS
-        value: "true"
 ```
 
 ### Render 運用上の注意
 
-- `branch: master` → master へのマージで自動デプロイが発火
-- `pullRequestPreviewsEnabled: true` → PR ごとにプレビュー URL が自動生成される
-- `NPM_CONFIG_IGNORE_SCRIPTS=true` → `prepare: husky` 等の lifecycle script を無効化（axios@1.15.2 対策）
-- ビルドが3回連続失敗した場合は CLAUDE.md の「アンチループデプロイ原則」に従う
+- `branch: master` → master 向けの commit が `autoDeployTrigger` に従って評価される
+- `autoDeployTrigger: checksPass` → **GitHub Actions CI がすべて緑になった時のみ deploy が起動**（CI が落ちている間は deploy 抑止）。`commit` トリガー（コミット即デプロイ）は #128 で暫定採用していたが、#80 の CI 構築完了で `checksPass` に切り戻し済み
+- `previews.generation: automatic` → PR ごとにプレビュー URL が自動生成される
+- buildCommand の `--ignore-scripts` → `prepare`/`postinstall` 等の lifecycle script を無効化（jsdom v25 の `convert-idl` 等が走らないことを保証）
+- buildCommand の `--prod` → root devDependencies は install しない（本番不要）。CI 側はフル install してテスト実行する想定
+- ビルドが3回連続失敗した場合は CLAUDE.md Pillar 5 の「デプロイ 3 回連続失敗時の対応」に従う
 
 ---
 
 ## CI/CD パイプライン（GitHub Actions）
 
-### 必須 CI チェック（PR 必須条件）
+### ワークフロー構成
 
-```yaml
-# .github/workflows/ci.yml （未実装・要設定）
-jobs:
-  lint:      # eslint
-  typecheck: # vue-tsc --noEmit
-  test:      # vitest run
-  build:     # vite build
+`.github/workflows/ci.yml` で `install` ジョブ完了後に **typecheck / lint / test / build の 4 ジョブを並列実行**する。
+
+```
+[install] (pnpm store キャッシュ + frozen-lockfile install)
+   ↓ needs
+   ├── [typecheck]  pnpm -r typecheck
+   ├── [lint]       pnpm --filter @high-q/lp lint
+   ├── [test]       pnpm -r test
+   └── [build]      pnpm -r build
 ```
 
-PR は上記すべてがパスするまでマージ不可とする（GitHub ブランチ保護で設定）。
+各 job は独立 runner で動き、1 つが失敗しても他はキャンセルされず最後まで走る（PR で問題を一度に把握できる）。Wall time の実測値は ~44 秒（install 17s + 並列 max 22s）。
+
+### トリガー
+
+| イベント | 対象 |
+|---|---|
+| `pull_request` (`opened` / `synchronize` / `reopened` / `ready_for_review`) | `master` 向け PR のみ |
+| `push` | `master` ブランチのみ（マージ後の sanity check） |
+
+`ready_for_review` を types に含めることで draft PR では CI が起動しない。
+
+### concurrency
+
+```yaml
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+```
+
+- 同一 PR への連続 push で古い run を自動キャンセル
+- master push は履歴に checks を残すためキャンセルしない
+
+### キャッシュ戦略
+
+- **pnpm store のみ** キャッシュ（key: `pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}` + restore-keys 部分一致 fallback）
+- Vite / Vitest / `tsbuildinfo` / ESLint キャッシュは投資対効果が薄いため不採用
+
+### Node / pnpm
+
+- Node: `22` 固定（GitHub-hosted runner の最新 22.x に追随）
+- pnpm: `corepack enable` で root `package.json` の `packageManager` 指定版を使用（Render と同方式）
+
+### 必須 CI チェック（PR 必須条件）
+
+PR は `typecheck` / `lint` / `test` / `build` の 4 ジョブすべてがパスするまでマージ不可とする（GitHub ブランチ保護で設定、後述）。
 
 ---
 
