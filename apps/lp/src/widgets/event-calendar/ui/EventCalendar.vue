@@ -45,6 +45,8 @@
 
         <!-- Success 状態 -->
         <v-sheet v-else height="440" rounded="b-xl">
+          <!-- TODO: Vuetify 3 で v-calendar は deprecated。Labs 版への移行を別 Issue で対応 -->
+          <!-- eslint-disable-next-line vuetify/no-deprecated-components -->
           <v-calendar
             v-model="viewDate"
             :events="calendarEvents"
