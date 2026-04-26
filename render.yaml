@@ -23,10 +23,12 @@ services:
     staticPublishPath: dist
 
     # 自動デプロイ設定:
-    # - autoDeployTrigger: checksPass で「CI 通過後にデプロイ」を実現
-    #   旧フィールド autoDeploy は非推奨、後継 autoDeployTrigger を使う
+    # - autoDeployTrigger: commit で commit ごとに即デプロイ
+    #   本来は checksPass にして CI 通過後にデプロイしたいが、Issue #80 の
+    #   GitHub Actions CI が未設定の間 checks が永久に走らず stuck するため
+    #   暫定で commit。#80 完了後に別 PR で checksPass に戻す（#128 参照）
     # - previews.generation: automatic で全 PR に Preview 環境を自動起動
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: commit
     previews:
       generation: automatic
 
