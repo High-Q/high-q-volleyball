@@ -23,12 +23,11 @@ services:
     staticPublishPath: dist
 
     # 自動デプロイ設定:
-    # - autoDeployTrigger: commit で commit ごとに即デプロイ
-    #   本来は checksPass にして CI 通過後にデプロイしたいが、Issue #80 の
-    #   GitHub Actions CI が未設定の間 checks が永久に走らず stuck するため
-    #   暫定で commit。#80 完了後に別 PR で checksPass に戻す（#128 参照）
+    # - autoDeployTrigger: checksPass で GitHub Actions CI が緑になった時のみデプロイ
+    #   #80 で GitHub Actions CI を構築完了したため、#128 の暫定対応（commit）から本来の挙動に戻した
+    #   CI が落ちている間は Render が deploy を起動しない安全側挙動になる
     # - previews.generation: automatic で全 PR に Preview 環境を自動起動
-    autoDeployTrigger: commit
+    autoDeployTrigger: checksPass
     previews:
       generation: automatic
 
