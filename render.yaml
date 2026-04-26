@@ -1,15 +1,31 @@
+# Render Blueprint 定義 — High Q LP
+# このファイルが Render Dashboard 設定の **真実の源** (Blueprint mode)。
+# Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。
+# Blueprint Instance を作成すると Auto-sync で本ファイルの変更が即反映される。
+
 services:
   - type: web
     name: high-q-lp
     runtime: static
     rootDir: apps/lp
-    # corepack enable で root package.json の packageManager (pnpm@10.33.2) を強制。
-    # これにより pnpm.onlyBuiltDependencies (core-js, esbuild のみホワイトリスト) が
-    # 機能し、jsdom などの build script (wireit) が誤って実行されない
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
-    staticPublishPath: dist
     branch: master
+
+    # ビルド方針:
+    # - corepack enable: root package.json の packageManager (pnpm@10.33.2) を強制
+    # - --prod: root package の devDependencies を install しない（本番不要）
+    # - --ignore-scripts: 全 lifecycle script (prepare/postinstall) を install 時にスキップ
+    #   jsdom v25 の prepare (convert-idl) や wireit 等の問題ある script が走らない事を保証
+    # - --frozen-lockfile: pnpm-lock.yaml に厳密従属
+    # CI (GitHub Actions) は別途フル install してテスト実行する想定。
+    buildCommand: corepack enable && pnpm install --prod --frozen-lockfile --ignore-scripts && pnpm build
+    staticPublishPath: dist
+
+    # 自動デプロイ設定:
+    # - master push で本番自動再ビルド
+    # - PR push で Preview 環境を自動起動
+    autoDeploy: true
     pullRequestPreviewsEnabled: true
+
     envVars:
       - key: NODE_VERSION
         value: "22"
