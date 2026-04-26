@@ -4,11 +4,11 @@ services:
     runtime: static
     rootDir: apps/lp
     # corepack enable で root package.json の packageManager (pnpm@10.33.2) を強制。
-    # --prod で devDependencies を install しない:
-    #   jsdom 等の prepare script (convert-idl / wireit 等) が install 時に走り
-    #   失敗する事象を根本回避（jsdom はテスト専用の devDep で本番ビルド不要）。
+    # --prod: root package の devDependencies をスキップ（workspace pkg には部分的）
+    # --ignore-scripts: 全 lifecycle script (prepare / postinstall 等) をスキップ
+    #   jsdom v25 の prepare (convert-idl) や wireit 等が走らない事を保証する
     # CI (GitHub Actions) は別途フル install してテスト実行する想定。
-    buildCommand: corepack enable && pnpm install --prod --frozen-lockfile && pnpm build
+    buildCommand: corepack enable && pnpm install --prod --frozen-lockfile --ignore-scripts && pnpm build
     staticPublishPath: dist
     branch: master
     pullRequestPreviewsEnabled: true
