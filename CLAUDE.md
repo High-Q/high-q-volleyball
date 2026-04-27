@@ -77,6 +77,19 @@ gh issue create --title "feat: ..." --label "enhancement"
 git checkout -b feature/<issue番号>-<kebab-case-summary>
 ```
 
+### Issue 新規作成時のルール（親 Epic 配置の提案必須）
+
+Issue を新規作成する前に、**必ず親 Issue (Epic) との関係を翔太郎くんに提案する**:
+
+1. 起点となる Issue / Epic がある場合は「**#xx の下に配置**」と明示提案
+2. 関連 Epic が複数 or 不明な場合は候補を提示して確認
+3. 完全に独立した新規タスクなら「親 Issue なし」と明示
+
+提案フォーマット例:
+> 「以下の Issue を作成します、配置: **Epic #75 の下**」
+
+承認後、Issue 本文の最終行に `Epic: #<親番号>` を記載する。これにより GitHub 上で Epic から後続 Issue を辿れる状態を保つ。後続 Issue を分離する際（例: スコープ縮小で別 Issue へ移譲する場合）は、元の Issue が紐付いていた Epic を踏襲することを基本方針とする。
+
 ### マージ後の後始末（必須）
 
 ```bash
