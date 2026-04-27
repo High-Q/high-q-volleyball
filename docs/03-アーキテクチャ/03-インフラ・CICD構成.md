@@ -2,45 +2,76 @@
 
 ## ホスティング構成
 
-| コンポーネント | サービス | プラン |
-|-------------|---------|--------|
-| LP | Render（Static Site） | 無料枠 |
-| Admin（予定） | Render（Static Site） | 無料枠 |
-| Reservation（予定） | Render（Static Site） | 無料枠 |
-| DB / Auth / Storage | Supabase | 無料枠 |
-| 既存イベントAPI | AWS API Gateway + DynamoDB | 既存 |
+| コンポーネント | サービス | Render サービス名 | 状態 | プラン |
+|-------------|---------|------------------|------|--------|
+| LP | Render（Static Site） | `high-q-volleyball` | デプロイ済み | 無料枠 |
+| Admin | Render（Static Site） | （未デプロイ） | 機能実装と認証ゲート完了後に追加 | 無料枠 |
+| Reservation | Render（Static Site） | （未デプロイ） | 機能実装と公開判断完了後に追加 | 無料枠 |
+| DB / Auth / Storage | Supabase | — | 利用中 | 無料枠 |
+| 既存イベントAPI | AWS API Gateway + DynamoDB | — | 既存 | 既存 |
+
+LP のみ Render Static Site としてデプロイ済み。admin / reservation は無料枠内で運用予定だが、**未完成アプリを商用公開しないガバナンス方針**（後述）により、現時点では `render.yaml` の `services` 配列に追加していない。雛形は `render.yaml` 末尾コメントに保持。
+
+### 未完成アプリの商用公開禁止ガバナンス
+
+Render Static Site はデフォルトで完全公開され、URL (`<service-name>.onrender.com`) を知っていれば誰でもアクセス可能。認証ゲートのない管理画面や未完成サイトを `services` 配列に追加することは情報漏洩・将来の攻撃面拡大に直結するため、**以下を満たさない限り `services` 配列への追加を禁止する**:
+
+1. **管理画面 (admin)**: Supabase Auth ゲート実装済み + 最低限の管理機能実装済み
+2. **公開サイト (reservation 等)**: 最低限の機能実装済み + 公開判断 OK
+3. **共通**: env var は `sync: false` で枠だけ定義（CLAUDE.md の `.env を読まない` ルール準拠）
+4. **共通**: SPA history routing 利用時は `routes` で `/* → /index.html` リライトを設定
+5. **共通**: PR レビューで「公開して問題ない状態か」を明示確認
 
 ---
 
 ## Render デプロイ設定（render.yaml）
 
-リポジトリルートの `render.yaml` が **真実の源（Blueprint mode）**。Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。
+リポジトリルートの `render.yaml` が **真実の源（Blueprint mode）**。Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。現状 LP のみ `services` 配列に定義し、admin / reservation は雛形コメントとして末尾に保持する。
 
-```yaml
-services:
-  - type: web
-    name: high-q-volleyball
-    runtime: static
-    rootDir: apps/lp
-    branch: master
-    buildCommand: corepack enable && pnpm install --prod --frozen-lockfile --ignore-scripts && pnpm build
-    staticPublishPath: dist
-    autoDeployTrigger: checksPass
-    previews:
-      generation: automatic
-    envVars:
-      - key: NODE_VERSION
-        value: "22"
-```
+### LP サービス定義（デプロイ済み）
+
+| 設定項目 | 値 | 役割 |
+|---|---|---|
+| `name` | `high-q-volleyball` | 既存サービス名。**不変厳守**（#125 二重作成回避） |
+| `runtime` | `static` | Static Site として配信（無料枠） |
+| `rootDir` | `apps/lp` | 該当ディレクトリ配下の変更のみが LP デプロイをトリガー |
+| `branch` | `master` | master 向け変更を deploy 対象とする |
+| `buildCommand` | `corepack enable && pnpm install --prod --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/lp build` | pnpm workspace のフィルタで LP のみビルド（#81 でモノレポ対応化） |
+| `staticPublishPath` | `dist` | Vite ビルド出力を公開 |
+| `autoDeployTrigger` | `checksPass` | GitHub Actions CI 緑のときだけ deploy 起動 |
+| `previews.generation` | `automatic` | 全 PR に Preview 環境を自動生成 |
+| `envVars[].NODE_VERSION` | `"22"` | ビルド時 Node バージョン統一 |
 
 ### Render 運用上の注意
 
+- **`name` 不変厳守**: Blueprint mode は `name` で既存サービスを識別する。変更すると新規サービスが二重作成される（#125 で経験済）
 - `branch: master` → master 向けの commit が `autoDeployTrigger` に従って評価される
 - `autoDeployTrigger: checksPass` → **GitHub Actions CI がすべて緑になった時のみ deploy が起動**（CI が落ちている間は deploy 抑止）。`commit` トリガー（コミット即デプロイ）は #128 で暫定採用していたが、#80 の CI 構築完了で `checksPass` に切り戻し済み
-- `previews.generation: automatic` → PR ごとにプレビュー URL が自動生成される
+- `previews.generation: automatic` → PR ごとに LP の Preview URL が自動生成される
+- `rootDir` による変更検知 → `apps/lp` 配下が変更されたときだけ deploy される
 - buildCommand の `--ignore-scripts` → `prepare`/`postinstall` 等の lifecycle script を無効化（jsdom v25 の `convert-idl` 等が走らないことを保証）
 - buildCommand の `--prod` → root devDependencies は install しない（本番不要）。CI 側はフル install してテスト実行する想定
+- buildCommand の `pnpm --filter @high-q/lp build` → モノレポ workspace 依存（`@high-q/shared` 等）も含めて LP のみビルド。将来 admin / reservation 追加時もこの形式を踏襲
 - ビルドが3回連続失敗した場合は CLAUDE.md Pillar 5 の「デプロイ 3 回連続失敗時の対応」に従う
+
+### 将来 admin / reservation を追加する際の手順
+
+機能実装と公開判断が完了した後、`render.yaml` 末尾の雛形コメントを参考に `services` 配列へ追加する。追加 PR では以下を必ず確認すること:
+
+1. **追加対象アプリの状態確認**:
+   - admin: Supabase Auth ゲート実装済み + 最低限の管理機能実装済み
+   - reservation: 最低限の予約フロー実装済み + 公開判断 OK
+2. **PR 作成前**: Render Dashboard で既存 LP の env var 一覧をスクリーンショット or テキスト退避
+3. **PR 内容**:
+   - `render.yaml` 末尾の雛形コメントから `services` 配列に該当ブロックを移動
+   - SPA history routing 利用時は `routes` で `/* → /index.html` リライト設定済みであることを確認
+   - Supabase 系 env var は `sync: false` で枠だけ定義（CLAUDE.md の `.env を読まない` ルール準拠）
+4. **PR Preview 確認**: 新サービス分の Preview URL が立ち上がることを確認
+5. **マージ後の Dashboard 操作**:
+   - Blueprint Instance Re-sync で新規サービスが作成されることを確認
+   - 新規サービスの Supabase 系 env var 値を Dashboard で設定
+   - 既存 LP の env var 値が保持されていることを確認
+   - 本番 URL が 200 を返すことを確認
 
 ---
 

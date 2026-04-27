@@ -1,9 +1,29 @@
-# Render Blueprint 定義 — High Q LP
+# Render Blueprint 定義 — High Q モノレポ
 # このファイルが Render Dashboard 設定の **真実の源** (Blueprint mode)。
 # Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。
 # Blueprint Instance の Auto-sync で本ファイルの変更が即反映される。
+#
+# 現状デプロイ対象: LP (apps/lp) のみ。
+# admin (apps/admin) / reservation (apps/reservation) は機能実装と認証ゲートが
+# 揃った後で services 配列に追加する（#81 で意図的に LP のみに限定。
+# 未完成サイトを商用環境に公開しないための判断）。
+#
+# 将来 admin / reservation を追加する際の雛形は本ファイル末尾のコメント参照。
+
+# 共通ビルド方針:
+# - corepack enable: root package.json の packageManager (pnpm@10.33.2) を強制
+# - --prod: root package の devDependencies を install しない（本番不要）
+# - --ignore-scripts: 全 lifecycle script (prepare/postinstall) を install 時にスキップ
+#   jsdom v25 の prepare (convert-idl) や wireit 等の問題ある script が走らない事を保証
+# - --frozen-lockfile: pnpm-lock.yaml に厳密従属
+# - pnpm --filter <pkg> build: モノレポ workspace の依存解決を尊重しつつ対象アプリのみビルド
+#   (#81 でモノレポ対応化。将来 admin/reservation 追加時もこの形式を踏襲)
+# CI (GitHub Actions) は別途フル install してテスト実行する想定。
 
 services:
+  # ============================================================
+  # LP (apps/lp) — Vuetify ベースの公開サイト
+  # ============================================================
   - type: web
     # name は既存サービスと一致させること（Blueprint は name で既存 service を識別する）。
     # ここを変えると新規サービスが二重作成される（#125 で経験済）。
@@ -12,14 +32,7 @@ services:
     rootDir: apps/lp
     branch: master
 
-    # ビルド方針:
-    # - corepack enable: root package.json の packageManager (pnpm@10.33.2) を強制
-    # - --prod: root package の devDependencies を install しない（本番不要）
-    # - --ignore-scripts: 全 lifecycle script (prepare/postinstall) を install 時にスキップ
-    #   jsdom v25 の prepare (convert-idl) や wireit 等の問題ある script が走らない事を保証
-    # - --frozen-lockfile: pnpm-lock.yaml に厳密従属
-    # CI (GitHub Actions) は別途フル install してテスト実行する想定。
-    buildCommand: corepack enable && pnpm install --prod --frozen-lockfile --ignore-scripts && pnpm build
+    buildCommand: corepack enable && pnpm install --prod --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/lp build
     staticPublishPath: dist
 
     # 自動デプロイ設定:
@@ -34,3 +47,41 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+
+# ============================================================
+# 将来追加用の雛形（admin / reservation）
+# ============================================================
+# 機能実装と認証ゲート完了後、以下のテンプレートを services 配列に追加する。
+# 未完成サイトを商用公開しないため、現状はコメントアウトで保持。
+#
+# 追加時のチェックリスト:
+# 1. 対象アプリで Supabase Auth ゲート（admin）または公開判断（reservation）完了
+# 2. apps/<app> に最低限の機能が実装済み（スキャフォールドではない）
+# 3. CLAUDE.md の「.env を読まない」ルール準拠で env var は sync: false で枠だけ定義
+# 4. SPA history routing 利用時は routes に /* → /index.html リライト追加
+# 5. PR レビューで「公開して問題ない状態か」を明示確認
+#
+# admin 雛形:
+#   - type: web
+#     name: high-q-admin
+#     runtime: static
+#     rootDir: apps/admin
+#     branch: master
+#     buildCommand: corepack enable && pnpm install --prod --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/admin build
+#     staticPublishPath: dist
+#     routes:
+#       - type: rewrite
+#         source: /*
+#         destination: /index.html
+#     autoDeployTrigger: checksPass
+#     previews:
+#       generation: automatic
+#     envVars:
+#       - key: NODE_VERSION
+#         value: "22"
+#       - key: VITE_SUPABASE_URL
+#         sync: false
+#       - key: VITE_SUPABASE_ANON_KEY
+#         sync: false
+#
+# reservation 雛形: 上記の name / rootDir / --filter を reservation に置換
