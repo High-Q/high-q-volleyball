@@ -22,20 +22,20 @@
 
 ## 4. PR 作成と CI 動作確認
 
-- [ ] 4.1 ブランチ `feature/136-playwright-e2e-ci-integration` を作成し、ここまでの変更をコミット
-- [ ] 4.2 PR を作成し、PR push トリガで `e2e` job が起動し `pnpm test:e2e:smoke` のみが実行されることを GitHub Actions のログで確認
-- [ ] 4.3 e2e job が typecheck / lint / test / build と並列起動していること（同時刻スタート）を Actions UI で確認
-- [ ] 4.4 ブラウザバイナリキャッシュが初回 miss → 2 回目 hit になることを確認（PR を 1 回更新 push して観察）
-- [ ] 4.5 試験的に smoke E2E をわざと失敗させ、`playwright-report/` と `test-results/` が artifact としてアップロードされ 14 日 retention であることを Actions UI で確認 → 確認後にロールバック commit
+- [x] 4.1 ブランチ `feature/136-playwright-e2e-ci-integration` を作成し、ここまでの変更をコミット
+- [x] 4.2 PR を作成し、PR push トリガで `e2e` job が起動し `pnpm test:e2e:smoke` のみが実行されることを GitHub Actions のログで確認（PR #143、run 24986793721 で確認）
+- [x] 4.3 e2e job が typecheck / lint / test / build と並列起動していること（同時刻スタート）を Actions UI で確認（install 09:18:17 完了 → 5 並列が 09:18:33-35 起動）
+- [x] 4.4 ブラウザバイナリキャッシュが初回 miss → 2 回目 hit になることを確認（PR を 1 回更新 push して観察）— 2回目 run 24986935931 で `Cache hit for: playwright-Linux-<hash>` 確認、3回目 run 24987036217 で e2e wall time 60s → 52s に短縮
+- [x] 4.5 試験的に smoke E2E をわざと失敗させ、`playwright-report/` と `test-results/` が artifact としてアップロードされ 14 日 retention であることを Actions UI で確認 → 確認後にロールバック commit（commit d43801e で意図的失敗、run 24986935931 で `name: playwright-report-24986935931`、`retention-days: 14` 確認、commit 603d47c でロールバック）
 
 ## 5. ハードリミット閾値の実測
 
-- [ ] 5.1 PR 上での `e2e` job の wall time を実測し、< 1 分目安に収まっていることを確認（実測値を PR 説明に記載）
-- [ ] 5.2 master push 想定の full 実行時間を、ローカル `pnpm test:e2e` の所要時間で代用測定し、< 5 分目安に収まっていることを記録（現状 smoke 1 件のみのため実質 smoke と同じ）
+- [x] 5.1 PR 上での `e2e` job の wall time を実測し、< 1 分目安に収まっていることを確認（実測値を PR 説明に記載）— run 24986793721: 60s（初回・cache miss）、run 24987036217: 52s（cache hit）。閾値 < 1 分は cache hit 後で達成、初回はギリ
+- [x] 5.2 master push 想定の full 実行時間を、ローカル `pnpm test:e2e` の所要時間で代用測定し、< 5 分目安に収まっていることを記録（現状 smoke 1 件のみのため実質 smoke と同じ）— ローカル `pnpm test:e2e` 実測 3.0s（test 単体）、CI 上で smoke と同じ ~52-60s の見込み、< 5 分閾値に十分余裕
 
 ## 6. 最終確認とレビュー準備
 
 - [x] 6.1 `pnpm -r typecheck && pnpm -r lint --if-present && pnpm -r test && pnpm -r build` をローカルで実行し、CI の他 4 job 相当が壊れていないことを確認
 - [x] 6.2 `pnpm test:e2e:smoke` と `pnpm test:e2e` をローカルで最終実行し、双方終了コード 0 を確認
 - [x] 6.3 `openspec validate playwright-e2e-ci-integration --strict` を実行し、spec / proposal / tasks の整合性を確認
-- [ ] 6.4 PR を ready for review にして翔太郎くんに承認依頼
+- [x] 6.4 PR を ready for review にして翔太郎くんに承認依頼（PR #143、draft でなく初手から open）
