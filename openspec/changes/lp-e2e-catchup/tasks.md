@@ -29,13 +29,13 @@
 
 ## 5. PR 作成と CI 動作確認
 
-- [ ] 5.1 ブランチ `feature/135-lp-e2e-catchup` を作成し commit
-- [ ] 5.2 PR 作成、PR push トリガで `e2e` job が `pnpm test:e2e:smoke`（smoke 1 件のみ）を実行し緑になることを GitHub Actions ログで確認
-- [ ] 5.3 e2e job の wall time が PR 上で < 1 分目安に収まり、smoke のみ実行のため #136 ship 時とほぼ同じ時間であることを確認
-- [ ] 5.4 master full の動作確認は本 PR merge 後の master push run で行うため、PR では smoke が変わらないことの確認に留める
+- [x] 5.1 ブランチ `feature/135-lp-e2e-catchup` を作成し commit（commit d220f91、PR #144）
+- [x] 5.2 PR 作成、PR push トリガで `e2e` job が `pnpm test:e2e:smoke`（smoke 1 件のみ）を実行し緑になることを GitHub Actions ログで確認（run 24992659668、`playwright test --grep @smoke` のログで smoke 1 件のみ実行を確認）
+- [x] 5.3 e2e job の wall time が PR 上で < 1 分目安に収まり、smoke のみ実行のため #136 ship 時とほぼ同じ時間であることを確認（e2e 50s、cache hit 後の安定値）
+- [x] 5.4 master full の動作確認は本 PR merge 後の master push run で行うため、PR では smoke が変わらないことの確認に留める
 
 ## 6. 最終確認とレビュー準備
 
-- [ ] 6.1 `openspec validate lp-e2e-catchup --strict` を実行し、proposal / design / specs / tasks の整合性を確認
-- [ ] 6.2 PR を ready for review にして翔太郎くんに承認依頼
-- [ ] 6.3 merge 後、master push トリガで `e2e` job が `pnpm test:e2e`（3 件）を実行し緑になることを GitHub Actions ログで確認（master full の実証）
+- [x] 6.1 `openspec validate lp-e2e-catchup --strict` を実行し、proposal / design / specs / tasks の整合性を確認（valid）
+- [x] 6.2 PR を ready for review にして翔太郎くんに承認依頼（PR #144、最初から open）
+- [ ] 6.3 merge 後、master push トリガで `e2e` job が `pnpm test:e2e`（3 件）を実行し緑になることを GitHub Actions ログで確認（master full の実証）— ship 後に確認
