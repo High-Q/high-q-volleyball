@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test.describe('LP smoke', () => {
+test.describe('LP smoke @smoke', () => {
   test('トップページが描画され主要セクションとカレンダー widget root が存在する', async ({ page }) => {
     await page.goto('/')
 
