@@ -8,7 +8,8 @@ test.describe('LP smoke @smoke', () => {
     await expect(page).toHaveTitle(/High Q/i)
 
     // 2. Hero セクション: ブランドタイトルが visible
-    await expect(page.locator('.hero-title')).toBeVisible()
+    // [TEMP] 4.5 verification: artifact upload on failure
+    await expect(page.locator('.hero-title-DELIBERATELY-BROKEN')).toBeVisible()
 
     // 3. Concept セクション (#concept) が DOM に存在する
     await expect(page.locator('section#concept')).toBeAttached()
