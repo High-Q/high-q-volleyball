@@ -79,7 +79,7 @@ Render Static Site はデフォルトで完全公開され、URL (`<service-name
 
 ### ワークフロー構成
 
-`.github/workflows/ci.yml` で `install` ジョブ完了後に **typecheck / lint / test / build の 4 ジョブを並列実行**する。
+`.github/workflows/ci.yml` で `install` ジョブ完了後に **typecheck / lint / test / build / e2e の 5 ジョブを並列実行**する。
 
 ```
 [install] (pnpm store キャッシュ + frozen-lockfile install)
@@ -87,10 +87,11 @@ Render Static Site はデフォルトで完全公開され、URL (`<service-name
    ├── [typecheck]  pnpm -r typecheck
    ├── [lint]       pnpm --filter @high-q/lp lint
    ├── [test]       pnpm -r test
-   └── [build]      pnpm -r build
+   ├── [build]      pnpm -r build
+   └── [e2e]        Playwright (PR=smoke / master=full、ブラウザ cache あり、失敗時 artifact upload)
 ```
 
-各 job は独立 runner で動き、1 つが失敗しても他はキャンセルされず最後まで走る（PR で問題を一度に把握できる）。Wall time の実測値は ~44 秒（install 17s + 並列 max 22s）。
+各 job は独立 runner で動き、1 つが失敗しても他はキャンセルされず最後まで走る（PR で問題を一度に把握できる）。Wall time の実測値は ~75 秒（install 13-17s + 並列 max ≈ e2e 40-60s、cache hit 後）。
 
 ### トリガー
 
@@ -114,7 +115,8 @@ concurrency:
 
 ### キャッシュ戦略
 
-- **pnpm store のみ** キャッシュ（key: `pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}` + restore-keys 部分一致 fallback）
+- **pnpm store** キャッシュ（key: `pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}` + restore-keys 部分一致 fallback）
+- **Playwright ブラウザバイナリ** キャッシュ（key: `playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}`、e2e job のみ、~250MB）
 - Vite / Vitest / `tsbuildinfo` / ESLint キャッシュは投資対効果が薄いため不採用
 
 ### Node / pnpm
@@ -124,7 +126,7 @@ concurrency:
 
 ### 必須 CI チェック（PR 必須条件）
 
-PR は `typecheck` / `lint` / `test` / `build` の 4 ジョブすべてがパスするまでマージ不可とする（GitHub ブランチ保護で設定、後述）。
+PR は `typecheck` / `lint` / `test` / `build` / `e2e` の 5 ジョブすべてがパスするまでマージ不可とする（GitHub ブランチ保護で設定、後述）。`e2e` は PR では smoke のみ（`@smoke` タグ）、master push ではフル E2E を実行する。
 
 ---
 
@@ -140,7 +142,7 @@ PR は `typecheck` / `lint` / `test` / `build` の 4 ジョブすべてがパス
 | Require approvals | 0（個人開発のため） | - |
 | Dismiss stale pull request approvals | ✅ ON | 再レビュー担保 |
 | Require status checks to pass | ✅ ON | CI 必須 |
-| Required status checks | `lint`, `typecheck`, `test`, `build` | 全チェック必須 |
+| Required status checks | `lint`, `typecheck`, `test`, `build`, `e2e` | 全チェック必須 |
 | Require branches to be up to date | ✅ ON | マージ前に最新化 |
 | Do not allow bypassing the above settings | ✅ ON | 管理者も例外なし |
 | Allow force pushes | ❌ OFF | 履歴破壊を防ぐ |

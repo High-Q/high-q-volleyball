@@ -162,3 +162,61 @@ jobs:
 
       - name: Build all workspaces
         run: pnpm -r build
+
+  e2e:
+    name: e2e
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Restore pnpm store cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install dependencies (offline if cache hit)
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright chromium (with-deps)
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Run Playwright (smoke only on PR)
+        if: github.event_name == 'pull_request'
+        run: pnpm test:e2e:smoke
+
+      - name: Run Playwright (full on master push)
+        if: github.event_name == 'push'
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+          if-no-files-found: ignore
