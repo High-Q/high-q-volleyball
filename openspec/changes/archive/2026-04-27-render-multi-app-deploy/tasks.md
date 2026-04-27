@@ -27,8 +27,8 @@
 
 ## 5. PR 作成と CI 確認
 
-- [ ] 5.1 変更をコミット（1 PR = 1 commit）
-- [ ] 5.2 push して PR 作成（`gh pr create`）。Issue #81 のスコープ縮小（LP モノレポ対応化 + 土台整備に限定）と、admin / reservation の実デプロイは後続 Issue へ分離する旨を PR 本文に明記
+- [x] 5.1 変更をコミット（1 PR = 1 commit）
+- [x] 5.2 push して PR 作成（`gh pr create`）。Issue #81 のスコープ縮小（LP モノレポ対応化 + 土台整備に限定）と、admin / reservation の実デプロイは後続 Issue へ分離する旨を PR 本文に明記
 - [ ] 5.3 GitHub Actions CI が全パスすることを確認
 - [ ] 5.4 PR の Render Preview URL（LP）が新ビルドコマンドで正常に立ち上がることを確認
 
