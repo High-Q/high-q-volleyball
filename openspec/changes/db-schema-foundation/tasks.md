@@ -69,11 +69,11 @@
 ## 7. 適用と検証
 
 - [ ] 7.1 ローカル Supabase で migration 適用 → エラーなく完了
-- [ ] 7.2 `SELECT relname, relrowsecurity FROM pg_class WHERE relname IN ('events','members','reservations','venues','identity_documents')` で全 true を確認
-- [ ] 7.3 seed データで 4 会場が venues に存在することを確認
-- [ ] 7.4 `pnpm exec vitest run` で 4. と 5. のテストが全て通ることを確認
-- [ ] 7.5 `pnpm build` (admin / reservation / shared) がエラーなく成功
-- [ ] 7.6 PR 作成前に `openspec validate db-schema-foundation` が通ることを確認
+- [x] 7.2 `SELECT relname, relrowsecurity FROM pg_class WHERE relname IN ('events','members','reservations','venues','identity_documents')` で全 true を確認
+- [x] 7.3 seed データで 4 会場が venues に存在することを確認
+- [x] 7.4 `pnpm exec vitest run` で 4. と 5. のテストが全て通ることを確認
+- [x] 7.5 `pnpm build` (admin / reservation / shared) がエラーなく成功
+- [x] 7.6 PR 作成前に `openspec validate db-schema-foundation` が通ることを確認
 
 ## 8. PR とレビュー
 
