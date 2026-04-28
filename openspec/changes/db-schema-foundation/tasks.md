@@ -36,12 +36,12 @@
 
 ## 4. TypeScript エンティティ型と Branded Types
 
-- [ ] 4.1 `packages/shared/src/entities/venue/types.ts` 作成: `VenueId` Branded Type + `Venue` 行型 + `createVenueId()` smart constructor
-- [ ] 4.2 `packages/shared/src/entities/identity-document/types.ts` 作成: `IdentityDocumentId` + `IdentityDocument` + `DocumentType` enum + `createIdentityDocumentId()`
-- [ ] 4.3 既存 `Event` / `Member` / `Reservation` 型を拡張列に合わせて更新
-- [ ] 4.4 `packages/shared/src/entities/index.ts` で Public API export を更新
-- [ ] 4.5 Vitest: Branded Type の混入防止テスト (VenueId に EventId を渡したら型エラー)
-- [ ] 4.6 Vitest: smart constructor の UUID バリデーションテスト
+- [x] 4.1 `packages/shared/src/entities/venue/types.ts` 作成: `VenueId` Branded Type + `Venue` 行型 + `createVenueId()` smart constructor
+- [x] 4.2 `packages/shared/src/entities/identity-document/types.ts` 作成: `IdentityDocumentId` + `IdentityDocument` + `DocumentType` enum + `createIdentityDocumentId()`
+- [x] 4.3 既存 `Event` / `Member` / `Reservation` 型を拡張列に合わせて更新
+- [x] 4.4 `packages/shared/src/entities/index.ts` で Public API export を更新
+- [x] 4.5 Vitest: Branded Type の混入防止テスト (VenueId に EventId を渡したら型エラー)
+- [x] 4.6 Vitest: smart constructor の UUID バリデーションテスト
 
 ## 5. RLS 振る舞いテスト (Vitest + Supabase client)
 

@@ -5,7 +5,7 @@
  * 「予約 ID をイベント ID として誤って渡す」等のミスをコンパイル時に防ぐ。
  *
  * 関連: CLAUDE.md Pillar 2「Branded Types でドメイン識別子を表現」
- *       openspec/changes/supabase-initial-schema/specs/supabase-foundation/spec.md
+ *       openspec/changes/db-schema-foundation/specs/data-schema/spec.md
  */
 
 import { type Result, ok, err, appError } from "./result.js";
@@ -16,6 +16,8 @@ type Brand<T, B> = T & { readonly [brand]: B };
 export type EventId = Brand<string, "EventId">;
 export type MemberId = Brand<string, "MemberId">;
 export type ReservationId = Brand<string, "ReservationId">;
+export type VenueId = Brand<string, "VenueId">;
+export type IdentityDocumentId = Brand<string, "IdentityDocumentId">;
 
 /**
  * UUID v4 を含む UUID 全般を許容する正規表現。
@@ -51,6 +53,9 @@ export const createEventId = makeIdConstructor<EventId>("EventId");
 export const createMemberId = makeIdConstructor<MemberId>("MemberId");
 export const createReservationId =
   makeIdConstructor<ReservationId>("ReservationId");
+export const createVenueId = makeIdConstructor<VenueId>("VenueId");
+export const createIdentityDocumentId =
+  makeIdConstructor<IdentityDocumentId>("IdentityDocumentId");
 
 /**
  * 信頼できるソース（DB から取得直後など）から型変換するための **unsafe** ヘルパー。
@@ -60,3 +65,6 @@ export const unsafeEventId = (value: string): EventId => value as EventId;
 export const unsafeMemberId = (value: string): MemberId => value as MemberId;
 export const unsafeReservationId = (value: string): ReservationId =>
   value as ReservationId;
+export const unsafeVenueId = (value: string): VenueId => value as VenueId;
+export const unsafeIdentityDocumentId = (value: string): IdentityDocumentId =>
+  value as IdentityDocumentId;
