@@ -78,8 +78,8 @@
 ## 8. PR とレビュー
 
 - [x] 8.1 ブランチ `feature/147-db-schema-foundation` を作成
-- [ ] 8.2 タスク 1-6 を 1 タスク 1 コミットの粒度でコミット
-- [ ] 8.3 PR を起票 — タイトル `feat(db): #147 DB スキーマ確立: events / members / reservations 拡張 + venues / identity_documents 追加 + RLS`
-- [ ] 8.4 PR 本文に対象 5 テーブル・新規 RLS 一覧・マイナンバー方針変更の要点を記載
+- [x] 8.2 タスク 1-6 を 1 タスク 1 コミットの粒度でコミット
+- [x] 8.3 PR を起票 — タイトル `feat(db): #147 DB スキーマ確立: events / members / reservations 拡張 + venues / identity_documents 追加 + RLS`
+- [x] 8.4 PR 本文に対象 5 テーブル・新規 RLS 一覧・マイナンバー方針変更の要点を記載
 - [ ] 8.5 CI (lint / typecheck / vitest) 全パス確認
 - [ ] 8.6 翔太郎くんのレビュー & 承認待ち
