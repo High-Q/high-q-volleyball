@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { HQ } from "./index.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+function toKebab(input: string): string {
+  return input.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+}
 
 describe("HQ design tokens — color", () => {
   it("paper / paperWarm / ink / inkSoft / muted の値が設計サンプルと一致する", () => {
@@ -76,5 +85,24 @@ describe("HQ design tokens — frozen / immutable", () => {
     expect(Object.isFrozen(HQ)).toBe(true);
     expect(Object.isFrozen(HQ.color)).toBe(true);
     expect(Object.isFrozen(HQ.font)).toBe(true);
+  });
+});
+
+describe("HQ tokens ↔ tokens.css drift detection", () => {
+  const cssPath = path.resolve(__dirname, "tokens.css");
+  const css = readFileSync(cssPath, "utf8");
+
+  it("HQ オブジェクトの全エントリが tokens.css に CSS variable として存在する (drift 検出)", () => {
+    const missing: string[] = [];
+    for (const [category, group] of Object.entries(HQ)) {
+      for (const [name, value] of Object.entries(group as Record<string, string>)) {
+        const varName = `--hq-${category}-${toKebab(name)}`;
+        const expected = `${varName}: ${value};`;
+        if (!css.includes(expected)) {
+          missing.push(expected);
+        }
+      }
+    }
+    expect(missing, `tokens.css に未反映: ${missing.join(", ")}\npnpm --filter @high-q/design-tokens build:tokens で再生成してください`).toEqual([]);
   });
 });

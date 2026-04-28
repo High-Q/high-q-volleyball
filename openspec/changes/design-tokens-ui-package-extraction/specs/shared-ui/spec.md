@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: 共有 UI パッケージが `@high-q/ui` として公開される
-新パッケージ `packages/ui` は、`package.json` の `name` を `@high-q/ui` とし、Vue 3 SFC で実装された UI プリミティブを named export で公開しなければならない（SHALL）。Vue 3 は `peerDependencies` として宣言する。
+新パッケージ `packages/ui` は、`package.json` の `name` を `@high-q/ui` とし、Vue 3 SFC で実装された UI プリミティブを named export で公開しなければならない（SHALL）。`main` / `types` / `exports` は `./src/index.ts` を直接指し、SFC コンパイルは consumer の `@vitejs/plugin-vue` / `vue-tsc` に委ねる（build 工程なし）。Vue 3 は `peerDependencies` として宣言する。
 
 #### Scenario: アプリから named import できる
 - **WHEN** consumer が `import { Button, Kicker, Badge, Photo, RemainBar } from '@high-q/ui'` を実行する
@@ -99,9 +99,9 @@
 - **WHEN** `pnpm --filter @high-q/ui dev` を実行する
 - **THEN** Vite 開発サーバーが起動し、ブラウザでアクセスすると全プリミティブが描画される
 
-#### Scenario: showcase ページが本番ビルドからは除外される
-- **WHEN** `pnpm --filter @high-q/ui build` でライブラリビルドを実行する
-- **THEN** showcase 用のエントリは成果物の公開 export に含まれず、`Button` / `Kicker` 等のプリミティブのみが公開される
+#### Scenario: showcase が consumer の本番ビルドに混入しない
+- **WHEN** `apps/admin` または `apps/reservation` の本番 Vite build を実行する
+- **THEN** `package.json` の `exports` は `.` のみを公開しているため、`Button` / `Kicker` 等のプリミティブのみが consumer から import 可能で、playground 配下のファイルは consumer のバンドルに含まれない
 
 ### Requirement: パッケージが pnpm -r build / typecheck / test に追従する
 新パッケージ `@high-q/ui` は、ルートで `pnpm -r build`・`pnpm -r typecheck`・`pnpm -r test` を実行した際に、各コマンドへ自動的に組み込まれていなければならない（SHALL）。

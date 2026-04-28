@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: HQ デザイントークンパッケージが TypeScript export を提供する
-`packages/design-tokens` パッケージは、HQ ブランドのデザイントークン（カラー / 書体 / spacing / radius / shadow）を **TypeScript の named export** として提供しなければならない（SHALL）。値はビルド時に確定し、tree-shaking 可能な形で公開される。
+`packages/design-tokens` パッケージは、HQ ブランドのデザイントークン（カラー / 書体 / spacing / radius / shadow）を **TypeScript の named export** として提供しなければならない（SHALL）。`package.json` の `main` / `types` / `exports` は `./src/index.ts` を直接指し、consumer の Vite / vue-tsc が直接コンパイルする（build 工程なし）。
 
 #### Scenario: TypeScript からトークンを参照できる
 - **WHEN** consumer（例: `apps/admin`）が `import { HQ } from '@high-q/design-tokens'` を実行する
@@ -12,15 +12,22 @@
 - **THEN** それぞれ `#f7f3ea` / `#1f1d1a` / `#b85c3c` を返す（`docs/10-デザインサンプル/admin/hq-system.jsx` の HQ オブジェクトと一致する）
 
 ### Requirement: HQ デザイントークンパッケージが CSS variables を提供する
-`packages/design-tokens` は、すべての公開トークンを **CSS カスタムプロパティ**（CSS variables）として提供する `tokens.css`（または同等のエントリ）を成果物に含めなければならない（SHALL）。CSS variables は `:root` セレクタでグローバルに宣言される。
+`packages/design-tokens` は、すべての公開トークンを **CSS カスタムプロパティ**（CSS variables）として提供する `src/tokens.css` を **コミット済みの静的ファイル**として配置しなければならない（SHALL）。`package.json` の `exports["./tokens.css"]` は `./src/tokens.css` を指し、consumer の Vite / Rollup が静的 CSS として import 解決する。CSS variables は `:root` セレクタでグローバルに宣言される。
 
-#### Scenario: アプリのグローバル CSS から CSS variables を読み込める
-- **WHEN** `apps/lp` のエントリ CSS が `@import '@high-q/design-tokens/tokens.css'` を行う
-- **THEN** ページの任意要素から `var(--hq-color-paper)` / `var(--hq-color-ink)` / `var(--hq-color-accent)` でトークン値を参照できる
+#### Scenario: アプリの JS / CSS から tokens.css を import できる
+- **WHEN** `apps/lp/src/main.js` が `import '@high-q/design-tokens/tokens.css'` を実行する
+- **THEN** Vite / Rollup が `packages/design-tokens/src/tokens.css` を解決し、ページの任意要素から `var(--hq-color-paper)` / `var(--hq-color-ink)` / `var(--hq-color-accent)` でトークン値を参照できる
 
 #### Scenario: CSS variables の命名規約が一貫している
 - **WHEN** 任意の公開トークン X について CSS variable 名を確認する
 - **THEN** `--hq-<category>-<name>`（kebab-case）の命名で宣言されている（例: カラー `paper` → `--hq-color-paper`、書体 `jpDisplay` → `--hq-font-jp-display`）
+
+### Requirement: tokens.css の drift 検出
+`src/tokens.css` は `scripts/generate-css.ts`（`tsx` で実行）により `HQ` オブジェクトから生成され、ソースコミットされる。**TS export と CSS variables の値の drift** はテストで自動検出されなければならない（SHALL）。
+
+#### Scenario: HQ オブジェクトの値変更が tokens.css に反映されていない場合にテストが落ちる
+- **WHEN** 開発者が `src/index.ts` の HQ オブジェクトの値を変更し、`pnpm --filter @high-q/design-tokens build:tokens` を忘れて test を実行する
+- **THEN** `src/index.test.ts` の drift 検出テストが失敗し、「`pnpm --filter @high-q/design-tokens build:tokens` で再生成してください」というメッセージが表示される
 
 ### Requirement: トークンカテゴリが必要十分にカバーされる
 パッケージは MVP1 で必要な以下のトークンカテゴリをすべて提供しなければならない（SHALL）。

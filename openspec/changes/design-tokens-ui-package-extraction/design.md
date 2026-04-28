@@ -54,36 +54,60 @@ High Q プロジェクトでは LP (Vuetify) / admin (shadcn/ui + Tailwind) / re
 - CSS を SoT にして JS 側を `getComputedStyle` で取得 → 採用せず。SSR / ビルド時参照ができない
 - `style-dictionary` 導入 → 採用せず。今のトークン規模（数十件）では正当化できない複雑性
 
-### 3. design-tokens のビルド: `tsc` のみ + 単純なコピー
+### 3. design-tokens / ui は build 工程を持たない（src 直接 export）
 
-`packages/design-tokens` は最小構成:
-- `src/index.ts`（TS export）
-- `src/generate-css.mjs`（実行時にトークン JSON から CSS variables を生成）
-- ビルド成果物は `dist/index.js` + `dist/index.d.ts` + `dist/tokens.css`
-- `package.json` の `exports`:
-  ```json
-  {
-    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" },
-    "./tokens.css": "./dist/tokens.css"
+**Apply フェーズ中の発見により、当初案（dist/ ビルド配布）から路線変更**した。
+
+`packages/design-tokens` / `packages/ui` の `package.json` は `main` / `types` / `exports` を **`./src/...` に直接向ける**。consumer（admin / reservation / lp）の Vite + `@vitejs/plugin-vue` + `vue-tsc` が src の SFC / TS を直接コンパイルする。`@high-q/shared` が既にこの規約で運用されているため一貫性も取れる。
+
+```jsonc
+// packages/design-tokens/package.json
+{
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./src/tokens.css"
   }
-  ```
+}
 
-代替案:
-- `tsup` 導入 → 採用せず。TS の単純な ESM 出力なら `tsc` で十分。依存削減を優先
-- ライブラリビルドに Vite を使う → `packages/ui` 側で使うので、`design-tokens` 側は更にミニマルに保つ
+// packages/ui/package.json
+{
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" }
+}
+```
 
-### 4. ui のビルド: `vite build --lib`
+**路線変更の理由（当初案 = dist/ ビルド配布の問題点）:**
 
-`packages/ui` は Vue 3 SFC を含むため、SFC コンパイルを行えるビルドツールが必要。**Vite のライブラリモード**を採用する。
+- CI の typecheck job は `pnpm -r build` を走らせないため、`packages/ui/dist/` が無く playground の `import { ... } from "@high-q/ui"` が解決失敗
+- e2e job は LP の Vite build を起動するが、`packages/design-tokens/dist/tokens.css` が無く Rollup が import を解決できない
+- Render の `buildCommand` は `pnpm install --prod --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/lp build` で固定されており、`--ignore-scripts` で `prepare` 系の逃げ道も塞がっている。dist 必要のままだと **Render preview / 本番デプロイも同じ理由で失敗**する構造
 
-- `vite.config.ts` で `build.lib` を有効化
-- `external`: `vue` および `@high-q/design-tokens`
-- `formats: ['es']`（CommonJS は不要、admin / reservation は ESM）
-- `vue-tsc --emitDeclarationOnly` で `.d.ts` を別ステップで生成
+**src 直接 export 案で問題が解消する理由:**
 
-代替案:
-- `unbuild` → 採用せず。Vite は既にプロジェクトで利用しており、追加依存ゼロ
-- `tsup` → 採用せず。Vue SFC コンパイルに別途 plugin が必要で複雑化
+- workspace 内 consumer の Vite が pnpm symlink 経由で `packages/*/src/` を直接読む
+- LP の Rollup は `@high-q/design-tokens/tokens.css` を **静的 CSS** として解決可能（build 工程不要）
+- CI の各 job / Render / 各 dev server で **build 順序を意識する必要が消える**
+
+**トレードオフ受容:**
+
+- `npm publish` 不可（生 TS / SFC は publish できない）→ 本パッケージは `private: true` のモノレポ内利用専用なので問題なし
+- 独立バージョニング不可 → `workspace:*` で同一 tree 同期、git commit hash で履歴管理
+- consumer 側に Vite + plugin-vue + vue-tsc の tooling が必須 → admin / reservation / lp すべてが既に保有
+
+**tokens.css の同期:**
+
+`scripts/generate-css.ts`（`tsx` で実行）が `src/index.ts` の HQ オブジェクトから `src/tokens.css` を再生成する。`src/tokens.css` は **commit する**（CI install 時の生成不要）。drift は `src/index.test.ts` の「HQ オブジェクトの全エントリが tokens.css に CSS variable として存在する」テストで自動検出。
+
+代替案として `style-dictionary` 導入や `prepare` script で install 時生成も検討したが、追加依存と CI 環境差の両方を持ち込むため不採用。「**ソースコミットされた静的ファイル + drift 検出テスト**」が最もシンプル。
+
+### 4. ui の SFC コンパイルは consumer の `@vitejs/plugin-vue` に委ねる
+
+src 直接 export 方式により、`packages/ui/src/*.vue` は consumer の Vite ビルドで処理される。`packages/ui/vite.config.ts` は **playground 開発専用**に縮小し、ライブラリビルド設定を持たない。
+
+代替案として Vite lib モードで dist 出力する案も検討したが、上記 Decision 3 と同じ理由（CI / Render の build 順序の複雑性）で却下。
 
 ### 5. showcase ページ: `packages/ui` 内に Vite アプリとして同居
 
