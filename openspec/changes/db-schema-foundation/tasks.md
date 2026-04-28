@@ -1,38 +1,38 @@
 ## 1. SQL Migration 作成
 
-- [ ] 1.1 `supabase/migrations/20260428XXXXXX_db_schema_foundation.sql` を作成 (timestamp は適用時刻)
-- [ ] 1.2 venues テーブル作成 (id / name UNIQUE / address / default_fee / access_note / map_url / is_primary / timestamps)
-- [ ] 1.3 venues に partial unique index `venues_single_primary_idx` (where is_primary = true)
-- [ ] 1.4 events から `location` 列を DROP / 列追加: `venue_id` (uuid NOT NULL, FK → venues, ON DELETE RESTRICT) / `fee` / `visibility` (CHECK in draft/published/private, default draft) / `cancel_deadline`
-- [ ] 1.5 events に index 追加: `venue_id` の B-tree
-- [ ] 1.6 members に列追加: `birthday` (date NOT NULL, placeholder default `current_date`) / `phone` / `experience_level` (CHECK in beginner/intermediate/experienced, default beginner)
-- [ ] 1.7 reservations に列追加: `guest_count` (smallint NOT NULL default 0, CHECK 0..5) / `phone_at_booking` / `checked_in_at` / `cancelled_at`
-- [ ] 1.8 reservations.status の CHECK 制約を更新して `'waitlist'` を含む 5 値に拡張
-- [ ] 1.9 reservations に index 追加: `(event_id, status)` の B-tree
-- [ ] 1.10 reservations に トリガー `set_reservations_cancelled_at` 追加 (status='cancelled' 時に cancelled_at = now())
-- [ ] 1.11 identity_documents テーブル作成 (id / member_id FK CASCADE / document_type CHECK 10 値 / storage_path / status CHECK 3 値 / rejection_reason / uploaded_at / reviewed_at / reviewed_by FK SET NULL)
-- [ ] 1.12 identity_documents に index 追加: `member_id` B-tree、`status` partial where status='pending'
-- [ ] 1.13 主要 5 会場の seed INSERT (具体値は design.md D9 の表に従う・`ON CONFLICT (name) DO NOTHING`)。**events.venue_id NOT NULL 化の前に必ず実行**する。有明会場の name / address は秘匿された値 (駅住所) で投入する
-- [ ] 1.14 ロールバック手順をファイル末尾コメントに記載
+- [x] 1.1 `supabase/migrations/20260428XXXXXX_db_schema_foundation.sql` を作成 (timestamp は適用時刻)
+- [x] 1.2 venues テーブル作成 (id / name UNIQUE / address / default_fee / access_note / map_url / is_primary / timestamps)
+- [x] 1.3 venues に partial unique index `venues_single_primary_idx` (where is_primary = true)
+- [x] 1.4 events から `location` 列を DROP / 列追加: `venue_id` (uuid NOT NULL, FK → venues, ON DELETE RESTRICT) / `fee` / `visibility` (CHECK in draft/published/private, default draft) / `cancel_deadline`
+- [x] 1.5 events に index 追加: `venue_id` の B-tree
+- [x] 1.6 members に列追加: `birthday` (date NOT NULL, placeholder default `current_date`) / `phone` / `experience_level` (CHECK in beginner/intermediate/experienced, default beginner)
+- [x] 1.7 reservations に列追加: `guest_count` (smallint NOT NULL default 0, CHECK 0..5) / `phone_at_booking` / `checked_in_at` / `cancelled_at`
+- [x] 1.8 reservations.status の CHECK 制約を更新して `'waitlist'` を含む 5 値に拡張
+- [x] 1.9 reservations に index 追加: `(event_id, status)` の B-tree
+- [x] 1.10 reservations に トリガー `set_reservations_cancelled_at` 追加 (status='cancelled' 時に cancelled_at = now())
+- [x] 1.11 identity_documents テーブル作成 (id / member_id FK CASCADE / document_type CHECK 10 値 / storage_path / status CHECK 3 値 / rejection_reason / uploaded_at / reviewed_at / reviewed_by FK SET NULL)
+- [x] 1.12 identity_documents に index 追加: `member_id` B-tree、`status` partial where status='pending'
+- [x] 1.13 主要 5 会場の seed INSERT (具体値は design.md D9 の表に従う・`ON CONFLICT (name) DO NOTHING`)。**events.venue_id NOT NULL 化の前に必ず実行**する。有明会場の name / address は秘匿された値 (駅住所) で投入する
+- [x] 1.14 ロールバック手順をファイル末尾コメントに記載
 
 ## 2. RLS ポリシー追加
 
-- [ ] 2.1 venues: ENABLE ROW LEVEL SECURITY
-- [ ] 2.2 venues SELECT ポリシー (USING true)
-- [ ] 2.3 venues INSERT/UPDATE/DELETE ポリシー (is_admin())
-- [ ] 2.4 identity_documents: ENABLE ROW LEVEL SECURITY
-- [ ] 2.5 identity_documents SELECT ポリシー (auth.uid() = member_id OR is_admin())
-- [ ] 2.6 identity_documents INSERT ポリシー (auth.uid() = member_id)
-- [ ] 2.7 identity_documents UPDATE ポリシー — メンバー: storage_path のみ更新可 / admin: status/rejection_reason/reviewed_at/reviewed_by 更新可
-- [ ] 2.8 identity_documents DELETE ポリシー (auth.uid() = member_id OR is_admin())
+- [x] 2.1 venues: ENABLE ROW LEVEL SECURITY
+- [x] 2.2 venues SELECT ポリシー (USING true)
+- [x] 2.3 venues INSERT/UPDATE/DELETE ポリシー (is_admin())
+- [x] 2.4 identity_documents: ENABLE ROW LEVEL SECURITY
+- [x] 2.5 identity_documents SELECT ポリシー (auth.uid() = member_id OR is_admin())
+- [x] 2.6 identity_documents INSERT ポリシー (auth.uid() = member_id)
+- [x] 2.7 identity_documents UPDATE ポリシー — メンバー: storage_path のみ更新可 / admin: status/rejection_reason/reviewed_at/reviewed_by 更新可
+- [x] 2.8 identity_documents DELETE ポリシー (auth.uid() = member_id OR is_admin())
 
 ## 3. Supabase Storage バケット & ポリシー
 
-- [ ] 3.1 Storage バケット `identity-documents` 作成 (private)
-- [ ] 3.2 storage.objects に identity-documents 用 RLS ポリシー (SELECT)
-- [ ] 3.3 storage.objects に identity-documents 用 RLS ポリシー (INSERT)
-- [ ] 3.4 storage.objects に identity-documents 用 RLS ポリシー (UPDATE / DELETE)
-- [ ] 3.5 バケット public フラグが false であることを確認
+- [x] 3.1 Storage バケット `identity-documents` 作成 (private)
+- [x] 3.2 storage.objects に identity-documents 用 RLS ポリシー (SELECT)
+- [x] 3.3 storage.objects に identity-documents 用 RLS ポリシー (INSERT)
+- [x] 3.4 storage.objects に identity-documents 用 RLS ポリシー (UPDATE / DELETE)
+- [x] 3.5 バケット public フラグが false であることを確認
 
 ## 4. TypeScript エンティティ型と Branded Types
 
@@ -77,7 +77,7 @@
 
 ## 8. PR とレビュー
 
-- [ ] 8.1 ブランチ `feature/147-db-schema-foundation` を作成
+- [x] 8.1 ブランチ `feature/147-db-schema-foundation` を作成
 - [ ] 8.2 タスク 1-6 を 1 タスク 1 コミットの粒度でコミット
 - [ ] 8.3 PR を起票 — タイトル `feat(db): #147 DB スキーマ確立: events / members / reservations 拡張 + venues / identity_documents 追加 + RLS`
 - [ ] 8.4 PR 本文に対象 5 テーブル・新規 RLS 一覧・マイナンバー方針変更の要点を記載
