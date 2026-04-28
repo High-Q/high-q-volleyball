@@ -208,9 +208,12 @@ importers:
         specifier: workspace:*
         version: link:../design-tokens
     devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.17
       '@vitejs/plugin-vue':
         specifier: ^5.0.2
-        version: 5.2.4(vite@5.4.21(@types/node@25.6.0)(sass@1.69.7))(vue@3.5.33(typescript@5.9.3))
+        version: 5.2.4(vite@5.4.21(@types/node@22.19.17)(sass@1.69.7))(vue@3.5.33(typescript@5.9.3))
       '@vue/test-utils':
         specifier: ^2.4.8
         version: 2.4.8(@vue/compiler-dom@3.5.33)(@vue/server-renderer@3.5.33(vue@3.5.33(typescript@5.9.3)))(vue@3.5.33(typescript@5.9.3))
@@ -222,10 +225,10 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^5.0.10
-        version: 5.4.21(@types/node@25.6.0)(sass@1.69.7)
+        version: 5.4.21(@types/node@22.19.17)(sass@1.69.7)
       vitest:
         specifier: ^2.1.9
-        version: 2.1.9(@types/node@25.6.0)(jsdom@25.0.1)(msw@2.13.6(@types/node@25.6.0)(typescript@5.9.3))(sass@1.69.7)
+        version: 2.1.9(@types/node@22.19.17)(jsdom@25.0.1)(msw@2.13.6(@types/node@22.19.17)(typescript@5.9.3))(sass@1.69.7)
       vue:
         specifier: ^3.4.3
         version: 3.5.33(typescript@5.9.3)

@@ -29,6 +29,7 @@
     "@high-q/design-tokens": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "@vitejs/plugin-vue": "^5.0.2",
     "@vue/test-utils": "^2.4.8",
     "jsdom": "^25.0.0",
