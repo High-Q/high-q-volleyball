@@ -1,9 +1,66 @@
-# Data Schema Spec
+## ADDED Requirements
 
-## Purpose
+### Requirement: venues テーブル
 
-High Q の MVP1 で必要な 5 テーブル (events / members / reservations / venues / identity_documents) の論理構造とビジネスルールを規定する。Supabase PostgreSQL で運用し、列定義 / CHECK 制約 / インデックス / Branded Types 対応を含む。
-## Requirements
+システムは `venues` テーブルを以下の列で定義 MUST する: `id` (UUID PK)、`name` (text NOT NULL)、`address` (text)、`default_fee` (integer NULL — NULL は会場側で都度決定)、`access_note` (text)、`map_url` (text)、`is_primary` (boolean default false)、`created_at` / `updated_at` (timestamptz default now)。
+
+#### Scenario: 主要 5 会場の seed 投入
+- **WHEN** migration 適用直後
+- **THEN** 以下の 5 行が初期データとして投入されている (具体値は design.md D9 を正とする):
+  - 亀戸スポーツセンター (江東区亀戸 8-22-1, default_fee=1000)
+  - 東砂スポーツセンター (江東区東砂 4-24-1, default_fee=1000)
+  - 深川スポーツセンター (江東区越中島 1-2-18, default_fee=1000)
+  - 深川北スポーツセンター (江東区平野 3-2-20, default_fee=1000)
+  - 有明会場 (江東区有明 1-8-14 先, default_fee=500, is_primary=true — 実会場の校名は DB に保管せず駅住所のみ)
+
+#### Scenario: 有明会場の場所秘匿
+- **WHEN** 未認証ユーザーが LP / 予約サイトで venues.address を取得
+- **THEN** 有明会場は駅住所 (江東区有明 1-8-14 先) のみが返る。実際の会場 (近隣の小学校) は予約確定メール (#148) で初めて伝達される
+
+#### Scenario: メイン会場フラグ
+- **WHEN** `is_primary = true` の会場を 2 件以上作成しようとする
+- **THEN** `venues_single_primary_idx` の partial unique index 違反でエラーとなる (メイン会場は最大 1 件)
+
+#### Scenario: 名称の重複防止
+- **WHEN** 同名の venues を 2 件 INSERT しようとする
+- **THEN** UNIQUE 制約 `venues_name_key` 違反でエラーとなる
+
+### Requirement: identity_documents テーブル
+
+システムは `identity_documents` テーブルを以下の列で定義 MUST する: `id` (UUID PK)、`member_id` (uuid NOT NULL references members(id) ON DELETE CASCADE)、`document_type` (text CHECK in 10 種類)、`storage_path` (text NOT NULL — Supabase Storage 内のキー)、`status` (text CHECK in `'pending'`,`'approved'`,`'rejected'`、default `'pending'`)、`rejection_reason` (text NULL)、`uploaded_at` (timestamptz default now)、`reviewed_at` (timestamptz NULL — null = 未確認)、`reviewed_by` (uuid NULL references members(id) ON DELETE SET NULL)。
+
+`document_type` の許容値は次の 10 種類: `'drivers_license'` / `'driving_history_cert'` / `'residence_certificate'` / `'disability_certificate'` / `'residence_card'` / `'special_permanent_resident_cert'` / `'student_id'` / `'passport'` / `'my_number_card_masked'` / `'health_insurance_cert'`。
+
+#### Scenario: 画像本体は別管理
+- **WHEN** identity_documents 行を作成
+- **THEN** 列に画像 BLOB は持たず、`storage_path` から Supabase Storage `identity-documents` バケット内のオブジェクトを参照する
+
+#### Scenario: マスク済みマイナンバーカードは受付可
+- **WHEN** `document_type = 'my_number_card_masked'` で行を作成
+- **THEN** 行は正常に作成される (個人番号 12 桁マスク済み画像であることはアプリ側 UX とレビュー運用で担保)
+
+#### Scenario: マイナンバーカード通知カードは受付不可
+- **WHEN** document_type に `'my_number_notification_card'` を指定して INSERT
+- **THEN** CHECK 制約違反でエラーとなる
+
+#### Scenario: 削除時の連鎖
+- **WHEN** members の行を DELETE
+- **THEN** その member の identity_documents 行も ON DELETE CASCADE で削除される (Storage 側のオブジェクト削除はアプリ層 SOP で別途実施)
+
+### Requirement: Storage バケット identity-documents
+
+システムは Supabase Storage に `identity-documents` という private バケットを作成 MUST する。バケット内のオブジェクト名は `<member_id>/<document_id>-<front|back>.<ext>` 形式で命名 SHALL する。
+
+#### Scenario: 公開アクセス禁止
+- **WHEN** 未認証ユーザーが バケット内オブジェクトに直接 URL でアクセス
+- **THEN** 403 Forbidden が返る (バケット public フラグは false)
+
+#### Scenario: ファイル名の安全性
+- **WHEN** アプリが画像を upload する
+- **THEN** ファイル名は `<member_id>/<document_id>-(front|back).(jpg|png|heic)` 形式に正規化される (member_id をディレクトリ階層に持たせ RLS と整合)
+
+## MODIFIED Requirements
+
 ### Requirement: events テーブル
 
 システムは `events` テーブルを以下の列で定義 MUST する: `id` (UUID PK)、`name` (text NOT NULL)、`description` (text)、`start_at` (timestamptz NOT NULL)、`end_at` (timestamptz NOT NULL)、`venue_id` (uuid NOT NULL references venues(id) ON DELETE RESTRICT)、`fee` (integer NULL — NULL は会場 default_fee を継承)、`capacity` (smallint NULL)、`visibility` (text CHECK in `'draft'`,`'published'`,`'private'`、default `'draft'`)、`status` (text CHECK in `'scheduled'`,`'cancelled'`,`'closed'`、default `'scheduled'`)、`cancel_deadline` (timestamptz NULL)、`created_at` (timestamptz default now)、`updated_at` (timestamptz default now)、`created_by` (uuid references auth.users(id) ON DELETE SET NULL)。
@@ -82,14 +139,6 @@ High Q の MVP1 で必要な 5 テーブル (events / members / reservations / v
 - **WHEN** member or admin が status を 'cancelled' に変更
 - **THEN** トリガー `set_reservations_cancelled_at` により cancelled_at が now() に自動設定される
 
-### Requirement: updated_at の自動更新
-
-システムは MUST events / members / reservations の `updated_at` 列を行更新時に自動で `now()` に書き換えるトリガー `set_updated_at()` を持つ。
-
-#### Scenario: UPDATE 時の自動更新
-- **WHEN** 任意の行を UPDATE する
-- **THEN** `updated_at` が現在時刻に更新される（明示的に指定した値があっても上書き）
-
 ### Requirement: インデックス
 
 システムは検索性能のため以下のインデックスを作成 MUST する:
@@ -136,63 +185,3 @@ High Q の MVP1 で必要な 5 テーブル (events / members / reservations / v
 #### Scenario: 通知カードは不可
 - **WHEN** identity_documents に `document_type = 'my_number_notification_card'` を作成しようとする
 - **THEN** CHECK 制約違反でエラーとなる (通知カードは本人確認書類として無効)
-
-### Requirement: venues テーブル
-
-システムは `venues` テーブルを以下の列で定義 MUST する: `id` (UUID PK)、`name` (text NOT NULL)、`address` (text)、`default_fee` (integer NULL — NULL は会場側で都度決定)、`access_note` (text)、`map_url` (text)、`is_primary` (boolean default false)、`created_at` / `updated_at` (timestamptz default now)。
-
-#### Scenario: 主要 5 会場の seed 投入
-- **WHEN** migration 適用直後
-- **THEN** 以下の 5 行が初期データとして投入されている (具体値は design.md D9 を正とする):
-  - 亀戸スポーツセンター (江東区亀戸 8-22-1, default_fee=1000)
-  - 東砂スポーツセンター (江東区東砂 4-24-1, default_fee=1000)
-  - 深川スポーツセンター (江東区越中島 1-2-18, default_fee=1000)
-  - 深川北スポーツセンター (江東区平野 3-2-20, default_fee=1000)
-  - 有明会場 (江東区有明 1-8-14 先, default_fee=500, is_primary=true — 実会場の校名は DB に保管せず駅住所のみ)
-
-#### Scenario: 有明会場の場所秘匿
-- **WHEN** 未認証ユーザーが LP / 予約サイトで venues.address を取得
-- **THEN** 有明会場は駅住所 (江東区有明 1-8-14 先) のみが返る。実際の会場 (近隣の小学校) は予約確定メール (#148) で初めて伝達される
-
-#### Scenario: メイン会場フラグ
-- **WHEN** `is_primary = true` の会場を 2 件以上作成しようとする
-- **THEN** `venues_single_primary_idx` の partial unique index 違反でエラーとなる (メイン会場は最大 1 件)
-
-#### Scenario: 名称の重複防止
-- **WHEN** 同名の venues を 2 件 INSERT しようとする
-- **THEN** UNIQUE 制約 `venues_name_key` 違反でエラーとなる
-
-### Requirement: identity_documents テーブル
-
-システムは `identity_documents` テーブルを以下の列で定義 MUST する: `id` (UUID PK)、`member_id` (uuid NOT NULL references members(id) ON DELETE CASCADE)、`document_type` (text CHECK in 10 種類)、`storage_path` (text NOT NULL — Supabase Storage 内のキー)、`status` (text CHECK in `'pending'`,`'approved'`,`'rejected'`、default `'pending'`)、`rejection_reason` (text NULL)、`uploaded_at` (timestamptz default now)、`reviewed_at` (timestamptz NULL — null = 未確認)、`reviewed_by` (uuid NULL references members(id) ON DELETE SET NULL)。
-
-`document_type` の許容値は次の 10 種類: `'drivers_license'` / `'driving_history_cert'` / `'residence_certificate'` / `'disability_certificate'` / `'residence_card'` / `'special_permanent_resident_cert'` / `'student_id'` / `'passport'` / `'my_number_card_masked'` / `'health_insurance_cert'`。
-
-#### Scenario: 画像本体は別管理
-- **WHEN** identity_documents 行を作成
-- **THEN** 列に画像 BLOB は持たず、`storage_path` から Supabase Storage `identity-documents` バケット内のオブジェクトを参照する
-
-#### Scenario: マスク済みマイナンバーカードは受付可
-- **WHEN** `document_type = 'my_number_card_masked'` で行を作成
-- **THEN** 行は正常に作成される (個人番号 12 桁マスク済み画像であることはアプリ側 UX とレビュー運用で担保)
-
-#### Scenario: マイナンバーカード通知カードは受付不可
-- **WHEN** document_type に `'my_number_notification_card'` を指定して INSERT
-- **THEN** CHECK 制約違反でエラーとなる
-
-#### Scenario: 削除時の連鎖
-- **WHEN** members の行を DELETE
-- **THEN** その member の identity_documents 行も ON DELETE CASCADE で削除される (Storage 側のオブジェクト削除はアプリ層 SOP で別途実施)
-
-### Requirement: Storage バケット identity-documents
-
-システムは Supabase Storage に `identity-documents` という private バケットを作成 MUST する。バケット内のオブジェクト名は `<member_id>/<document_id>-<front|back>.<ext>` 形式で命名 SHALL する。
-
-#### Scenario: 公開アクセス禁止
-- **WHEN** 未認証ユーザーが バケット内オブジェクトに直接 URL でアクセス
-- **THEN** 403 Forbidden が返る (バケット public フラグは false)
-
-#### Scenario: ファイル名の安全性
-- **WHEN** アプリが画像を upload する
-- **THEN** ファイル名は `<member_id>/<document_id>-(front|back).(jpg|png|heic)` 形式に正規化される (member_id をディレクトリ階層に持たせ RLS と整合)
-
