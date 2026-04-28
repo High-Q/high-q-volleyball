@@ -45,17 +45,17 @@
 
 ## 5. RLS 振る舞いテスト (Vitest + Supabase client)
 
-- [ ] 5.1 venues: anon で SELECT → 全件返る
-- [ ] 5.2 venues: member で INSERT → 拒否
-- [ ] 5.3 venues: admin で INSERT → 成功
-- [ ] 5.4 identity_documents: 自分の SELECT → 1 行
-- [ ] 5.5 identity_documents: 他人の id を指定して SELECT → 0 行
-- [ ] 5.6 identity_documents: 自己 status='approved' UPDATE → 拒否
-- [ ] 5.7 identity_documents: admin で status='approved' UPDATE → 成功
-- [ ] 5.8 Storage: 自分のディレクトリに upload → 成功
-- [ ] 5.9 Storage: 他人のディレクトリに upload → 拒否
-- [ ] 5.10 reservations: status='cancelled' に UPDATE → cancelled_at が自動セット
-- [ ] 5.11 reservations: 同一 (event_id, member_id) で重複 INSERT → UNIQUE 違反
+- [x] 5.1 venues: anon で SELECT → 全件返る
+- [x] 5.2 venues: member で INSERT → 拒否
+- [x] 5.3 venues: admin で INSERT → 成功
+- [x] 5.4 identity_documents: 自分の SELECT → 1 行
+- [x] 5.5 identity_documents: 他人の id を指定して SELECT → 0 行
+- [x] 5.6 identity_documents: 自己 status='approved' UPDATE → 拒否
+- [x] 5.7 identity_documents: admin で status='approved' UPDATE → 成功
+- [x] 5.8 Storage: 自分のディレクトリに upload → 成功
+- [x] 5.9 Storage: 他人のディレクトリに upload → 拒否
+- [x] 5.10 reservations: status='cancelled' に UPDATE → cancelled_at が自動セット
+- [x] 5.11 reservations: 同一 (event_id, member_id) で重複 INSERT → UNIQUE 違反
 
 ## 6. ドキュメント更新
 
