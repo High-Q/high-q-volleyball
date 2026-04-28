@@ -109,19 +109,39 @@ reset role;
 -- =============================================================================
 -- Test 5.10: reservations — status='cancelled' UPDATE → cancelled_at 自動セット
 -- =============================================================================
--- service_role で実施 (RLS バイパスでトリガー単体を検証)
+-- 注意: members.id は auth.users(id) への FK のため、テスト用 member 作成には
+--       既存の auth.users 行が必要 (Supabase の auth スキーマは supabase_auth_admin
+--       オーナーで、postgres からの直接 INSERT は通常許可されない)。
+-- 戦略: 既存の auth.users 行を 1 件流用する。なければ SKIP。
 do $$
 declare
+  test_venue_id uuid;
   test_event_id uuid;
   test_member_id uuid;
   test_reservation_id uuid;
   before_cancelled_at timestamptz;
   after_cancelled_at timestamptz;
 begin
-  -- 検証用 venue / event / member を仮作成 (rollback で消える)
-  -- venues seed の 1 件を使う
-  select id into test_event_id
-  from public.venues where is_primary = true limit 1;
+  -- 既存の auth.users から 1 件取得 (なければ SKIP)
+  select id into test_member_id from auth.users limit 1;
+
+  if test_member_id is null then
+    raise notice '⚠️  5.10 SKIP: auth.users に行がないため検証不可。最初に admin アカウントを作成してから再実行してください';
+    return;
+  end if;
+
+  -- members 行が存在しない場合は作成 (FK は auth.users 側で満たされる)
+  insert into public.members (id, email, display_name, birthday)
+  values (
+    test_member_id,
+    coalesce((select email from auth.users where id = test_member_id), 'unknown@example.com'),
+    'Trigger Test',
+    '1990-01-01'
+  )
+  on conflict (id) do nothing;
+
+  -- venues seed の primary 会場を取得
+  select id into test_venue_id from public.venues where is_primary = true limit 1;
 
   -- 一時 event 作成
   insert into public.events (name, start_at, end_at, venue_id)
@@ -129,22 +149,16 @@ begin
     'TEST_RESERVATION_TRIGGER',
     now() + interval '1 day',
     now() + interval '1 day' + interval '2 hours',
-    test_event_id
+    test_venue_id
   )
   returning id into test_event_id;
-
-  -- 一時 member 作成 (auth.users と FK ありのため、実環境では既存 member を使う)
-  -- ※本検証は service_role で auth.users の制約を一時的に無視する形になる
-  test_member_id := gen_random_uuid();
-  insert into public.members (id, email, display_name, birthday)
-  values (test_member_id, 'trigger-test@example.com', 'Trigger Test', '1990-01-01');
 
   -- 予約作成
   insert into public.reservations (event_id, member_id)
   values (test_event_id, test_member_id)
   returning id, cancelled_at into test_reservation_id, before_cancelled_at;
 
-  -- status を cancelled に更新
+  -- status を cancelled に更新 (トリガー発火)
   update public.reservations set status = 'cancelled' where id = test_reservation_id;
   select cancelled_at into after_cancelled_at
   from public.reservations where id = test_reservation_id;
@@ -174,7 +188,7 @@ begin
   where event_id = test_event_id limit 1;
 
   if test_event_id is null or test_member_id is null then
-    raise notice '⚠️  5.11 SKIP: 5.10 の検証データが見つからない';
+    raise notice '⚠️  5.11 SKIP: 5.10 の検証データが見つからない (auth.users が空の可能性)';
     return;
   end if;
 
