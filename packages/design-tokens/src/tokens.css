@@ -1,0 +1,34 @@
+/* High Q design tokens — auto-generated from src/index.ts via scripts/generate-css.ts. Do not edit by hand. */
+:root {
+  --hq-color-paper: #f7f3ea;
+  --hq-color-paper-warm: #f1ece0;
+  --hq-color-ink: #1f1d1a;
+  --hq-color-ink-soft: #3a3833;
+  --hq-color-muted: #8a857a;
+  --hq-color-accent: #b85c3c;
+  --hq-color-accent-soft: rgba(184,92,60,0.08);
+  --hq-color-hairline: rgba(31,29,26,0.12);
+  --hq-color-success: #6b7e4f;
+  --hq-color-success-soft: rgba(107,126,79,0.10);
+  --hq-color-warn: #c08442;
+  --hq-color-warn-soft: rgba(192,132,66,0.10);
+  --hq-color-danger: #9c4030;
+  --hq-color-danger-soft: rgba(156,64,48,0.10);
+  --hq-font-jp-display: "Klee One", "Shippori Mincho", "Noto Serif JP", serif;
+  --hq-font-jp: "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif;
+  --hq-font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --hq-space-1: 4px;
+  --hq-space-2: 8px;
+  --hq-space-3: 12px;
+  --hq-space-4: 16px;
+  --hq-space-6: 24px;
+  --hq-space-8: 32px;
+  --hq-space-14: 56px;
+  --hq-radius-none: 0;
+  --hq-radius-sm: 4px;
+  --hq-radius-md: 12px;
+  --hq-radius-pill: 999px;
+  --hq-shadow-none: none;
+  --hq-shadow-sm: 0 1px 2px rgba(31,29,26,0.04), 0 1px 1px rgba(31,29,26,0.06);
+  --hq-shadow-md: 0 4px 12px rgba(31,29,26,0.06), 0 2px 4px rgba(31,29,26,0.04);
+}
