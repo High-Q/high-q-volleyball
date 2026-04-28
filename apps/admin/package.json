@@ -11,7 +11,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@high-q/design-tokens": "workspace:*",
     "@high-q/shared": "workspace:*",
+    "@high-q/ui": "workspace:*",
     "@vitejs/plugin-vue": "^5.0.2",
     "vite": "^5.0.10",
     "vue": "^3.4.3",

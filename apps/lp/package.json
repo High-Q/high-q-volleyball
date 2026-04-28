@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@high-q/design-tokens": "workspace:*",
     "@tanstack/vue-query": "^5.100.1",
     "@vitejs/plugin-vue": "^5.0.2",
     "vite": "^5.0.10",
