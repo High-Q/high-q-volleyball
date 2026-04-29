@@ -29,12 +29,12 @@
 
 ## 3. `apps/admin` の Tailwind 導入と Vuetify 剥がし
 
-- [ ] 3.1 `apps/admin/package.json` を更新: `vuetify` / `vite-plugin-vuetify` / `sass` を削除、`tailwindcss` / `postcss` / `autoprefixer` / `vue-router` / `radix-vue` / `class-variance-authority` / `clsx` / `tailwind-merge` / `@high-q/tailwind-preset` (`workspace:*`) を追加
-- [ ] 3.2 `apps/admin/tailwind.config.ts` を新設し `presets: [hqPreset]` で `@high-q/tailwind-preset` を適用、`content` に `index.html` と `src/**/*.{vue,ts,tsx}` を指定
-- [ ] 3.3 `apps/admin/postcss.config.js` を新設（tailwindcss + autoprefixer）
-- [ ] 3.4 `apps/admin/src/style.css` を新設し、`@import '@high-q/design-tokens/dist/tokens.css'`（既存の配布形式に合わせる）と Tailwind directive（`@tailwind base; @tailwind components; @tailwind utilities;`）を記述
-- [ ] 3.5 `apps/admin/vite.config.ts` から `vite-plugin-vuetify` の import と plugin 呼び出しを削除（必要なら `@vitejs/plugin-vue` のみ残す）
-- [ ] 3.6 ルートで `pnpm install` を実行し、admin 配下の依存解決が成功することを確認
+- [x] 3.1 `apps/admin/package.json` を更新: `vuetify` / `vite-plugin-vuetify` / `sass` を削除、`tailwindcss` / `postcss` / `autoprefixer` / `vue-router` / `radix-vue` / `class-variance-authority` / `clsx` / `tailwind-merge` / `@high-q/tailwind-preset` (`workspace:*`) を追加
+- [x] 3.2 `apps/admin/tailwind.config.ts` を新設し `presets: [hqPreset]` で `@high-q/tailwind-preset` を適用、`content` に `index.html` と `src/**/*.{vue,ts,tsx}` を指定
+- [x] 3.3 `apps/admin/postcss.config.js` を新設（tailwindcss + autoprefixer）
+- [x] 3.4 `apps/admin/src/style.css` を新設し、`@import '@high-q/design-tokens/tokens.css'` と Tailwind directive（`@tailwind base; @tailwind components; @tailwind utilities;`）を記述
+- [x] 3.5 `apps/admin/vite.config.ts` には既に Vuetify plugin が含まれていないことを確認、`vitest.config.ts` の `server.deps.inline: ["vuetify"]` を除去
+- [x] 3.6 ルートで `pnpm install` を実行し、admin 配下の依存解決が成功することを確認
 
 ---
 

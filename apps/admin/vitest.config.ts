@@ -9,10 +9,5 @@ export default defineConfig({
     include: ["src/**/*.spec.{ts,tsx,js,jsx}"],
     setupFiles: ["./src/test/setup.ts"],
     css: false,
-    server: {
-      deps: {
-        inline: ["vuetify"],
-      },
-    },
   },
 });
