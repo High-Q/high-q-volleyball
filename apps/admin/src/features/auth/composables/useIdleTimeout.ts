@@ -5,6 +5,11 @@
  * - 最後のイベントから IDLE_LIMIT_MS 経過で `onIdle` を呼ぶ
  * - `start(onIdle)` / `stop()` で外側がライフサイクルを管理する
  *
+ * 開発時の動作確認:
+ *   下記 IDLE_LIMIT_MS を一時的に短縮（例: 30_000 = 30 秒）して
+ *   `pnpm --filter @high-q/admin dev` で起動 → ログイン後 30 秒放置で /login
+ *   へ戻ることを確認。確認後は元に戻す（コミットしない）。
+ *
  * 関連:
  *   openspec/changes/admin-login-magic-link/specs/admin-auth/spec.md
  *     "JWT 30 分 + idle timeout 15 分" Requirement

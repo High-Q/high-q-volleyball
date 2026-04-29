@@ -95,7 +95,7 @@ E2E は本番 Supabase に通信が届かないことを **多層防御**で保�
 - [x] 15.7 Playwright E2E が通る → 5/5 (admin 2 + lp 3 既存)
 - [x] 15.8 `apps/admin/src/app/router.ts` から `// TODO(#84)` コメントが除去されていることを確認 → 0 件
 - [ ] 15.9 ローカルで実機確認: `/login` 表示 → 4 状態の手動テスト（CTA 押下で Loading → Success、空送信で Error バナー、`/login?reason=not-admin` で Error バナー文言）。MFA setup / challenge の手動テストは Supabase Dashboard に Auth ユーザーと TOTP factor を持つ環境で確認（または翔太郎くんが本番デプロイ後に行う）
-- [ ] 15.10 idle timeout の動作確認: 15 分放置せずとも、設計レビューで `MS_IDLE_LIMIT` を一時的に短縮（例: 30 秒）して動作を見る方法を README に明記しておく
+- [x] 15.10 idle timeout の動作確認: 15 分放置せずとも、`IDLE_LIMIT_MS` を一時的に短縮（例: 30 秒）して動作を見る方法を `useIdleTimeout.ts` のコメントに明記
 
 ## 16. ドキュメント・運用準備（Sync フェーズ向けメモ）
 
