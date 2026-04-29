@@ -87,12 +87,12 @@
 
 ## 8. 最終検証 & PR
 
-- [ ] 8.1 リポジトリルートで `pnpm -r typecheck` を実行し全パス確認
-- [ ] 8.2 `pnpm -r test` を実行し全パス確認
-- [ ] 8.3 `pnpm -r build` を実行し admin / reservation / lp / packages の build が全成功することを確認
-- [ ] 8.4 `apps/admin` をローカル dev 起動し、`/` と `/login` の遷移が動作すること、HQ デザイントークン経由の見た目が崩れていないことを目視確認
-- [ ] 8.5 `apps/reservation` で同様の目視確認
-- [ ] 8.6 `apps/lp` がローカル dev で従来通り動作すること（本 change が LP に影響を与えていないこと）を目視確認
+- [x] 8.1 リポジトリルートで `pnpm -r typecheck` を実行し全パス確認
+- [x] 8.2 `pnpm -r test` を実行し全パス確認（design-tokens 11 / shared 37 / tailwind-preset 7 / ui 28 / lp 20 / admin 18 / reservation 17 = 計 138 件 pass）
+- [x] 8.3 `pnpm -r build` を実行し admin / reservation / lp / packages の build が全成功することを確認（admin/reservation 各 47 modules / lp 314 modules）
+- [ ] 8.4 `apps/admin` をローカル dev 起動し、`/` と `/login` の遷移が動作すること、HQ デザイントークン経由の見た目が崩れていないことを目視確認 — 翔太郎くん側で確認（Render プレビューで集約可）
+- [ ] 8.5 `apps/reservation` で同様の目視確認 — 翔太郎くん側
+- [ ] 8.6 `apps/lp` がローカル dev で従来通り動作すること（本 change が LP に影響を与えていないこと）を目視確認 — 翔太郎くん側
 - [ ] 8.7 PR 作成（タイトル: `feat(ui): #175 admin/reservation UI 基盤整備（Tailwind preset + shadcn-vue + Vue Router）`、base: `master`）
 - [ ] 8.8 CI（lint / typecheck / test / build / E2E smoke）全パスを確認
 - [ ] 8.9 Render プレビュー URL で admin / reservation / lp の動作確認（翔太郎くん側で実施）
