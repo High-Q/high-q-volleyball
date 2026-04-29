@@ -47,6 +47,14 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      # Render Static Site はデフォルトで buildCommand の前に自動 `npm install` を
+      # 実行するが、本リポジトリは pnpm workspaces (`workspace:*`) のため npm では
+      # 解釈できずビルドが失敗する (#84 PR Preview で確認)。SKIP_INSTALL_DEPS=true で
+      # 自動 install を完全にスキップし、buildCommand の `corepack enable && pnpm install`
+      # のみで依存解決する。
+      # 公式 docs: https://render.com/docs/static-sites
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
 
 # ============================================================
 # 将来追加用の雛形（admin / reservation）
@@ -79,9 +87,12 @@ services:
 #     envVars:
 #       - key: NODE_VERSION
 #         value: "22"
+#       # pnpm workspaces のため自動 npm install を skip させる (#84 で確立)
+#       - key: SKIP_INSTALL_DEPS
+#         value: "true"
 #       - key: VITE_SUPABASE_URL
 #         sync: false
-#       - key: VITE_SUPABASE_ANON_KEY
+#       - key: VITE_SUPABASE_PUBLISHABLE_KEY
 #         sync: false
 #
 # reservation 雛形: 上記の name / rootDir / --filter を reservation に置換
