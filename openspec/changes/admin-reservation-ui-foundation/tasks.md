@@ -90,9 +90,9 @@
 - [x] 8.1 リポジトリルートで `pnpm -r typecheck` を実行し全パス確認
 - [x] 8.2 `pnpm -r test` を実行し全パス確認（design-tokens 11 / shared 37 / tailwind-preset 7 / ui 28 / lp 20 / admin 18 / reservation 17 = 計 138 件 pass）
 - [x] 8.3 `pnpm -r build` を実行し admin / reservation / lp / packages の build が全成功することを確認（admin/reservation 各 47 modules / lp 314 modules）
-- [ ] 8.4 `apps/admin` をローカル dev (`pnpm --filter @high-q/admin dev`) 起動し、`/` と `/login` の遷移、HQ デザイントークン経由の見た目（紙色背景 / accent kicker / Zen Kaku Gothic / Button）を翔太郎くん目視確認
-- [ ] 8.5 `apps/reservation` で同様の目視確認（`pnpm --filter @high-q/reservation dev`）
-- [ ] 8.6 `apps/lp` がローカル dev (`pnpm --filter @high-q/lp dev`) で従来通り動作することを翔太郎くん目視確認（本 change が LP に影響を与えていないこと）
+- [x] 8.4 `apps/admin` をローカル dev (`pnpm --filter @high-q/admin dev`) 起動し、`/` と `/login` の遷移、HQ デザイントークン経由の見た目（紙色背景 / accent kicker / Zen Kaku Gothic / Button）を翔太郎くん目視確認 — OK
+- [x] 8.5 `apps/reservation` で同様の目視確認（`pnpm --filter @high-q/reservation dev`） — OK
+- [x] 8.6 `apps/lp` がローカル dev (`pnpm --filter @high-q/lp dev`) で従来通り動作することを翔太郎くん目視確認（本 change が LP に影響を与えていないこと） — OK
 - [x] 8.7 PR 作成（#176: https://github.com/High-Q/high-q-volleyball/pull/176）
 - [x] 8.8 CI（install / lint / typecheck / test / build / e2e / CodeQL）全パスを確認
 - [x] 8.9 Render プレビューは本 PR では利用不可（Render CI は LP パス変更時のみ動作 / Preview 単体デプロイ不可 / admin・reservation は商用未公開）と判明したため撤回。代替として T8.4-T8.6 のローカル dev 目視で集約する
