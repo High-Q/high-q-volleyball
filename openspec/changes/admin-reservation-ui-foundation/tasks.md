@@ -80,8 +80,8 @@
 
 ## 7. ドキュメント更新
 
-- [ ] 7.1 `docs/05-インターフェース/01-UI設計方針.md` の UI スタック表を「`@high-q/ui` (意匠系) + shadcn-vue (機能系) + `@high-q/tailwind-preset` + Vue Router」へ改訂し、棲み分けセクション（Button は `@high-q/ui` のみ等）を追記
-- [ ] 7.2 `CLAUDE.md` Pillar 3 の UI スタック表を実態に合わせて更新
+- [x] 7.1 `docs/05-インターフェース/01-UI設計方針.md` の UI スタック表を「`@high-q/ui` (意匠系) + shadcn-vue (機能系) + `@high-q/tailwind-preset` + Vue Router」へ改訂し、棲み分けセクション（Button は `@high-q/ui` のみ等）を追記
+- [x] 7.2 `CLAUDE.md` Pillar 3 の UI スタック表を実態に合わせて更新（プリミティブ棲み分けセクションも追加）
 
 ---
 
