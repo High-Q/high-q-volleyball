@@ -93,8 +93,8 @@
 - [ ] 8.4 `apps/admin` をローカル dev 起動し、`/` と `/login` の遷移が動作すること、HQ デザイントークン経由の見た目が崩れていないことを目視確認 — 翔太郎くん側で確認（Render プレビューで集約可）
 - [ ] 8.5 `apps/reservation` で同様の目視確認 — 翔太郎くん側
 - [ ] 8.6 `apps/lp` がローカル dev で従来通り動作すること（本 change が LP に影響を与えていないこと）を目視確認 — 翔太郎くん側
-- [ ] 8.7 PR 作成（タイトル: `feat(ui): #175 admin/reservation UI 基盤整備（Tailwind preset + shadcn-vue + Vue Router）`、base: `master`）
-- [ ] 8.8 CI（lint / typecheck / test / build / E2E smoke）全パスを確認
+- [x] 8.7 PR 作成（#176: https://github.com/High-Q/high-q-volleyball/pull/176）
+- [x] 8.8 CI（install / lint / typecheck / test / build / e2e / CodeQL）全パスを確認
 - [ ] 8.9 Render プレビュー URL で admin / reservation / lp の動作確認（翔太郎くん側で実施）
 
 ---
