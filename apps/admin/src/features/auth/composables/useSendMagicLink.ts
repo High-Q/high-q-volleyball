@@ -41,14 +41,40 @@ export function useSendMagicLink() {
 }
 
 function classifyError(e: unknown): AuthError {
+  if (import.meta.env.DEV) {
+    // 本番では出さない。開発時の原因切り分けを助けるため raw error を console に。
+    // eslint-disable-next-line no-console
+    console.error("[useSendMagicLink] raw error:", e);
+  }
   if (typeof e === "object" && e !== null) {
-    const obj = e as { message?: unknown; status?: unknown };
+    const obj = e as {
+      message?: unknown;
+      status?: unknown;
+      code?: unknown;
+      name?: unknown;
+    };
     const message = typeof obj.message === "string" ? obj.message : "";
     const status = typeof obj.status === "number" ? obj.status : 0;
-    if (status === 429 || /rate.limit/i.test(message)) {
+    const code = typeof obj.code === "string" ? obj.code : "";
+    // shouldCreateUser:false かつ auth.users 未登録、または email signups disabled
+    if (
+      code === "otp_disabled" ||
+      /signups? not allowed/i.test(message) ||
+      /email signups (are )?disabled/i.test(message)
+    ) {
+      return "not-registered";
+    }
+    if (
+      status === 429 ||
+      code === "over_email_send_rate_limit" ||
+      /rate.limit/i.test(message)
+    ) {
       return "rate-limit";
     }
-    if (/network|fetch/i.test(message)) {
+    if (
+      obj.name === "TypeError" ||
+      /network|fetch|failed to fetch/i.test(message)
+    ) {
       return "network";
     }
   }

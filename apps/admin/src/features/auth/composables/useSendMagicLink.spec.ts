@@ -90,6 +90,30 @@ describe("useSendMagicLink", () => {
     expect(c.error.value).toBe("rate-limit");
   });
 
+  it("otp_disabled (shouldCreateUser:false で未登録メール) は not-registered に変換される", async () => {
+    sendMagicLinkMock.mockRejectedValue({
+      code: "otp_disabled",
+      message: "Signups not allowed for otp",
+      status: 422,
+    });
+    const { useSendMagicLink } = await import("./useSendMagicLink");
+    const c = useSendMagicLink();
+
+    await c.send("stranger@example.com");
+
+    expect(c.error.value).toBe("not-registered");
+  });
+
+  it("ネットワークエラーは network に変換される", async () => {
+    sendMagicLinkMock.mockRejectedValue(new TypeError("Failed to fetch"));
+    const { useSendMagicLink } = await import("./useSendMagicLink");
+    const c = useSendMagicLink();
+
+    await c.send("owner@high-q.club");
+
+    expect(c.error.value).toBe("network");
+  });
+
   it("その他のエラーは unknown", async () => {
     sendMagicLinkMock.mockRejectedValue(new Error("boom"));
     const { useSendMagicLink } = await import("./useSendMagicLink");

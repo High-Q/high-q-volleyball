@@ -105,6 +105,14 @@ describe("LoginPage", () => {
     expect(wrapper.find('[role="alert"]').exists()).toBe(true);
   });
 
+  it("Error 状態 (not-registered) で専用文言を表示", async () => {
+    sendState.status.value = "error";
+    sendState.error.value = "not-registered";
+    const wrapper = await mountAt();
+    expect(wrapper.find('[role="alert"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain("アクセスを許可されていません");
+  });
+
   it("?reason=not-admin で Error バナーが表示される", async () => {
     const wrapper = await mountAt({ reason: "not-admin" });
     expect(wrapper.find('[role="alert"]').exists()).toBe(true);

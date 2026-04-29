@@ -16,6 +16,7 @@ export type AuthStatus =
 /** マジックリンク送信時のエラーコード。 */
 export type AuthError =
   | "invalid-email"
+  | "not-registered"
   | "rate-limit"
   | "network"
   | "unknown";

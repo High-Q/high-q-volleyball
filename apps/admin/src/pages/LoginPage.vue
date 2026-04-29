@@ -42,6 +42,8 @@ const errorMessage = computed<string | null>(() => {
     switch (error.value) {
       case "invalid-email":
         return "メールアドレスの形式が正しくありません。";
+      case "not-registered":
+        return "このメールアドレスは管理画面へのアクセスを許可されていません。オーナーアカウントのメールをご確認ください。";
       case "rate-limit":
         return "送信回数の上限に達しました。しばらく待ってから再試行してください。";
       case "network":
