@@ -40,13 +40,13 @@
 
 ## 4. `apps/admin` の shadcn-vue プリミティブ取り込み
 
-- [ ] 4.1 `apps/admin/components.json` を新設（shadcn-vue 規約: `tailwind.config` / `aliases.components: @/shared/ui` / `aliases.utils: @/shared/lib/utils` / `style: default` / `framework: vue`）
-- [ ] 4.2 `apps/admin/src/shared/lib/utils.ts` に `cn()` ユーティリティ（`clsx` + `tailwind-merge` 合成）を実装
-- [ ] 4.3 `apps/admin/src/shared/ui/Input.vue` を作成（shadcn-vue 公式の Input 規約に準拠、Tailwind preset utility で着色、リテラル色禁止）
-- [ ] 4.4 `apps/admin/src/shared/ui/Label.vue` を作成（同上）
-- [ ] 4.5 `apps/admin/src/shared/ui/FormField.vue` を作成（label + slot + error message スロットの最小実装、vee-validate 統合は #84 で判断）
-- [ ] 4.6 `apps/admin/src/shared/ui/index.ts` で 3 プリミティブを named export
-- [ ] 4.7 `apps/admin/src/shared/ui/Input.spec.ts` / `Label.spec.ts` / `FormField.spec.ts` にスモークテスト（基本レンダリング + props 反映）を追加
+- [x] 4.1 `apps/admin/components.json` を新設（shadcn-vue 規約: `tailwind.config` / `aliases.components: @/shared/ui` / `aliases.utils: @/shared/lib/utils` / `style: default` / `framework: vue`）+ tsconfig/vite に `@/` alias 追加
+- [x] 4.2 `apps/admin/src/shared/lib/utils.ts` に `cn()` ユーティリティ（`clsx` + `tailwind-merge` 合成）を実装
+- [x] 4.3 `apps/admin/src/shared/ui/Input.vue` を作成（shadcn-vue 公式の Input 規約に準拠、Tailwind preset utility で着色、リテラル色禁止）
+- [x] 4.4 `apps/admin/src/shared/ui/Label.vue` を作成（同上）
+- [x] 4.5 `apps/admin/src/shared/ui/FormField.vue` を作成（label + slot + error message スロットの最小実装、vee-validate 統合は #84 で判断）
+- [x] 4.6 `apps/admin/src/shared/ui/index.ts` で 3 プリミティブを named export
+- [x] 4.7 `apps/admin/src/shared/ui/Input.spec.ts` / `Label.spec.ts` / `FormField.spec.ts` にスモークテスト 15 件追加・全 pass（typecheck と App.spec.ts は Section 5 で mountWithVuetify 置換後に解消）
 
 ---
 

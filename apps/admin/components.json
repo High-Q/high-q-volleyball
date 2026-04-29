@@ -1,0 +1,19 @@
+{
+  "$schema": "https://shadcn-vue.com/schema.json",
+  "style": "default",
+  "typescript": true,
+  "tailwind": {
+    "config": "tailwind.config.ts",
+    "css": "src/style.css",
+    "baseColor": "slate",
+    "cssVariables": false
+  },
+  "framework": "vue",
+  "aliases": {
+    "components": "@/shared/ui",
+    "utils": "@/shared/lib/utils",
+    "ui": "@/shared/ui",
+    "lib": "@/shared/lib",
+    "composables": "@/shared/lib"
+  }
+}
