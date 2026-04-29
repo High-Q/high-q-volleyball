@@ -147,11 +147,17 @@ app → pages → widgets → features → entities → shared
 
 ## Pillar 3 — UI 品質
 
-| アプリ | UI ライブラリ |
+| アプリ | UI スタック |
 |---|---|
-| `apps/lp` | Vuetify 3 |
-| `apps/admin` | shadcn/ui + Tailwind |
-| `apps/reservation` | shadcn/ui + Tailwind |
+| `apps/lp` | Vuetify 3（移行検討中） |
+| `apps/admin` | `@high-q/ui`（意匠系） + shadcn-vue（機能系） + `@high-q/tailwind-preset` + Vue Router |
+| `apps/reservation` | 同上 |
+
+すべてのアプリで HQ デザイントークン（`@high-q/design-tokens`）が単一の真実の源。色・書体・spacing・radius・shadow は CSS 変数（`var(--hq-*)`）または Tailwind preset utility（`bg-paper` / `p-hq-4` 等）経由のみ。マジックナンバー禁止。
+
+**プリミティブの棲み分け**（admin / reservation）:
+- **意匠系 = `@high-q/ui`**（`Button` / `Kicker` / `Badge` / `Photo` / `RemainBar`）— HQ ブランドの顔。3 アプリ共通。`var(--hq-*)` 直接利用、Tailwind / shadcn-vue 非依存。`Button` は 3 アプリで完全統一するため `@high-q/ui` のみ。
+- **機能系 = shadcn-vue**（`Input` / `Label` / `FormField` / `Dialog` / `Combobox` / `DataTable` / `Toast` / `DatePicker` 等）— a11y 重視のプリミティブを CLI で `apps/<app>/src/shared/ui/` に copy-paste。Tailwind preset utility 経由で着色。本基盤では Login (#84) 用の `Input` / `Label` / `FormField` のみ取り込み済み。追加は必要時に各 Issue で個別取得。
 
 Design フェーズで必ずチェック: 影響レイヤー / ビジネス異常系列挙 + UI フィードバック / Loading・Empty・Error・Success 4 状態 / モバイルファースト / アクセシビリティ AA / デザイントークン使用（マジックナンバー禁止）/ **E2E ハッピーパス試験の対象シナリオ列挙**。
 

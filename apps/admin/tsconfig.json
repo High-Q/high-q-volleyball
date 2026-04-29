@@ -18,7 +18,11 @@
     "noEmit": true,
     "useDefineForClassFields": true,
     "allowImportingTsExtensions": false,
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
   "exclude": ["node_modules", "dist"]
