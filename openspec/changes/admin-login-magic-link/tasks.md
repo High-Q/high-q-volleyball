@@ -73,27 +73,27 @@
 
 E2E は本番 Supabase に通信が届かないことを **多層防御**で保証する。詳細は design.md D10.1 参照。
 
-- [ ] 14.0 **E2E 用ダミー env**: `apps/admin/.env.e2e`（または `.env.test`）に `VITE_SUPABASE_URL=https://e2e-dummy.invalid` / `VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_e2e_dummy_xxxxxxxx` を設定。DNS で解決できない値とする（mock 漏れがあっても本番に届かない）
-- [ ] 14.1 `e2e/admin/login.spec.ts` に共通 fixture を作り、以下の防御を全テストに適用:
-  - (i) global setup で `VITE_SUPABASE_URL` を assertion し、`.supabase.co` を含む場合は throw（本番 env 誤注入の即時検知）
-  - (ii) `page.route('**/auth/v1/**', ...)` `page.route('**/rest/v1/**', ...)` `page.route('**/storage/v1/**', ...)` で Supabase 全 API を fixture mock
-  - (iii) `page.route('**/*', route => ...)` の fallback で未マッチ HTTP は `route.abort()` で blocking
-- [ ] 14.2 `e2e/admin/login.spec.ts` に **2 件**の E2E を追加:
+- [x] 14.0 **E2E 用ダミー env**: playwright.config.ts の admin webServer.env に `VITE_SUPABASE_URL=https://e2e-dummy.invalid` / `VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_e2e_dummy_*` を inline で設定。さらに `PLAYWRIGHT_E2E=1` を渡し apps/admin/vite.config.ts で envDir をプロジェクトローカル (.env なし) に切り替えて .env.local 漏れを遮断。`*.invalid` は RFC 2606 予約 TLD なので DNS で解決できない（mock 漏れがあっても本番に届かない）
+- [x] 14.1 `e2e/admin/_helpers/supabaseGuard.ts` に共通 fixture を作り、以下の防御を全テストに適用:
+  - (i) `e2e/_global-setup.ts` で `VITE_SUPABASE_URL` を assertion し、`.supabase.co`/`.supabase.io` を含む場合は throw（本番 env 誤注入の即時検知）
+  - (ii) `page.route(/\/auth\/v[0-9]+\//, ...)` `page.route(/\/rest\/v[0-9]+\//, ...)` `page.route(/\/storage\/v[0-9]+\//, ...)` で Supabase 全 API を fixture mock
+  - (iii) `page.route('**/*', route => ...)` の fallback で localhost / 127.0.0.1 / *.invalid 以外は `route.abort('blockedbyclient')`（許可リスト方式）
+- [x] 14.2 `e2e/admin/login.e2e.ts` に **2 件**の E2E を追加:
   - (a) `/` に未認証アクセス → `/login` にリダイレクトされ、メール入力フォームと CTA が表示される
-  - (b) `/login` で有効メールを入力して CTA を押すと、Success 状態の文言が表示される（Supabase Auth は Playwright route mock で `signInWithOtp` を成功レスポンスにスタブ）
-- [ ] 14.3 既存 Playwright 設定が `apps/admin` をカバーしていない場合、最小限の baseURL と project を追加（追加が大きくなる場合は本 change のスコープ外と判定し、別 change を切る相談を翔太郎くんに）
+  - (b) `/login` で有効メールを入力して CTA を押すと、Success 状態の文言が表示される（`mockSignInWithOtpSuccess(page)` で `signInWithOtp` を成功レスポンスにスタブ）
+- [x] 14.3 playwright.config.ts に admin 用 project (`baseURL=http://localhost:4174`) と webServer (`pnpm --filter @high-q/admin build && vite preview --port 4174`) を追加。lp / admin で testDir を分離
 - [ ] 14.4 **CI 運用ルール明記**: GitHub Actions の E2E ジョブには本番 Supabase secrets を渡さない設計を `docs/03-アーキテクチャ/03-インフラ・CICD構成.md` に追記する Sync 候補としてメモ（実装は Sync フェーズで）
 
 ## 15. 品質確認・最終チェック
 
-- [ ] 15.1 `apps/admin` 全体を grep して、オーナー email リテラル（`'owner@high-q.club'` 等）が認証判定ロジックに登場しないことを確認
-- [ ] 15.2 `apps/admin` 全体を grep して、`mfa.unenroll` の呼び出しが**存在しない**ことを確認（factor 削除は Dashboard 専用）
-- [ ] 15.3 マジックナンバー（`px-[56px]` 等の任意値クラス、生の hex カラー、生の `font-family`）が新規ファイルに含まれないことを確認
-- [ ] 15.4 `pnpm --filter @high-q/admin typecheck` が通る
-- [ ] 15.5 `pnpm --filter @high-q/admin test` が通る（unit + component test）
-- [ ] 15.6 `pnpm --filter @high-q/admin build` が通る
-- [ ] 15.7 Playwright E2E が通る（ローカルで `pnpm exec playwright test --project=admin` 等。プロジェクト設定済み前提）
-- [ ] 15.8 `apps/admin/src/app/router.ts` から `// TODO(#84)` コメントが除去されていることを確認
+- [x] 15.1 `apps/admin` 全体を grep して、オーナー email リテラル（`'owner@high-q.club'` 等）が認証判定ロジックに登場しないことを確認 → spec / placeholder のみ
+- [x] 15.2 `apps/admin` 全体を grep して、`mfa.unenroll` の呼び出しが**存在しない**ことを確認 → 0 件
+- [x] 15.3 マジックナンバー（`px-[56px]` 等の任意値クラス、生の hex カラー、生の `font-family`）が新規ファイルに含まれないことを確認 → 0 件
+- [x] 15.4 `pnpm --filter @high-q/admin typecheck` が通る
+- [x] 15.5 `pnpm --filter @high-q/admin test` が通る（unit + component test）→ 111/111
+- [x] 15.6 `pnpm --filter @high-q/admin build` が通る
+- [x] 15.7 Playwright E2E が通る → 5/5 (admin 2 + lp 3 既存)
+- [x] 15.8 `apps/admin/src/app/router.ts` から `// TODO(#84)` コメントが除去されていることを確認 → 0 件
 - [ ] 15.9 ローカルで実機確認: `/login` 表示 → 4 状態の手動テスト（CTA 押下で Loading → Success、空送信で Error バナー、`/login?reason=not-admin` で Error バナー文言）。MFA setup / challenge の手動テストは Supabase Dashboard に Auth ユーザーと TOTP factor を持つ環境で確認（または翔太郎くんが本番デプロイ後に行う）
 - [ ] 15.10 idle timeout の動作確認: 15 分放置せずとも、設計レビューで `MS_IDLE_LIMIT` を一時的に短縮（例: 30 秒）して動作を見る方法を README に明記しておく
 
