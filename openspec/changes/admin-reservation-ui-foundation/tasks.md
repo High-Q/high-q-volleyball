@@ -52,14 +52,14 @@
 
 ## 5. `apps/admin` の Vue Router 導入と "準備中" 画面
 
-- [ ] 5.1 `apps/admin/src/app/router.ts` を新設（`/` → `HomePlaceholder` / `/login` → `LoginPlaceholder`、`createWebHistory()`、`router.beforeEach` 用拡張点コメント `// TODO(#84): auth guard をここに追加`）
-- [ ] 5.2 `apps/admin/src/pages/HomePlaceholder.vue` を新設（HQ paper 背景、Zen Kaku Gothic、"管理画面 — 準備中" 表示。Tailwind utility のみで着色、`@high-q/ui` Button を 1 つ配置して疎通確認）
-- [ ] 5.3 `apps/admin/src/pages/LoginPlaceholder.vue` を新設（後続 #84 で置換される枠。"Login — 準備中" + Tailwind utility での見た目確認 + `@high-q/ui/Button` 配置）
-- [ ] 5.4 `apps/admin/src/App.vue` を `<RouterView />` をマウントするレイアウトに書き換え、`apps/admin/src/style.css` を `<style>` で import
-- [ ] 5.5 `apps/admin/src/main.ts` で `import router from './app/router'` し、`createApp(App).use(router).mount('#app')` に変更
-- [ ] 5.6 `apps/admin/src/test/mountWithVuetify.ts` を削除し、`mountWithRouter.ts` を新設（`createMemoryHistory()` + `createRouter()` で test 用 router を組み立てるヘルパー）
-- [ ] 5.7 `apps/admin/src/App.spec.ts` をルーティングスモークテストに書き換える（`/` で `HomePlaceholder` がマウント / `/login` で `LoginPlaceholder` がマウント）
-- [ ] 5.8 `pnpm --filter @high-q/admin typecheck` / `test` / `build` がすべて pass することを確認
+- [x] 5.1 `apps/admin/src/app/router.ts` を新設（`/` → `HomePlaceholder` / `/login` → `LoginPlaceholder`、`createWebHistory()`、`router.beforeEach` 用拡張点コメント `// TODO(#84): auth guard をここに追加`）
+- [x] 5.2 `apps/admin/src/pages/HomePlaceholder.vue` を新設（HQ paper 背景、Zen Kaku Gothic、"管理画面 — 準備中" 表示。Tailwind utility のみで着色、`@high-q/ui` Button を 1 つ配置して疎通確認）
+- [x] 5.3 `apps/admin/src/pages/LoginPlaceholder.vue` を新設（後続 #84 で置換される枠。"Login — 準備中" + Tailwind utility での見た目確認 + `@high-q/ui/Button` 配置）
+- [x] 5.4 `apps/admin/src/App.vue` を `<RouterView />` をマウントするレイアウトに書き換え、`main.ts` で `style.css` を import（CSS bundling 順序最適化）
+- [x] 5.5 `apps/admin/src/main.ts` で `import router from './app/router'` し、`createApp(App).use(router).mount('#app')` に変更
+- [x] 5.6 `apps/admin/src/test/mountWithVuetify.ts` を削除し、`mountWithRouter.ts` を新設（`createMemoryHistory()` + `createRouter()` で test 用 router を組み立てるヘルパー）
+- [x] 5.7 `apps/admin/src/App.spec.ts` をルーティングスモークテストに書き換える（`/` で `HomePlaceholder` がマウント / `/login` で `LoginPlaceholder` がマウント）
+- [x] 5.8 `pnpm --filter @high-q/admin typecheck` / `test` (18 件 pass) / `build` (47 modules) がすべて pass することを確認。`"type": "module"` 追加で postcss 警告も解消
 
 ---
 
