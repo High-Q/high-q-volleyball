@@ -39,42 +39,50 @@
 
 ## 8. Routing: ルート定義 + auth guard（TDD・6 ケース）
 
-- [ ] 8.1 `apps/admin/src/app/router.spec.ts` （または既存のスモークテスト）に guard の **6 ケース**を追加: 未認証で `/` → `/login`、AAL1 + factor 未登録で `/` → `/mfa/setup`、AAL1 + factor 登録済みで `/` → `/mfa`、AAL2 admin で `/` → 通過、AAL2 非 admin で `/` → サインアウト + `/login?reason=not-admin`、AAL2 admin で `/login` → `/`。`useAuthSession` は `vi.mock`
-- [ ] 8.2 `apps/admin/src/app/router.ts` を更新: `/auth/callback` / `/mfa` / `/mfa/setup` ルート追加、`meta.public` を `/login` と `/auth/callback` に設定、`router.beforeEach` を実装し `// TODO(#84)` コメントを除去
-- [ ] 8.3 `apps/admin/src/main.ts` を確認し、`installAuthSession(app)` を `app.use(router)` の **前** で呼ぶように修正（router guard が inject に依存するため）。同時に `useIdleTimeout` をルートマウント直後に start し、ハンドラで `useAuthSession.signOut` を呼ぶ配線を行う
+- [x] 8.1 `apps/admin/src/app/router.spec.ts` （または既存のスモークテスト）に guard の **6 ケース**を追加: 未認証で `/` → `/login`、AAL1 + factor 未登録で `/` → `/mfa/setup`、AAL1 + factor 登録済みで `/` → `/mfa`、AAL2 admin で `/` → 通過、AAL2 非 admin で `/` → サインアウト + `/login?reason=not-admin`、AAL2 admin で `/login` → `/`。`useAuthSession` は `vi.mock`
+- [x] 8.2 `apps/admin/src/app/router.ts` を更新: `/auth/callback` / `/mfa` / `/mfa/setup` ルート追加、`meta.public` を `/login` と `/auth/callback` に設定、`router.beforeEach` を実装し `// TODO(#84)` コメントを除去
+- [x] 8.3 `apps/admin/src/main.ts` を確認し、`installAuthSession(app)` を `app.use(router)` の **前** で呼ぶように修正（router guard が inject に依存するため）。同時に `useIdleTimeout` をルートマウント直後に start し、ハンドラで `useAuthSession.signOut` を呼ぶ配線を行う
 
 ## 9. UI: AuthCallbackPage（TDD）
 
-- [ ] 9.1 `apps/admin/src/pages/AuthCallbackPage.spec.ts` を書く: マウント時に Loading 表示、AAL2 admin としてセッション確立で `/` に push、AAL1 + factor 未登録で `/mfa/setup` に push、AAL1 + factor 登録済みで `/mfa` に push、AAL2 非 admin でサインアウト + `/login?reason=not-admin`、エラーで `/login?reason=link-invalid`
-- [ ] 9.2 `apps/admin/src/pages/AuthCallbackPage.vue` を実装。HQ paper 背景 + 中央寄せの「サインインしています…」メッセージ、`useAuthSession` の `ready()` を await して結果に応じて router.replace
+- [x] 9.1 `apps/admin/src/pages/AuthCallbackPage.spec.ts` を書く: マウント時に Loading 表示、AAL2 admin としてセッション確立で `/` に push、AAL1 + factor 未登録で `/mfa/setup` に push、AAL1 + factor 登録済みで `/mfa` に push、AAL2 非 admin でサインアウト + `/login?reason=not-admin`、エラーで `/login?reason=link-invalid`
+- [x] 9.2 `apps/admin/src/pages/AuthCallbackPage.vue` を実装。HQ paper 背景 + 中央寄せの「サインインしています…」メッセージ、`useAuthSession` の `ready()` を await して結果に応じて router.replace
 
 ## 10. UI: LoginPage（TDD）
 
-- [ ] 10.1 `apps/admin/src/pages/LoginPage.spec.ts` を書く: Empty 状態で input + CTA 表示、CTA 押下で Loading（CTA disabled）、Success 状態（メール送信完了文言 + 「別のメールアドレスを使う」）、Error 状態（バナー文言が `reason` クエリ別に切り替わる: `not-admin` / `link-invalid` / バリデーション）、CTA 再活性、`reason` クエリは `replaceState` で URL から除去
-- [ ] 10.2 `apps/admin/src/pages/LoginPage.vue` を実装。デザインサンプル `ScreenLogin` を参考に、左ペイン（ブランド・コピー）/ 右ペイン（フォーム）の 2 カラムレイアウト。書体は `font-jp` / `font-jp-display` / `font-mono`、色は `bg-paper` / `bg-paper-warm` / `text-accent` / `border-hairline`、spacing は `p-hq-*` / `gap-hq-*`。shadcn-vue の `Input` / `Label` / `FormField`、`@high-q/ui` の `Button`、`Kicker` を使用
-- [ ] 10.3 `apps/admin/src/pages/LoginPlaceholder.vue` を削除し、router 定義を `LoginPage` に切り替える（8.2 の差分内で済む場合は本タスクをマージ可）
+- [x] 10.1 `apps/admin/src/pages/LoginPage.spec.ts` を書く: Empty 状態で input + CTA 表示、CTA 押下で Loading（CTA disabled）、Success 状態（メール送信完了文言 + 「別のメールアドレスを使う」）、Error 状態（バナー文言が `reason` クエリ別に切り替わる: `not-admin` / `link-invalid` / バリデーション）、CTA 再活性、`reason` クエリは `replaceState` で URL から除去
+- [x] 10.2 `apps/admin/src/pages/LoginPage.vue` を実装。デザインサンプル `ScreenLogin` を参考に、左ペイン（ブランド・コピー）/ 右ペイン（フォーム）の 2 カラムレイアウト。書体は `font-jp` / `font-jp-display` / `font-mono`、色は `bg-paper` / `bg-paper-warm` / `text-accent` / `border-hairline`、spacing は `p-hq-*` / `gap-hq-*`。shadcn-vue の `Input` / `Label` / `FormField`、`@high-q/ui` の `Button`、`Kicker` を使用
+- [x] 10.3 `apps/admin/src/pages/LoginPlaceholder.vue` を削除し、router 定義を `LoginPage` に切り替える（8.2 の差分内で済む場合は本タスクをマージ可）
 
 ## 11. UI: MfaSetupPage（TDD）
 
-- [ ] 11.1 `apps/admin/src/pages/MfaSetupPage.spec.ts` を書く: マウント時に Loading（enroll 呼び出し中）、Empty=QR コード SVG / secret テキスト / 6 桁入力欄 / 推奨アプリリンク表示、CTA 押下で Loading（verify 中、入力 disabled）、Success（成功表示 → 自動 router.replace('/')）、Error（誤コードバナー + 入力欄クリア + 再入力可）
-- [ ] 11.2 `apps/admin/src/pages/MfaSetupPage.vue` を実装。`useMfaEnrollment` を利用。`qrcode` ライブラリで `qrCode`（otpauth URI）から SVG を生成して表示。HQ デザイントークン準拠。手順説明（"認証アプリをインストール → QR コードをスキャン → 6 桁を入力" の 3 ステップ + Authy / Google Authenticator / 1Password へのリンク）
+- [x] 11.1 `apps/admin/src/pages/MfaSetupPage.spec.ts` を書く: マウント時に Loading（enroll 呼び出し中）、Empty=QR コード SVG / secret テキスト / 6 桁入力欄 / 推奨アプリリンク表示、CTA 押下で Loading（verify 中、入力 disabled）、Success（成功表示 → 自動 router.replace('/')）、Error（誤コードバナー + 入力欄クリア + 再入力可）
+- [x] 11.2 `apps/admin/src/pages/MfaSetupPage.vue` を実装。`useMfaEnrollment` を利用。`qrcode` ライブラリで `qrCode`（otpauth URI）から SVG を生成して表示。HQ デザイントークン準拠。手順説明（"認証アプリをインストール → QR コードをスキャン → 6 桁を入力" の 3 ステップ + Authy / Google Authenticator / 1Password へのリンク）
 
 ## 12. UI: MfaChallengePage（TDD）
 
-- [ ] 12.1 `apps/admin/src/pages/MfaChallengePage.spec.ts` を書く: マウント時に Loading（factor 取得 / challenge 中）、Empty=6 桁入力欄表示、CTA 押下で Loading（verify 中）、Success（成功 → 自動 router.replace('/')）、Error（誤コードバナー + 入力欄クリア + 再入力可）、factor が無い場合は `/mfa/setup` に redirect
-- [ ] 12.2 `apps/admin/src/pages/MfaChallengePage.vue` を実装。`useMfaChallenge` を利用。HQ デザイントークン準拠
+- [x] 12.1 `apps/admin/src/pages/MfaChallengePage.spec.ts` を書く: マウント時に Loading（factor 取得 / challenge 中）、Empty=6 桁入力欄表示、CTA 押下で Loading（verify 中）、Success（成功 → 自動 router.replace('/')）、Error（誤コードバナー + 入力欄クリア + 再入力可）、factor が無い場合は `/mfa/setup` に redirect
+- [x] 12.2 `apps/admin/src/pages/MfaChallengePage.vue` を実装。`useMfaChallenge` を利用。HQ デザイントークン準拠
 
 ## 13. UI: HomePlaceholder にサインアウトボタン
 
-- [ ] 13.1 `apps/admin/src/pages/HomePlaceholder.spec.ts` に「サインアウトボタンを押すと `useAuthSession.signOut` が呼ばれ、`/login` に遷移」のテストを追加（既存テストがあれば追記）
-- [ ] 13.2 `apps/admin/src/pages/HomePlaceholder.vue` に最小限の「ログアウト」`Button`（variant=ghost）を右上 or 下部に追加。`// TODO(後続 dashboard Issue): サインアウトボタンを Sidebar に移設` のコメントを残す
+- [x] 13.1 `apps/admin/src/pages/HomePlaceholder.spec.ts` に「サインアウトボタンを押すと `useAuthSession.signOut` が呼ばれ、`/login` に遷移」のテストを追加（既存テストがあれば追記）
+- [x] 13.2 `apps/admin/src/pages/HomePlaceholder.vue` に最小限の「ログアウト」`Button`（variant=ghost）を右上 or 下部に追加。`// TODO(後続 dashboard Issue): サインアウトボタンを Sidebar に移設` のコメントを残す
 
 ## 14. E2E（Playwright）
 
-- [ ] 14.1 `e2e/admin/login.spec.ts` （または既存のディレクトリ構造に合わせる）に **2 件**の E2E を追加:
+E2E は本番 Supabase に通信が届かないことを **多層防御**で保証する。詳細は design.md D10.1 参照。
+
+- [ ] 14.0 **E2E 用ダミー env**: `apps/admin/.env.e2e`（または `.env.test`）に `VITE_SUPABASE_URL=https://e2e-dummy.invalid` / `VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_e2e_dummy_xxxxxxxx` を設定。DNS で解決できない値とする（mock 漏れがあっても本番に届かない）
+- [ ] 14.1 `e2e/admin/login.spec.ts` に共通 fixture を作り、以下の防御を全テストに適用:
+  - (i) global setup で `VITE_SUPABASE_URL` を assertion し、`.supabase.co` を含む場合は throw（本番 env 誤注入の即時検知）
+  - (ii) `page.route('**/auth/v1/**', ...)` `page.route('**/rest/v1/**', ...)` `page.route('**/storage/v1/**', ...)` で Supabase 全 API を fixture mock
+  - (iii) `page.route('**/*', route => ...)` の fallback で未マッチ HTTP は `route.abort()` で blocking
+- [ ] 14.2 `e2e/admin/login.spec.ts` に **2 件**の E2E を追加:
   - (a) `/` に未認証アクセス → `/login` にリダイレクトされ、メール入力フォームと CTA が表示される
-  - (b) `/login` で有効メールを入力して CTA を押すと、Success 状態の文言が表示される（Supabase Auth は MSW or Playwright route mock で `signInWithOtp` を成功レスポンスにスタブ）
-- [ ] 14.2 既存 Playwright 設定が `apps/admin` をカバーしていない場合、最小限の baseURL と project を追加（追加が大きくなる場合は本 change のスコープ外と判定し、別 change を切る相談を翔太郎くんに）
+  - (b) `/login` で有効メールを入力して CTA を押すと、Success 状態の文言が表示される（Supabase Auth は Playwright route mock で `signInWithOtp` を成功レスポンスにスタブ）
+- [ ] 14.3 既存 Playwright 設定が `apps/admin` をカバーしていない場合、最小限の baseURL と project を追加（追加が大きくなる場合は本 change のスコープ外と判定し、別 change を切る相談を翔太郎くんに）
+- [ ] 14.4 **CI 運用ルール明記**: GitHub Actions の E2E ジョブには本番 Supabase secrets を渡さない設計を `docs/03-アーキテクチャ/03-インフラ・CICD構成.md` に追記する Sync 候補としてメモ（実装は Sync フェーズで）
 
 ## 15. 品質確認・最終チェック
 

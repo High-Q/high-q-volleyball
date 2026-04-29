@@ -61,10 +61,11 @@ async function setupSession() {
   const { installAuthSession, useAuthSession } = await import(
     "./useAuthSession"
   );
-  let captured: ReturnType<typeof useAuthSession> | null = null;
+  type Captured = ReturnType<typeof useAuthSession>;
+  let captured: Captured | null = null;
   const Probe = defineComponent({
     setup() {
-      captured = useAuthSession();
+      captured = useAuthSession() as Captured;
       return () => h("div");
     },
   });
@@ -72,10 +73,11 @@ async function setupSession() {
   installAuthSession(app);
   app.mount(document.createElement("div"));
   testApp = app;
-  if (captured === null) {
+  const result = captured as Captured | null;
+  if (result === null) {
     throw new Error("useAuthSession not captured");
   }
-  return captured;
+  return result;
 }
 
 describe("useAuthSession", () => {

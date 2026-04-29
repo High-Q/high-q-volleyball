@@ -16,6 +16,7 @@
     "@high-q/shared": "workspace:*",
     "@high-q/tailwind-preset": "workspace:*",
     "@high-q/ui": "workspace:*",
+    "@supabase/supabase-js": "^2.45.0",
     "@vitejs/plugin-vue": "^5.0.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

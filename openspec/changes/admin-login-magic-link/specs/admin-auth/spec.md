@@ -96,6 +96,27 @@
 - **WHEN** 15 分以上経過したマジックリンクをクリックして `/auth/callback` に到達
 - **THEN** session 確立に失敗し、`/login?reason=link-invalid` にリダイレクトされる
 
+### Requirement: E2E から本番 Supabase へ通信が届かないこと
+
+`apps/admin` の E2E (Playwright) は SHALL 本番 Supabase に対して 1 本も HTTP リクエストを送らない。多層防御を MUST 実装する:
+
+- E2E env (`.env.e2e` 等) は `VITE_SUPABASE_URL` を DNS 解決不可なドメイン (例: `https://e2e-dummy.invalid`) とする
+- Playwright global setup は `VITE_SUPABASE_URL` に `.supabase.co` が含まれていたら fail-fast で全テスト中止
+- 各テスト fixture は `page.route('**/auth/v1/**', ...)` / `page.route('**/rest/v1/**', ...)` / `page.route('**/storage/v1/**', ...)` で Supabase 全 API パスを mock
+- 未マッチの HTTP は `page.route('**/*', route => route.abort())` で全 abort
+
+#### Scenario: env 誤注入の即時検知
+- **WHEN** E2E ジョブで `VITE_SUPABASE_URL=https://xxx.supabase.co` のように本番値が誤って渡される
+- **THEN** Playwright global setup の assertion により全テストが中止される
+
+#### Scenario: 未マッチ HTTP の遮断
+- **WHEN** E2E 中に Supabase 以外の予期しない外部 URL へリクエストが発生
+- **THEN** `route.abort()` により遮断される
+
+#### Scenario: CI 運用
+- **WHEN** GitHub Actions の E2E ジョブを実行
+- **THEN** 本番 Supabase の secrets は環境変数として渡されない（CI 設定で意図的に分離）
+
 ### Requirement: features/auth スライスの Public API
 
 `apps/admin/src/features/auth/index.ts` は `useAuthSession` / `useSendMagicLink` / `useSignOut` / `useMfaEnrollment` / `useMfaChallenge` / `useIdleTimeout` / `installAuthSession` / 関連型を export SHALL する。他レイヤーは内部の `composables/` や `api/` を直接 import SHALL NOT。

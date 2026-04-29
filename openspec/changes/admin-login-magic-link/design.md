@@ -252,6 +252,17 @@ apps/admin/src/
 
 E2E は機能あたり 1〜2 件の上限を遵守。マジックリンクの実メール受信および TOTP 検証は E2E では追わず、callback / MFA 後の挙動は component test に押し下げる。
 
+#### D10.1. **E2E が本番 Supabase に届かないことの保証（多層防御）**
+
+本サービスは数十人規模の本人確認書類を扱うため、E2E が誤って本番 Supabase に書き込みを行うことは絶対に避けなければならない。以下の 4 層で fail-closed 防御する:
+
+1. **Playwright route mock**: 各 E2E テスト fixture で `page.route('**/auth/v1/**', ...)` `page.route('**/rest/v1/**', ...)` `page.route('**/storage/v1/**', ...)` を設定し、Supabase の全 API パスを mock 応答に差し替える
+2. **ダミー env (`.env.e2e`)**: `VITE_SUPABASE_URL=https://e2e-dummy.invalid` のように **DNS で解決できないドメイン**を E2E 環境変数として用意。mock 漏れが起きても本番には届かない
+3. **URL ガード assertion**: Playwright global setup で `VITE_SUPABASE_URL` を検査し、`.supabase.co` を含む（= 本番系の可能性）場合は `throw` でテスト全停止
+4. **未マッチ HTTP のブロック**: 全テストで `page.route('**/*', route => { ... })` のフォールバック handler を設定し、明示的に許可した URL 以外の通信は `route.abort()` する
+
+CI（GitHub Actions）でも、**E2E ジョブには本番 Supabase の secrets を渡さない**ことを運用ルールとする。E2E 環境変数は必ずダミー値であり、本番 secrets は build / unit test ジョブのみに公開される。
+
 ### D11. TOTP 二要素認証（MFA）の必須化
 
 **選択**: Supabase Auth 標準の `mfa.enroll/challenge/verify` API を利用し、admin は TOTP factor の登録と検証を必須とする。AAL2 に到達するまで `is_admin()` を呼ばず、保護ルートも guard で遮断する。

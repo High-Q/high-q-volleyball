@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import { Button } from "@high-q/ui";
 import { useRouter } from "vue-router";
+import { useAuthSession } from "@/features/auth";
 
 const router = useRouter();
+const session = useAuthSession();
+
+// TODO(後続 dashboard Issue): サインアウトボタンを Sidebar に移設
+async function onSignOut() {
+  await session.signOut();
+  await router.replace({ name: "login" });
+}
 </script>
 
 <template>
@@ -22,10 +30,8 @@ const router = useRouter();
         （Tailwind preset / shadcn-vue / Vue Router）の疎通確認用プレースホルダ
         です。
       </p>
-      <div>
-        <Button variant="secondary" @click="router.push('/login')">
-          ログイン画面へ
-        </Button>
+      <div class="flex gap-hq-3">
+        <Button variant="ghost" @click="onSignOut">ログアウト</Button>
       </div>
     </div>
   </main>
