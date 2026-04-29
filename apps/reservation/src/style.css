@@ -1,0 +1,15 @@
+/* HQ デザイントークン CSS 変数（:root に --hq-*）。@high-q/ui プリミティブと
+   Tailwind preset の両方が同じ値を参照する。 */
+@import "@high-q/design-tokens/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* アプリ全体のベースタイポグラフィ・背景。HQ token 経由のみ。 */
+html,
+body {
+  background-color: var(--hq-color-paper);
+  color: var(--hq-color-ink);
+  font-family: var(--hq-font-jp);
+}

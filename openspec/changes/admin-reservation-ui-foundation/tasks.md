@@ -65,16 +65,16 @@
 
 ## 6. `apps/reservation` を admin と同等の構成にする
 
-- [ ] 6.1 `apps/reservation/package.json` を 3.1 と同等の内容に更新
-- [ ] 6.2 `apps/reservation/tailwind.config.ts` / `postcss.config.js` / `src/style.css` を 3.2-3.4 と同等の内容で新設
-- [ ] 6.3 `apps/reservation/vite.config.ts` から Vuetify plugin を削除
-- [ ] 6.4 `apps/reservation/components.json` を 4.1 と同等の内容で新設
-- [ ] 6.5 `apps/reservation/src/shared/lib/utils.ts` に `cn()` を実装
-- [ ] 6.6 `apps/reservation/src/shared/ui/Input.vue` / `Label.vue` / `FormField.vue` を 4.3-4.5 と同等の実装で配置（admin と同じファイルを copy-paste で良い、shadcn-vue 哲学に沿う）
-- [ ] 6.7 `apps/reservation/src/shared/ui/index.ts` および各 `*.spec.ts` を追加
-- [ ] 6.8 `apps/reservation/src/app/router.ts` / `pages/HomePlaceholder.vue` / `pages/LoginPlaceholder.vue` を 5.1-5.3 と同等の内容で新設（reservation 文脈での "準備中" 表記）
-- [ ] 6.9 `apps/reservation/src/App.vue` / `main.ts` / `test/mountWithRouter.ts` / `App.spec.ts` を 5.4-5.7 と同等に整備
-- [ ] 6.10 `pnpm --filter @high-q/reservation typecheck` / `test` / `build` がすべて pass することを確認
+- [x] 6.1 `apps/reservation/package.json` を 3.1 と同等の内容に更新
+- [x] 6.2 `apps/reservation/tailwind.config.ts` / `postcss.config.js` / `src/style.css` を 3.2-3.4 と同等の内容で新設
+- [x] 6.3 `apps/reservation/vite.config.ts` には既に Vuetify plugin が含まれていないことを確認、resolve.alias 追加 + vitest.config.ts の `inline: ["vuetify"]` 除去
+- [x] 6.4 `apps/reservation/components.json` を 4.1 と同等の内容で新設
+- [x] 6.5 `apps/reservation/src/shared/lib/utils.ts` に `cn()` を実装
+- [x] 6.6 `apps/reservation/src/shared/ui/Input.vue` / `Label.vue` / `FormField.vue` を 4.3-4.5 と同等の実装で配置（admin と同じファイルを copy-paste で良い、shadcn-vue 哲学に沿う）
+- [x] 6.7 `apps/reservation/src/shared/ui/index.ts` および各 `*.spec.ts` を追加
+- [x] 6.8 `apps/reservation/src/app/router.ts` / `pages/HomePlaceholder.vue` / `pages/LoginPlaceholder.vue` を 5.1-5.3 と同等の内容で新設（reservation 文脈での "予約サイト 準備中" 表記）
+- [x] 6.9 `apps/reservation/src/App.vue` / `main.ts` / `test/mountWithRouter.ts` / `App.spec.ts` を 5.4-5.7 と同等に整備
+- [x] 6.10 `pnpm --filter @high-q/reservation typecheck` / `test` (17 件 pass) / `build` (47 modules) がすべて pass することを確認
 
 ---
 
