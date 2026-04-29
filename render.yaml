@@ -12,12 +12,14 @@
 
 # 共通ビルド方針:
 # - corepack enable: root package.json の packageManager (pnpm@10.33.2) を強制
-# - --prod: root package の devDependencies を install しない（本番不要）
 # - --ignore-scripts: 全 lifecycle script (prepare/postinstall) を install 時にスキップ
 #   jsdom v25 の prepare (convert-idl) や wireit 等の問題ある script が走らない事を保証
 # - --frozen-lockfile: pnpm-lock.yaml に厳密従属
 # - pnpm --filter <pkg> build: モノレポ workspace の依存解決を尊重しつつ対象アプリのみビルド
 #   (#81 でモノレポ対応化。将来 admin/reservation 追加時もこの形式を踏襲)
+# - 注: `--prod` は付けない。Vite/unplugin-vue-components 等の build 専用ツールは
+#   devDependencies に入っているため、`--prod` だと build が失敗する (#84 で確認)。
+#   build 専用 dep は最終 dist には含まれないため本番サイズに影響なし。
 # CI (GitHub Actions) は別途フル install してテスト実行する想定。
 
 services:
@@ -32,7 +34,7 @@ services:
     rootDir: apps/lp
     branch: master
 
-    buildCommand: corepack enable && pnpm install --prod --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/lp build
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/lp build
     staticPublishPath: dist
 
     # 自動デプロイ設定:
@@ -47,6 +49,14 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      # Render Static Site はデフォルトで buildCommand の前に自動 `npm install` を
+      # 実行するが、本リポジトリは pnpm workspaces (`workspace:*`) のため npm では
+      # 解釈できずビルドが失敗する (#84 PR Preview で確認)。SKIP_INSTALL_DEPS=true で
+      # 自動 install を完全にスキップし、buildCommand の `corepack enable && pnpm install`
+      # のみで依存解決する。
+      # 公式 docs: https://render.com/docs/static-sites
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
 
 # ============================================================
 # 将来追加用の雛形（admin / reservation）
@@ -67,7 +77,7 @@ services:
 #     runtime: static
 #     rootDir: apps/admin
 #     branch: master
-#     buildCommand: corepack enable && pnpm install --prod --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/admin build
+#     buildCommand: corepack enable && pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/admin build
 #     staticPublishPath: dist
 #     routes:
 #       - type: rewrite
@@ -79,9 +89,12 @@ services:
 #     envVars:
 #       - key: NODE_VERSION
 #         value: "22"
+#       # pnpm workspaces のため自動 npm install を skip させる (#84 で確立)
+#       - key: SKIP_INSTALL_DEPS
+#         value: "true"
 #       - key: VITE_SUPABASE_URL
 #         sync: false
-#       - key: VITE_SUPABASE_ANON_KEY
+#       - key: VITE_SUPABASE_PUBLISHABLE_KEY
 #         sync: false
 #
 # reservation 雛形: 上記の name / rootDir / --filter を reservation に置換

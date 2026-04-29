@@ -59,11 +59,14 @@ export function readSupabaseConfig(
       )
     );
   }
-  if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)) {
+  // `*.supabase.co` (本番) または `*.invalid` (RFC 2606 予約 TLD、E2E テスト専用) を許可。
+  // E2E では DNS 解決できない `.invalid` を使うことで本番 Supabase へ届かないことを保証する。
+  // 関連: openspec/changes/admin-login-magic-link/design.md (D10.1)
+  if (!/^https:\/\/[a-z0-9-]+\.(supabase\.co|invalid)$/i.test(url)) {
     return err(
       appError(
         "ENV_INVALID_SUPABASE_URL",
-        `VITE_SUPABASE_URL must look like 'https://<ref>.supabase.co', got: ${url}`
+        `VITE_SUPABASE_URL must look like 'https://<ref>.supabase.co' (or '<name>.invalid' for E2E), got: ${url}`
       )
     );
   }
