@@ -39,7 +39,7 @@ const errorMessage = computed<string | null>(() => {
 
 function handleStatus(next: typeof status.value) {
   if (next === "success") {
-    void router.replace({ name: "home" });
+    void router.replace({ name: "events" });
   }
   if (next === "awaiting-code") {
     code.value = "";
@@ -54,7 +54,7 @@ function handleError() {
 
 onMounted(async () => {
   if (status.value === "success") {
-    void router.replace({ name: "home" });
+    void router.replace({ name: "events" });
     return;
   }
   if (status.value === "idle") {
