@@ -8,3 +8,19 @@
 export { default as Input } from "./Input.vue";
 export { default as Label } from "./Label.vue";
 export { default as FormField } from "./FormField.vue";
+
+export { default as Table } from "./Table.vue";
+export { default as TableHeader } from "./TableHeader.vue";
+export { default as TableBody } from "./TableBody.vue";
+export { default as TableRow } from "./TableRow.vue";
+export { default as TableHead } from "./TableHead.vue";
+export { default as TableCell } from "./TableCell.vue";
+export { default as TableCaption } from "./TableCaption.vue";
+
+export { default as Select } from "./Select.vue";
+export { default as SelectTrigger } from "./SelectTrigger.vue";
+export { default as SelectValue } from "./SelectValue.vue";
+export { default as SelectContent } from "./SelectContent.vue";
+export { default as SelectItem } from "./SelectItem.vue";
+
+export { default as Skeleton } from "./Skeleton.vue";

@@ -3,10 +3,11 @@ import { Button } from "@high-q/ui";
 import { useRouter } from "vue-router";
 import { useAuthSession } from "@/features/auth";
 
+// TODO(sync): /events 移行 (#85) に伴い HomePlaceholder は router から外された。
+// ファイル本体は次の Sync フェーズで削除する候補。残存は履歴互換のみ。
 const router = useRouter();
 const session = useAuthSession();
 
-// TODO(後続 dashboard Issue): サインアウトボタンを Sidebar に移設
 async function onSignOut() {
   await session.signOut();
   await router.replace({ name: "login" });

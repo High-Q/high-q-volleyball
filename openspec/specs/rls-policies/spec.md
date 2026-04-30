@@ -156,3 +156,34 @@ High Q の Supabase PostgreSQL 全テーブルに対する Row Level Security �
 - **WHEN** member が `<other_user_id>/<doc_id>-front.jpg` に upload を試みる
 - **THEN** RLS で拒否される
 
+### Requirement: event_list_view の RLS と権限
+
+`event_list_view` ビューは `SECURITY INVOKER` で作成 MUST し、参照される events / venues / reservations 各テーブルの既存 RLS ポリシーを継承する。view 自体への明示的な RLS ポリシーは持たないが、anon ロールへの SELECT 権限は MUST 付与しない（admin アプリ専用ビューとして契約）。authenticated ロールには SELECT を許可 SHALL する。
+
+実態としての行レベル制御は参照テーブルの RLS で行われる:
+- events / venues は anon 含めて全件 SELECT 可（既存）
+- reservations は自分の予約のみ SELECT 可、admin は全件可（既存）→ admin で view を呼ぶと `reserved_count` は正しい全件 COUNT、非 admin で呼ぶと自分の予約分のみ COUNT になる
+
+#### Scenario: anon ロールは event_list_view を SELECT できない
+
+- **WHEN** anon JWT で `SELECT * FROM event_list_view`
+- **THEN** GRANT 不在により権限エラーが返る
+
+#### Scenario: authenticated ロールは event_list_view を SELECT できる
+
+- **WHEN** AAL2 admin が `SELECT * FROM event_list_view`
+- **THEN** events × venues × reservations 集計の結果が返る
+
+#### Scenario: 非 admin authenticated の reserved_count
+
+- **WHEN** AAL2 だが `role = 'member'` のユーザーが `SELECT id, reserved_count FROM event_list_view`
+- **THEN** events 行は anon と同等に全件返るが、reserved_count はその member 自身の予約分のみが COUNT される（仕様上の制約。クライアント側で当該ロールから呼ばないことを契約）
+
+### Requirement: event_list_view への admin アプリからの呼び出し契約
+
+`event_list_view` は admin アプリ（`apps/admin`）からのみ呼び出される MUST 契約とする。LP / reservation アプリ・anon ユーザーは本 view を呼び出してはならない。本契約の遵守は仕様上の責務であり、技術的には GRANT で anon を排除することで多層防御する。
+
+#### Scenario: 呼び出し元の限定
+
+- **WHEN** `apps/admin` 以外のソースで `event_list_view` を SELECT する import / SQL が含まれていないか grep する
+- **THEN** マッチが 0 件である

@@ -52,6 +52,7 @@ beforeEach(() => {
     history: createMemoryHistory(),
     routes: [
       { path: "/", name: "home", component: { template: "<div/>" } },
+      { path: "/events", name: "events", component: { template: "<div/>" } },
       { path: "/mfa/setup", name: "mfa-setup", component: MfaSetupPage },
     ],
   });
@@ -126,10 +127,10 @@ describe("MfaSetupPage", () => {
     expect(cta.attributes("disabled")).toBeDefined();
   });
 
-  it("Success 状態で home に遷移する", async () => {
+  it("Success 状態で /events に遷移する", async () => {
     enrollment.status.value = "success";
     await mountAt();
-    expect(router.currentRoute.value.path).toBe("/");
+    expect(router.currentRoute.value.path).toBe("/events");
   });
 
   it("Error (invalid-code) でバナー表示 + 再入力可", async () => {

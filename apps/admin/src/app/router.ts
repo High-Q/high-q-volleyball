@@ -6,7 +6,8 @@ import {
   type RouteRecordRaw,
   type Router,
 } from "vue-router";
-import HomePlaceholder from "@/pages/HomePlaceholder.vue";
+import EventsListPage from "@/pages/EventsListPage.vue";
+import EventsNewPage from "@/pages/EventsNewPage.vue";
 import LoginPage from "@/pages/LoginPage.vue";
 import AuthCallbackPage from "@/pages/AuthCallbackPage.vue";
 import MfaChallengePage from "@/pages/MfaChallengePage.vue";
@@ -19,9 +20,13 @@ import { useAuthSession } from "@/features/auth";
  * 関連:
  *   openspec/changes/admin-login-magic-link/specs/app-routing/spec.md
  *   openspec/changes/admin-login-magic-link/design.md (D4, D8)
+ *   openspec/changes/admin-events-list-screen/specs/app-routing/spec.md
  */
 const routes: RouteRecordRaw[] = [
-  { path: "/", name: "home", component: HomePlaceholder },
+  { path: "/", redirect: { name: "events" } },
+  { path: "/events", name: "events", component: EventsListPage },
+  // /events/new は #86 で本実装される。本 change ではプレースホルダ。
+  { path: "/events/new", name: "events-new", component: EventsNewPage },
   {
     path: "/login",
     name: "login",
@@ -60,7 +65,7 @@ export function registerAuthGuard(router: Router): void {
           aal === "aal2" &&
           admin === true
         ) {
-          return { name: "home" };
+          return { name: "events" };
         }
         return true;
       }
@@ -86,7 +91,7 @@ export function registerAuthGuard(router: Router): void {
 
       // AAL2 + admin が /mfa, /mfa/setup へ来たら /
       if (to.name === "mfa" || to.name === "mfa-setup") {
-        return { name: "home" };
+        return { name: "events" };
       }
 
       return true;

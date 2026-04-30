@@ -33,6 +33,7 @@ beforeEach(() => {
     history: createMemoryHistory(),
     routes: [
       { path: "/", name: "home", component: { template: "<div/>" } },
+      { path: "/events", name: "events", component: { template: "<div/>" } },
       { path: "/login", name: "login", component: { template: "<div/>" } },
       { path: "/mfa", name: "mfa", component: { template: "<div/>" } },
       {
@@ -81,13 +82,13 @@ describe("AuthCallbackPage", () => {
     await flushPromises();
   });
 
-  it("AAL2 admin で / にリダイレクト", async () => {
+  it("AAL2 admin で /events にリダイレクト", async () => {
     session.status.value = "authenticated";
     session.aal.value = "aal2";
     session.isAdmin.value = true;
 
     await mountAt("/auth/callback");
-    expect(router.currentRoute.value.path).toBe("/");
+    expect(router.currentRoute.value.path).toBe("/events");
   });
 
   it("AAL1 + factor 未登録で /mfa/setup にリダイレクト", async () => {
