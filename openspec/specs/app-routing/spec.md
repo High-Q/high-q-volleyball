@@ -164,3 +164,45 @@ guard は以下の判定を行う:
 - **WHEN** guard の単体テストを実行する
 - **THEN** 以下の 6 ケースが pass する: 「未認証で / → /login」「AAL1 + factor 未登録で / → /mfa/setup」「AAL1 + factor 登録済みで / → /mfa」「AAL2 admin で / → 通過」「AAL2 非 admin で / → サインアウト + /login?reason=not-admin」「AAL2 admin で /login → /」
 
+### Requirement: `/events` ルート（apps/admin のみ）
+
+`apps/admin` は `path: '/events'` ルートを SHALL 持ち、`EventsListPage.vue` を描画する。本ルートは admin 認証下のルートであり、既存の auth guard により AAL2 + admin role を満たすユーザーのみアクセス可能で、未認証 / AAL1 / 非 admin の各ケースで `/login` / `/mfa` / `/mfa/setup` / `/login?reason=not-admin` に redirect される。
+
+#### Scenario: events ルートが定義されている
+
+- **WHEN** `apps/admin/src/app/router.ts` の `routes` 配列を確認する
+- **THEN** `path: '/events'`、`name: 'events'`、`component: EventsListPage` が含まれる
+
+#### Scenario: 未認証アクセスは /login に redirect される
+
+- **WHEN** 未認証ユーザーが `/events` にアクセス
+- **THEN** auth guard により `/login` に redirect される
+
+#### Scenario: 認証済 admin はそのまま描画
+
+- **WHEN** AAL2 + admin role のユーザーが `/events` にアクセス
+- **THEN** `EventsListPage.vue` が描画される
+
+### Requirement: `/events/new` ルート予約（apps/admin のみ）
+
+`apps/admin` は `path: '/events/new'` ルートを SHALL 予約する。Issue #85 ではプレースホルダコンポーネント（"準備中"）を表示し、実体（イベント編集フォーム）は #86 で実装される。本ルートも admin 認証下のルート。
+
+#### Scenario: events/new ルートが定義されている
+
+- **WHEN** `apps/admin/src/app/router.ts` の `routes` 配列を確認する
+- **THEN** `path: '/events/new'` のルートエントリが存在する
+
+### Requirement: ルート `/` から `/events` への redirect（apps/admin のみ）
+
+`apps/admin` のトップルート `/` は、`redirect: { name: 'events' }` を SHALL 持つ。これにより認証済 admin は自動的に実機能（イベント一覧）に到達し、未認証なら `/events` 経由で auth guard により `/login` に到達する。`HomePlaceholder.vue` を `/` に紐付ける旧仕様（admin-reservation-ui-foundation 由来）は本変更で置き換えられる。
+
+#### Scenario: 認証済 admin の / アクセス
+
+- **WHEN** AAL2 + admin role のユーザーが `/` にアクセス
+- **THEN** auth guard 通過後、router が `/events` に redirect する
+
+#### Scenario: 未認証の / アクセス
+
+- **WHEN** 未認証ユーザーが `/` にアクセス
+- **THEN** `/` → `/events` の redirect 後、auth guard により `/login` に到達する
+

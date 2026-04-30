@@ -59,21 +59,36 @@ shadcn-vue CLI（`npx shadcn-vue@latest add <component>`）で取り込んだコ
 - **WHEN** `docs/05-インターフェース/01-UI設計方針.md` を確認する
 - **THEN** 「`@high-q/ui` と shadcn-vue の棲み分け」セクションが存在し、上記の責務分離基準が記述されている
 
-### Requirement: Login 用最小プリミティブのみが本基盤整備で取り込まれる
+### Requirement: 取り込み済みプリミティブの累積管理
 
-本 capability の初期取り込み範囲は、後続の Login (#84) 実装に必要な最小プリミティブ（`Input` / `Label` / `FormField`）のみとしなければならない（SHALL）。`Dialog` / `Combobox` / `DataTable` / `Toast` / `DatePicker` 等の追加は、必要となる後続 Issue の Apply タスク内で個別に取り込む。
+本 capability の取り込み範囲は、必要となる Issue ごとにインクリメンタルに拡張 SHALL する。各取り込み時点で具体的に何が `apps/admin/src/shared/ui/` および `apps/reservation/src/shared/ui/` 配下に存在しているかは、以下の累積リストで管理 MUST する:
 
-#### Scenario: 取り込み済みプリミティブが Login 必要分に限定される
+- 初期取り込み（admin-reservation-ui-foundation, #175）: `Input.vue` / `Label.vue` / `FormField.vue`（admin / reservation 共通、Login #84 の必要分）
+- admin-events-list-screen（#85）追加分: `Table.vue`（+ サブコンポーネント `TableHeader` / `TableBody` / `TableRow` / `TableHead` / `TableCell` / `TableCaption`） / `Select.vue`（+ サブコンポーネント `SelectTrigger` / `SelectValue` / `SelectContent` / `SelectItem`） / `Skeleton.vue`（admin のみ。イベント一覧の DataTable / フィルタ select / Loading skeleton 用）
+
+`Dialog` / `Combobox` / `Toast` / `DatePicker` 等の追加は、必要となる後続 Issue の Apply タスク内で個別に取り込む MUST。各取り込みにおいて Tailwind preset 経由での着色（`var(--hq-*)` および HQ utility 経由）を満たす SHALL。
+
+#### Scenario: admin に Table / Select / Skeleton が配置される
+
+- **WHEN** `apps/admin/src/shared/ui/` 配下を確認する
+- **THEN** `Input.vue` / `Label.vue` / `FormField.vue` に加えて `Table.vue` / `TableHeader.vue` / `TableBody.vue` / `TableRow.vue` / `TableHead.vue` / `TableCell.vue` / `TableCaption.vue` / `Select.vue` / `SelectTrigger.vue` / `SelectValue.vue` / `SelectContent.vue` / `SelectItem.vue` / `Skeleton.vue` が存在する
+
+#### Scenario: reservation 側には Table / Select / Skeleton 未取り込み
+
+- **WHEN** `apps/reservation/src/shared/ui/` 配下を確認する
+- **THEN** `Table.vue` / `Select.vue` / `Skeleton.vue` は存在しない（admin のみで使用するため、reservation で必要になる Issue で改めて取り込む）
+
+#### Scenario: 取り込み済みプリミティブが累積リストの範囲に限定される
 
 - **WHEN** `apps/admin/src/shared/ui/` および `apps/reservation/src/shared/ui/` の Vue ファイル一覧を確認する
-- **THEN** `Input.vue` / `Label.vue` / `FormField.vue` 以外の shadcn-vue 由来コンポーネントが存在しない（追加が必要な場合は後続 Issue で対応する）
+- **THEN** Login 必要分（Input / Label / FormField）+ Events List 必要分（Table 群 / Select 群 / Skeleton）以外の shadcn-vue 由来コンポーネントが存在しない（追加が必要な場合は後続 Issue で対応する）
 
 ### Requirement: shadcn-vue 由来プリミティブにスモークテストが存在する
 
-各取り込み済みプリミティブは、Vitest + `@vue/test-utils` で**最低 1 件のスモークテスト**（基本レンダリング + props 反映）を持たなければならない（SHALL）。
+各取り込み済みプリミティブは、Vitest + `@vue/test-utils` で**最低 1 件のスモークテスト**（基本レンダリング + props 反映）を持たなければならない（SHALL）。新たに取り込んだプリミティブも同様のテストを SHALL 持つ。
 
 #### Scenario: pnpm test が shadcn-vue プリミティブのテストを通す
 
 - **WHEN** `pnpm --filter @high-q/admin test` および `pnpm --filter @high-q/reservation test` を実行する
-- **THEN** `Input` / `Label` / `FormField` のスモークテストが pass する
+- **THEN** Login 系（`Input` / `Label` / `FormField`）+ Events List 系（`Table` / `Select` / `Skeleton`）のスモークテストが pass する
 
