@@ -13,8 +13,10 @@ vi.mock("../composables/useEventsListData", () => ({
   useEventsListData: useEventsListDataMock,
 }));
 
-vi.mock("../composables/useVenues", () => ({
+vi.mock("@/entities/venue", () => ({
   useVenues: useVenuesMock,
+  // EventsTable が会場名短縮で参照する。テストでは pass-through で十分。
+  shortenVenueName: (name: string) => name,
 }));
 
 import EventsListWidget from "./EventsListWidget.vue";

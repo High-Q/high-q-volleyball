@@ -15,8 +15,9 @@ vi.mock("@/widgets/events-list/composables/useEventsListData", () => ({
   useEventsListData: useEventsListDataMock,
 }));
 
-vi.mock("@/widgets/events-list/composables/useVenues", () => ({
+vi.mock("@/entities/venue", () => ({
   useVenues: useVenuesMock,
+  shortenVenueName: (name: string) => name,
 }));
 
 vi.mock("@/features/auth", () => ({

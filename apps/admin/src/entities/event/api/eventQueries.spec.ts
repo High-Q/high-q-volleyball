@@ -15,6 +15,19 @@ function makeBuilder() {
     or: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     range: vi.fn().mockImplementation(async () => ({ ...builderResult })),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    single: vi.fn().mockImplementation(async () => ({
+      data: builderResult.data,
+      error: builderResult.error,
+    })),
+    maybeSingle: vi.fn().mockImplementation(async () => ({
+      data: builderResult.data,
+      error: builderResult.error,
+    })),
+    // delete().eq() is awaitable directly
+    then: undefined,
   };
   return builder;
 }
@@ -297,5 +310,195 @@ describe("fetchEventsList", () => {
     if (!result.ok) {
       expect(result.error.code).toBe("SERVER_ERROR");
     }
+  });
+});
+
+// =============================================================================
+// admin-events-crud-screen (#86) — getEventById / createEvent / updateEvent /
+// deleteEvent
+// =============================================================================
+
+const SAMPLE_EVENT_ID = "11111111-1111-4111-8111-111111111111";
+const SAMPLE_VENUE_ID = "22222222-2222-4222-8222-222222222222";
+const SAMPLE_EVENT = {
+  id: SAMPLE_EVENT_ID,
+  name: "ゆる練 vol.43",
+  description: null,
+  start_at: "2026-05-12T19:30:00+09:00",
+  end_at: "2026-05-12T21:30:00+09:00",
+  venue_id: SAMPLE_VENUE_ID,
+  fee: 1000,
+  capacity: null,
+  visibility: "published",
+  status: "scheduled",
+  cancel_deadline: null,
+  created_by: null,
+  created_at: "2026-05-01T00:00:00Z",
+  updated_at: "2026-05-01T00:00:00Z",
+};
+
+describe("getEventById", () => {
+  it("events を id で 1 件 SELECT して Event を返す", async () => {
+    builderResult.data = SAMPLE_EVENT;
+    const { getEventById } = await import("./eventQueries");
+    const result = await getEventById(SAMPLE_EVENT_ID as never);
+    expect(fromMock).toHaveBeenCalledWith("events");
+    expect(currentBuilder.eq).toHaveBeenCalledWith("id", SAMPLE_EVENT_ID);
+    expect(currentBuilder.maybeSingle).toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value?.id).toBe(SAMPLE_EVENT_ID);
+  });
+
+  it("行が無い場合は ok(null) を返す", async () => {
+    builderResult.data = null;
+    builderResult.error = null;
+    const { getEventById } = await import("./eventQueries");
+    const result = await getEventById(SAMPLE_EVENT_ID as never);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value).toBeNull();
+  });
+
+  it("RLS で 42501 エラーは PERMISSION_DENIED にマップ", async () => {
+    builderResult.data = null;
+    builderResult.error = { code: "42501", message: "permission denied" };
+    const { getEventById } = await import("./eventQueries");
+    const result = await getEventById(SAMPLE_EVENT_ID as never);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("PERMISSION_DENIED");
+  });
+});
+
+describe("createEvent", () => {
+  it("INSERT ペイロードに visibility:'published' / capacity:null / description:null / cancel_deadline:null を固定投入する (D3, 即時公開ポリシー)", async () => {
+    builderResult.data = SAMPLE_EVENT;
+    const { createEvent } = await import("./eventQueries");
+    const result = await createEvent({
+      name: "ゆる練 vol.43",
+      start_at: "2026-05-12T19:30:00+09:00",
+      end_at: "2026-05-12T21:30:00+09:00",
+      venue_id: SAMPLE_VENUE_ID as never,
+      fee: 1000,
+    });
+    expect(fromMock).toHaveBeenCalledWith("events");
+    expect(currentBuilder.insert).toHaveBeenCalledTimes(1);
+    const payload = (currentBuilder.insert as ReturnType<typeof vi.fn>).mock
+      .calls[0]![0];
+    expect(payload.visibility).toBe("published");
+    expect(payload.capacity).toBeNull();
+    expect(payload.description).toBeNull();
+    expect(payload.cancel_deadline).toBeNull();
+    expect(payload.name).toBe("ゆる練 vol.43");
+    expect(payload.fee).toBe(1000);
+    expect(currentBuilder.single).toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+  });
+
+  it("呼び出し側が visibility を指定しても 'published' で上書きされる", async () => {
+    builderResult.data = SAMPLE_EVENT;
+    const { createEvent } = await import("./eventQueries");
+    await createEvent({
+      name: "draft で送りたい",
+      start_at: "2026-05-12T19:30:00+09:00",
+      end_at: "2026-05-12T21:30:00+09:00",
+      venue_id: SAMPLE_VENUE_ID as never,
+      // EventInsert は visibility を optional に許容するが、createEvent 内で
+      // 'published' に固定上書きすることをここで検証する
+      visibility: "draft",
+    });
+    const payload = (currentBuilder.insert as ReturnType<typeof vi.fn>).mock
+      .calls[0]![0];
+    expect(payload.visibility).toBe("published");
+  });
+
+  it("RLS エラーは PERMISSION_DENIED を返す", async () => {
+    builderResult.data = null;
+    builderResult.error = {
+      code: "42501",
+      message: "permission denied for table events",
+    };
+    const { createEvent } = await import("./eventQueries");
+    const result = await createEvent({
+      name: "x",
+      start_at: "2026-05-12T19:30:00+09:00",
+      end_at: "2026-05-12T21:30:00+09:00",
+      venue_id: SAMPLE_VENUE_ID as never,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("PERMISSION_DENIED");
+  });
+});
+
+describe("updateEvent", () => {
+  it("UPDATE ペイロードに visibility / capacity / description / cancel_deadline / status は含めない (既存値保護)", async () => {
+    builderResult.data = SAMPLE_EVENT;
+    const { updateEvent } = await import("./eventQueries");
+    await updateEvent(SAMPLE_EVENT_ID as never, {
+      name: "改題後",
+      fee: 1500,
+    });
+    expect(currentBuilder.update).toHaveBeenCalledTimes(1);
+    const payload = (currentBuilder.update as ReturnType<typeof vi.fn>).mock
+      .calls[0]![0];
+    expect(payload.name).toBe("改題後");
+    expect(payload.fee).toBe(1500);
+    expect("visibility" in payload).toBe(false);
+    expect("capacity" in payload).toBe(false);
+    expect("description" in payload).toBe(false);
+    expect("cancel_deadline" in payload).toBe(false);
+    expect("status" in payload).toBe(false);
+    expect(currentBuilder.eq).toHaveBeenCalledWith("id", SAMPLE_EVENT_ID);
+  });
+
+  it("呼び出し側が unknown キーで visibility を渡しても落とす", async () => {
+    builderResult.data = SAMPLE_EVENT;
+    const { updateEvent } = await import("./eventQueries");
+    await updateEvent(
+      SAMPLE_EVENT_ID as never,
+      // @ts-expect-error 攻撃的呼び出しシミュレーション
+      { name: "改題", visibility: "draft", capacity: 30 },
+    );
+    const payload = (currentBuilder.update as ReturnType<typeof vi.fn>).mock
+      .calls[0]![0];
+    expect("visibility" in payload).toBe(false);
+    expect("capacity" in payload).toBe(false);
+  });
+});
+
+describe("deleteEvent", () => {
+  it("delete().eq('id', ...) を呼ぶ", async () => {
+    builderResult.data = null;
+    builderResult.error = null;
+    // delete() chain returns { error: null } via .eq
+    currentBuilder.eq = vi.fn().mockResolvedValue({ error: null });
+    const { deleteEvent } = await import("./eventQueries");
+    const result = await deleteEvent(SAMPLE_EVENT_ID as never);
+    expect(fromMock).toHaveBeenCalledWith("events");
+    expect(currentBuilder.delete).toHaveBeenCalledTimes(1);
+    expect(currentBuilder.eq).toHaveBeenCalledWith("id", SAMPLE_EVENT_ID);
+    expect(result.ok).toBe(true);
+  });
+
+  it("FK 違反 (23503) は RESERVATIONS_EXIST を返す", async () => {
+    currentBuilder.eq = vi.fn().mockResolvedValue({
+      error: {
+        code: "23503",
+        message:
+          'update or delete on table "events" violates foreign key constraint "reservations_event_id_fkey"',
+      },
+    });
+    const { deleteEvent } = await import("./eventQueries");
+    const result = await deleteEvent(SAMPLE_EVENT_ID as never);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("RESERVATIONS_EXIST");
+  });
+
+  it("RLS エラーは PERMISSION_DENIED を返す", async () => {
+    currentBuilder.eq = vi.fn().mockResolvedValue({
+      error: { code: "42501", message: "permission denied" },
+    });
+    const { deleteEvent } = await import("./eventQueries");
+    const result = await deleteEvent(SAMPLE_EVENT_ID as never);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("PERMISSION_DENIED");
   });
 });

@@ -137,4 +137,35 @@ describe("useSendMagicLink", () => {
     expect(c.submittedEmail.value).toBe("");
     expect(c.error.value).toBeNull();
   });
+
+  it("同一フレーム内で send が複数回呼ばれても sendMagicLink は 1 度しか呼ばれない (再入ガード)", async () => {
+    let resolve!: () => void;
+    sendMagicLinkMock.mockImplementation(
+      () => new Promise<void>((r) => (resolve = r)),
+    );
+    const { useSendMagicLink } = await import("./useSendMagicLink");
+    const c = useSendMagicLink();
+
+    // ダブル / トリプルクリックを同期的にシミュレートする
+    const p1 = c.send("owner@high-q.club");
+    const p2 = c.send("owner@high-q.club");
+    const p3 = c.send("owner@high-q.club");
+    const p4 = c.send("owner@high-q.club");
+
+    resolve();
+    await Promise.all([p1, p2, p3, p4]);
+
+    expect(sendMagicLinkMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("1 回目の send が完了した後の 2 回目の send は受け付ける", async () => {
+    sendMagicLinkMock.mockResolvedValue(undefined);
+    const { useSendMagicLink } = await import("./useSendMagicLink");
+    const c = useSendMagicLink();
+
+    await c.send("owner@high-q.club");
+    await c.send("another@high-q.club");
+
+    expect(sendMagicLinkMock).toHaveBeenCalledTimes(2);
+  });
 });
