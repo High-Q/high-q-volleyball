@@ -10,24 +10,36 @@ export function useSendMagicLink() {
   const status = ref<SendStatus>("idle");
   const error = ref<AuthError | null>(null);
   const submittedEmail = ref<string>("");
+  // 同期的な再入ガード。`status.value = "loading"` は Vue の reactivity に依存し
+  // DOM 反映が次 tick になるため、超速ダブルクリックや Enter 連打で同一フレーム
+  // に複数の send() が走り、Supabase へ複数の signInWithOtp が飛ぶ事故が観測
+  // された (#86 Apply 中、トークン全て異なる重複メールで判明)。closure フラグで
+  // 同期的に塞ぐ。
+  let inFlight = false;
 
   async function send(email: string): Promise<void> {
-    error.value = null;
-
-    if (!email || !EMAIL_PATTERN.test(email)) {
-      status.value = "error";
-      error.value = "invalid-email";
-      return;
-    }
-
-    status.value = "loading";
+    if (inFlight) return;
+    inFlight = true;
     try {
-      await sendMagicLink(email);
-      submittedEmail.value = email;
-      status.value = "success";
-    } catch (e: unknown) {
-      status.value = "error";
-      error.value = classifyError(e);
+      error.value = null;
+
+      if (!email || !EMAIL_PATTERN.test(email)) {
+        status.value = "error";
+        error.value = "invalid-email";
+        return;
+      }
+
+      status.value = "loading";
+      try {
+        await sendMagicLink(email);
+        submittedEmail.value = email;
+        status.value = "success";
+      } catch (e: unknown) {
+        status.value = "error";
+        error.value = classifyError(e);
+      }
+    } finally {
+      inFlight = false;
     }
   }
 

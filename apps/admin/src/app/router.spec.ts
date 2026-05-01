@@ -174,13 +174,14 @@ describe("router auth guard", () => {
 });
 
 describe("router routes", () => {
-  it("7 つのルートが定義されている（/ redirect + /events + /events/new + 既存 4）", async () => {
+  it("8 つのルートが定義されている（/ redirect + /events + /events/new + /events/:id/edit + 既存 4）", async () => {
     const { routes } = await import("./router");
     const paths = routes.map((r) => r.path).sort();
     expect(paths).toEqual([
       "/",
       "/auth/callback",
       "/events",
+      "/events/:id/edit",
       "/events/new",
       "/login",
       "/mfa",

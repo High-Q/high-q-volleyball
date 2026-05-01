@@ -134,6 +134,30 @@ export type EventInsert = {
   created_by?: string | null;
 };
 
+/**
+ * admin-events-crud-screen (#86) の UPDATE 用型。本 capability では admin が
+ * 編集できる列を `name` / `start_at` / `end_at` / `venue_id` / `fee` のみに
+ * 限定する（即時公開ポリシー / MVP1 スコープ縮小のため）。
+ *
+ * 意図的に除外している列:
+ * - `visibility`: D3「即時公開ポリシー」。Edit で勝手に値が変わらないよう
+ *    UPDATE ペイロードに含めず、既存値を保護する。
+ * - `capacity`: MVP1 で UI に出さない（無制限運用）。NULL 維持のため UPDATE
+ *    対象から除外。
+ * - `description`: MVP1 で UI に出さない（紹介文セクション削除）。NULL 維持。
+ * - `cancel_deadline`: MVP1 で UI に出さない。NULL 維持。
+ * - `status`: 中止 / 終了の操作は別 Issue。
+ *
+ * MVP2 で対応 UI が復活した時点で、本型を拡張する。
+ */
+export type EventUpdate = {
+  name?: string;
+  start_at?: string;
+  end_at?: string;
+  venue_id?: VenueId;
+  fee?: number | null;
+};
+
 // =============================================================================
 // members
 // =============================================================================

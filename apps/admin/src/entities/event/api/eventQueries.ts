@@ -1,5 +1,12 @@
 import { type Result, ok, err, appError } from "@high-q/shared";
-import type { VenueId, EventVisibility } from "@high-q/shared";
+import type {
+  VenueId,
+  EventVisibility,
+  Event,
+  EventInsert,
+  EventUpdate,
+  EventId,
+} from "@high-q/shared";
 import { getSupabase } from "@/shared/api/supabase";
 import type {
   EventListRow,
@@ -19,7 +26,8 @@ import type {
 export type FetchErrorCode =
   | "NETWORK_ERROR"
   | "SERVER_ERROR"
-  | "PERMISSION_DENIED";
+  | "PERMISSION_DENIED"
+  | "RESERVATIONS_EXIST";
 
 export interface FetchError {
   code: FetchErrorCode;
@@ -84,6 +92,13 @@ function classifyError(error: { code?: string; message: string }): FetchErrorCod
   ) {
     return "PERMISSION_DENIED";
   }
+  // PostgreSQL FK violation: events を削除しようとして reservations が刺さっている
+  if (
+    error.code === "23503" ||
+    /foreign key constraint .*reservations/i.test(error.message)
+  ) {
+    return "RESERVATIONS_EXIST";
+  }
   return "SERVER_ERROR";
 }
 
@@ -143,6 +158,178 @@ export async function fetchEventsList(
         code: "NETWORK_ERROR",
         message: cause.message,
       });
+    }
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return err({ code: "SERVER_ERROR", message });
+  }
+}
+
+// =============================================================================
+// admin-events-crud-screen (#86) — single-event CRUD
+// =============================================================================
+
+/**
+ * 単一 event を id で取得する。
+ *
+ * - 行が見つからない場合は `ok(null)` を返す（404 を Error 扱いしない）
+ * - RLS 拒否は `PERMISSION_DENIED`
+ *
+ * 関連: openspec/changes/admin-events-crud-screen/specs/admin-events-crud/spec.md
+ */
+export async function getEventById(
+  id: EventId,
+): Promise<Result<Event | null, FetchError>> {
+  const supabase = getSupabase();
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .eq("id", id as unknown as string)
+      .maybeSingle();
+    if (error) {
+      return err({
+        code: classifyError(error),
+        message: error.message,
+      });
+    }
+    return ok((data as Event | null) ?? null);
+  } catch (cause) {
+    if (cause instanceof TypeError) {
+      return err({ code: "NETWORK_ERROR", message: cause.message });
+    }
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return err({ code: "SERVER_ERROR", message });
+  }
+}
+
+/**
+ * 新規 event を INSERT する。
+ *
+ * **D3 即時公開ポリシー**: 呼び出し側が `visibility` を渡しても `'published'` で
+ * 上書きする。`capacity` / `description` / `cancel_deadline` は MVP1 で UI に
+ * 出さないため `NULL` を投入する。
+ *
+ * 関連:
+ *   openspec/changes/admin-events-crud-screen/design.md (D3, §3.2, §5)
+ *   openspec/changes/admin-events-crud-screen/specs/admin-events-crud/spec.md
+ */
+export async function createEvent(
+  input: EventInsert,
+): Promise<Result<Event, FetchError>> {
+  const supabase = getSupabase();
+  // visibility / capacity / description / cancel_deadline は意図的に固定する
+  // （呼び出し側の値は無視）
+  const payload = {
+    name: input.name,
+    start_at: input.start_at,
+    end_at: input.end_at,
+    venue_id: input.venue_id,
+    fee: input.fee ?? null,
+    visibility: "published" as EventVisibility,
+    capacity: null,
+    description: null,
+    cancel_deadline: null,
+    ...(input.created_by !== undefined ? { created_by: input.created_by } : {}),
+  };
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .insert(payload)
+      .select("*")
+      .single();
+    if (error) {
+      return err({
+        code: classifyError(error),
+        message: error.message,
+      });
+    }
+    return ok(data as Event);
+  } catch (cause) {
+    if (cause instanceof TypeError) {
+      return err({ code: "NETWORK_ERROR", message: cause.message });
+    }
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return err({ code: "SERVER_ERROR", message });
+  }
+}
+
+/**
+ * 既存 event を UPDATE する。
+ *
+ * 既存値保護のため `visibility` / `capacity` / `description` / `cancel_deadline`
+ * / `status` は **ペイロードに含めない**（D3, MVP1 押し下げ列）。`EventUpdate` 型
+ * には元々これらが含まれないが、攻撃的呼び出しに備えて allowlist で再フィルタ
+ * する。
+ *
+ * 関連:
+ *   openspec/changes/admin-events-crud-screen/design.md (D3, §3.3)
+ */
+export async function updateEvent(
+  id: EventId,
+  patch: EventUpdate,
+): Promise<Result<Event, FetchError>> {
+  const supabase = getSupabase();
+  // allowlist で安全な列のみ抽出
+  const safe: Record<string, unknown> = {};
+  const p = patch as Record<string, unknown>;
+  if ("name" in p) safe.name = p.name;
+  if ("start_at" in p) safe.start_at = p.start_at;
+  if ("end_at" in p) safe.end_at = p.end_at;
+  if ("venue_id" in p) safe.venue_id = p.venue_id;
+  if ("fee" in p) safe.fee = p.fee;
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .update(safe)
+      .eq("id", id as unknown as string)
+      .select("*")
+      .single();
+    if (error) {
+      return err({
+        code: classifyError(error),
+        message: error.message,
+      });
+    }
+    return ok(data as Event);
+  } catch (cause) {
+    if (cause instanceof TypeError) {
+      return err({ code: "NETWORK_ERROR", message: cause.message });
+    }
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return err({ code: "SERVER_ERROR", message });
+  }
+}
+
+/**
+ * event を DELETE する。
+ *
+ * reservations が刺さっている場合は ON DELETE RESTRICT により FK 違反となり、
+ * `RESERVATIONS_EXIST` を返す。UI 側で「予約があるため削除できません」と表示
+ * する契約。
+ *
+ * 関連:
+ *   openspec/changes/admin-events-crud-screen/design.md (§3.4)
+ *   openspec/specs/data-schema/spec.md (events テーブル ON DELETE RESTRICT)
+ */
+export async function deleteEvent(
+  id: EventId,
+): Promise<Result<void, FetchError>> {
+  const supabase = getSupabase();
+  try {
+    const { error } = await supabase
+      .from("events")
+      .delete()
+      .eq("id", id as unknown as string);
+    if (error) {
+      return err({
+        code: classifyError(error),
+        message: error.message,
+      });
+    }
+    return ok(undefined);
+  } catch (cause) {
+    if (cause instanceof TypeError) {
+      return err({ code: "NETWORK_ERROR", message: cause.message });
     }
     const message = cause instanceof Error ? cause.message : String(cause);
     return err({ code: "SERVER_ERROR", message });

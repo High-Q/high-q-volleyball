@@ -24,3 +24,24 @@ export { default as SelectContent } from "./SelectContent.vue";
 export { default as SelectItem } from "./SelectItem.vue";
 
 export { default as Skeleton } from "./Skeleton.vue";
+
+// AlertDialog group (admin-events-crud-screen, #86)
+export { default as AlertDialog } from "./AlertDialog.vue";
+export { default as AlertDialogTrigger } from "./AlertDialogTrigger.vue";
+export { default as AlertDialogContent } from "./AlertDialogContent.vue";
+export { default as AlertDialogHeader } from "./AlertDialogHeader.vue";
+export { default as AlertDialogFooter } from "./AlertDialogFooter.vue";
+export { default as AlertDialogTitle } from "./AlertDialogTitle.vue";
+export { default as AlertDialogDescription } from "./AlertDialogDescription.vue";
+export { default as AlertDialogAction } from "./AlertDialogAction.vue";
+export { default as AlertDialogCancel } from "./AlertDialogCancel.vue";
+
+// Toast group (admin-events-crud-screen, #86)
+export { default as Toast } from "./Toast.vue";
+export { default as Toaster } from "./Toaster.vue";
+export { default as ToastProvider } from "./ToastProvider.vue";
+export { default as ToastViewport } from "./ToastViewport.vue";
+export { default as ToastTitle } from "./ToastTitle.vue";
+export { default as ToastDescription } from "./ToastDescription.vue";
+export { default as ToastClose } from "./ToastClose.vue";
+export { useToast, type ToastOptions, type ToastEntry } from "./useToast";

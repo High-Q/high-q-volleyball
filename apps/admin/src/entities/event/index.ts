@@ -22,6 +22,10 @@ export {
 
 export {
   fetchEventsList,
+  getEventById,
+  createEvent,
+  updateEvent,
+  deleteEvent,
   type EventsListFilter,
   type EventsListResult,
   type FetchError,

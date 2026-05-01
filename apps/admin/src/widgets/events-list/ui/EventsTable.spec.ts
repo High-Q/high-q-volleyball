@@ -59,12 +59,13 @@ describe("EventsTable", () => {
     const wrapper = await renderTable({ rows: [baseRow()] });
     const headers = wrapper.findAll("th");
     const labels = headers.map((h) => h.text().trim());
+    // 「定員」列は MVP1 で UI から削除（capacity フィールドそのものをフォーム
+    // からも外したため、表示の必要性が無い）
     expect(labels).toEqual([
       "日付",
       "タイトル",
       "会場",
       "時間",
-      "定員",
       "予約",
       "ステータス",
       "操作",
@@ -87,7 +88,8 @@ describe("EventsTable", () => {
       sort: "status",
       dir: "desc",
     });
-    const statusHeader = wrapper.findAll("th").at(6);
+    // 「定員」列削除後の順: 0=日付 1=タイトル 2=会場 3=時間 4=予約 5=ステータス 6=操作
+    const statusHeader = wrapper.findAll("th").at(5);
     expect(statusHeader?.attributes("aria-sort")).toBe("descending");
     const dateHeader = wrapper.findAll("th").at(0);
     expect(dateHeader?.attributes("aria-sort")).toBe("none");
@@ -114,10 +116,40 @@ describe("EventsTable", () => {
     expect(wrapper.emitted("update:sort")?.[0]).toEqual(["date", "desc"]);
   });
 
-  it("capacity が null の行は RemainBar の代わりに「予約 N 件」を表示", async () => {
+  it("capacity が null の行は RemainBar の代わりに「N 件」を表示（『予約』プレフィックスは冗長なので省略）", async () => {
     const row = baseRow({ capacity: null, reserved_count: 12 });
     const wrapper = await renderTable({ rows: [row] });
-    expect(wrapper.text()).toContain("予約 12 件");
+    expect(wrapper.text()).toContain("12 件");
+    expect(wrapper.text()).not.toContain("予約 12 件");
+  });
+
+  it("会場名は施設種別末尾を削った主要部のみ表示する（モバイル改行抑止）", async () => {
+    const row = baseRow({ venue_name: "亀戸スポーツセンター" });
+    const wrapper = await renderTable({ rows: [row] });
+    // 短縮表示
+    expect(wrapper.text()).toContain("亀戸");
+    expect(wrapper.text()).not.toContain("亀戸スポーツセンター");
+    // 元の名前は title 属性でホバー時に確認可能
+    const venueCell = wrapper
+      .findAll("td")
+      .find((c) => c.text().includes("亀戸"));
+    expect(venueCell?.attributes("title")).toBe("亀戸スポーツセンター");
+  });
+
+  it("会場名が NULL の行は '—' を表示", async () => {
+    const row = baseRow({ venue_name: null });
+    const wrapper = await renderTable({ rows: [row] });
+    expect(wrapper.text()).toContain("—");
+  });
+
+  it("テーブルセルに whitespace-nowrap が付与されている（モバイル改行抑止）", async () => {
+    const row = baseRow();
+    const wrapper = await renderTable({ rows: [row] });
+    const cells = wrapper.findAll("td");
+    // 全セルが nowrap
+    cells.forEach((c) => {
+      expect(c.classes()).toContain("whitespace-nowrap");
+    });
   });
 
   it("end_at が past の行は ステータス列に「終了」を表示", async () => {

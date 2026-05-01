@@ -7,7 +7,8 @@ import {
   type Router,
 } from "vue-router";
 import EventsListPage from "@/pages/EventsListPage.vue";
-import EventsNewPage from "@/pages/EventsNewPage.vue";
+import EventCreatePage from "@/pages/EventCreatePage.vue";
+import EventEditPage from "@/pages/EventEditPage.vue";
 import LoginPage from "@/pages/LoginPage.vue";
 import AuthCallbackPage from "@/pages/AuthCallbackPage.vue";
 import MfaChallengePage from "@/pages/MfaChallengePage.vue";
@@ -25,8 +26,12 @@ import { useAuthSession } from "@/features/auth";
 const routes: RouteRecordRaw[] = [
   { path: "/", redirect: { name: "events" } },
   { path: "/events", name: "events", component: EventsListPage },
-  // /events/new は #86 で本実装される。本 change ではプレースホルダ。
-  { path: "/events/new", name: "events-new", component: EventsNewPage },
+  { path: "/events/new", name: "events-new", component: EventCreatePage },
+  {
+    path: "/events/:id/edit",
+    name: "events-edit",
+    component: EventEditPage,
+  },
   {
     path: "/login",
     name: "login",

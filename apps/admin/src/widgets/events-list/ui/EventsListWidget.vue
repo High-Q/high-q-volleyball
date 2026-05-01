@@ -3,7 +3,7 @@ import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { useEventsFilter } from "@/features/events-filter";
 import { useEventsListData } from "../composables/useEventsListData";
-import { useVenues } from "../composables/useVenues";
+import { useVenues } from "@/entities/venue";
 import EventsToolbar from "./EventsToolbar.vue";
 import EventsTable from "./EventsTable.vue";
 import EventsTableSkeleton from "./EventsTableSkeleton.vue";
