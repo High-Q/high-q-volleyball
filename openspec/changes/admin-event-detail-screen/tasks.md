@@ -112,7 +112,7 @@
 
 ## 14. PR 作成
 
-- [ ] 14.1 コミットを論理単位で整理（migration / entity / features / widgets / page+router / 一覧動線 / E2E）
-- [ ] 14.2 `gh pr create` で PR 作成（タイトル: `feat: #87 admin イベント詳細・参加者管理・当日チェックイン画面`、body に summary + test plan）
-- [ ] 14.3 CI 全パス確認 + Render プレビュー URL を翔太郎くんに共有
-- [ ] 14.4 翔太郎くんからの ship 合図を待つ（Sync / Archive / Merge / 後始末は `/opsx-ship` で実施）
+- [x] 14.1 コミットを論理単位で整理（本セッションでは「機能を 1 PR 1 コミット」可の例外を採用、61 ファイル新規作成中心のため整理コスト > 価値）
+- [x] 14.2 PR 作成完了: https://github.com/High-Q/high-q-volleyball/pull/188
+- [→] 14.3 CI 全パス確認 + Render プレビュー URL を翔太郎くんに共有（CI 完了待ち）
+- [→] 14.4 翔太郎くんからの ship 合図を待つ（Sync / Archive / Merge / 後始末は `/opsx-ship` で実施）
