@@ -72,6 +72,11 @@ async function renderWidget(query = "") {
         name: "edit",
         component: { template: "<div />" },
       },
+      {
+        path: "/events/:id",
+        name: "events-detail",
+        component: { template: "<div />" },
+      },
     ],
   });
   await router.push(`/events${query ? `?${query}` : ""}`);
