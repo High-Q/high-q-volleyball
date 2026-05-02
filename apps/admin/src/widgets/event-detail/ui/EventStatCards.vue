@@ -70,7 +70,7 @@ const stats = computed<Stat[]>(() => {
 
 <template>
   <div
-    class="grid grid-cols-4 bg-paper border border-hairline rounded-hq-lg overflow-hidden"
+    class="grid grid-cols-4 bg-paper-warm border border-hairline rounded-hq-lg overflow-hidden shadow-hq-sm"
   >
     <div
       v-for="(s, i) in stats"

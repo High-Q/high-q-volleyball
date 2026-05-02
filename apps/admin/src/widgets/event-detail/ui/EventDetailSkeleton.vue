@@ -27,7 +27,7 @@ import { Skeleton } from "@/shared/ui";
     <!-- StatCard 4 枚 -->
     <div class="px-hq-8 pt-hq-5">
       <div
-        class="grid grid-cols-4 bg-paper border border-hairline rounded-hq-lg overflow-hidden"
+        class="grid grid-cols-4 bg-paper-warm border border-hairline rounded-hq-lg overflow-hidden shadow-hq-sm"
       >
         <div
           v-for="i in 4"
