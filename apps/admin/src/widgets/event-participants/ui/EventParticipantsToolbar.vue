@@ -23,12 +23,6 @@ import type {
 
 const props = defineProps<{
   filter: ParticipantsFilter;
-  /** 表示中件数 */
-  visibleCount: number;
-  /** 全参加者数 */
-  totalCount: number;
-  /** チェックイン済件数（rawData ベース、filter 影響しない） */
-  checkedInCount: number;
 }>();
 
 const emit = defineEmits<{
@@ -113,16 +107,5 @@ function onCkChange(value: string): void {
       </SelectContent>
     </Select>
 
-    <div
-      class="ml-auto font-mono text-xs text-muted tracking-wider"
-      data-testid="participants-summary"
-    >
-      <template v-if="visibleCount === totalCount">
-        {{ totalCount }} 名 · {{ checkedInCount }} 名チェックイン済
-      </template>
-      <template v-else>
-        {{ visibleCount }} / {{ totalCount }} 名 · {{ checkedInCount }} 名チェックイン済
-      </template>
-    </div>
   </div>
 </template>

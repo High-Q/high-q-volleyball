@@ -142,15 +142,23 @@ async function onGuestChange(
 </script>
 
 <template>
+  <!--
+    列整列のベストプラクティス:
+      - テキスト (名前 / メール) → 左寄せ
+      - Badge / Status (経験) → 中央寄せ (列幅の中で浮いて見える誤認回避)
+      - 数値・mono (予約日時) → 右寄せ (時系列比較しやすく)
+      - コントロール (Stepper / Switch) → 中央寄せ
+      - Action (キャンセルボタン) → 右寄せ (慣習)
+  -->
   <Table>
     <TableHeader>
       <TableRow>
         <TableHead>名前</TableHead>
-        <TableHead class="w-24">経験</TableHead>
-        <TableHead class="w-20 text-right">同伴</TableHead>
-        <TableHead class="w-32">予約日時</TableHead>
+        <TableHead class="w-24 text-center">経験</TableHead>
+        <TableHead class="w-24 text-center">同伴</TableHead>
+        <TableHead class="w-32 text-right">予約日時</TableHead>
         <TableHead class="w-56">メール</TableHead>
-        <TableHead class="w-32">チェックイン</TableHead>
+        <TableHead class="w-32 text-center">チェックイン</TableHead>
         <TableHead class="w-28 text-right">操作</TableHead>
       </TableRow>
     </TableHeader>
@@ -170,12 +178,12 @@ async function onGuestChange(
             <Badge v-if="row.is_first_time" tone="accent">初回</Badge>
           </span>
         </TableCell>
-        <TableCell class="whitespace-nowrap">
+        <TableCell class="whitespace-nowrap text-center">
           <Badge :tone="EXP_TONE[row.experience_level]">
             {{ EXP_LABEL[row.experience_level] }}
           </Badge>
         </TableCell>
-        <TableCell class="whitespace-nowrap text-right">
+        <TableCell class="whitespace-nowrap text-center">
           <GuestCountStepper
             :count="row.guest_count"
             :member-name="row.display_name"
@@ -183,13 +191,13 @@ async function onGuestChange(
             @change="(next) => onGuestChange(row, next)"
           />
         </TableCell>
-        <TableCell class="whitespace-nowrap font-mono text-xs text-muted">
+        <TableCell class="whitespace-nowrap text-right font-mono text-xs text-muted">
           {{ row.__whenLabel }}
         </TableCell>
         <TableCell class="whitespace-nowrap font-mono text-xs text-muted">
           {{ row.email }}
         </TableCell>
-        <TableCell class="whitespace-nowrap">
+        <TableCell class="whitespace-nowrap text-center">
           <CheckinToggle
             :checked="row.__isChecked"
             :member-name="row.display_name"

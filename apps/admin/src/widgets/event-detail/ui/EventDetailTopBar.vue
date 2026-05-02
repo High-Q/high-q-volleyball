@@ -57,7 +57,7 @@ const subtitle = computed(
     class="flex items-center justify-between border-b border-hairline bg-paper px-hq-8 py-hq-3"
   >
     <div>
-      <Kicker color="muted">— イベント · {{ breadcrumbDate }}</Kicker>
+      <Kicker color="muted">— {{ breadcrumbDate }}</Kicker>
       <h1 class="font-jp-display text-xl text-ink">{{ row.name }}</h1>
       <p class="font-jp text-xs text-muted mt-hq-1">{{ subtitle }}</p>
     </div>

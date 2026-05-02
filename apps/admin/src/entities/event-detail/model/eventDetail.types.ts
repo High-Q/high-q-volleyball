@@ -49,6 +49,16 @@ export interface EventDetailRow {
    * キャンセル待ち人数 (本人 + 同伴)。MVP1 は常に 0、機能は MVP2。
    */
   waitlist_count: number;
+  /**
+   * 予約の本人数 (= active 予約 row 数、同伴を除く)。
+   * 「内 同伴 = reserved_count - reserved_member_count」を client で算出するため。
+   */
+  reserved_member_count: number;
+  /**
+   * チェックイン済の本人数 (= attended row 数、同伴を除く)。
+   * 「内 同伴 = checked_in_count - checked_in_member_count」算出用。
+   */
+  checked_in_member_count: number;
   created_at: string;
   updated_at: string;
 }

@@ -20,10 +20,17 @@ export interface UseEventDetailData {
   isError: Ref<boolean>;
   errorCode: Ref<FetchErrorCode | null>;
   refetch: () => Promise<void>;
-  /** Optimistic 反映: chechked_in_count / reserved_count を delta で更新 */
+  /**
+   * Optimistic 反映: 集計列を delta で更新。
+   * - checkin/reserved/waitlist は **人数 (本人+同伴)** の差分
+   * - checkinMember/reservedMember は **本人数 (= row 数)** の差分
+   *   (member 数の変動はチェックインで ±1、キャンセル代行で -1。同伴編集は 0)
+   */
   applyDeltas: (deltas: {
     checkin?: number;
     reserved?: number;
+    checkinMember?: number;
+    reservedMember?: number;
   }) => void;
 }
 
@@ -87,6 +94,8 @@ export function useEventDetailData(
   function applyDeltas(deltas: {
     checkin?: number;
     reserved?: number;
+    checkinMember?: number;
+    reservedMember?: number;
   }): void {
     if (data.value === null) return;
     data.value = {
@@ -95,6 +104,10 @@ export function useEventDetailData(
         data.value.checked_in_count + (deltas.checkin ?? 0),
       reserved_count:
         data.value.reserved_count + (deltas.reserved ?? 0),
+      checked_in_member_count:
+        data.value.checked_in_member_count + (deltas.checkinMember ?? 0),
+      reserved_member_count:
+        data.value.reserved_member_count + (deltas.reservedMember ?? 0),
     };
   }
 

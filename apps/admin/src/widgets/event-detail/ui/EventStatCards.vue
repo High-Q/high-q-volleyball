@@ -6,12 +6,8 @@ import type { EventDetailRow } from "@/entities/event-detail";
 /**
  * イベント詳細のサマリ StatCard 4 枚。
  *
- * 1 番目は `capacity` 有無で動的切替（D8）:
- *   - capacity = NULL → 「予約数」 reserved_count 名
- *   - capacity あり → 「残席」 (capacity - reserved_count) / capacity 名
- *
- * 2 番目「チェックイン」は RemainBar と同じビジュアル言語の進捗バー +
- * 数値併記で表示する (taken=checked_in / capacity=reserved)。
+ * 1 番目「予約数 / 残席」(capacity 動的切替) と 2 番目「チェックイン」には
+ * 「内 同伴 N 名」の小さい補足行を本値の下に表示する (人数の内訳明示)。
  *
  * 関連:
  *   openspec/changes/admin-event-detail-screen/specs/admin-event-detail/spec.md
@@ -28,6 +24,8 @@ interface NumberStat {
   label: string;
   value: string;
   unit: string;
+  /** 「内 同伴 N 名」の補足。undefined なら非表示 */
+  guestNote?: string;
 }
 
 interface BarStat {
@@ -36,12 +34,18 @@ interface BarStat {
   label: string;
   taken: number;
   capacity: number;
+  guestNote?: string;
 }
 
 type Stat = NumberStat | BarStat;
 
 const stats = computed<Stat[]>(() => {
   const r = props.row;
+
+  // 予約の同伴数 = 全人数 - 本人数
+  const reservedGuests = r.reserved_count - r.reserved_member_count;
+  const checkedInGuests = r.checked_in_count - r.checked_in_member_count;
+
   // 1 番目: capacity 有無で動的切替
   const first: NumberStat =
     r.capacity === null
@@ -51,6 +55,7 @@ const stats = computed<Stat[]>(() => {
           label: "予約数",
           value: String(r.reserved_count),
           unit: "名",
+          guestNote: `内 同伴 ${reservedGuests} 名`,
         }
       : {
           kind: "number",
@@ -58,6 +63,7 @@ const stats = computed<Stat[]>(() => {
           label: "残席",
           value: String(Math.max(0, r.capacity - r.reserved_count)),
           unit: `/ ${r.capacity} 名`,
+          guestNote: `内 同伴 ${reservedGuests} 名`,
         };
 
   return [
@@ -68,6 +74,7 @@ const stats = computed<Stat[]>(() => {
       label: "チェックイン",
       taken: r.checked_in_count,
       capacity: r.reserved_count,
+      guestNote: `内 同伴 ${checkedInGuests} 名`,
     },
     {
       kind: "number",
@@ -143,6 +150,14 @@ function fillRatio(taken: number, capacity: number): number {
           />
         </div>
       </template>
+
+      <div
+        v-if="s.guestNote !== undefined"
+        class="font-jp text-[10px] text-muted mt-hq-1"
+        data-testid="stat-guest-note"
+      >
+        {{ s.guestNote }}
+      </div>
 
       <div
         class="font-jp text-xs text-muted mt-hq-1"

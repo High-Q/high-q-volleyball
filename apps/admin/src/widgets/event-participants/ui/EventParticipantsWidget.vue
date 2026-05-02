@@ -132,9 +132,6 @@ defineExpose({
   <div class="flex flex-col">
     <EventParticipantsToolbar
       :filter="filter"
-      :visible-count="data.visibleCount.value"
-      :total-count="data.rawData.value.length"
-      :checked-in-count="data.checkedInCount.value"
       @update:search="setSearch"
       @update:experience="setExperience"
       @update:checkin-state="setCheckinState"

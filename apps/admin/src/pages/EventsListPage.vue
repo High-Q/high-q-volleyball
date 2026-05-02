@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Kicker } from "@high-q/ui";
 import { EventsListWidget } from "@/widgets/events-list";
+import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 import { useAuthSession } from "@/features/auth";
 import { useRouter } from "vue-router";
 
@@ -25,7 +25,12 @@ async function onSignOut(): Promise<void> {
       class="flex items-center justify-between border-b border-hairline bg-paper px-hq-8 py-hq-3"
     >
       <div>
-        <Kicker color="muted">— Workspace · Events</Kicker>
+        <PageBreadcrumb
+          :items="[
+            { label: 'Workspace' },
+            { label: 'Events' },
+          ]"
+        />
         <h1 class="font-jp-display text-lg text-ink">イベント</h1>
       </div>
       <button

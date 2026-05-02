@@ -79,14 +79,26 @@ function onGoBack(): void {
 // 直列実行する (`useEventDetailData` の requestSeq ガードで並列でも古い結果は
 // 自動で捨てられる)。これで複数 admin 同時操作にも整合する。
 function onCheckinChanged(delta: number): void {
-  detail.applyDeltas({ checkin: delta });
+  // チェックインで member 数も ±1 動く (1 件の reservation が
+  // reserved/attended を行き来する。reserved_member_count は両方 active なので
+  // 不変、checked_in_member_count のみ ±1)
+  const memberDelta = delta > 0 ? 1 : -1;
+  detail.applyDeltas({ checkin: delta, checkinMember: memberDelta });
 }
 
 function onReservationCancelled(reservedDelta: number, checkinDelta: number): void {
-  detail.applyDeltas({ reserved: reservedDelta, checkin: checkinDelta });
+  // キャンセル代行で 1 件 reservation が active から外れる
+  // → reserved_member_count -1、checked_in_member_count は元 attended なら -1
+  detail.applyDeltas({
+    reserved: reservedDelta,
+    checkin: checkinDelta,
+    reservedMember: -1,
+    checkinMember: checkinDelta < 0 ? -1 : 0,
+  });
 }
 
 function onGuestChanged(reservedDelta: number, checkinDelta: number): void {
+  // 同伴編集は member 数 (本人数) は不変
   detail.applyDeltas({ reserved: reservedDelta, checkin: checkinDelta });
 }
 
