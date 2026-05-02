@@ -90,6 +90,48 @@ export async function toggleCheckin(
 }
 
 /**
+ * admin による同伴者数の更新。
+ *
+ * `reservations.guest_count` を 0〜5 の範囲で UPDATE。CHECK 制約 (>= 0 AND <= 5)
+ * で範囲外は DB 側で弾かれる。RLS は admin の全件 UPDATE 権限の範囲内。
+ */
+export async function updateGuestCount(
+  reservationId: ReservationId,
+  nextCount: number,
+): Promise<Result<void, MutationError>> {
+  if (nextCount < 0 || nextCount > 5) {
+    return err({
+      code: "SERVER_ERROR",
+      message: `guest_count out of range: ${nextCount}`,
+    });
+  }
+  const supabase = getSupabase();
+  const idStr = reservationId as unknown as string;
+
+  try {
+    const { error } = await supabase
+      .from("reservations")
+      .update({ guest_count: nextCount })
+      .eq("id", idStr);
+
+    if (error) {
+      return err({
+        code: classifyError(error),
+        message: error.message,
+      });
+    }
+
+    return ok(undefined);
+  } catch (cause) {
+    if (cause instanceof TypeError) {
+      return err({ code: "NETWORK_ERROR", message: cause.message });
+    }
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return err({ code: "SERVER_ERROR", message });
+  }
+}
+
+/**
  * admin による予約キャンセル代行。
  *
  * status='cancelled' で UPDATE。cancelled_at はトリガー `set_reservations_cancelled_at`

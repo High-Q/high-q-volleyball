@@ -29,13 +29,25 @@ export interface EventDetailRow {
   visibility: EventVisibility;
   status: EventStatus;
   cancel_deadline: string | null;
-  /** status='reserved' 件数 */
+  /**
+   * 予約数 (本人 + 同伴の合計人数)。
+   * `SUM(1 + guest_count) FILTER (status IN ('reserved', 'attended'))`。
+   * チェックイン操作で status が変わっても active な予約は減らないため不変。
+   */
   reserved_count: number;
-  /** status='attended' 件数 */
+  /**
+   * チェックイン済人数 (本人 + 同伴)。
+   * `SUM(1 + guest_count) FILTER (status = 'attended')`。
+   */
   checked_in_count: number;
-  /** reserved のうち is_first_time=true 件数（D2） */
+  /**
+   * 初回参加 member 数 (同伴は member 化されてないため対象外、D2)。
+   * `COUNT(*) FILTER (status IN ('reserved', 'attended') AND is_first_time)`。
+   */
   first_time_count: number;
-  /** status='waitlist' 件数（MVP1 は常に 0、機能は MVP2） */
+  /**
+   * キャンセル待ち人数 (本人 + 同伴)。MVP1 は常に 0、機能は MVP2。
+   */
   waitlist_count: number;
   created_at: string;
   updated_at: string;

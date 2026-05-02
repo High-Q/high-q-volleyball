@@ -203,6 +203,27 @@ describe("useEventParticipantsData — Optimistic 操作", () => {
     expect(composable.rawData.value[0]!.status).toBe("reserved");
   });
 
+  it("applyGuestUpdate で行の guest_count が書き換わる", async () => {
+    const { composable } = await setup([
+      makeRow({ reservation_id: "r1" }),
+    ]);
+    expect(composable.rawData.value[0]!.guest_count).toBe(0);
+    composable.applyGuestUpdate("r1", 3);
+    expect(composable.rawData.value[0]!.guest_count).toBe(3);
+    composable.applyGuestUpdate("r1", 0);
+    expect(composable.rawData.value[0]!.guest_count).toBe(0);
+  });
+
+  it("applyGuestUpdate で他行は影響を受けない", async () => {
+    const { composable } = await setup([
+      makeRow({ reservation_id: "r1" }),
+      makeRow({ reservation_id: "r2", display_name: "佐藤" }),
+    ]);
+    composable.applyGuestUpdate("r1", 2);
+    expect(composable.rawData.value[0]!.guest_count).toBe(2);
+    expect(composable.rawData.value[1]!.guest_count).toBe(0);
+  });
+
   it("removeRow で行が rawData から消える", async () => {
     const { composable } = await setup([
       makeRow({ reservation_id: "r1" }),

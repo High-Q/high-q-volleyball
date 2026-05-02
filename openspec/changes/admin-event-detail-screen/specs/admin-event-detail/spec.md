@@ -39,32 +39,40 @@ CSV エクスポート / 一括メールの CTA は MVP1 では **表示しな�
 
 ### Requirement: StatCard 4 枚のサマリ表示
 
-`EventDetailPage` は MUST `EventStatCards` を TopBar 直下に表示し、4 つの統計を横並びで表示する:
+`EventDetailPage` は MUST `EventStatCards` を TopBar 直下に表示し、4 つの統計を横並びで表示する。**人数ベースの集計** (本人 + 同伴) を母集団とする (data-schema spec の `reserved_count` / `checked_in_count` / `waitlist_count` 仕様参照)。
 
 1. **予約数 / 残席**（`capacity` 有無で動的切替）:
-   - `capacity === null` の時（MVP1 デフォルト、#86 で capacity 入力 UI 未提供）: ラベル「予約数」、主値 `reserved_count`、補助単位「名」
+   - `capacity === null` の時（MVP1 デフォルト、#86 で capacity 入力 UI 未提供）: ラベル「予約数」、主値 `reserved_count` (本人+同伴の総人数)、補助単位「名」
    - `capacity` ありの時: ラベル「残席」、主値 `capacity - reserved_count`、補助単位 `/ capacity 名`
-2. **チェックイン**: `checked_in_count` を主値、`/ {reserved_count}` を補助単位として表示
-3. **初回参加**: `first_time_count` を主値、`名` を補助単位として表示
+2. **チェックイン**: 主値 `checked_in_count` (本人+同伴のチェックイン済人数) + 補助 `/ {reserved_count}` (active 予約人数) + RemainBar と同じビジュアル言語のミニ進捗バー (track + fill、`role="progressbar"`)
+3. **初回参加**: `first_time_count` を主値、`名` を補助単位として表示。母集団は **member 数** (同伴は member 化されていないため対象外)
 4. **キャンセル待ち**: `waitlist_count` を主値、`名` を補助単位として表示。MVP1 では DB 側で常に 0 を返すため `0 名` 固定表示
 
 各 StatCard は `Kicker`（`— 01` ～ `— 04`）+ 主値（数値大表示）+ 補助単位 + ラベルで構成し、`@high-q/ui` のデザイントークン（`var(--hq-*)`）を使用 SHALL する。マジックナンバー（`#182F43` 等）禁止。
 
-#### Scenario: capacity NULL（MVP1 デフォルト）の StatCard
-- **WHEN** event_detail_view から `capacity=null, reserved_count=16, checked_in_count=4, first_time_count=2, waitlist_count=0` が返る
-- **THEN** 4 枚の StatCard が左から「予約数 16 名」「チェックイン 4 / 16」「初回参加 2 名」「キャンセル待ち 0 名」と表示される
+#### Scenario: capacity NULL（MVP1 デフォルト）の StatCard 表示
+- **WHEN** event_detail_view から `capacity=null, reserved_count=19, checked_in_count=6, first_time_count=2, waitlist_count=0` が返る (16 件の予約 + 同伴計 3 名 + うち 4 件 attended で同伴 2 名チェックイン済の状態)
+- **THEN** 4 枚の StatCard が左から「予約数 19 名」「チェックイン 6 / 19 + 進捗バー」「初回参加 2 名」「キャンセル待ち 0 名」と表示される
 
-#### Scenario: capacity あり（将来 MVP2 で復活時）の StatCard
-- **WHEN** event_detail_view から `capacity=18, reserved_count=16, checked_in_count=4, first_time_count=2, waitlist_count=0` が返る
-- **THEN** 4 枚の StatCard が左から「残席 2 / 18」「チェックイン 4 / 16」「初回参加 2 名」「キャンセル待ち 0 名」と表示される
+#### Scenario: capacity あり（将来 MVP2 で復活時）の StatCard 表示
+- **WHEN** event_detail_view から `capacity=20, reserved_count=19, checked_in_count=6, first_time_count=2, waitlist_count=0` が返る
+- **THEN** 4 枚の StatCard が左から「残席 1 / 20」「チェックイン 6 / 19 + 進捗バー」「初回参加 2 名」「キャンセル待ち 0 名」と表示される
 
-#### Scenario: チェックイン後の即時反映
-- **WHEN** 参加者の 1 名をチェックイン操作で `'reserved' → 'attended'` に変更
-- **THEN** チェックイン StatCard の主値が +1 される（optimistic 反映）。直後の event_detail_view 再取得で同じ値に整合する
+#### Scenario: チェックイン操作で予約数は不変、チェックイン人数のみ増減
+- **WHEN** 参加者の 1 件 (guest_count=0) をチェックイン操作で `'reserved' → 'attended'` に変更
+- **THEN** **予約数 (StatCard 1) は不変**、チェックイン StatCard 02 の主値が **+1** される (本人 1 名分)。直後の event_detail_view 再取得で同じ値に整合する。
 
-#### Scenario: キャンセル代行後の即時反映
-- **WHEN** 参加者の 1 名をキャンセル代行で `'reserved' → 'cancelled'` に変更
-- **THEN** 1 番目の StatCard が capacity NULL なら「予約数 -1」、capacity ありなら「残席 +1」となる（optimistic 反映）。直後の event_detail_view 再取得で同じ値に整合する
+#### Scenario: 同伴ありのチェックインは「本人 + 同伴」分カウントが上がる
+- **WHEN** 参加者の 1 件 (guest_count=2) をチェックイン
+- **THEN** チェックイン StatCard 02 の主値が **+3** される (本人 1 + 同伴 2)。予約数 StatCard は不変。
+
+#### Scenario: キャンセル代行後の即時反映（同伴も外れる）
+- **WHEN** 参加者の 1 件 (guest_count=1, status='reserved') をキャンセル代行で `'cancelled'` に変更
+- **THEN** 1 番目の StatCard (capacity NULL) は「予約数 **-2**」(本人 1 + 同伴 1)、capacity ありなら「残席 +2」となる (optimistic 反映)。直後の event_detail_view 再取得で同じ値に整合する。
+
+#### Scenario: 同伴者数の編集が StatCard に即時反映
+- **WHEN** admin が ある reservation の guest_count を 0 → 2 に変更
+- **THEN** 予約数 StatCard が **+2** される (本人は元々カウント済み、増分は同伴 2 名のみ)。当該 reservation が attended ならチェックイン StatCard も +2。
 
 ### Requirement: RemainBar の表示（capacity ありの時のみ）
 

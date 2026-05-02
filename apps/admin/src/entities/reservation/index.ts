@@ -16,6 +16,7 @@ export {
 export {
   toggleCheckin,
   cancelByAdmin,
+  updateGuestCount,
   type MutationError as ReservationMutationError,
   type MutationErrorCode as ReservationMutationErrorCode,
 } from "./api/reservationMutations";

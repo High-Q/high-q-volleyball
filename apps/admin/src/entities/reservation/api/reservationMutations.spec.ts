@@ -148,6 +148,78 @@ describe("toggleCheckin", () => {
   });
 });
 
+describe("updateGuestCount", () => {
+  it("guest_count を nextCount で UPDATE する", async () => {
+    const eqMock = vi.fn().mockImplementation(async () => ({ error: null }));
+    const updateMock = vi.fn().mockReturnValue({ eq: eqMock });
+    fromMock.mockReturnValueOnce({ update: updateMock });
+    const { updateGuestCount } = await import("./reservationMutations");
+
+    const result = await updateGuestCount(RID, 2);
+
+    expect(updateMock).toHaveBeenCalledWith({ guest_count: 2 });
+    expect(eqMock).toHaveBeenCalledWith("id", RID);
+    expect(result.ok).toBe(true);
+  });
+
+  it("nextCount=0 でも UPDATE する", async () => {
+    const eqMock = vi.fn().mockImplementation(async () => ({ error: null }));
+    const updateMock = vi.fn().mockReturnValue({ eq: eqMock });
+    fromMock.mockReturnValueOnce({ update: updateMock });
+    const { updateGuestCount } = await import("./reservationMutations");
+
+    const result = await updateGuestCount(RID, 0);
+
+    expect(updateMock).toHaveBeenCalledWith({ guest_count: 0 });
+    expect(result.ok).toBe(true);
+  });
+
+  it("負数は SERVER_ERROR で client side 拒否", async () => {
+    const { updateGuestCount } = await import("./reservationMutations");
+    const result = await updateGuestCount(RID, -1);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe("SERVER_ERROR");
+      expect(result.error.message).toMatch(/out of range/);
+    }
+    expect(fromMock).not.toHaveBeenCalled();
+  });
+
+  it("6 以上は SERVER_ERROR で client side 拒否", async () => {
+    const { updateGuestCount } = await import("./reservationMutations");
+    const result = await updateGuestCount(RID, 6);
+    expect(result.ok).toBe(false);
+    expect(fromMock).not.toHaveBeenCalled();
+  });
+
+  it("network error で NETWORK_ERROR を返す", async () => {
+    fromMock.mockImplementationOnce(() => {
+      throw new TypeError("Failed to fetch");
+    });
+    const { updateGuestCount } = await import("./reservationMutations");
+    const result = await updateGuestCount(RID, 2);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe("NETWORK_ERROR");
+    }
+  });
+
+  it("RLS 拒否で PERMISSION_DENIED を返す", async () => {
+    const eqMock = vi.fn().mockImplementation(async () => ({
+      error: { code: "42501", message: "permission denied" },
+    }));
+    fromMock.mockReturnValueOnce({
+      update: vi.fn().mockReturnValue({ eq: eqMock }),
+    });
+    const { updateGuestCount } = await import("./reservationMutations");
+    const result = await updateGuestCount(RID, 2);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe("PERMISSION_DENIED");
+    }
+  });
+});
+
 describe("cancelByAdmin", () => {
   it("status='cancelled' で UPDATE する", async () => {
     const { cancelByAdmin } = await import("./reservationMutations");

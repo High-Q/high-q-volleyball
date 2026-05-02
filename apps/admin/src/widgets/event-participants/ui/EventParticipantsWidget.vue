@@ -23,10 +23,22 @@ const props = defineProps<{
 const eventIdRef = toRef(props, "eventId");
 
 const emit = defineEmits<{
-  /** Optimistic 反映済みのチェックイン状態変化（StatCard 連携用） */
+  /**
+   * Optimistic 反映済みのチェックイン人数変化（StatCard 連携用）。
+   * delta は本人 + 同伴を含む人数 (= ±(1 + guest_count))。
+   */
   "checkin-changed": [delta: number];
-  /** キャンセル代行成功（StatCard reserved_count -1 用） */
-  "reservation-cancelled": [];
+  /**
+   * キャンセル代行成功時、減らすべき予約人数 / チェックイン済人数。
+   * いずれも本人 + 同伴を含む。チェックイン未の場合は checkinDelta=0。
+   */
+  "reservation-cancelled": [reservedDelta: number, checkinDelta: number];
+  /**
+   * 同伴者数編集時、StatCard に反映する人数 delta。
+   * - 予約数: 常に同伴差分 (next - prev)
+   * - チェックイン: 当該予約が attended なら同伴差分、reserved なら 0
+   */
+  "guest-changed": [reservedDelta: number, checkinDelta: number];
 }>();
 
 const {
@@ -54,12 +66,39 @@ function onCheckinFlip(reservationId: string, nextChecked: boolean): void {
   const wasChecked = current.checked_in_at !== null;
   if (wasChecked === nextChecked) return;
   data.applyCheckinFlip(reservationId, nextChecked);
-  emit("checkin-changed", nextChecked ? 1 : -1);
+  // 本人 + 同伴の人数分を delta として通知
+  const headcount = 1 + current.guest_count;
+  emit("checkin-changed", nextChecked ? headcount : -headcount);
+}
+
+function onGuestChanged(
+  reservationId: string,
+  prev: number,
+  next: number,
+): void {
+  if (prev === next) return;
+  const current = data.rawData.value.find(
+    (r) => (r.reservation_id as unknown as string) === reservationId,
+  );
+  data.applyGuestUpdate(reservationId, next);
+  const guestDelta = next - prev;
+  const isAttended = current?.checked_in_at !== null;
+  emit("guest-changed", guestDelta, isAttended ? guestDelta : 0);
 }
 
 function onCancelled(reservationId: string): void {
+  // キャンセル前の行を読んで予約人数 / チェックイン人数の delta を算出
+  const current = data.rawData.value.find(
+    (r) => (r.reservation_id as unknown as string) === reservationId,
+  );
+  const headcount = current ? 1 + current.guest_count : 0;
+  const wasChecked = current?.checked_in_at !== null;
   data.removeRow(reservationId);
-  emit("reservation-cancelled");
+  emit(
+    "reservation-cancelled",
+    -headcount,
+    wasChecked ? -headcount : 0,
+  );
 }
 
 defineExpose({
@@ -113,6 +152,7 @@ defineExpose({
         v-else-if="view === 'success'"
         :rows="data.data.value"
         @checkin-flip="onCheckinFlip"
+        @guest-changed="onGuestChanged"
         @cancelled="onCancelled"
       />
     </div>

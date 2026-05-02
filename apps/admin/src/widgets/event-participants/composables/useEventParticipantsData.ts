@@ -39,6 +39,8 @@ export interface UseEventParticipantsData {
   refetch: () => Promise<void>;
   /** Optimistic 更新: 行の checked_in_at をローカルで反転 */
   applyCheckinFlip: (reservationId: string, nextChecked: boolean) => void;
+  /** Optimistic 更新: 行の guest_count をローカルで書き換え */
+  applyGuestUpdate: (reservationId: string, nextCount: number) => void;
   /** Optimistic 削除: 指定 reservation を rawData から除く（キャンセル代行成功時） */
   removeRow: (reservationId: string) => void;
 }
@@ -139,6 +141,17 @@ export function useEventParticipantsData(
     );
   }
 
+  function applyGuestUpdate(
+    reservationId: string,
+    nextCount: number,
+  ): void {
+    rawData.value = rawData.value.map((r) =>
+      (r.reservation_id as unknown as string) === reservationId
+        ? { ...r, guest_count: nextCount }
+        : r,
+    );
+  }
+
   function removeRow(reservationId: string): void {
     rawData.value = rawData.value.filter(
       (r) => (r.reservation_id as unknown as string) !== reservationId,
@@ -156,6 +169,7 @@ export function useEventParticipantsData(
     checkedInCount,
     refetch: load,
     applyCheckinFlip,
+    applyGuestUpdate,
     removeRow,
   };
 }

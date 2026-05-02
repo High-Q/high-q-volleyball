@@ -75,13 +75,21 @@ function onGoBack(): void {
 }
 
 function onCheckinChanged(delta: number): void {
+  // delta は本人 + 同伴を含む人数 (= ±(1 + guest_count))
   detail.applyDeltas({ checkin: delta });
   // 背景で view を再取得して整合性を取る（D3）
   void detail.refetch();
 }
 
-function onReservationCancelled(): void {
-  detail.applyDeltas({ reserved: -1 });
+function onReservationCancelled(reservedDelta: number, checkinDelta: number): void {
+  // reservedDelta / checkinDelta はそれぞれ本人 + 同伴を含む人数の負値
+  detail.applyDeltas({ reserved: reservedDelta, checkin: checkinDelta });
+  void detail.refetch();
+}
+
+function onGuestChanged(reservedDelta: number, checkinDelta: number): void {
+  // 同伴者数編集の差分を予約数 / チェックイン人数の両方に反映
+  detail.applyDeltas({ reserved: reservedDelta, checkin: checkinDelta });
   void detail.refetch();
 }
 </script>
@@ -123,6 +131,7 @@ function onReservationCancelled(): void {
           :event-id="eventId"
           @checkin-changed="onCheckinChanged"
           @reservation-cancelled="onReservationCancelled"
+          @guest-changed="onGuestChanged"
         />
       </div>
     </template>

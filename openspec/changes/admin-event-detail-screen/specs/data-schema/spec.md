@@ -16,10 +16,10 @@
 - `visibility` (text) — events.visibility
 - `status` (text) — events.status
 - `cancel_deadline` (timestamptz) — events.cancel_deadline
-- `reserved_count` (integer) — `reservations` のうち `event_id = events.id` かつ `status = 'reserved'` の件数
-- `checked_in_count` (integer) — `reservations` のうち `event_id = events.id` かつ `status = 'attended'` の件数
-- `first_time_count` (integer) — `reservations` のうち `event_id = events.id` かつ `status = 'reserved'` かつ「当該 member が当該 event.start_at より前に他イベントで `status = 'attended'` を持たない」を満たす件数
-- `waitlist_count` (integer) — `reservations` のうち `event_id = events.id` かつ `status = 'waitlist'` の件数（MVP1 では 0 が返る運用）
+- `reserved_count` (integer) — **本人 + 同伴を含む人数**。`SUM(1 + guest_count) FILTER (status IN ('reserved', 'attended'))`。チェックイン操作で `status` が `'reserved' → 'attended'` に変わっても両方とも filter にヒットするため**減らない**
+- `checked_in_count` (integer) — **本人 + 同伴を含む人数**。`SUM(1 + guest_count) FILTER (status = 'attended')`。1 件チェックインすると当該行の `1 + guest_count` 名がカウントに乗る
+- `first_time_count` (integer) — **member 数** (同伴は member 化されていないため初回判定の対象外)。`COUNT(*) FILTER (status IN ('reserved', 'attended') AND is_first_time)`。`is_first_time` は「当該 member が当該 event.start_at より前に他イベントで `status = 'attended'` を持たない」場合に true
+- `waitlist_count` (integer) — **本人 + 同伴を含む人数**。`SUM(1 + guest_count) FILTER (status = 'waitlist')` (MVP1 では 0 が返る運用)
 - `created_at` / `updated_at` (timestamptz) — events 由来
 
 view は events × venues の `LEFT JOIN` と、reservations の集計サブクエリ（`COUNT(*) FILTER (...)` 4 種）を持つ。view は `SECURITY INVOKER` で作成 MUST し、参照テーブルの RLS を継承する。
@@ -28,17 +28,25 @@ view は events × venues の `LEFT JOIN` と、reservations の集計サブク�
 - **WHEN** admin が `SELECT * FROM event_detail_view WHERE id = '<uuid>'` を実行
 - **THEN** 上記の全列を含む 1 行が返る
 
-#### Scenario: reserved_count の集計
-- **WHEN** ある event に対して `status = 'reserved'` の reservations が 16 件、`status = 'cancelled'` が 2 件、`status = 'attended'` が 4 件存在する
-- **THEN** 当該 event の `reserved_count` は 16、`checked_in_count` は 4 を返す（cancelled は除外）
+#### Scenario: 予約数 / チェックイン人数の集計（同伴含む）
+- **WHEN** ある event に対して `status = 'reserved'` の reservations が 12 件 (うち 1 件は guest_count=1)、`status = 'cancelled'` が 2 件、`status = 'attended'` が 4 件 (うち 1 件は guest_count=2) 存在する
+- **THEN** `reserved_count` は **(12 + 1) + (4 + 2) = 19 名** (active な予約全件 × 本人+同伴)、`checked_in_count` は **4 + 2 = 6 名** (attended のみ × 本人+同伴) を返す。cancelled は除外。
 
-#### Scenario: first_time_count の集計
-- **WHEN** ある event の reserved 16 件のうち、過去に他イベントで attended 履歴がない member が 2 名いる
-- **THEN** 当該 event の `first_time_count` は 2 を返す
+#### Scenario: チェックイン操作で予約数は不変
+- **WHEN** 上記状態から 1 件チェックイン (`status='reserved' → 'attended'`、当該 reservation の guest_count=0)
+- **THEN** `reserved_count` は **19 のまま**（active な予約は減らない）、`checked_in_count` は **6 + 1 = 7 名** に増える
+
+#### Scenario: first_time_count の集計（member 数ベース）
+- **WHEN** ある event の active 予約 16 件のうち、過去に他イベントで attended 履歴がない member が 2 名いる（同伴者数は問わない）
+- **THEN** 当該 event の `first_time_count` は 2 を返す。同伴者は member 化されていないため初回判定の対象外。
 
 #### Scenario: waitlist_count の集計（MVP1 想定）
 - **WHEN** ある event に `status = 'waitlist'` の reservations が 0 件
 - **THEN** 当該 event の `waitlist_count` は 0 を返す
+
+#### Scenario: 同伴者数の更新が集計に反映される
+- **WHEN** admin が ある reservation (status='reserved', guest_count=0) の `guest_count` を 0 → 2 に UPDATE
+- **THEN** `reserved_count` が +2 増える（本人は元々カウント済みのため、増分は同伴 2 名分のみ）
 
 #### Scenario: fee の COALESCE
 - **WHEN** events.fee が NULL で venues.default_fee が 1000 の event 行

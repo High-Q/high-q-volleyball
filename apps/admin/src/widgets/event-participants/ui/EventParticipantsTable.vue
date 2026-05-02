@@ -16,6 +16,10 @@ import {
   useReservationCheckin,
 } from "@/features/reservation-checkin";
 import { ReservationCancelDialog } from "@/features/reservation-cancel-by-admin";
+import {
+  GuestCountStepper,
+  useReservationGuestEdit,
+} from "@/features/reservation-guest-edit";
 
 /**
  * 参加者一覧の DataTable 本体（Success 状態専用）。
@@ -34,11 +38,14 @@ const props = defineProps<{
 const emit = defineEmits<{
   /** Optimistic flip 用: caller の rawData を更新する */
   "checkin-flip": [reservationId: string, nextChecked: boolean];
+  /** 同伴者数編集 (caller の rawData / StatCard 更新用) */
+  "guest-changed": [reservationId: string, prev: number, next: number];
   /** キャンセル代行成功時 */
   cancelled: [reservationId: string];
 }>();
 
 const checkin = useReservationCheckin();
+const guest = useReservationGuestEdit();
 
 const EXP_TONE: Record<ExperienceLevel, "success" | "accent" | "neutral"> = {
   experienced: "success",
@@ -56,7 +63,6 @@ interface DisplayedRow extends ParticipantRow {
   __initial: string;
   __whenLabel: string;
   __isChecked: boolean;
-  __guestLabel: string;
 }
 
 function formatWhen(iso: string): string {
@@ -74,7 +80,6 @@ const displayedRows = computed<DisplayedRow[]>(() =>
     __initial: r.display_name.charAt(0),
     __whenLabel: formatWhen(r.created_at),
     __isChecked: r.checked_in_at !== null,
-    __guestLabel: r.guest_count > 0 ? `+${r.guest_count}` : "–",
   })),
 );
 
@@ -98,6 +103,29 @@ async function onToggle(row: DisplayedRow): Promise<void> {
 
 function onCancelled(reservationId: string): void {
   emit("cancelled", reservationId);
+}
+
+async function onGuestChange(
+  row: DisplayedRow,
+  nextCount: number,
+): Promise<void> {
+  const prev = row.guest_count;
+  // Optimistic 反映: caller (Widget) に通知 → caller が rawData を更新
+  emit("guest-changed", row.reservation_id as unknown as string, prev, nextCount);
+  await guest.setGuestCount({
+    reservationId: row.reservation_id,
+    prevCount: prev,
+    nextCount,
+    onRollback: () => {
+      // 失敗時は元に戻す
+      emit(
+        "guest-changed",
+        row.reservation_id as unknown as string,
+        nextCount,
+        prev,
+      );
+    },
+  });
 }
 </script>
 
@@ -135,11 +163,13 @@ function onCancelled(reservationId: string): void {
             {{ EXP_LABEL[row.experience_level] }}
           </Badge>
         </TableCell>
-        <TableCell
-          class="whitespace-nowrap text-right font-mono text-xs"
-          :class="row.guest_count > 0 ? 'text-ink' : 'text-muted'"
-        >
-          {{ row.__guestLabel }}
+        <TableCell class="whitespace-nowrap text-right">
+          <GuestCountStepper
+            :count="row.guest_count"
+            :member-name="row.display_name"
+            :in-flight="guest.isInFlight(row.reservation_id)"
+            @change="(next) => onGuestChange(row, next)"
+          />
         </TableCell>
         <TableCell class="whitespace-nowrap font-mono text-xs text-muted">
           {{ row.__whenLabel }}
