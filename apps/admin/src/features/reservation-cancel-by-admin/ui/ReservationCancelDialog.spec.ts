@@ -34,14 +34,14 @@ afterEach(() => {
 });
 
 describe("ReservationCancelDialog — トリガーボタン", () => {
-  it("デフォルトトリガー（slot 未提供）が「キャンセル代行」ボタンを描画", () => {
+  it("デフォルトトリガー（slot 未提供）が「キャンセル」ボタンを描画", () => {
     wrapper = mount(ReservationCancelDialog, {
       props: { reservationId: RID, memberName: "田中 美咲" },
       attachTo: document.body,
     });
     const trigger = wrapper.find('button[type="button"]');
     expect(trigger.exists()).toBe(true);
-    expect(trigger.text()).toContain("キャンセル代行");
+    expect(trigger.text().trim()).toBe("キャンセル");
     expect(trigger.attributes("aria-label")).toBe(
       "田中 美咲 の予約をキャンセル",
     );
@@ -97,8 +97,11 @@ describe("ReservationCancelDialog — 確定 / キャンセル", () => {
     await wrapper.find("button").trigger("click");
     await flushPromises();
 
+    // ダイアログ内のキャンセルボタン (trigger の「キャンセル」と区別するため
+    // alertdialog スコープ内に絞る)。
+    const dialog = document.body.querySelector('[role="alertdialog"]');
     const cancelBtn = Array.from(
-      document.body.querySelectorAll("button"),
+      dialog?.querySelectorAll("button") ?? [],
     ).find((b) => b.textContent?.trim() === "キャンセル");
     cancelBtn!.click();
     await flushPromises();

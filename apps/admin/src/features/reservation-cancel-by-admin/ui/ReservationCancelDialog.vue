@@ -51,7 +51,7 @@ defineExpose({ open });
       :aria-label="`${memberName} の予約をキャンセル`"
       @click="open"
     >
-      キャンセル代行
+      キャンセル
     </button>
   </slot>
 

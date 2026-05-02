@@ -38,6 +38,8 @@ const space = Object.freeze({
   2: "8px",
   3: "12px",
   4: "16px",
+  /** 設計サンプル準拠の card 上部 padding (20px)。 */
+  5: "20px",
   6: "24px",
   8: "32px",
   14: "56px",
