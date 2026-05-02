@@ -1,4 +1,4 @@
-import { ref, watch, type Ref } from "vue";
+import { onMounted, onUnmounted, ref, watch, type Ref } from "vue";
 import type { EventId } from "@high-q/shared";
 import {
   getEventDetail,
@@ -64,6 +64,24 @@ export function useEventDetailData(
 
   watch(eventId, () => {
     void load();
+  });
+
+  // 他 admin が同時に変更した場合の取り込み: タブが foreground に戻ったら refetch
+  // (visibilitychange は SSR 対策で window 存在チェック)
+  function onVisibilityChange(): void {
+    if (typeof document !== "undefined" && document.visibilityState === "visible") {
+      void load();
+    }
+  }
+  onMounted(() => {
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisibilityChange);
+    }
+  });
+  onUnmounted(() => {
+    if (typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    }
   });
 
   function applyDeltas(deltas: {

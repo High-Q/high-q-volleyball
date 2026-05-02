@@ -42,6 +42,13 @@ const emit = defineEmits<{
   "guest-changed": [reservationId: string, prev: number, next: number];
   /** キャンセル代行成功時 */
   cancelled: [reservationId: string];
+  /**
+   * 任意の mutation (チェックイン / 同伴編集 / キャンセル) が DB 反映まで
+   * 完了 (成功 / 失敗 / 重複ガードによる no-op どれも含む) した時点で発火。
+   * caller は最新値を取り直すために refetch を呼ぶ用途。複数 admin 環境での
+   * 整合性確保のため。
+   */
+  "mutation-settled": [];
 }>();
 
 const checkin = useReservationCheckin();
@@ -99,10 +106,14 @@ async function onToggle(row: DisplayedRow): Promise<void> {
       );
     },
   });
+  // DB 反映が完了 (成功 / 失敗 / 重複 no-op) → caller に refetch を促す
+  emit("mutation-settled");
 }
 
 function onCancelled(reservationId: string): void {
   emit("cancelled", reservationId);
+  // キャンセル代行の DB UPDATE は ReservationCancelDialog 内で完了済
+  emit("mutation-settled");
 }
 
 async function onGuestChange(
@@ -126,6 +137,7 @@ async function onGuestChange(
       );
     },
   });
+  emit("mutation-settled");
 }
 </script>
 

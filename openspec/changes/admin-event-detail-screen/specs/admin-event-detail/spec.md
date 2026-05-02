@@ -60,7 +60,7 @@ CSV エクスポート / 一括メールの CTA は MVP1 では **表示しな�
 
 #### Scenario: チェックイン操作で予約数は不変、チェックイン人数のみ増減
 - **WHEN** 参加者の 1 件 (guest_count=0) をチェックイン操作で `'reserved' → 'attended'` に変更
-- **THEN** **予約数 (StatCard 1) は不変**、チェックイン StatCard 02 の主値が **+1** される (本人 1 名分)。直後の event_detail_view 再取得で同じ値に整合する。
+- **THEN** **予約数 (StatCard 1) は不変**、チェックイン StatCard 02 の主値が **+1** される (本人 1 名分、optimistic 反映)。mutation の DB 反映完了後、event_detail_view を refetch して真値で StatCard を上書きする (`requestSeq` ガードで並列 mutation でも古い結果は捨てる)。
 
 #### Scenario: 同伴ありのチェックインは「本人 + 同伴」分カウントが上がる
 - **WHEN** 参加者の 1 件 (guest_count=2) をチェックイン
@@ -68,7 +68,7 @@ CSV エクスポート / 一括メールの CTA は MVP1 では **表示しな�
 
 #### Scenario: キャンセル代行後の即時反映（同伴も外れる）
 - **WHEN** 参加者の 1 件 (guest_count=1, status='reserved') をキャンセル代行で `'cancelled'` に変更
-- **THEN** 1 番目の StatCard (capacity NULL) は「予約数 **-2**」(本人 1 + 同伴 1)、capacity ありなら「残席 +2」となる (optimistic 反映)。直後の event_detail_view 再取得で同じ値に整合する。
+- **THEN** 1 番目の StatCard (capacity NULL) は「予約数 **-2**」(本人 1 + 同伴 1)、capacity ありなら「残席 +2」となる (optimistic 反映)。DB UPDATE 完了後、event_detail_view を refetch して真値で StatCard を上書きする。
 
 #### Scenario: 同伴者数の編集が StatCard に即時反映
 - **WHEN** admin が ある reservation の guest_count を 0 → 2 に変更
@@ -174,7 +174,7 @@ MVP1 では実質 RemainBar は描画されない（#86 の admin-events-crud �
 2. `update reservations set status = ?, checked_in_at = ? where id = :id` を Supabase に発行
    - 未 → 済: `status = 'attended', checked_in_at = now()`、WHERE 句に `status = 'reserved' and checked_in_at is null` を含める（多重 UPDATE 防御）
    - 済 → 未: `status = 'reserved', checked_in_at = null`、WHERE 句に `status = 'attended'` を含める
-3. 成功時: StatCard のチェックイン済カウントを +1 / -1（optimistic）。background で `event_detail_view` を invalidate して再取得（整合確認）
+3. UI 反映: StatCard のチェックイン済カウントを `±(1 + guest_count)` で optimistic 反映 → mutation 完了 (await) 後に participants_view + event_detail_view を順に refetch して真値で同期。`requestSeq` ガードにより並列 mutation でも古い refetch 結果は捨てられ、複数 admin の同時操作にも整合する
 4. 失敗時: UI の Switch を元の状態に戻す（slider と隣接テキスト両方）+ Toast でエラー表示（「チェックイン更新に失敗しました」）
 5. 同 reservation_id への in-flight mutation が既にある場合は二重発火を防ぐ（クライアント側 `inFlight` Set）。in-flight 中は Switch を `disabled` 状態（`aria-busy="true"`）にする
 
@@ -341,6 +341,34 @@ MVP1 では実質 RemainBar は描画されない（#86 の admin-events-crud �
 #### Scenario: 参加者一覧の単一クエリ
 - **WHEN** 参加者一覧が描画される
 - **THEN** Supabase クライアントは `event_participants_view` を event_id でフィルタして 1 回 SELECT し、`is_first_time` を含む全列を取得する
+
+### Requirement: 複数 admin の同時操作整合性
+
+本画面は MUST 複数の admin が同時に操作しても data の整合性を保ち SHALL なければならない。
+
+具体的には以下を満たす:
+
+1. **Optimistic UI** で即時フィードバック (押下感を維持)
+2. mutation の DB UPDATE 完了 (`await`) を **待ってから** participants_view と event_detail_view を refetch する。並列 fire-and-forget は禁止 (UPDATE 完了前の fetch が古い DB 値で optimistic 値を上書きする race condition を起こす)
+3. fetch の sequence ガード (`requestSeq`) で、**並列に複数 mutation** が走っても **古い refetch 結果は捨て**、最新 refetch のみを state に反映する
+4. **タブが foreground に戻った時** (`document.visibilitychange` で visible) に participants_view と event_detail_view を自動で refetch して、他 admin がバックグラウンド中に行った変更を取り込む
+5. 同一 reservation への二重操作は **DB の WHERE 句条件** (`status='reserved' AND checked_in_at IS NULL` 等) と **client side の in-flight Set** の二重ガードで防ぐ
+
+#### Scenario: mutation 完了後の真値同期
+- **WHEN** admin A がチェックイン UPDATE を発行し、mutation が DB 反映を完了
+- **THEN** participants_view と event_detail_view の refetch が直列に実行され、StatCard と Table の両方が真値で上書きされる (optimistic 値の累積誤差は発生しない)
+
+#### Scenario: 並列 mutation での古い refetch 結果は捨てる
+- **WHEN** admin が短時間に 2 件の mutation A, B を連続発行し、A の refetch fetch が B の refetch fetch より遅れて返る
+- **THEN** B の refetch が先に state を更新し、A の fetch 結果は `requestSeq` 不一致で捨てられる。state は B 完了時点の真値を保持
+
+#### Scenario: 別 admin の変更がタブ復帰で取り込まれる
+- **WHEN** admin A が画面を開いた状態で別タブに切り替え、その間に admin B が同 event をチェックイン操作 → admin A がタブを戻す
+- **THEN** `document.visibilitychange` で visible になった瞬間に participants_view と event_detail_view が refetch され、admin B の変更 (チェックイン人数 +N 等) が admin A の画面に反映される
+
+#### Scenario: 同一行への二重チェックインは DB レベルで no-op
+- **WHEN** admin A と admin B が同じ未チェックインの予約を同時刻にチェックイン操作
+- **THEN** 先着 1 件のみ `WHERE status='reserved' AND checked_in_at IS NULL` 条件にヒットして UPDATE 成功、後着は条件不一致で 0 行更新 (`ALREADY_UPDATED` エラーで Toast 表示)。データ整合性は保たれる
 
 ### Requirement: テスト
 

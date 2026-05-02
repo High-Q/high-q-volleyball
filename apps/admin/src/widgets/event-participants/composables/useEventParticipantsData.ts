@@ -1,4 +1,12 @@
-import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+  type ComputedRef,
+  type Ref,
+} from "vue";
 import type { EventId } from "@high-q/shared";
 import {
   getEventParticipants,
@@ -109,6 +117,23 @@ export function useEventParticipantsData(
 
   watch(eventId, () => {
     void load();
+  });
+
+  // 他 admin の変更取り込み: タブ foreground 復帰で refetch
+  function onVisibilityChange(): void {
+    if (typeof document !== "undefined" && document.visibilityState === "visible") {
+      void load();
+    }
+  }
+  onMounted(() => {
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisibilityChange);
+    }
+  });
+  onUnmounted(() => {
+    if (typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    }
   });
 
   const data = computed(() => applyFilter(rawData.value, filter.value));

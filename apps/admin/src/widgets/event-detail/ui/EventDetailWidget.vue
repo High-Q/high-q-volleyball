@@ -74,22 +74,28 @@ function onGoBack(): void {
   void router.push({ name: "events" });
 }
 
+// 各 mutation hook は **optimistic apply のみ** を担当 (即時 UI フィードバック)。
+// DB と同期するための refetch は `onMutationSettled` で mutation 完了後に
+// 直列実行する (`useEventDetailData` の requestSeq ガードで並列でも古い結果は
+// 自動で捨てられる)。これで複数 admin 同時操作にも整合する。
 function onCheckinChanged(delta: number): void {
-  // delta は本人 + 同伴を含む人数 (= ±(1 + guest_count))
   detail.applyDeltas({ checkin: delta });
-  // 背景で view を再取得して整合性を取る（D3）
-  void detail.refetch();
 }
 
 function onReservationCancelled(reservedDelta: number, checkinDelta: number): void {
-  // reservedDelta / checkinDelta はそれぞれ本人 + 同伴を含む人数の負値
   detail.applyDeltas({ reserved: reservedDelta, checkin: checkinDelta });
-  void detail.refetch();
 }
 
 function onGuestChanged(reservedDelta: number, checkinDelta: number): void {
-  // 同伴者数編集の差分を予約数 / チェックイン人数の両方に反映
   detail.applyDeltas({ reserved: reservedDelta, checkin: checkinDelta });
+}
+
+/**
+ * EventParticipantsWidget からの「mutation 完了」を受けて、
+ * event_detail_view を refetch し StatCard を真値で上書き。
+ * UPDATE 完了後にのみ呼ばれるため、race condition なし。
+ */
+function onMutationSettled(): void {
   void detail.refetch();
 }
 </script>
@@ -132,6 +138,7 @@ function onGuestChanged(reservedDelta: number, checkinDelta: number): void {
           @checkin-changed="onCheckinChanged"
           @reservation-cancelled="onReservationCancelled"
           @guest-changed="onGuestChanged"
+          @mutation-settled="onMutationSettled"
         />
       </div>
     </template>

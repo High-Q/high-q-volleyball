@@ -39,6 +39,12 @@ const emit = defineEmits<{
    * - チェックイン: 当該予約が attended なら同伴差分、reserved なら 0
    */
   "guest-changed": [reservedDelta: number, checkinDelta: number];
+  /**
+   * 任意の mutation が DB 反映完了した時点で発火。EventDetailWidget が
+   * 受けて event_detail_view を refetch し、StatCard の集計を最新化する
+   * (複数 admin の同時操作にも整合)。
+   */
+  "mutation-settled": [];
 }>();
 
 const {
@@ -101,6 +107,19 @@ function onCancelled(reservationId: string): void {
   );
 }
 
+/**
+ * Table から「mutation 完了」を受けて、participants_view を refetch して
+ * 真値で rawData を上書き (optimistic と DB の同期)。さらに上位
+ * EventDetailWidget に伝搬し、event_detail_view も refetch させる。
+ *
+ * 既存 `requestSeq` ガードにより、複数並列 refetch が来ても古い結果は
+ * 自動で捨てられる (useEventParticipantsData / useEventDetailData 共通)。
+ */
+async function onMutationSettled(): Promise<void> {
+  await data.refetch();
+  emit("mutation-settled");
+}
+
 defineExpose({
   refetch: data.refetch,
   visibleCount: data.visibleCount,
@@ -154,6 +173,7 @@ defineExpose({
         @checkin-flip="onCheckinFlip"
         @guest-changed="onGuestChanged"
         @cancelled="onCancelled"
+        @mutation-settled="onMutationSettled"
       />
     </div>
   </div>
