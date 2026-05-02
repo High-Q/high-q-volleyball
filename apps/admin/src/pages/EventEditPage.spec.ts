@@ -68,9 +68,10 @@ function buildRouter() {
   return createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: "/events", component: { template: "<div>list</div>" } },
+      { path: "/events", name: "events", component: { template: "<div>list</div>" } },
       {
         path: "/events/:id/edit",
+        name: "events-edit",
         component: { template: "<div />" },
       },
     ],

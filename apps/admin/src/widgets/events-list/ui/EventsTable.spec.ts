@@ -39,6 +39,11 @@ async function renderTable(props: {
         name: "edit",
         component: { template: "<div />" },
       },
+      {
+        path: "/events/:id",
+        name: "events-detail",
+        component: { template: "<div />" },
+      },
     ],
   });
   await router.push("/events");
@@ -171,8 +176,27 @@ describe("EventsTable", () => {
   it("操作列のリンクが /events/:id/edit を指す", async () => {
     const row = baseRow();
     const wrapper = await renderTable({ rows: [row] });
-    const link = wrapper.find("a");
-    expect(link.attributes("href")).toContain(`/events/${row.id}/edit`);
+    // 行内には title (events-detail) + edit の 2 リンクが存在する。
+    // 末尾の操作列が /events/:id/edit。
+    const links = wrapper.findAll("a");
+    const editLink = links.find((a) =>
+      a.attributes("href")?.endsWith("/edit"),
+    );
+    expect(editLink?.attributes("href")).toContain(
+      `/events/${row.id}/edit`,
+    );
+  });
+
+  it("タイトル列のリンクが /events/:id（詳細）を指す", async () => {
+    const row = baseRow();
+    const wrapper = await renderTable({ rows: [row] });
+    const links = wrapper.findAll("a");
+    const titleLink = links.find(
+      (a) =>
+        a.attributes("href") === `/events/${row.id}` &&
+        a.text() === row.name,
+    );
+    expect(titleLink).toBeDefined();
   });
 
   it("Enter キーで sort トグルが発火", async () => {

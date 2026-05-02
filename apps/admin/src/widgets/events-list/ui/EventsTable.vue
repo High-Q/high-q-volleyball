@@ -135,10 +135,11 @@ function onHeaderKeyDown(col: SortKey, event: KeyboardEvent): void {
           {{ row.__dateLabel }}
         </TableCell>
         <TableCell class="font-jp text-sm text-ink whitespace-nowrap">
-          <span
-            class="block truncate max-w-[12rem] sm:max-w-xs"
+          <router-link
+            :to="{ name: 'events-detail', params: { id: row.id } }"
+            class="block truncate max-w-[12rem] sm:max-w-xs hover:underline underline-offset-4"
             :title="row.name"
-          >{{ row.name }}</span>
+          >{{ row.name }}</router-link>
         </TableCell>
         <TableCell
           class="font-jp text-sm text-muted whitespace-nowrap"

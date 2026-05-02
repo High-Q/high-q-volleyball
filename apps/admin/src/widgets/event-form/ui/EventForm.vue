@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { useRouter, RouterLink } from "vue-router";
-import { Button, Kicker } from "@high-q/ui";
+import { useRouter } from "vue-router";
+import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
+import { Button } from "@high-q/ui";
 import type { Event } from "@high-q/shared";
 import { useVenues } from "@/entities/venue";
 import FormSection from "./FormSection.vue";
@@ -61,11 +62,13 @@ async function handleCancel() {
       class="sticky top-0 z-10 bg-paper border-b border-hairline px-hq-6 py-hq-4 flex items-center justify-between gap-hq-3 flex-wrap"
     >
       <div class="flex flex-col gap-hq-1 min-w-0">
-        <Kicker color="muted">
-          <RouterLink to="/events" class="hover:text-ink"
-            >— Events / {{ mode === "create" ? "新規作成" : "編集" }}</RouterLink
-          >
-        </Kicker>
+        <PageBreadcrumb
+          :items="[
+            { label: 'Workspace' },
+            { label: 'Events', to: { name: 'events' } },
+            { label: mode === 'create' ? '新規作成' : '編集' },
+          ]"
+        />
         <h2 class="font-jp text-base font-medium text-ink truncate">
           {{ headerTitle }}
         </h2>

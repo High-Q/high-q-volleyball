@@ -9,6 +9,7 @@ import {
 import EventsListPage from "@/pages/EventsListPage.vue";
 import EventCreatePage from "@/pages/EventCreatePage.vue";
 import EventEditPage from "@/pages/EventEditPage.vue";
+import EventDetailPage from "@/pages/EventDetailPage.vue";
 import LoginPage from "@/pages/LoginPage.vue";
 import AuthCallbackPage from "@/pages/AuthCallbackPage.vue";
 import MfaChallengePage from "@/pages/MfaChallengePage.vue";
@@ -31,6 +32,11 @@ const routes: RouteRecordRaw[] = [
     path: "/events/:id/edit",
     name: "events-edit",
     component: EventEditPage,
+  },
+  {
+    path: "/events/:id",
+    name: "events-detail",
+    component: EventDetailPage,
   },
   {
     path: "/login",
