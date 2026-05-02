@@ -10,14 +10,21 @@
 --   と算出する。
 --
 -- v2 (20260502165034) からの差分:
---   - 列追加: reserved_member_count   (active 予約の本人数 = row 数)
---   - 列追加: checked_in_member_count (attended の本人数 = row 数)
+--   - 列追加 (末尾): reserved_member_count   (active 予約の本人数 = row 数)
+--   - 列追加 (末尾): checked_in_member_count (attended の本人数 = row 数)
+--
+-- ⚠️ PostgreSQL の `create or replace view` 制約:
+--   既存 view の列順を変更したり、既存列の前に新規列を挿入することはできない
+--   (「列名を変更しようとしている」と解釈されエラー 42P16 になる)。
+--   新規列は **末尾** にのみ追加可能。本 v3 では updated_at の後ろに追加する。
 --
 -- 関連:
 --   openspec/changes/admin-event-detail-screen/specs/data-schema/spec.md
 --   supabase/migrations/20260502165034_event_detail_view_v2_headcount.sql (v2)
 --
--- ロールバック: v2 の create or replace を再 RUN すれば戻る。
+-- ロールバック: v2 の create or replace を再 RUN すれば戻る (列が消えるが、
+--   列削除も「列順変更」扱いで同様にエラーになる場合がある。その場合は先に
+--   `drop view event_detail_view` してから v2 を RUN する)。
 -- =============================================================================
 
 create or replace view public.event_detail_view
@@ -41,11 +48,13 @@ select
   coalesce(agg.checked_in_count, 0)::int          as checked_in_count,
   coalesce(agg.first_time_count, 0)::int          as first_time_count,
   coalesce(agg.waitlist_count, 0)::int            as waitlist_count,
-  -- 本人数 (= 同伴を除いた row 数。client で「内 同伴 = total - member」算出用)
-  coalesce(agg.reserved_member_count, 0)::int     as reserved_member_count,
-  coalesce(agg.checked_in_member_count, 0)::int   as checked_in_member_count,
+  -- 既存列 (v2 までと同じ列順を保つ)
   e.created_at,
-  e.updated_at
+  e.updated_at,
+  -- 本人数 (= 同伴を除いた row 数、client で「内 同伴 = total - member」算出用)
+  -- create or replace の制約により末尾にのみ追加可能 (列順変更不可)
+  coalesce(agg.reserved_member_count, 0)::int     as reserved_member_count,
+  coalesce(agg.checked_in_member_count, 0)::int   as checked_in_member_count
 from public.events e
 left join public.venues v on v.id = e.venue_id
 left join lateral (
