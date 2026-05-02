@@ -27,13 +27,13 @@ import { Skeleton } from "@/shared/ui";
     <!-- StatCard 4 枚 -->
     <div class="px-hq-8 pt-hq-5">
       <div
-        class="grid grid-cols-4 bg-paper-warm border border-hairline rounded-hq-lg overflow-hidden shadow-hq-sm"
+        class="grid grid-cols-4 bg-surface border border-hairline rounded-hq-lg overflow-hidden"
       >
         <div
           v-for="i in 4"
           :key="i"
-          class="px-hq-5 py-hq-4 flex flex-col gap-hq-2"
-          :class="i < 4 ? 'border-r border-hairline' : ''"
+          class="py-hq-4 px-hq-6 flex flex-col gap-hq-2"
+          :class="i < 4 ? 'border-r border-hairline-soft' : ''"
         >
           <Skeleton class="h-3 w-8" />
           <Skeleton class="h-7 w-16" />

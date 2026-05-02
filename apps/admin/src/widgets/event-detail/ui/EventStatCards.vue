@@ -70,17 +70,19 @@ const stats = computed<Stat[]>(() => {
 
 <template>
   <div
-    class="grid grid-cols-4 bg-paper-warm border border-hairline rounded-hq-lg overflow-hidden shadow-hq-sm"
+    class="grid grid-cols-4 bg-surface border border-hairline rounded-hq-lg overflow-hidden"
   >
     <div
       v-for="(s, i) in stats"
       :key="s.k"
-      class="px-hq-5 py-hq-4"
-      :class="i < stats.length - 1 ? 'border-r border-hairline' : ''"
+      class="py-hq-4 px-hq-6"
+      :class="i < stats.length - 1 ? 'border-r border-hairline-soft' : ''"
       data-testid="event-stat-card"
     >
-      <Kicker color="muted">— {{ s.k }}</Kicker>
-      <div class="flex items-baseline gap-hq-1 mt-hq-1">
+      <div class="mb-hq-1">
+        <Kicker color="muted">— {{ s.k }}</Kicker>
+      </div>
+      <div class="flex items-baseline gap-hq-1">
         <span
           class="font-jp text-2xl font-semibold text-ink"
           data-testid="stat-value"
@@ -90,7 +92,7 @@ const stats = computed<Stat[]>(() => {
         }}</span>
       </div>
       <div
-        class="font-jp text-xs text-muted mt-hq-1"
+        class="font-jp text-xs text-muted"
         data-testid="stat-label"
       >
         {{ s.label }}
