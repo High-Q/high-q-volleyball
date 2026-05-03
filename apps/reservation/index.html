@@ -4,6 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>High Q 予約サイト</title>
+    <!--
+      HQ デザイントークン (packages/design-tokens/src/tokens.css) で指定する Web フォント。
+      これらが読み込まれていないとフォールバック (system-ui / serif) で描画され、
+      デザインサンプル (docs/10-デザインサンプル/reservation/) と乖離する。
+        - Klee One        → font-jp-display (大見出し: 「はじめる」等)
+        - Zen Kaku Gothic New → font-jp (本文)
+        - Shippori Mincho → font-jp-display フォールバック
+        - JetBrains Mono  → font-mono (kicker / EST.21 等装飾)
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="app"></div>

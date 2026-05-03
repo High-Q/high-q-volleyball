@@ -2,8 +2,10 @@ import { defineConfig, devices } from '@playwright/test'
 
 const LP_PORT = 4173
 const ADMIN_PORT = 4174
+const RESERVATION_PORT = 4175
 const LP_URL = `http://localhost:${LP_PORT}`
 const ADMIN_URL = `http://localhost:${ADMIN_PORT}`
+const RESERVATION_URL = `http://localhost:${RESERVATION_PORT}`
 
 /**
  * E2E 用の DUMMY Supabase 接続情報。
@@ -50,6 +52,14 @@ export default defineConfig({
         baseURL: ADMIN_URL,
       },
     },
+    {
+      name: 'reservation',
+      testDir: './e2e/reservation',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: RESERVATION_URL,
+      },
+    },
   ],
   webServer: [
     {
@@ -63,6 +73,18 @@ export default defineConfig({
       command:
         'pnpm --filter @high-q/admin build && pnpm --filter @high-q/admin exec vite preview --port 4174 --strictPort',
       url: ADMIN_URL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: {
+        PLAYWRIGHT_E2E: '1',
+        VITE_SUPABASE_URL: E2E_DUMMY_SUPABASE_URL,
+        VITE_SUPABASE_PUBLISHABLE_KEY: E2E_DUMMY_SUPABASE_KEY,
+      },
+    },
+    {
+      command:
+        'pnpm --filter @high-q/reservation build && pnpm --filter @high-q/reservation exec vite preview --port 4175 --strictPort',
+      url: RESERVATION_URL,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: {
