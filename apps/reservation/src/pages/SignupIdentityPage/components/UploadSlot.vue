@@ -69,13 +69,13 @@ onUnmounted(() => {
       </span>
       <span
         v-if="props.required"
-        class="rounded-sm bg-danger/10 px-hq-1.5 py-[2px] font-mono text-[8.5px] tracking-[0.12em] text-danger"
+        class="rounded-sm bg-danger/10 px-hq-2 py-[2px] font-mono text-[8.5px] tracking-[0.12em] text-danger"
       >
         必須
       </span>
       <span
         v-else
-        class="rounded-sm bg-hairline/40 px-hq-1.5 py-[2px] font-mono text-[8.5px] tracking-[0.12em] text-muted"
+        class="rounded-sm bg-hairline/40 px-hq-2 py-[2px] font-mono text-[8.5px] tracking-[0.12em] text-muted"
       >
         任意
       </span>
@@ -168,7 +168,7 @@ onUnmounted(() => {
 
       <!-- 左下: ファイル名キャプション (画像の上にオーバーレイ) -->
       <div
-        class="absolute bottom-2 left-2 max-w-[calc(100%-3rem)] truncate rounded-sm bg-ink/70 px-hq-1.5 py-[3px] font-mono text-[10px] tracking-[0.06em] text-paper"
+        class="absolute bottom-2 left-2 max-w-[calc(100%-3rem)] truncate rounded-sm bg-ink/70 px-hq-2 py-[3px] font-mono text-[10px] tracking-[0.06em] text-paper"
       >
         {{ props.data.file?.name ?? "" }}
       </div>

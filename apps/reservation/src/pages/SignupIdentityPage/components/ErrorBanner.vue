@@ -11,7 +11,7 @@ defineProps<Props>();
   <div
     role="alert"
     aria-live="polite"
-    class="mt-hq-4 flex gap-hq-2.5 rounded-lg border border-danger bg-danger/[0.08] px-hq-3 py-hq-3"
+    class="mt-hq-4 flex gap-hq-3 rounded-lg border border-danger bg-danger/[0.08] px-hq-3 py-hq-3"
   >
     <svg
       width="18"

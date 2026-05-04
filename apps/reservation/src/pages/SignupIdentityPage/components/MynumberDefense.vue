@@ -45,7 +45,7 @@ function onToggle(next: boolean) {
       <div class="font-mono text-[10px] tracking-[0.16em] text-muted">
         — SAMPLE
       </div>
-      <div class="mt-hq-2 grid grid-cols-2 gap-hq-2.5">
+      <div class="mt-hq-3 grid grid-cols-2 gap-hq-4">
         <!-- BAD -->
         <div>
           <div
@@ -75,7 +75,7 @@ function onToggle(next: boolean) {
             </div>
           </div>
           <div
-            class="mt-hq-1.5 font-jp text-[11px] font-medium text-danger"
+            class="mt-hq-2 font-jp text-[11px] font-medium text-danger"
           >
             マスク不十分
           </div>
@@ -109,7 +109,7 @@ function onToggle(next: boolean) {
             </div>
           </div>
           <div
-            class="mt-hq-1.5 font-jp text-[11px] font-medium text-success"
+            class="mt-hq-2 font-jp text-[11px] font-medium text-success"
           >
             マスク適切
           </div>

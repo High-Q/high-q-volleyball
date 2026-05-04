@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 <template>
   <div class="flex items-center gap-hq-3">
-    <div class="flex gap-hq-1.5">
+    <div class="flex gap-hq-2">
       <span
         v-for="i in props.total"
         :key="i"

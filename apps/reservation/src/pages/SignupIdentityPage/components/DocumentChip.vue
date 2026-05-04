@@ -34,7 +34,7 @@ function onClick() {
     :aria-checked="props.selected"
     :disabled="props.disabled"
     :class="[
-      'flex items-center gap-hq-2 rounded-md border px-hq-3 py-hq-2.5 text-left',
+      'flex items-center gap-hq-2 rounded-md border px-hq-3 py-hq-3 text-left',
       'min-h-[44px] cursor-pointer transition-colors',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper',
       'disabled:cursor-not-allowed disabled:opacity-50',
@@ -60,7 +60,7 @@ function onClick() {
     </span>
     <span
       v-if="isMyNumber"
-      class="rounded-sm bg-danger/10 px-hq-1.5 py-[2px] font-mono text-[8.5px] tracking-[0.12em] text-danger"
+      class="rounded-sm bg-danger/10 px-hq-2 py-[2px] font-mono text-[8.5px] tracking-[0.12em] text-danger"
     >
       注意
     </span>
