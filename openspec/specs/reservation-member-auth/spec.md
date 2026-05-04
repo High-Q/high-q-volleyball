@@ -25,9 +25,10 @@ TBD - created by archiving change reservation-member-auth-magic-link. Update Pur
 
 ### Requirement: 会員登録フロー = `/login` 段階 1 + `/signup/profile` 段階 2
 
-会員登録フローは **2 段階** で構成する SHALL:
+会員登録フローは **3 段階** で構成する SHALL:
 - 段階 1: `/login` でメール送信（上記 Requirement と兼用 — 既存会員ログインと共通フォーム）
 - 段階 2（`/signup/profile`）: マジックリンク認証完了後、氏名 / 生年月日 / 電話 / 経験レベル / 利用規約同意を入力 → `members` UPDATE
+- 段階 3（`/signup/identity`）: プロフィール完成後、本人確認書類 1 点をアップロード（詳細は `reservation-identity-document-upload` capability を参照）
 
 `/signup` 単独ルートは **撤廃** する SHALL（段階 1 は `/login` で兼用するため）。HomePlaceholder 等の「会員登録」CTA は `/login` を指す。
 
@@ -37,13 +38,17 @@ TBD - created by archiving change reservation-member-auth-magic-link. Update Pur
 - **WHEN** `apps/reservation/src/app/router.ts` の `routes` 配列を確認する
 - **THEN** `path: '/signup'` のルート定義は存在しない（撤廃済み）
 
+#### Scenario: /signup/identity ルートが存在する
+- **WHEN** `apps/reservation/src/app/router.ts` の `routes` 配列を確認する
+- **THEN** `path: '/signup/identity'` / `name: 'signup-identity'` のルートが定義されている (Step 3 / 3 として)
+
 ### Requirement: 会員登録フロー段階 2（プロフィール入力）
 
-`apps/reservation` の `/signup/profile` ページは、認証済み + `isProfileComplete === false` の会員のみアクセス可能 SHALL。氏名 / 生年月日 / 電話（必須・国内携帯番号） / 経験レベル / 利用規約同意の入力を受け付け、同意 ON で CTA「登録する」が活性化する。CTA 押下で `members` テーブルを UPDATE し、`profile.signup_completed = true` + `profile.terms_agreed_at` を既存 jsonb にマージする MUST。成功で `useAuthSession.refresh()` を呼び `/` に遷移する。
+`apps/reservation` の `/signup/profile` ページは、認証済み + `isProfileComplete === false` の会員のみアクセス可能 SHALL。氏名 / 生年月日 / 電話（必須・国内携帯番号） / 経験レベル / 利用規約同意の入力を受け付け、同意 ON で CTA「登録する」が活性化する。CTA 押下で `members` テーブルを UPDATE し、`profile.signup_completed = true` + `profile.terms_agreed_at` を既存 jsonb にマージする MUST。成功で `useAuthSession.refresh()` を呼び `/signup/identity` (Step 3 / 3) に遷移する SHALL。
 
 #### Scenario: 全フィールド入力 + 同意 ON で登録
 - **WHEN** 認証済み + プロフィール未完成のユーザーが `/signup/profile` で氏名「田中 美咲」/ 生年月日 `1995-03-15` / 電話 `090-1234-5678` / 経験レベル「初めて」/ 同意 ON で CTA を押す
-- **THEN** `members` UPDATE が `{ display_name: '田中 美咲', birthday: '1995-03-15', phone: '090-1234-5678', experience_level: 'beginner', profile: { ...existing, signup_completed: true, terms_agreed_at: '<ISO8601>' } }` で実行され、成功後 `/` に遷移する
+- **THEN** `members` UPDATE が `{ display_name: '田中 美咲', birthday: '1995-03-15', phone: '090-1234-5678', experience_level: 'beginner', profile: { ...existing, signup_completed: true, terms_agreed_at: '<ISO8601>' } }` で実行され、成功後 `/signup/identity` に遷移する
 
 #### Scenario: 利用規約同意なしで登録を試みる
 - **WHEN** 全フィールドを入力したが同意チェックボックスが OFF の状態で CTA を押そうとする
@@ -78,16 +83,8 @@ TBD - created by archiving change reservation-member-auth-magic-link. Update Pur
 - **THEN** API は呼ばれず、電話番号フィールドに「電話番号の桁数が正しくありません」のエラーが表示される
 
 #### Scenario: 電話番号の入力ゆらぎを正規化
-- **WHEN** 電話番号に `09012345678`（ハイフンなし）/ `０９０-１２３４-５６７８`（全角）/ `+819012345678`（国際表記）のいずれかを入力して CTA を押す
-- **THEN** Smart constructor が `090-1234-5678`（半角ハイフン区切り）に正規化し、UPDATE にはこの正規化済みの値が送られる
-
-#### Scenario: 未認証ユーザーが /signup/profile にアクセス
-- **WHEN** 未認証ユーザーが `/signup/profile` を直接 URL アクセス
-- **THEN** auth guard により `/login` にリダイレクトされる
-
-#### Scenario: プロフィール完成済みユーザーが /signup/profile にアクセス
-- **WHEN** 認証済み + プロフィール完成済みのユーザーが `/signup/profile` にアクセス
-- **THEN** auth guard により `/` にリダイレクトされる
+- **WHEN** 電話番号に `090 1234 5678` (半角空白) または `09012345678` (区切りなし) を入力して CTA を押す
+- **THEN** Smart constructor `createPhone()` で正規化された値（`'090-1234-5678'`）が `phone` 列に保存される
 
 ### Requirement: マジックリンク戻り先 `/auth/callback`
 
@@ -251,19 +248,23 @@ TBD - created by archiving change reservation-member-auth-magic-link. Update Pur
 
 ### Requirement: 会員プロフィールの取得とキャッシュ
 
-`useAuthSession` は session 確立後、`members` テーブルから自分の行を 1 回 SELECT し、`member` reactive state にキャッシュ SHALL する。`onAuthStateChange` でセッションが変わるたび、または `refresh()` 明示呼び出しで再取得 MUST する。RLS により自分の行のみ返ることを前提とする。
+`useAuthSession` は session 確立後、`members` テーブルから自分の行を 1 回 SELECT し、`member` reactive state にキャッシュ SHALL する。同時に `identity_documents` テーブルへの存在チェック (`select id from identity_documents where member_id = ? limit 1`) を並行で MUST 実行し、結果を `hasIdentityDocument` reactive state にキャッシュする。`onAuthStateChange` でセッションが変わるたび、または `refresh()` 明示呼び出しで両方再取得 MUST する。RLS により自分の行のみ返ることを前提とする。
 
 #### Scenario: 初回 session 確立で member 取得
 - **WHEN** session 確立後、`useAuthSession.ready()` が解決
 - **THEN** `supabase.from('members').select('*').eq('id', auth.uid()).single()` が呼ばれ、`member` state に格納される
 
+#### Scenario: 初回 session 確立で identity_documents 存在チェック
+- **WHEN** session 確立後、`useAuthSession.ready()` が解決
+- **THEN** `supabase.from('identity_documents').select('id').eq('member_id', auth.uid()).limit(1)` 相当のクエリが並行で呼ばれ、結果が `hasIdentityDocument` state に格納される
+
 #### Scenario: refresh() 呼び出しで再取得
-- **WHEN** `/signup/profile` で UPDATE 完了後に `refresh()` を呼ぶ
-- **THEN** members から最新の行が再取得され、`member` state が更新される
+- **WHEN** `/signup/profile` または `/signup/identity` で UPDATE 完了後に `refresh()` を呼ぶ
+- **THEN** members と identity_documents の両方から最新値が再取得され、`member` / `hasIdentityDocument` state が更新される
 
 #### Scenario: signOut で member クリア
 - **WHEN** `signOut()` を呼ぶ
-- **THEN** `member` state が `null` に戻る
+- **THEN** `member` state が `null` に戻り、`hasIdentityDocument` も `false` に戻る
 
 ### Requirement: 利用規約同意の記録
 
@@ -284,3 +285,4 @@ TBD - created by archiving change reservation-member-auth-magic-link. Update Pur
 #### Scenario: コード grep
 - **WHEN** `apps/reservation/src/` を `'owner@high-q.club'` で grep
 - **THEN** マッチが 0 件、またはコメント / spec ファイルのみ
+

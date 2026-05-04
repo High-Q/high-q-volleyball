@@ -5,6 +5,7 @@ const getSessionMock = vi.fn();
 const signOutMock = vi.fn();
 const onAuthStateChangeMock = vi.fn();
 const fetchMyMemberMock = vi.fn();
+const fetchHasIdentityDocumentMock = vi.fn();
 
 vi.mock("../api/auth-client", () => ({
   getSession: () => getSessionMock(),
@@ -18,6 +19,8 @@ vi.mock("@/entities/member", async () => {
   return {
     ...actual,
     fetchMyMember: (uid: string) => fetchMyMemberMock(uid),
+    fetchHasIdentityDocument: (uid: string) =>
+      fetchHasIdentityDocumentMock(uid),
   };
 });
 
@@ -42,6 +45,7 @@ const memberFixture = {
 beforeEach(() => {
   vi.clearAllMocks();
   onAuthStateChangeMock.mockReturnValue({ unsubscribe: vi.fn() });
+  fetchHasIdentityDocumentMock.mockResolvedValue(false);
 });
 
 afterEach(() => {
@@ -76,6 +80,7 @@ describe("useAuthSession", () => {
     expect(session.status.value).toBe("unauthenticated");
     expect(session.member.value).toBeNull();
     expect(session.isProfileComplete.value).toBe(false);
+    expect(session.hasIdentityDocument.value).toBe(false);
   });
 
   it("session あり + member 取得成功で authenticated に遷移", async () => {
@@ -150,5 +155,63 @@ describe("useAuthSession", () => {
     getSessionMock.mockResolvedValue(null);
     await setupSession();
     expect(onAuthStateChangeMock).toHaveBeenCalled();
+  });
+});
+
+describe("useAuthSession.hasIdentityDocument", () => {
+  it("session 確立時に identity_documents の存在を fetch する", async () => {
+    getSessionMock.mockResolvedValue(sessionFixture);
+    fetchMyMemberMock.mockResolvedValue(memberFixture);
+    fetchHasIdentityDocumentMock.mockResolvedValue(true);
+    const session = await setupSession();
+    await session.ready();
+    expect(fetchHasIdentityDocumentMock).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+    );
+    expect(session.hasIdentityDocument.value).toBe(true);
+  });
+
+  it("0 件なら hasIdentityDocument=false", async () => {
+    getSessionMock.mockResolvedValue(sessionFixture);
+    fetchMyMemberMock.mockResolvedValue(memberFixture);
+    fetchHasIdentityDocumentMock.mockResolvedValue(false);
+    const session = await setupSession();
+    await session.ready();
+    expect(session.hasIdentityDocument.value).toBe(false);
+  });
+
+  it("fetch エラー時は安全側 (false) に倒す", async () => {
+    getSessionMock.mockResolvedValue(sessionFixture);
+    fetchMyMemberMock.mockResolvedValue(memberFixture);
+    fetchHasIdentityDocumentMock.mockRejectedValue(new Error("boom"));
+    const session = await setupSession();
+    await session.ready();
+    expect(session.hasIdentityDocument.value).toBe(false);
+  });
+
+  it("refresh() で再取得", async () => {
+    getSessionMock.mockResolvedValue(sessionFixture);
+    fetchMyMemberMock.mockResolvedValue(memberFixture);
+    fetchHasIdentityDocumentMock.mockResolvedValueOnce(false);
+    const session = await setupSession();
+    await session.ready();
+    expect(session.hasIdentityDocument.value).toBe(false);
+
+    fetchHasIdentityDocumentMock.mockResolvedValueOnce(true);
+    await session.refresh();
+    expect(session.hasIdentityDocument.value).toBe(true);
+  });
+
+  it("signOut() で false にリセット", async () => {
+    getSessionMock.mockResolvedValue(sessionFixture);
+    fetchMyMemberMock.mockResolvedValue(memberFixture);
+    fetchHasIdentityDocumentMock.mockResolvedValue(true);
+    signOutMock.mockResolvedValue(undefined);
+    const session = await setupSession();
+    await session.ready();
+    expect(session.hasIdentityDocument.value).toBe(true);
+
+    await session.signOut();
+    expect(session.hasIdentityDocument.value).toBe(false);
   });
 });

@@ -13,3 +13,4 @@ export { createPhone } from "./model/phone";
 export { createExperienceLevel } from "./model/experienceLevel";
 export { isProfileComplete } from "./model/isProfileComplete";
 export { fetchMyMember, updateMyMember } from "./api/member-client";
+export { fetchHasIdentityDocument } from "./api/identity-document-existence";

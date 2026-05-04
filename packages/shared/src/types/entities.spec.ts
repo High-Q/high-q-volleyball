@@ -5,8 +5,10 @@ import type {
   EventUpdate,
   EventVisibility,
   EventStatus,
+  IdentityDocument,
+  IdentityDocumentInsert,
 } from "./entities.js";
-import type { VenueId } from "./ids.js";
+import type { MemberId, VenueId } from "./ids.js";
 
 /**
  * `EventUpdate` 型に対する型レベル契約テスト。
@@ -93,5 +95,73 @@ describe("Event entity 型は変更なし", () => {
     expectTypeOf<Event["visibility"]>().toEqualTypeOf<EventVisibility>();
     expectTypeOf<Event["status"]>().toEqualTypeOf<EventStatus>();
     expectTypeOf<Event["capacity"]>().toEqualTypeOf<number | null>();
+  });
+});
+
+/**
+ * `IdentityDocument` 型に対する型レベル契約テスト。
+ *
+ * 関連: openspec/changes/reservation-identity-document-upload/specs/data-schema/spec.md
+ *       (storage_path → storage_path_front + storage_path_back 列分割)
+ */
+
+describe("IdentityDocument 型契約 (表裏 2 ファイル対応)", () => {
+  const MEMBER_ID = "11111111-1111-4111-8111-111111111111" as MemberId;
+
+  it("storage_path 単一列を持たない（旧スキーマからの移行確認）", () => {
+    type HasOldPath = "storage_path" extends keyof IdentityDocument
+      ? true
+      : false;
+    expectTypeOf<HasOldPath>().toEqualTypeOf<false>();
+  });
+
+  it("storage_path_front (string) を持つ", () => {
+    expectTypeOf<IdentityDocument["storage_path_front"]>().toEqualTypeOf<string>();
+  });
+
+  it("storage_path_back (string | null) を持つ", () => {
+    expectTypeOf<
+      IdentityDocument["storage_path_back"]
+    >().toEqualTypeOf<string | null>();
+  });
+});
+
+describe("IdentityDocumentInsert 型契約", () => {
+  const MEMBER_ID = "11111111-1111-4111-8111-111111111111" as MemberId;
+
+  it("表面のみの insert は許容される", () => {
+    const insert: IdentityDocumentInsert = {
+      member_id: MEMBER_ID,
+      document_type: "drivers_license",
+      storage_path_front: `${MEMBER_ID}/doc-1-front.jpg`,
+    };
+    expectTypeOf(insert).toMatchTypeOf<IdentityDocumentInsert>();
+  });
+
+  it("表裏両方の insert は許容される", () => {
+    const insert: IdentityDocumentInsert = {
+      member_id: MEMBER_ID,
+      document_type: "residence_card",
+      storage_path_front: `${MEMBER_ID}/doc-2-front.jpg`,
+      storage_path_back: `${MEMBER_ID}/doc-2-back.jpg`,
+    };
+    expectTypeOf(insert).toMatchTypeOf<IdentityDocumentInsert>();
+  });
+
+  it("storage_path_back は null も許容（明示的な null 設定）", () => {
+    const insert: IdentityDocumentInsert = {
+      member_id: MEMBER_ID,
+      document_type: "passport",
+      storage_path_front: `${MEMBER_ID}/doc-3-front.jpg`,
+      storage_path_back: null,
+    };
+    expectTypeOf(insert).toMatchTypeOf<IdentityDocumentInsert>();
+  });
+
+  it("storage_path_front は必須", () => {
+    type HasFront = "storage_path_front" extends keyof IdentityDocumentInsert
+      ? true
+      : false;
+    expectTypeOf<HasFront>().toEqualTypeOf<true>();
   });
 });

@@ -235,9 +235,12 @@ export type IdentityDocument = {
   id: IdentityDocumentId;
   member_id: MemberId;
   document_type: DocumentType;
-  /** Supabase Storage 内のオブジェクトキー。
-   * 形式: `<member_id>/<document_id>-(front|back).(jpg|png|heic)` */
-  storage_path: string;
+  /** 表面画像の Supabase Storage パス。常に存在。
+   * 形式: `<member_id>/<document_id>-front.(jpg|png)` */
+  storage_path_front: string;
+  /** 裏面画像の Supabase Storage パス。任意提出時のみ値を持つ。
+   * 形式: `<member_id>/<document_id>-back.(jpg|png)` */
+  storage_path_back: string | null;
   status: IdentityDocumentStatus;
   rejection_reason: string | null;
   uploaded_at: string;
@@ -250,7 +253,8 @@ export type IdentityDocument = {
 export type IdentityDocumentInsert = {
   member_id: MemberId;
   document_type: DocumentType;
-  storage_path: string;
+  storage_path_front: string;
+  storage_path_back?: string | null;
 };
 
 /**
