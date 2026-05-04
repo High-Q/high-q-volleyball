@@ -146,7 +146,7 @@ UI 連続変更タスクのため、各タスク後の vitest 実行は省略 (�
 - [ ] 18.1 **【ユーザー手動】** ローカル / Render Preview で /signup/identity を実機確認 (各状態 + マイナンバー三重防壁 + 表のみ送信 + 表裏送信 + ホーム遷移 + heic 変換 (iPhone 写真) + Android Chrome での挙動)
 - [x] 18.2 `git diff master --stat` で確認: 変更は reservation / shared (型のみ) / supabase / e2e / docs に限定。`apps/admin` / `apps/lp` に副作用なし
 - [x] 18.3 PR #197 作成: https://github.com/High-Q/high-q-volleyball/pull/197 (base: master、Closes #92、Epic: #170、表裏 2 スロット拡張 / DB 列分割 / heic 自動変換 / 法令 footer の意思決定を本文に明記)
-- [ ] 18.4 CI 全パス + Render PR Preview ビルド成功 (push 直後、結果待ち)
+- [x] 18.4 CI 全パス: build / lint / test / typecheck / e2e / Analyze (actions) / Analyze (js-ts) / CodeQL / install すべて green
 - [ ] 18.5 **【ユーザー手動】** Render Preview で動作確認 + 法令対応 Issue (#192 / #193) の進捗確認 (順不同で進めて良いがファーストリリース時に必要)
 
 ---
