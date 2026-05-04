@@ -36,6 +36,16 @@ export { default as AlertDialogDescription } from "./AlertDialogDescription.vue"
 export { default as AlertDialogAction } from "./AlertDialogAction.vue";
 export { default as AlertDialogCancel } from "./AlertDialogCancel.vue";
 
+// Dialog group (admin-identity-document-review, #171) — 画像プレビューモーダル等の汎用 modal
+export { default as Dialog } from "./Dialog.vue";
+export { default as DialogTrigger } from "./DialogTrigger.vue";
+export { default as DialogContent } from "./DialogContent.vue";
+export { default as DialogHeader } from "./DialogHeader.vue";
+export { default as DialogFooter } from "./DialogFooter.vue";
+export { default as DialogTitle } from "./DialogTitle.vue";
+export { default as DialogDescription } from "./DialogDescription.vue";
+export { default as DialogClose } from "./DialogClose.vue";
+
 // Toast group (admin-events-crud-screen, #86)
 export { default as Toast } from "./Toast.vue";
 export { default as Toaster } from "./Toaster.vue";
