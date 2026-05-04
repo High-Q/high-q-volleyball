@@ -14,7 +14,7 @@
 
 ## 進捗
 
-- 完了: 28 / 42 タスク
+- 完了: 33 / 42 タスク
 
 ---
 
@@ -69,11 +69,11 @@
 
 ## 8. AuthSession 拡張: hasIdentityDocument (TDD)
 
-- [ ] 8.1 `apps/reservation/src/entities/member/api/identity-document-existence.spec.ts` を作成: `fetchHasIdentityDocument(memberId)` を mock で検証 (1 件以上=true / 0 件=false / RLS でゼロ件 / network error)
-- [ ] 8.2 `apps/reservation/src/entities/member/api/identity-document-existence.ts` を新規作成: `select('id').eq('member_id', ...).limit(1)` 実装
-- [ ] 8.3 `useAuthSession.spec.ts` に `hasIdentityDocument` Computed の挙動追加: ready / refresh / signOut での挙動
-- [ ] 8.4 `useAuthSession.ts` の `evaluate()` を拡張: `Promise.all([fetchMyMember(uid), fetchHasIdentityDocument(uid)])` で並行取得、結果を新 ref に格納、`AuthSession` 型に `hasIdentityDocument: ComputedRef<boolean>` を追加
-- [ ] 8.5 `pnpm --filter @high-q/reservation test features/auth entities/member` 通過確認
+- [x] 8.1 `identity-document-existence.spec.ts` 4 spec (0/1+/RLS 0/error)
+- [x] 8.2 `identity-document-existence.ts` 実装、`entities/member/index.ts` で export
+- [x] 8.3 `useAuthSession.spec.ts` に `hasIdentityDocument` 5 spec を追加 (session 有無 / fetch エラー / refresh / signOut)
+- [x] 8.4 `useAuthSession.ts` の `evaluate()` を `Promise.allSettled` で並行 fetch + AuthSession 型に `hasIdentityDocument: ComputedRef<boolean>` 追加
+- [x] 8.5 `pnpm --filter @high-q/reservation test features/auth entities/member` 通過 (79 passed)
 
 ## 9. router 拡張 (TDD)
 

@@ -14,7 +14,11 @@ import {
   onAuthStateChange,
   signOut as signOutApi,
 } from "../api/auth-client";
-import { fetchMyMember, isProfileComplete } from "@/entities/member";
+import {
+  fetchHasIdentityDocument,
+  fetchMyMember,
+  isProfileComplete,
+} from "@/entities/member";
 import type { Member } from "@/entities/member";
 import type { AuthStatus } from "../types";
 
@@ -24,6 +28,8 @@ export type AuthSession = {
   member: Ref<Member | null>;
   isProfileComplete: ComputedRef<boolean>;
   isAuthenticated: ComputedRef<boolean>;
+  /** 自分の identity_documents が 1 件以上存在するか (本人確認書類アップロード判定) */
+  hasIdentityDocument: ComputedRef<boolean>;
   ready: () => Promise<void>;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -35,8 +41,10 @@ function createAuthSession(): AuthSession {
   const status = ref<AuthStatus>("loading");
   const session = shallowRef<Session | null>(null);
   const member = shallowRef<Member | null>(null);
+  const hasIdentityDoc = ref<boolean>(false);
   const isProfileCompleteRef = computed<boolean>(() => isProfileComplete(member.value));
   const isAuthenticated = computed<boolean>(() => status.value === "authenticated");
+  const hasIdentityDocumentRef = computed<boolean>(() => hasIdentityDoc.value);
 
   let readyPromise: Promise<void> | null = null;
 
@@ -46,13 +54,16 @@ function createAuthSession(): AuthSession {
     if (current === null) {
       status.value = "unauthenticated";
       member.value = null;
+      hasIdentityDoc.value = false;
       return;
     }
-    try {
-      member.value = await fetchMyMember(current.user.id);
-    } catch {
-      member.value = null;
-    }
+    const [memberResult, idDocResult] = await Promise.allSettled([
+      fetchMyMember(current.user.id),
+      fetchHasIdentityDocument(current.user.id),
+    ]);
+    member.value = memberResult.status === "fulfilled" ? memberResult.value : null;
+    hasIdentityDoc.value =
+      idDocResult.status === "fulfilled" ? idDocResult.value : false;
     status.value = "authenticated";
   }
 
@@ -73,6 +84,7 @@ function createAuthSession(): AuthSession {
     } finally {
       session.value = null;
       member.value = null;
+      hasIdentityDoc.value = false;
       status.value = "unauthenticated";
     }
   }
@@ -87,6 +99,7 @@ function createAuthSession(): AuthSession {
     member,
     isProfileComplete: isProfileCompleteRef,
     isAuthenticated,
+    hasIdentityDocument: hasIdentityDocumentRef,
     ready,
     refresh,
     signOut,
