@@ -14,29 +14,29 @@
 
 ## 進捗
 
-- 完了: 0 / 42 タスク
+- 完了: 11 / 42 タスク
 
 ---
 
 ## 1. 事前作業
 
-- [ ] 1.1 Issue #92 を本サイクルの作業 Issue として確認 (Epic #170 配下)
-- [ ] 1.2 ブランチ作成: `feature/92-reservation-identity-document-upload`
-- [ ] 1.3 propose 4 ファイル群 (proposal / design / specs/data-schema / specs/reservation-identity-document-upload / specs/reservation-member-auth / tasks) を Apply 初期コミット
+- [x] 1.1 Issue #92 を本サイクルの作業 Issue として確認 (Epic #170 配下)
+- [x] 1.2 ブランチ作成: `feature/92-reservation-identity-document-upload`
+- [x] 1.3 propose 4 ファイル群 (proposal / design / specs/data-schema / specs/reservation-identity-document-upload / specs/reservation-member-auth / tasks) を Apply 初期コミット
 
 ## 2. 既存資産の確認 (実装ゼロ・verify only)
 
-- [ ] 2.1 `packages/shared/src/types/labels.ts` の `DOCUMENT_TYPE_LABELS` / `DOCUMENT_TYPE_REQUIREMENTS` が 10 種完備していること、文言が design.md D5 と一致することを確認
-- [ ] 2.2 `openspec/specs/data-schema/spec.md` および `openspec/specs/rls-policies/spec.md` の `identity_documents` / Storage バケット記述が現状で動作する状態か Supabase Studio で確認 (RLS 有効・bucket private)
-- [ ] 2.3 法令対応 Issue 群 (#192 着手順 1 / #193 着手順 2) の進捗を確認、ship タイミングのブロッカーを把握
+- [x] 2.1 `packages/shared/src/types/labels.ts` の `DOCUMENT_TYPE_LABELS` / `DOCUMENT_TYPE_REQUIREMENTS` が 10 種完備していること、文言が design.md D5 と一致することを確認
+- [x] 2.2 `supabase/migrations/20260428143738_db_schema_foundation.sql` の `identity_documents` テーブル + RLS + bucket 定義を確認 (RLS 有効・bucket private 設定済 ・本番 0 行)
+- [x] 2.3 法令対応 Issue 群を確認: #192 #193 #194 #195 #196 全て Todo 状態。ship タイミングのブロッカーは #192 (Cookie 同意 + 外部送信) / #193 (プライバシーポリシー)
 
 ## 3. DB Migration: storage_path 列分割
 
-- [ ] 3.1 `supabase/migrations/<timestamp>_split_identity_documents_storage_path.sql` を作成: `RENAME COLUMN storage_path TO storage_path_front` + `ADD COLUMN storage_path_back text NULL`
-- [ ] 3.2 ローカル `supabase db push` (or `supabase migration up`) で適用、Supabase Studio で列構造を確認
-- [ ] 3.3 `packages/shared/src/types/entities.ts` の `IdentityDocumentRow` / `IdentityDocument` 型を新スキーマに追従 (`storage_path` → `storage_path_front: string` + `storage_path_back: string | null`)
-- [ ] 3.4 `packages/shared/src/types/entities.spec.ts` の関連 spec を更新 (新スキーマでの型互換性チェック)
-- [ ] 3.5 `pnpm --filter @high-q/shared test entities` 通過確認
+- [x] 3.1 `supabase/migrations/20260504231456_split_identity_documents_storage_path.sql` を作成: `RENAME COLUMN storage_path TO storage_path_front` + `ADD COLUMN storage_path_back text NULL`
+- [ ] 3.2 **【ユーザー手動】** Supabase Dashboard (Studio) または `supabase db push` でマイグレーションを本番適用、列構造を確認 (Claude 環境に supabase CLI 不在のため)
+- [x] 3.3 `packages/shared/src/types/entities.ts` の `IdentityDocument` / `IdentityDocumentInsert` 型を新スキーマに追従 (`storage_path` → `storage_path_front: string` + `storage_path_back: string | null`)
+- [x] 3.4 `packages/shared/src/types/entities.spec.ts` に IdentityDocument 型契約 spec を追加 (旧 `storage_path` キーの不在 / `storage_path_front` 必須 / `storage_path_back` 任意の確認)
+- [x] 3.5 `pnpm --filter @high-q/shared test` 通過確認 (55 passed | 11 todo)
 
 ## 4. entities/identity-document スライス作成 (TDD)
 
