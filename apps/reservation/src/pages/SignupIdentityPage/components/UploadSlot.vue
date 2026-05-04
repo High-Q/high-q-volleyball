@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import type { SlotData } from "@/entities/identity-document";
 import type { Side } from "@/features/identity-document";
 
@@ -33,8 +33,32 @@ function onRemove() {
   emit("remove", props.side);
 }
 
-const showProgressBar = computed(() => props.data.state === "uploading");
 const progressLabel = computed(() => `${props.data.progress}%`);
+
+// プレビュー画像の URL を File から生成し、変更/解放時に revokeObjectURL する。
+// previewUrl は ready / uploading / uploaded で利用される (実際のアップロード画像)。
+const previewUrl = ref<string | null>(null);
+
+watch(
+  () => props.data.file,
+  (file) => {
+    if (previewUrl.value !== null) {
+      URL.revokeObjectURL(previewUrl.value);
+      previewUrl.value = null;
+    }
+    if (file) {
+      previewUrl.value = URL.createObjectURL(file);
+    }
+  },
+  { immediate: true },
+);
+
+onUnmounted(() => {
+  if (previewUrl.value !== null) {
+    URL.revokeObjectURL(previewUrl.value);
+    previewUrl.value = null;
+  }
+});
 </script>
 
 <template>
@@ -97,20 +121,27 @@ const progressLabel = computed(() => `${props.data.progress}%`);
       </div>
     </label>
 
-    <!-- ready / uploaded -->
+    <!-- ready / uploaded — プレビュー画像 + ファイル名キャプション + (ready のみ) 削除ボタン -->
     <div
       v-else-if="
         props.data.state === 'ready' || props.data.state === 'uploaded'
       "
       :class="[
-        'relative mt-hq-2 flex aspect-[85/54] items-end justify-between overflow-hidden rounded-xl border-[1.5px] p-hq-2',
-        props.data.state === 'uploaded'
-          ? 'border-success bg-paper-warm'
-          : 'border-accent bg-paper-warm',
+        'relative mt-hq-2 aspect-[85/54] overflow-hidden rounded-xl border-[1.5px] bg-paper-warm',
+        props.data.state === 'uploaded' ? 'border-success' : 'border-accent',
       ]"
     >
+      <img
+        v-if="previewUrl"
+        :src="previewUrl"
+        :alt="`${props.label} プレビュー`"
+        class="absolute inset-0 h-full w-full object-cover"
+      />
+
+      <!-- 右上: ✓ (uploaded) / × 削除 (ready) -->
       <div
         v-if="props.data.state === 'uploaded'"
+        aria-label="アップロード完了"
         class="absolute right-2 top-2 flex h-[28px] w-[28px] items-center justify-center rounded-full bg-success text-white shadow-md"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -123,27 +154,38 @@ const progressLabel = computed(() => `${props.data.progress}%`);
           />
         </svg>
       </div>
+      <button
+        v-else
+        type="button"
+        aria-label="画像を削除"
+        class="absolute right-2 top-2 flex h-[28px] w-[28px] items-center justify-center rounded-full bg-paper/95 text-ink shadow-md transition-colors hover:bg-paper hover:text-danger"
+        @click="onRemove"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+
+      <!-- 左下: ファイル名キャプション (画像の上にオーバーレイ) -->
       <div
-        class="rounded-sm bg-ink/60 px-hq-1.5 py-[3px] font-mono text-[10px] tracking-[0.08em] text-paper"
+        class="absolute bottom-2 left-2 max-w-[calc(100%-3rem)] truncate rounded-sm bg-ink/70 px-hq-1.5 py-[3px] font-mono text-[10px] tracking-[0.06em] text-paper"
       >
         {{ props.data.file?.name ?? "" }}
       </div>
-      <button
-        v-if="props.data.state === 'ready'"
-        type="button"
-        class="rounded-md border border-hairline bg-paper px-hq-2 py-hq-1 font-jp text-[11px] text-ink hover:border-danger hover:text-danger"
-        @click="onRemove"
-      >
-        削除
-      </button>
     </div>
 
-    <!-- uploading -->
+    <!-- uploading — プレビュー画像 + 暗いオーバーレイ + プログレスバー -->
     <div
       v-else-if="props.data.state === 'uploading'"
       class="relative mt-hq-2 flex aspect-[85/54] items-center justify-center overflow-hidden rounded-xl border-[1.5px] border-accent bg-paper-warm"
     >
-      <div class="absolute inset-0 bg-ink/35" />
+      <img
+        v-if="previewUrl"
+        :src="previewUrl"
+        :alt="`${props.label} プレビュー (アップロード中)`"
+        class="absolute inset-0 h-full w-full object-cover"
+      />
+      <div class="absolute inset-0 bg-ink/55" />
       <div class="relative text-center font-jp text-[12px] text-paper">
         <div
           class="mx-auto mb-hq-2 h-1 w-[140px] overflow-hidden rounded-full bg-paper/30"

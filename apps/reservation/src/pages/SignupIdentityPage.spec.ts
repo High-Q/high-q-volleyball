@@ -86,6 +86,19 @@ beforeEach(() => {
   succeeded.value = false;
   frontSlot.value = { state: "empty", file: null, progress: 0 };
   backSlot.value = { state: "empty", file: null, progress: 0 };
+
+  // jsdom には URL.createObjectURL / revokeObjectURL が無いので、UploadSlot の
+  // watch 内で呼ばれてもエラーにならないよう常時 stub する。
+  Object.defineProperty(URL, "createObjectURL", {
+    value: vi.fn(() => "blob:preview-mock-url"),
+    writable: true,
+    configurable: true,
+  });
+  Object.defineProperty(URL, "revokeObjectURL", {
+    value: vi.fn(),
+    writable: true,
+    configurable: true,
+  });
 });
 
 afterEach(() => {
@@ -295,5 +308,76 @@ describe("SignupIdentityPage — スロット独立性", () => {
     const { wrapper } = await mountPage();
     expect(wrapper.text()).toContain("front.jpg"); // 表面プレビュー継続
     expect(wrapper.text()).toContain("形式不正"); // 裏面エラー表示
+  });
+});
+
+describe("SignupIdentityPage — 画像プレビュー (URL.createObjectURL)", () => {
+  it("ready 状態でプレビュー <img> が表示される", async () => {
+    selectedDocumentType.value = "drivers_license";
+    frontSlot.value = {
+      state: "ready",
+      file: new File([new Uint8Array([255, 216])], "front.jpg", {
+        type: "image/jpeg",
+      }),
+      progress: 0,
+    };
+    const { wrapper } = await mountPage();
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    const img = wrapper.find('img[alt*="表面"]');
+    expect(img.exists()).toBe(true);
+    expect(img.attributes("src")).toBe("blob:preview-mock-url");
+  });
+
+  it("uploading 状態でも背景にプレビュー画像が表示される", async () => {
+    selectedDocumentType.value = "drivers_license";
+    frontSlot.value = {
+      state: "uploading",
+      file: new File([new Uint8Array([255, 216])], "front.jpg", {
+        type: "image/jpeg",
+      }),
+      progress: 50,
+    };
+    const { wrapper } = await mountPage();
+    const img = wrapper.find('img[alt*="アップロード中"]');
+    expect(img.exists()).toBe(true);
+    expect(img.attributes("src")).toBe("blob:preview-mock-url");
+  });
+
+  it("uploaded 状態でプレビュー画像 + ✓ バッジが表示される", async () => {
+    selectedDocumentType.value = "drivers_license";
+    frontSlot.value = {
+      state: "uploaded",
+      file: new File([new Uint8Array([255, 216])], "front.jpg", {
+        type: "image/jpeg",
+      }),
+      progress: 100,
+    };
+    const { wrapper } = await mountPage();
+    const img = wrapper.find('img[alt*="表面"]');
+    expect(img.exists()).toBe(true);
+    expect(wrapper.find('[aria-label="アップロード完了"]').exists()).toBe(true);
+  });
+
+  it("empty 状態ではプレビュー <img> が表示されない", async () => {
+    selectedDocumentType.value = "drivers_license";
+    // frontSlot は default の empty
+    const { wrapper } = await mountPage();
+    expect(wrapper.find("img").exists()).toBe(false);
+  });
+
+  it("ready スロットに削除ボタン (×) が配置される", async () => {
+    selectedDocumentType.value = "drivers_license";
+    frontSlot.value = {
+      state: "ready",
+      file: new File([new Uint8Array([255, 216])], "front.jpg", {
+        type: "image/jpeg",
+      }),
+      progress: 0,
+    };
+    const { wrapper } = await mountPage();
+    const btn = wrapper.find('button[aria-label="画像を削除"]');
+    expect(btn.exists()).toBe(true);
+    await btn.trigger("click");
+    expect(removeFileMock).toHaveBeenCalledWith("front");
   });
 });
