@@ -14,7 +14,7 @@
 
 ## 進捗
 
-- 完了: 11 / 42 タスク
+- 完了: 16 / 42 タスク
 
 ---
 
@@ -40,11 +40,11 @@
 
 ## 4. entities/identity-document スライス作成 (TDD)
 
-- [ ] 4.1 `apps/reservation/src/entities/identity-document/model/identity-document.types.ts` を作成: `IdentityDocumentId` / `DocumentType` を `@high-q/shared` から再 export、Result 型 `UploadError` union (8 種: unsupported_format / file_too_large / consent_required / front_required / storage_failed_front / storage_failed_back / db_failed / network) を定義
-- [ ] 4.2 `SubmitInput` / `SlotState` / `PageState` 型を定義 (design.md D11 参照)
-- [ ] 4.3 `apps/reservation/src/entities/identity-document/model/identity-document.types.spec.ts` を作成: 型互換性のコンパイルテスト + UploadError union が想定値を含むことの確認
-- [ ] 4.4 `apps/reservation/src/entities/identity-document/index.ts` (Public API) で types のみ re-export
-- [ ] 4.5 `pnpm --filter @high-q/reservation test entities/identity-document` 通過確認
+- [x] 4.1 `apps/reservation/src/entities/identity-document/model/identity-document.types.ts` を作成: `IdentityDocumentId` / `DocumentType` を `@high-q/shared` から再 export、`UploadError` union 8 種を定義
+- [x] 4.2 `SubmitInput` / `SlotState` / `SlotData` / `PageState` 型を定義 (design.md D11 参照)
+- [x] 4.3 `identity-document.types.spec.ts` を作成: 型互換性のコンパイルテスト + UploadError union 等の網羅 (9 spec)
+- [x] 4.4 `apps/reservation/src/entities/identity-document/index.ts` (Public API) で types を re-export
+- [x] 4.5 `pnpm --filter @high-q/reservation test entities/identity-document` 通過確認 (9 passed)
 
 ## 5. heic2any 依存追加 + 変換 helper (TDD)
 
