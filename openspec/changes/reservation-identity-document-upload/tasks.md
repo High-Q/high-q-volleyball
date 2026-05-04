@@ -143,11 +143,11 @@ UI 連続変更タスクのため、各タスク後の vitest 実行は省略 (�
 
 ## 18. 最終確認 + PR
 
-- [ ] 18.1 ローカルで `pnpm --filter @high-q/reservation dev` 起動、ブラウザで /signup/identity を実機確認 (各状態 + マイナンバー三重防壁 + 表のみ送信 + 表裏送信 + ホーム遷移 + heic 変換 (Mac Safari で iPhone 同期写真等))
-- [ ] 18.2 git diff で意図しない変更がないこと、`packages/shared` (型変更のみ意図通り) / `apps/admin` / `apps/lp` に副作用がないことを確認
-- [ ] 18.3 PR 作成 (base: master、Closes #92、Epic: #170)。本文に Claude Design 出典 (`/tmp/hq-design/high-q/project/hq-reserve-screens.jsx:1283-1764`) と表裏 2 スロット拡張の意思決定を含める
-- [ ] 18.4 CI 全パス + Render PR Preview ビルド成功
-- [ ] 18.5 翔太郎くんに Render Preview で動作確認依頼 + 法令対応 Issue (#192 / #193) の状況確認 (ship 順序ゲートのため)
+- [ ] 18.1 **【ユーザー手動】** ローカル / Render Preview で /signup/identity を実機確認 (各状態 + マイナンバー三重防壁 + 表のみ送信 + 表裏送信 + ホーム遷移 + heic 変換 (iPhone 写真) + Android Chrome での挙動)
+- [x] 18.2 `git diff master --stat` で確認: 変更は reservation / shared (型のみ) / supabase / e2e / docs に限定。`apps/admin` / `apps/lp` に副作用なし
+- [x] 18.3 PR #197 作成: https://github.com/High-Q/high-q-volleyball/pull/197 (base: master、Closes #92、Epic: #170、表裏 2 スロット拡張 / DB 列分割 / heic 自動変換 / 法令 footer の意思決定を本文に明記)
+- [ ] 18.4 CI 全パス + Render PR Preview ビルド成功 (push 直後、結果待ち)
+- [ ] 18.5 **【ユーザー手動】** Render Preview で動作確認 + 法令対応 Issue (#192 / #193) の進捗確認 (順不同で進めて良いがファーストリリース時に必要)
 
 ---
 
