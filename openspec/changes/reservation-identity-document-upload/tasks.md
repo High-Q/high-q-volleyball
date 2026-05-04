@@ -14,7 +14,7 @@
 
 ## 進捗
 
-- 完了: 33 / 42 タスク
+- 完了: 36 / 42 タスク
 
 ---
 
@@ -77,9 +77,9 @@
 
 ## 9. router 拡張 (TDD)
 
-- [ ] 9.1 `apps/reservation/src/app/router.spec.ts` に新ガード分岐の test を追加: 「authed + profileDone + !hasIdentityDocument → /signup/identity 強制」「authed + profileDone + hasIdentityDocument + /signup/identity 直リン → /」「/signup/identity 自体は無限ループしない」
-- [ ] 9.2 `apps/reservation/src/app/router.ts` に `/signup/identity` ルート追加 (component lazy import)、ガード `beforeEach` に新分岐を追加 (順序は design.md D2 通り)
-- [ ] 9.3 `pnpm --filter @high-q/reservation test app/router` 通過確認
+- [x] 9.1 `router.spec.ts` に hasIdentityDocument 分岐 5 spec 追加 (強制誘導 / 無限ループ防止 / 提出済直リン / callback 通過 / 既存テスト 3 段階対応)
+- [x] 9.2 `router.ts` に `/signup/identity` ルート追加 (lazy import) + ガードに「!hasIdDoc → /signup/identity 強制」分岐追加
+- [x] 9.3 `pnpm --filter @high-q/reservation test app/router` 通過確認 (14 passed)
 
 ## 10. shared/ui プリミティブ (Checkbox 取り込み)
 

@@ -25,11 +25,16 @@ const routes: RouteRecordRaw[] = [
   },
   // /signup ルートは撤廃 (2026-05-03 翔太郎くん指示)。
   // 段階 1 (メール送信) は /login で兼用するため不要。
-  // /signup/profile は段階 2 (情報入力) として残す。
+  // /signup/profile は段階 2、/signup/identity は段階 3 (#92) として運用。
   {
     path: "/signup/profile",
     name: "signup-profile",
     component: SignupProfilePage,
+  },
+  {
+    path: "/signup/identity",
+    name: "signup-identity",
+    component: () => import("@/pages/SignupIdentityPage.vue"),
   },
   {
     path: "/auth/callback",
@@ -56,6 +61,7 @@ export function registerAuthGuard(router: Router): void {
       const isPublic = to.meta?.public === true;
       const authed = session.status.value === "authenticated";
       const profileDone = session.isProfileComplete.value;
+      const hasIdDoc = session.hasIdentityDocument.value;
 
       // 未認証
       if (!authed) {
@@ -72,8 +78,21 @@ export function registerAuthGuard(router: Router): void {
         return { name: "signup-profile" };
       }
 
-      // 認証済み + プロフィール完成: ログイン / プロフィール入力系は / へ
-      if (to.name === "login" || to.name === "signup-profile") {
+      // 認証済み + プロフィール完成 + 書類未提出 → /signup/identity 強制誘導 (#92)
+      if (!hasIdDoc) {
+        if (to.name === "signup-identity" || to.name === "auth-callback") {
+          return true;
+        }
+        return { name: "signup-identity" };
+      }
+
+      // 認証済み + プロフィール完成 + 書類提出済み:
+      // ログイン / 段階 2 / 段階 3 系は / へ
+      if (
+        to.name === "login" ||
+        to.name === "signup-profile" ||
+        to.name === "signup-identity"
+      ) {
         return { name: "home" };
       }
 
