@@ -147,7 +147,7 @@ describe("confirmStoragePaths", () => {
       back: `${MEMBER_ID}/${DOC_ID}-back.jpg`,
     });
 
-    const fromCall = supabaseMock.from.mock.results[0]
+    const fromCall = supabaseMock.from.mock.results[0]!
       .value as ReturnType<typeof buildFromMock>;
     expect(fromCall.update).toHaveBeenCalledWith({
       storage_path_front: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
@@ -164,7 +164,7 @@ describe("confirmStoragePaths", () => {
       front: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
     });
 
-    const fromCall = supabaseMock.from.mock.results[0]
+    const fromCall = supabaseMock.from.mock.results[0]!
       .value as ReturnType<typeof buildFromMock>;
     expect(fromCall.update).toHaveBeenCalledWith({
       storage_path_front: `${MEMBER_ID}/${DOC_ID}-front.jpg`,

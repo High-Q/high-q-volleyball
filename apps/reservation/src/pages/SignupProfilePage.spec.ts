@@ -27,6 +27,7 @@ const Stub = defineComponent({ template: "<div/>" });
 const routes = [
   { path: "/", name: "home", component: Stub },
   { path: "/signup/profile", name: "signup-profile", component: Stub },
+  { path: "/signup/identity", name: "signup-identity", component: Stub },
 ];
 
 beforeEach(() => {
@@ -73,7 +74,7 @@ describe("SignupProfilePage (段階2: 情報入力 + UPDATE)", () => {
     expect(cta?.attributes("disabled")).toBeUndefined();
   });
 
-  it("送信時に submit が呼ばれ、success で / に遷移", async () => {
+  it("送信時に submit が呼ばれ、success で /signup/identity (Step 3 of 3) に遷移", async () => {
     const { wrapper, router } = await mountAt();
     await wrapper.find('input[autocomplete="name"]').setValue("田中 美咲");
     await wrapper.find('input[type="date"]').setValue("1995-03-15");
@@ -83,7 +84,7 @@ describe("SignupProfilePage (段階2: 情報入力 + UPDATE)", () => {
     await cta?.trigger("click");
     await flushPromises();
     expect(submitMock).toHaveBeenCalled();
-    expect(router.currentRoute.value.name).toBe("home");
+    expect(router.currentRoute.value.name).toBe("signup-identity");
   });
 
   it("バリデーションエラー (氏名) 表示", async () => {

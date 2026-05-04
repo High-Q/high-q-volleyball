@@ -68,7 +68,7 @@ const experienceOptions = [
 
 watch(status, (s) => {
   if (s === "success") {
-    void router.push({ name: "home" });
+    void router.push({ name: "signup-identity" });
   }
 });
 

@@ -41,7 +41,9 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
     quality: 0.92,
   });
 
-  const jpegBlob = Array.isArray(converted) ? converted[0] : converted;
+  const jpegBlob: Blob = Array.isArray(converted)
+    ? (converted[0] ?? new Blob([], { type: "image/jpeg" }))
+    : converted;
   const jpegName = file.name.replace(HEIC_EXT_RE, ".jpg");
 
   return new File([jpegBlob], jpegName, { type: "image/jpeg" });

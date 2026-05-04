@@ -11,8 +11,8 @@ const apiMock = {
 
 vi.mock("../api/identity-document-client", () => apiMock);
 
-const convertMock = vi.fn(async (f: File) => f);
-const isHeicMock = vi.fn(() => false);
+const convertMock = vi.fn<(f: File) => Promise<File>>(async (f) => f);
+const isHeicMock = vi.fn<(f: File) => boolean>(() => false);
 vi.mock("../lib/convertHeicToJpeg", () => ({
   convertHeicToJpeg: (f: File) => convertMock(f),
   isHeicFile: (f: File) => isHeicMock(f),
