@@ -14,7 +14,7 @@
 
 ## 進捗
 
-- 完了: 16 / 42 タスク
+- 完了: 20 / 42 タスク
 
 ---
 
@@ -48,10 +48,10 @@
 
 ## 5. heic2any 依存追加 + 変換 helper (TDD)
 
-- [ ] 5.1 `apps/reservation/package.json` に `heic2any` を追加 (`pnpm add heic2any --filter @high-q/reservation`)
-- [ ] 5.2 `apps/reservation/src/features/identity-document/lib/convertHeicToJpeg.ts` を新規作成: dynamic import で heic2any を読み込み、heic/heif の File を jpeg File に変換する純粋関数
-- [ ] 5.3 `apps/reservation/src/features/identity-document/lib/convertHeicToJpeg.spec.ts`: heic 検出 / 変換成功 / 変換失敗 / 拡張子置換 / MIME 置換のテスト (heic2any は mock)
-- [ ] 5.4 `pnpm --filter @high-q/reservation test features/identity-document/lib` 通過確認
+- [x] 5.1 `apps/reservation/package.json` に `heic2any@^0.0.4` を追加
+- [x] 5.2 `convertHeicToJpeg.ts` を新規作成: dynamic import + isHeicFile + 拡張子/MIME 正規化
+- [x] 5.3 `convertHeicToJpeg.spec.ts`: 8 spec (heic/heif 検出 / 変換成功 / 配列対応 / 失敗 throw / non-heic は素通し / isHeicFile 単体)
+- [x] 5.4 `pnpm --filter @high-q/reservation test features/identity-document/lib` 通過確認 (8 passed)
 
 ## 6. features/identity-document/api/ 作成 (TDD)
 
