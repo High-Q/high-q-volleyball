@@ -341,7 +341,7 @@ describe("SignupIdentityPage — CTA 状態駆動", () => {
     expect(cta?.attributes("disabled")).toBeDefined();
   });
 
-  it("success 状態で CTA「完了する」が活性、押下でホーム遷移", async () => {
+  it("success 状態は CTA「ホームに移動します…」+ disabled (自動遷移のため)", async () => {
     selectedDocumentType.value = "drivers_license";
     frontSlot.value = {
       state: "uploaded",
@@ -349,13 +349,31 @@ describe("SignupIdentityPage — CTA 状態駆動", () => {
       progress: 100,
     };
     succeeded.value = true;
-    const { wrapper, router } = await mountPage();
-    const cta = wrapper.findAll("button").find((b) => b.text().includes("完了する"));
-    expect(cta?.attributes("disabled")).toBeUndefined();
-    await cta?.trigger("click");
-    await flushPromises();
-    expect(sessionRef.refresh).toHaveBeenCalled();
-    expect(router.currentRoute.value.name).toBe("home");
+    const { wrapper } = await mountPage();
+    const cta = wrapper
+      .findAll("button")
+      .find((b) => b.text().includes("ホームに移動します"));
+    expect(cta).toBeDefined();
+    expect(cta?.attributes("disabled")).toBeDefined();
+  });
+
+  it("success 遷移時に 1.5 秒後に自動でホームへ遷移する (CTA 押下不要)", async () => {
+    vi.useFakeTimers();
+    try {
+      selectedDocumentType.value = "drivers_license";
+      const { router } = await mountPage();
+      // success に遷移
+      succeeded.value = true;
+      await flushPromises();
+      // 1500ms 経過前は遷移していない
+      expect(router.currentRoute.value.name).toBe("signup-identity");
+      await vi.advanceTimersByTimeAsync(1500);
+      await flushPromises();
+      expect(sessionRef.refresh).toHaveBeenCalled();
+      expect(router.currentRoute.value.name).toBe("home");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

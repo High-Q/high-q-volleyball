@@ -93,7 +93,8 @@ const errorBanner = computed(() => {
 const cta = computed<{ label: string; disabled: boolean; spinner: boolean }>(
   () => {
     if (upload.pageState.value === "success") {
-      return { label: "完了する", disabled: false, spinner: false };
+      // 自動遷移するため CTA はクリック不可の進行表示にする
+      return { label: "ホームに移動します…", disabled: true, spinner: true };
     }
     if (upload.pageState.value === "submitting") {
       return { label: "アップロード中…", disabled: true, spinner: true };
@@ -153,19 +154,25 @@ function onConsent(value: boolean) {
 
 async function onCtaClick() {
   if (upload.pageState.value === "success") {
-    await session.refresh();
-    void router.push({ name: "home" });
+    // success 時の CTA は自動遷移待ちなので操作不要 (disabled)
     return;
   }
   await upload.submit();
 }
 
+// 成功バナーをユーザーに認知させる時間 (短すぎると「送信できた感」が出ない、
+// 長すぎると待たせる)。1.5 秒は LinkSentPage 等で採用済の標準値。
+const SUCCESS_AUTO_REDIRECT_MS = 1500;
+
 watch(
   () => upload.pageState.value,
-  (state) => {
-    if (state === "success") {
-      // 自動遷移はせず、CTA「完了する」押下でホームへ移動 (ユーザー確認の余白)
-    }
+  async (state) => {
+    if (state !== "success") return;
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, SUCCESS_AUTO_REDIRECT_MS),
+    );
+    await session.refresh();
+    void router.push({ name: "home" });
   },
 );
 
