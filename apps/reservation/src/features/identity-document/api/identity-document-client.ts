@@ -42,24 +42,40 @@ export function buildStoragePath(
 /**
  * `status='pending'` で identity_documents 行を作成し、生成された ID を返す。
  * `storage_path_front` には placeholder を入れ、Storage upload 後に UPDATE する。
+ *
+ * 失敗時は Supabase の error オブジェクトを console.error に詳細出力してから throw
+ * する (本番デバッグ性の確保。本番でのみ意味のある情報のため、テストは error を
+ * throw するかどうかのみ確認する)。
  */
 export async function insertPendingRecord(
   memberId: string,
   documentType: DocumentType,
 ): Promise<string> {
   const supabase = getSupabase();
+  const payload = {
+    member_id: memberId,
+    document_type: documentType,
+    storage_path_front: STORAGE_PATH_PLACEHOLDER,
+    storage_path_back: null,
+    status: "pending",
+  };
   const { data, error } = await supabase
     .from(TABLE)
-    .insert({
-      member_id: memberId,
-      document_type: documentType,
-      storage_path_front: STORAGE_PATH_PLACEHOLDER,
-      storage_path_back: null,
-      status: "pending",
-    })
+    .insert(payload)
     .select("id")
     .single();
-  if (error) throw error;
+  if (error) {
+    // 本番で 400 等が出た時に原因を特定できるよう、Supabase error の全フィールドを残す
+    // eslint-disable-next-line no-console
+    console.error("[#92] identity_documents INSERT failed", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+      payload,
+    });
+    throw error;
+  }
   if (!data || typeof data.id !== "string") {
     throw new Error("identity_documents INSERT did not return id");
   }
