@@ -14,7 +14,7 @@
 
 ## 進捗
 
-- 完了: 20 / 42 タスク
+- 完了: 28 / 42 タスク
 
 ---
 
@@ -55,17 +55,17 @@
 
 ## 6. features/identity-document/api/ 作成 (TDD)
 
-- [ ] 6.1 `apps/reservation/src/features/identity-document/api/identity-document-client.spec.ts` 先に作成: Supabase mock で `insertPendingRecord` / `uploadFileToStorage` / `confirmStoragePaths` / `rollbackRecord` 各関数の振る舞い (happy / DB error / Storage error / 表のみ / 表裏両方 / 表成功+裏失敗のロールバック) を網羅
-- [ ] 6.2 `apps/reservation/src/features/identity-document/api/identity-document-client.ts` 実装: 上記 4 関数を export、Supabase クライアントは `@/shared/api/supabase` の `getSupabase()` 経由
-- [ ] 6.3 ファイル名命名規則: `<member_id>/<document_id>-<side>.<ext>` (side ∈ {'front', 'back'}) を関数化 `buildStoragePath()` + spec
-- [ ] 6.4 `pnpm --filter @high-q/reservation test features/identity-document/api` 通過確認
+- [x] 6.1 `identity-document-client.spec.ts` 14 spec: insertPendingRecord / uploadFileToStorage / confirmStoragePaths / rollbackRecord / removeStorageObjects / buildStoragePath
+- [x] 6.2 `identity-document-client.ts` 実装: 5 関数を export、supabase は getSupabase() 経由
+- [x] 6.3 `buildStoragePath()` 関数化、heic→jpg 拡張子フォールバック spec
+- [x] 6.4 `pnpm --filter @high-q/reservation test features/identity-document/api` 通過 (14 passed)
 
 ## 7. features/identity-document/composables/useUploadIdentityDocument (TDD)
 
-- [ ] 7.1 `useUploadIdentityDocument.spec.ts` 先に作成: 状態モデル (PageState + 2 SlotState)、8 種 UploadError、表のみ送信成功 / 表裏両方送信成功 / 表面失敗ロールバック / 裏面失敗ロールバック / consent_required ガード / front_required ガードを網羅
-- [ ] 7.2 `useUploadIdentityDocument.ts` を実装: `pageState` reactive、`frontSlot` / `backSlot` reactive (各 SlotData)、`selectedDocumentType` reactive、`consented` reactive、`error` reactive、`submit(input: SubmitInput)` で Result を返す。バリデーションは順に MIME → 拡張子 → サイズ → heic 変換 → consent (mynumber 時) → front_required → Storage 並列 upload → DB UPDATE
-- [ ] 7.3 `pnpm --filter @high-q/reservation test features/identity-document/composables` 通過確認
-- [ ] 7.4 `apps/reservation/src/features/identity-document/index.ts` (Public API) で composable と型を re-export
+- [x] 7.1 `useUploadIdentityDocument.spec.ts` 20 spec: 初期 / select / バリデーション 7 件 / heic 3 件 / submit 8 件 (front_required / consent_required / 表面のみ / 表裏 / Storage 失敗対称 / DB 失敗 2 種)
+- [x] 7.2 `useUploadIdentityDocument.ts` 実装: pageState (computed) / frontSlot / backSlot (ref) / selectedDocumentType / consented / error / select系 / submit で Result 返却
+- [x] 7.3 `pnpm --filter @high-q/reservation test features/identity-document/composables` 通過 (20 passed)
+- [x] 7.4 `apps/reservation/src/features/identity-document/index.ts` (Public API) で composable と型を re-export
 
 ## 8. AuthSession 拡張: hasIdentityDocument (TDD)
 
