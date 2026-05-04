@@ -31,12 +31,12 @@ DB enum 値と日本語ラベルの対応は [packages/shared/src/types/labels.t
 
 CLAUDE.md セキュリティルール「マイナンバーカードの個人番号 (12 桁) をテキスト列として保管するコード禁止」を維持しつつ、**マスク済み画像のみ**は本人確認書類として受け付ける。
 
-### アップロード時の UX 三重防壁（reservation 側 #92 で実装）
+### アップロード時の UX 三重防壁（reservation 側 #92 ✅ 実装済 / 2026-05-05）
 
 1. **注意喚起 UI**: 書類種別で「マイナンバーカード」を選択した時点で警告メッセージを表示
    > 「個人番号（裏面 12 桁）を完全に隠してから撮影してください。マスキングテープ・付箋などで確実に隠せていない画像は受け付けられません」
-2. **サンプル画像**: マスク前 / マスク後の対比画像を表示し、適切なマスクの目安を視覚化
-3. **同意チェックボックス**: 「個人番号を隠して撮影したことを確認しました」のチェック必須
+2. **サンプル画像**: マスク前 / マスク後の対比表示を CSS のみで描画し、適切なマスクの目安を視覚化（画像アセット非依存）
+3. **同意チェックボックス**: 「個人番号を完全に隠して撮影したことを確認しました」のチェック必須（チェック前は CTA disabled）
 
 ### admin レビュー時の確認フロー（admin 側 #171 で実装）
 
@@ -85,14 +85,16 @@ MVP1 では admin が個別画像を SQL Editor 経由でダウンロード（�
 ### DB
 
 - テーブル: `public.identity_documents`
-- 列: `id` / `member_id` / `document_type` / `storage_path` / `status` / `rejection_reason` / `uploaded_at` / `reviewed_at` / `reviewed_by`
+- 列: `id` / `member_id` / `document_type` / **`storage_path_front`** / **`storage_path_back`** / `status` / `rejection_reason` / `uploaded_at` / `reviewed_at` / `reviewed_by`
+- 表裏 2 ファイル対応 (#92 で `storage_path` を分割): `storage_path_front` は NOT NULL (常に存在)、`storage_path_back` は NULL 可 (任意提出時のみ値)
 - RLS: 自分の書類は本人と admin のみ SELECT 可。status / rejection_reason / reviewed_at / reviewed_by の UPDATE は admin のみ
 - 関連 spec: [openspec/specs/data-schema/spec.md](../../openspec/specs/data-schema/spec.md) / [openspec/specs/rls-policies/spec.md](../../openspec/specs/rls-policies/spec.md)
 
 ### Storage
 
 - バケット: `identity-documents`（private、public フラグ false）
-- パス命名: `<member_id>/<document_id>-(front|back).(jpg|png|heic)`
+- パス命名: `<member_id>/<document_id>-(front|back).(jpg|png)` (heic/heif は `heic2any` でクライアント変換し `.jpg` で保存)
+- 表裏ペアリング: 同じ `<document_id>` で `front` と `back` のオブジェクトが同一の `identity_documents.id` 行 (`storage_path_front` / `storage_path_back`) から参照される。admin レビューでは 1 行 = 1 提出セットとして扱う
 - 暗号化: Supabase Storage デフォルト（at-rest 暗号化）
 - アクセス: signed URL を admin / 本人のみ発行可。直接 URL アクセスは 403
 
@@ -131,3 +133,4 @@ MVP1 では特別な監査ログテーブルは持たず、Supabase Dashboard �
 | 日付 | 改訂内容 | 改訂者 |
 |---|---|---|
 | 2026-04-28 | 初版（#147 で SOP 新設） | 翔太郎くん / レム |
+| 2026-05-05 | #92 reservation 側アップロード実装に合わせて改訂: 表裏 2 列分割 (`storage_path_front` / `storage_path_back`)、heic2any クライアント変換、Storage パス拡張子は jpg/png に統一 | 翔太郎くん / レム |
