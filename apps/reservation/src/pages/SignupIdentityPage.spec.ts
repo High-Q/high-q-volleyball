@@ -194,6 +194,54 @@ describe("SignupIdentityPage — チップ選択", () => {
   });
 });
 
+describe("SignupIdentityPage — 裏面ヒントは書類別に切り替わる", () => {
+  it("運転免許証: 本籍・住所変更履歴に言及", async () => {
+    selectedDocumentType.value = "drivers_license";
+    const { wrapper } = await mountPage();
+    expect(wrapper.text()).toContain(
+      "本籍・住所変更履歴がある場合は裏面も提出してください",
+    );
+  });
+
+  it("在留カード: 在留資格・住居地履歴の提出を促す", async () => {
+    selectedDocumentType.value = "residence_card";
+    const { wrapper } = await mountPage();
+    expect(wrapper.text()).toContain(
+      "在留資格・住居地履歴の裏面を提出してください",
+    );
+  });
+
+  it("パスポート: 裏面提出は不要と明示", async () => {
+    selectedDocumentType.value = "passport";
+    const { wrapper } = await mountPage();
+    expect(wrapper.text()).toContain(
+      "裏面の提出は不要です (顔写真ページのみで OK)",
+    );
+  });
+
+  it("健康保険資格確認書: 裏面提出は通常不要と明示", async () => {
+    selectedDocumentType.value = "health_insurance_cert";
+    const { wrapper } = await mountPage();
+    expect(wrapper.text()).toContain("裏面の提出は通常不要です");
+  });
+
+  it("マイナンバーカード: 個人番号マスクを促す (三重防壁とは別の裏面ヒント)", async () => {
+    selectedDocumentType.value = "my_number_card_masked";
+    const { wrapper } = await mountPage();
+    expect(wrapper.text()).toContain(
+      "裏面を提出する場合は個人番号 12 桁を完全にマスクしてください",
+    );
+  });
+
+  it("書類未選択時は裏面ヒントが表示されない (旧固定文言「本籍欄・在留情報・見開き」も非表示)", async () => {
+    // 初期 (selectedDocumentType=null) では裏面スロット自体が非表示
+    const { wrapper } = await mountPage();
+    expect(wrapper.text()).not.toContain(
+      "本籍欄・在留情報・見開き 2 ページ目",
+    );
+  });
+});
+
 describe("SignupIdentityPage — CTA 状態駆動", () => {
   it("通常書類 + 表面 ready で CTA 活性 (裏面任意)", async () => {
     selectedDocumentType.value = "drivers_license";

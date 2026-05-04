@@ -80,6 +80,30 @@ export const DOCUMENT_TYPE_REQUIREMENTS: Record<DocumentType, string> = {
   health_insurance_cert: "有効期間内であること",
 };
 
+/**
+ * 各書類種別の裏面アップロードに関するヒント (本人確認書類アップロード画面で
+ * 裏面スロットの help text として表示)。
+ *
+ * 書類によって裏面に重要情報があるか / そもそも裏面提出が不要か異なるため、
+ * 書類ごとに文言を分岐する SSOT として定義。
+ *
+ * 関連: openspec/changes/reservation-identity-document-upload/specs/reservation-identity-document-upload/spec.md
+ */
+export const DOCUMENT_TYPE_BACK_HINTS: Record<DocumentType, string> = {
+  drivers_license: "本籍・住所変更履歴がある場合は裏面も提出してください",
+  driving_history_cert: "本籍欄に変更がある場合は裏面も提出してください",
+  residence_certificate: "見開き 2 ページ目がある場合のみ提出してください",
+  disability_certificate:
+    "等級・受給者番号が裏面にある場合は提出してください",
+  residence_card: "在留資格・住居地履歴の裏面を提出してください",
+  special_permanent_resident_cert: "在留情報の裏面を提出してください",
+  student_id: "有効期限・学年情報が裏面にある場合は提出してください",
+  passport: "裏面の提出は不要です (顔写真ページのみで OK)",
+  my_number_card_masked:
+    "裏面を提出する場合は個人番号 12 桁を完全にマスクしてください",
+  health_insurance_cert: "裏面の提出は通常不要です",
+};
+
 export const IDENTITY_DOCUMENT_STATUS_LABELS: Record<
   IdentityDocumentStatus,
   string

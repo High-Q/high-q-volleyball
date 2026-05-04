@@ -2,7 +2,10 @@
 import { computed, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { Kicker } from "@high-q/ui";
-import { DOCUMENT_TYPE_LABELS } from "@high-q/shared";
+import {
+  DOCUMENT_TYPE_BACK_HINTS,
+  DOCUMENT_TYPE_LABELS,
+} from "@high-q/shared";
 import type { DocumentType } from "@/entities/identity-document";
 import {
   useUploadIdentityDocument,
@@ -104,11 +107,11 @@ const cta = computed<{ label: string; disabled: boolean; spinner: boolean }>(
   },
 );
 
-const backHelpText = computed(() =>
-  isMyNumber.value
-    ? "裏面を提出する場合は個人番号 12 桁を完全にマスクしてください"
-    : "本籍欄・在留情報・見開き 2 ページ目などを撮影してください",
-);
+const backHelpText = computed<string | undefined>(() => {
+  const type = upload.selectedDocumentType.value;
+  if (type === null) return undefined;
+  return DOCUMENT_TYPE_BACK_HINTS[type];
+});
 
 const frontLabel = computed(() => (isMyNumber.value ? "表面 (顔写真側)" : "表面"));
 const backLabel = computed(() =>
