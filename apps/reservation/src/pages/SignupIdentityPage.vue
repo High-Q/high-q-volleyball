@@ -23,9 +23,19 @@ const router = useRouter();
 const session = useAuthSession();
 const upload = useUploadIdentityDocument();
 
+// チップ表示は 1 行に収めるため短縮形を使う。SSOT (DOCUMENT_TYPE_LABELS) は
+// admin レビュー画面 / メール文面用に正式名称「マイナンバーカード (個人番号マスク済み)」
+// のまま維持する。チップだけ表示用に「マイナンバー」へ差し替え。
+const CHIP_LABEL_OVERRIDES: Partial<Record<DocumentType, string>> = {
+  my_number_card_masked: "マイナンバー",
+};
+
 const DOCS: Array<{ type: DocumentType; label: string }> = (
   Object.keys(DOCUMENT_TYPE_LABELS) as DocumentType[]
-).map((type) => ({ type, label: DOCUMENT_TYPE_LABELS[type] }));
+).map((type) => ({
+  type,
+  label: CHIP_LABEL_OVERRIDES[type] ?? DOCUMENT_TYPE_LABELS[type],
+}));
 
 const isMyNumber = computed(
   () => upload.selectedDocumentType.value === "my_number_card_masked",

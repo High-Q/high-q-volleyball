@@ -136,12 +136,15 @@ describe("SignupIdentityPage — 初期描画 (empty)", () => {
     expect(cta?.attributes("disabled")).toBeDefined();
   });
 
-  it("マイナンバーチップに「注意」バッジが表示される", async () => {
+  it("マイナンバーチップに「注意」バッジ + 短縮ラベル「マイナンバー」(1 行収まり) が表示される", async () => {
     const { wrapper } = await mountPage();
     const myNumberChip = wrapper
       .findAll('button[role="radio"]')
-      .find((b) => b.text().includes("マイナンバーカード"));
+      .find((b) => b.text().includes("マイナンバー"));
+    expect(myNumberChip).toBeDefined();
     expect(myNumberChip?.text()).toContain("注意");
+    // 正式名称「マイナンバーカード (個人番号マスク済み)」(2 行になる) はチップでは使わない
+    expect(myNumberChip?.text()).not.toContain("(個人番号マスク済み)");
   });
 
   it("footer に法令文言とリンク 2 件が含まれる", async () => {
