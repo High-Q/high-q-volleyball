@@ -239,6 +239,70 @@ describe("submit — 業務ガード", () => {
     const r = await c.submit();
     expect(r).toEqual({ ok: false, error: "consent_required" });
   });
+
+  it("在留カード + 表面のみ (裏面なし) は { ok:false, error:'back_required' }", async () => {
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("residence_card");
+    await c.selectFile("front", makeJpeg("front.jpg"));
+    const r = await c.submit();
+    expect(r).toEqual({ ok: false, error: "back_required" });
+  });
+
+  it("特別永住者証明書 + 表面のみ → back_required", async () => {
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("special_permanent_resident_cert");
+    await c.selectFile("front", makeJpeg("front.jpg"));
+    const r = await c.submit();
+    expect(r).toEqual({ ok: false, error: "back_required" });
+  });
+
+  it("パスポート + 表面のみ → back_required", async () => {
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("passport");
+    await c.selectFile("front", makeJpeg("front.jpg"));
+    const r = await c.submit();
+    expect(r).toEqual({ ok: false, error: "back_required" });
+  });
+
+  it("運転免許証 + 表面のみは back_required を返さない (任意のため)", async () => {
+    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.uploadFileToStorage.mockResolvedValue(undefined);
+    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
+
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("drivers_license");
+    await c.selectFile("front", makeJpeg("front.jpg"));
+    const r = await c.submit();
+    expect(r.ok).toBe(true);
+  });
+
+  it("在留カード + 表裏両方なら成功", async () => {
+    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.uploadFileToStorage.mockResolvedValue(undefined);
+    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
+
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("residence_card");
+    await c.selectFile("front", makeJpeg("front.jpg"));
+    await c.selectFile("back", makeJpeg("back.jpg"));
+    const r = await c.submit();
+    expect(r.ok).toBe(true);
+  });
 });
 
 describe("submit — happy path", () => {

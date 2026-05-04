@@ -184,13 +184,30 @@ describe("SignupIdentityPage — チップ選択", () => {
     );
   });
 
-  it("通常書類選択時は表面/裏面 2 スロットが描画される", async () => {
+  it("通常書類 (運転免許証) は裏面スロットが任意バッジ", async () => {
     selectedDocumentType.value = "drivers_license";
     const { wrapper } = await mountPage();
     expect(wrapper.text()).toContain("表面");
     expect(wrapper.text()).toContain("裏面");
-    expect(wrapper.text()).toContain("必須");
-    expect(wrapper.text()).toContain("任意");
+    expect(wrapper.text()).toContain("必須"); // 表面側
+    expect(wrapper.text()).toContain("任意"); // 裏面側
+  });
+
+  it("在留カードは裏面スロットが必須バッジ (任意は表示されない)", async () => {
+    selectedDocumentType.value = "residence_card";
+    const { wrapper } = await mountPage();
+    // 表面・裏面ともに必須バッジで、任意バッジは出ない
+    const requiredBadges = wrapper
+      .findAll("span")
+      .filter((s) => s.text() === "必須");
+    expect(requiredBadges.length).toBeGreaterThanOrEqual(2);
+    expect(wrapper.text()).not.toContain("任意");
+  });
+
+  it("パスポートも裏面スロットが必須", async () => {
+    selectedDocumentType.value = "passport";
+    const { wrapper } = await mountPage();
+    expect(wrapper.text()).not.toContain("任意");
   });
 });
 
@@ -203,19 +220,17 @@ describe("SignupIdentityPage — 裏面ヒントは書類別に切り替わる",
     );
   });
 
-  it("在留カード: 在留資格・住居地履歴の提出を促す", async () => {
+  it("在留カード: 住居地・在留資格の裏面が必須と明示", async () => {
     selectedDocumentType.value = "residence_card";
     const { wrapper } = await mountPage();
-    expect(wrapper.text()).toContain(
-      "在留資格・住居地履歴の裏面を提出してください",
-    );
+    expect(wrapper.text()).toContain("住居地・在留資格の裏面が必須です");
   });
 
-  it("パスポート: 裏面提出は不要と明示", async () => {
+  it("パスポート: 所持人記入欄の裏面が必須と明示", async () => {
     selectedDocumentType.value = "passport";
     const { wrapper } = await mountPage();
     expect(wrapper.text()).toContain(
-      "裏面の提出は不要です (顔写真ページのみで OK)",
+      "所持人記入欄 (住所) の見開きページが必須です",
     );
   });
 
@@ -281,6 +296,36 @@ describe("SignupIdentityPage — CTA 状態駆動", () => {
     expect(cta?.attributes("disabled")).toBeUndefined();
   });
 
+  it("在留カード + 表面のみ ready + 裏面 empty → CTA disabled (back_required)", async () => {
+    selectedDocumentType.value = "residence_card";
+    frontSlot.value = {
+      state: "ready",
+      file: new File([], "f.jpg", { type: "image/jpeg" }),
+      progress: 0,
+    };
+    backSlot.value = { state: "empty", file: null, progress: 0 };
+    const { wrapper } = await mountPage();
+    const cta = wrapper.findAll("button").find((b) => b.text().includes("送信する"));
+    expect(cta?.attributes("disabled")).toBeDefined();
+  });
+
+  it("在留カード + 表裏両方 ready → CTA 活性", async () => {
+    selectedDocumentType.value = "residence_card";
+    frontSlot.value = {
+      state: "ready",
+      file: new File([], "f.jpg", { type: "image/jpeg" }),
+      progress: 0,
+    };
+    backSlot.value = {
+      state: "ready",
+      file: new File([], "b.jpg", { type: "image/jpeg" }),
+      progress: 0,
+    };
+    const { wrapper } = await mountPage();
+    const cta = wrapper.findAll("button").find((b) => b.text().includes("送信する"));
+    expect(cta?.attributes("disabled")).toBeUndefined();
+  });
+
   it("submitting 中は CTA「アップロード中…」+ disabled", async () => {
     selectedDocumentType.value = "drivers_license";
     frontSlot.value = {
@@ -329,6 +374,13 @@ describe("SignupIdentityPage — エラー / 成功バナー", () => {
     error.value = "file_too_large";
     const { wrapper } = await mountPage();
     expect(wrapper.text()).toContain("ファイルサイズが大きすぎます");
+  });
+
+  it("error=back_required で裏面必須バナー", async () => {
+    selectedDocumentType.value = "residence_card";
+    error.value = "back_required";
+    const { wrapper } = await mountPage();
+    expect(wrapper.text()).toContain("裏面の提出が必要です");
   });
 
   it("success 状態で緑の SuccessBanner 表示 (role=status)", async () => {

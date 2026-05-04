@@ -19,12 +19,14 @@ export type DocumentType = SharedDocumentType;
 export type IdentityDocumentId = SharedIdentityDocumentId;
 
 /**
- * アップロード処理で発生し得る業務 / 技術エラーの 8 分類。
+ * アップロード処理で発生し得る業務 / 技術エラーの 9 分類。
  *
  * - `unsupported_format`: MIME / 拡張子が許容セット外
  * - `file_too_large`: 10MB 超過 (heic 変換後に判定する場合も含む)
  * - `consent_required`: マイナンバー選択時に同意 chkbox 未チェック
  * - `front_required`: 表面ファイルが指定されていない
+ * - `back_required`: 書類種別が裏面必須 (在留カード/特別永住者/パスポート) で
+ *   裏面ファイルが指定されていない
  * - `storage_failed_front`: 表面の Supabase Storage upload 失敗
  * - `storage_failed_back`: 裏面の Supabase Storage upload 失敗
  * - `db_failed`: identity_documents の INSERT / UPDATE / DELETE 失敗
@@ -35,6 +37,7 @@ export type UploadError =
   | "file_too_large"
   | "consent_required"
   | "front_required"
+  | "back_required"
   | "storage_failed_front"
   | "storage_failed_back"
   | "db_failed"

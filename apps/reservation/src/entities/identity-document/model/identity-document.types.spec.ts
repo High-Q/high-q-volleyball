@@ -39,13 +39,14 @@ describe("IdentityDocumentId / DocumentType (re-export from @high-q/shared)", ()
   });
 });
 
-describe("UploadError union (8 種)", () => {
-  it("8 種すべての値を許容する", () => {
+describe("UploadError union (9 種)", () => {
+  it("9 種すべての値を許容する", () => {
     const all: UploadError[] = [
       "unsupported_format",
       "file_too_large",
       "consent_required",
       "front_required",
+      "back_required",
       "storage_failed_front",
       "storage_failed_back",
       "db_failed",

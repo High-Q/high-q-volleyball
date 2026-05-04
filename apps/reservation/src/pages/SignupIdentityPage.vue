@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { Kicker } from "@high-q/ui";
 import {
   DOCUMENT_TYPE_BACK_HINTS,
+  DOCUMENT_TYPE_BACK_REQUIRED,
   DOCUMENT_TYPE_LABELS,
 } from "@high-q/shared";
 import type { DocumentType } from "@/entities/identity-document";
@@ -44,6 +45,11 @@ const isMyNumber = computed(
   () => upload.selectedDocumentType.value === "my_number_card_masked",
 );
 
+const isBackRequired = computed<boolean>(() => {
+  const t = upload.selectedDocumentType.value;
+  return t !== null && DOCUMENT_TYPE_BACK_REQUIRED[t];
+});
+
 const ERROR_BANNER_MAP: Record<
   string,
   { title: string; description: string }
@@ -63,6 +69,10 @@ const ERROR_BANNER_MAP: Record<
   storage_failed_back: {
     title: "アップロードに失敗しました (裏面)",
     description: "通信状況を確認してから、もう一度お試しください。",
+  },
+  back_required: {
+    title: "裏面の提出が必要です",
+    description: "この書類は表面だけでは現住所が確認できないため、裏面もアップロードしてください。",
   },
   db_failed: {
     title: "保存に失敗しました",
@@ -92,6 +102,13 @@ const cta = computed<{ label: string; disabled: boolean; spinner: boolean }>(
       return { label: "送信する", disabled: true, spinner: false };
     }
     if (upload.frontSlot.value.state !== "ready") {
+      return { label: "送信する", disabled: true, spinner: false };
+    }
+    if (
+      isBackRequired.value &&
+      upload.backSlot.value.state !== "ready" &&
+      upload.backSlot.value.state !== "uploaded"
+    ) {
       return { label: "送信する", disabled: true, spinner: false };
     }
     if (
@@ -241,7 +258,7 @@ onUnmounted(() => {
         <UploadSlot
           side="back"
           :data="upload.backSlot.value"
-          :required="false"
+          :required="isBackRequired"
           :label="backLabel"
           :help-text="backHelpText"
           @select="onSelectFile"

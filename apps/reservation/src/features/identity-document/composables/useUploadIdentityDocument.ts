@@ -14,7 +14,7 @@
 
 import { computed, reactive, ref } from "vue";
 import type { ComputedRef, Ref } from "vue";
-import type { Result } from "@high-q/shared";
+import { DOCUMENT_TYPE_BACK_REQUIRED, type Result } from "@high-q/shared";
 import { useAuthSession } from "@/features/auth";
 import type {
   DocumentType,
@@ -181,6 +181,11 @@ export function useUploadIdentityDocument(): UseUploadIdentityDocument {
     if (docType === "my_number_card_masked" && !consented.value) {
       error.value = "consent_required";
       return { ok: false, error: "consent_required" };
+    }
+
+    if (DOCUMENT_TYPE_BACK_REQUIRED[docType] && backRef.value.file === null) {
+      error.value = "back_required";
+      return { ok: false, error: "back_required" };
     }
 
     const memberId = session.session.value?.user.id;
