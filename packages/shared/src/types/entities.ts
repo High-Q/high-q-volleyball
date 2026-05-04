@@ -235,9 +235,10 @@ export type IdentityDocument = {
   id: IdentityDocumentId;
   member_id: MemberId;
   document_type: DocumentType;
-  /** 表面画像の Supabase Storage パス。常に存在。
-   * 形式: `<member_id>/<document_id>-front.(jpg|png)` */
-  storage_path_front: string;
+  /** 表面画像の Supabase Storage パス。
+   * 形式: `<member_id>/<document_id>-front.(jpg|png)`
+   * INSERT 時はアプリ層で必須、admin マスク漏れ削除時のみ NULL になる (#171)。 */
+  storage_path_front: string | null;
   /** 裏面画像の Supabase Storage パス。任意提出時のみ値を持つ。
    * 形式: `<member_id>/<document_id>-back.(jpg|png)` */
   storage_path_back: string | null;
