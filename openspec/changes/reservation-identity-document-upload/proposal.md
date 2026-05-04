@@ -41,6 +41,7 @@ Issue #92 で MVP1 必須機能と位置付けられた **本人確認書類ア�
 - **NEW**: 4 状態 (Loading / Empty / Error / Success) を含む 6 アートボード相当 + 表裏 2 スロットレイアウトを実装
 - **MODIFIED**: 既存 `reservation-member-auth` capability の「会員登録フローは 2 段階」記述を 3 段階に更新 (Step 3 として本機能を後置) — 詳細スコープは design.md で確定
 - **NEW**: E2E happy path (1 件): 書類選択 → 表面画像アップロード → 送信 → 成功バナー表示 (Playwright)
+- **NEW**: SignupIdentityPage の footer に法令対応リンク (`/privacy`、`/external-transmission`) を **dead link 込みで** 配置。リンク先ページは別 Issue (#192 / #193) で実装、本件マージ時点では 404 でも OK (順不同で進めて良い、ファーストリリース時点で揃っていれば良い)
 
 ## Capabilities
 
@@ -81,13 +82,16 @@ Issue #92 で MVP1 必須機能と位置付けられた **本人確認書類ア�
 - **更新**: 同 SOP §4 の DB 列名を `storage_path` → `storage_path_front` / `storage_path_back` に追従
 - **不要**: 新規 SOP 追加 (既存 SOP で reservation 側 UX 三重防壁の運用ルールは記載済)
 
-### 関連 Issue (法令対応・着手順)
-- **#192 (着手順 1)** 改正電気通信事業法 (外部送信規律) — Cookie 同意 + /external-transmission [ship ブロッカー]
-- **#193 (着手順 2)** プライバシーポリシー本文 (/privacy) [ship ブロッカー]
-- **#194 (着手順 3)** 開示請求窓口・規定整備
-- **#195 (着手順 4)** 安全管理措置文書化・漏洩時報告体制
-- **#196 (着手順 5)** pending 会員予約禁止ガード (本件後に着手)
-- **#92 (着手順 6) 本件**
+### 関連 Issue (法令対応・順不同で OK)
+
+ファーストリリース未実施のため、本件 (#92) と法令対応 Issue (#192-#196) は順不同で進めて良い。本件単独のマージに法令 Issue 完了の前提はない。ただしファーストリリース前にはいずれも完了が必要。
+
+- **#192** 改正電気通信事業法 (外部送信規律) — Cookie 同意 + /external-transmission [必須]
+- **#193** プライバシーポリシー本文 (/privacy) [必須]
+- **#194** 開示請求窓口・規定整備 [推奨]
+- **#195** 安全管理措置文書化・漏洩時報告体制 [推奨]
+- **#196** pending 会員予約禁止ガード [推奨・本件 + #171 後に着手]
+- **#92** 本件
 
 ### テスト
 - **追加**: vitest component test (各状態 / マイナンバー三重防壁 / CTA disabled 制御)

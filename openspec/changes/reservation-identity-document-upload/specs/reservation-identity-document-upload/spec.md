@@ -378,7 +378,7 @@ CTA「完了する」押下で `useAuthSession.refresh()` を呼び `hasIdentity
 >
 > 詳細は[プライバシーポリシー](/privacy)・[外部送信ポリシー](/external-transmission)をご覧ください。
 
-リンク先 (`/privacy` / `/external-transmission`) のページ本文は **本 change のスコープ外** で、別 Issue (法令対応 着手順 1 / 2) で実装される。本 change では footer のリンク張りまでを完了させる SHALL。
+リンク先 (`/privacy` / `/external-transmission`) のページ本文は **本 change のスコープ外** で、別 Issue (#193 / #192) で実装される。本 change では footer のリンク張りまでを完了させる SHALL。本件マージ時点でリンク先が 404 でも本件単独の受け入れには影響しない (順不同で進めて良い)。ファーストリリース時点で全 Issue が揃っていれば良い。
 
 #### Scenario: footer 注記の存在
 - **WHEN** 画面が描画される

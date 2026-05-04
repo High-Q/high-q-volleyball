@@ -2,19 +2,19 @@
 
 > **承認ゲート**: Proposal + Design + spec (data-schema + reservation-identity-document-upload + reservation-member-auth) + 本 Tasks の 4 ファイル群が揃って承認されてから Apply に入る。
 >
-> **Ship 順序ゲート**: 本 change の **Render 本番デプロイ (= ship)** は法令対応 Issue (#192 着手順 1: Cookie 同意 + 外部送信ポリシー、#193 着手順 2: プライバシーポリシー本文) の完了後に実施。Apply 自体は先行可能 (UI 実装と DB migration はリバーシブル)。
+> **ファーストリリース条件**: 本件と法令対応 Issue (#192-#196) はファーストリリース前にいずれも完了させる。順不同で OK (本件単独のマージに法令 Issue 完了前提はなし)。
 >
-> **関連 Issue (Project 着手順)**:
-> - #192 (着手順 1) Cookie 同意 + 外部送信ポリシー — ship ブロッカー
-> - #193 (着手順 2) プライバシーポリシー本文 — ship ブロッカー
+> **関連 Issue (Project 着手順 = 開発順序の目安)**:
+> - #192 (着手順 1) Cookie 同意 + 外部送信ポリシー
+> - #193 (着手順 2) プライバシーポリシー本文
 > - #194 (着手順 3) 開示請求窓口
 > - #195 (着手順 4) 安全管理措置文書化
-> - #196 (着手順 5) pending 会員予約禁止ガード — 本件後に着手
+> - #196 (着手順 5) pending 会員予約禁止ガード
 > - **#92 (着手順 6) 本件**
 
 ## 進捗
 
-- 完了: 36 / 42 タスク
+- 完了: 40 / 42 タスク (※ 75 サブタスク中)
 
 ---
 
@@ -28,7 +28,7 @@
 
 - [x] 2.1 `packages/shared/src/types/labels.ts` の `DOCUMENT_TYPE_LABELS` / `DOCUMENT_TYPE_REQUIREMENTS` が 10 種完備していること、文言が design.md D5 と一致することを確認
 - [x] 2.2 `supabase/migrations/20260428143738_db_schema_foundation.sql` の `identity_documents` テーブル + RLS + bucket 定義を確認 (RLS 有効・bucket private 設定済 ・本番 0 行)
-- [x] 2.3 法令対応 Issue 群を確認: #192 #193 #194 #195 #196 全て Todo 状態。ship タイミングのブロッカーは #192 (Cookie 同意 + 外部送信) / #193 (プライバシーポリシー)
+- [x] 2.3 法令対応 Issue 群を確認: #192 #193 #194 #195 #196 全て Todo 状態。本件マージの前提条件ではない (順不同で OK) が、ファーストリリース前にいずれも完了が必要
 
 ## 3. DB Migration: storage_path 列分割
 
@@ -83,10 +83,10 @@
 
 ## 10. shared/ui プリミティブ (Checkbox 取り込み)
 
-- [ ] 10.1 `apps/reservation/src/shared/ui/Checkbox.vue` を shadcn-vue 流に新規作成 (純粋に `<input type="checkbox">` を `class-variance-authority` でスタイリング、Tailwind preset utility のみ利用)
-- [ ] 10.2 `apps/reservation/src/shared/ui/Checkbox.spec.ts`: v-model / aria-checked / disabled / required 属性の振る舞いを spec
-- [ ] 10.3 `apps/reservation/src/shared/ui/index.ts` に Checkbox を追加
-- [ ] 10.4 `pnpm --filter @high-q/reservation test shared/ui/Checkbox` 通過確認
+- [x] 10.1 `Checkbox.vue` を新規作成 (ネイティブ checkbox + Tailwind preset utility)
+- [x] 10.2 `Checkbox.spec.ts` 7 spec (v-model / disabled / required / aria-describedby / type / id / 初期値)
+- [x] 10.3 `shared/ui/index.ts` に Checkbox を追加
+- [x] 10.4 `pnpm --filter @high-q/reservation test shared/ui/Checkbox` 通過 (7 passed)
 
 ## 11. SignupIdentityPage の sub-components 実装
 
@@ -159,4 +159,4 @@ UI 連続変更タスクのため、各タスク後の vitest 実行は省略 (�
 - マイナンバーカード提出後の admin 側確認・承認画面は別 Issue (#171, MVP1)。本 change では status='pending' で行を作成して終わる。
 - pending 状態会員の予約ガードは別 Issue **#196 (着手順 5)** で実装する (本件 #92 + admin 承認画面 #171 完了後)。
 - E2E は 1 件のみ (CLAUDE.md 「機能あたり 1〜2 件」上限遵守)。表裏両方の組み合わせや heic 変換は component test に押し下げ。
-- **Ship ブロッカー**: 法令対応 Issue **#192 (着手順 1: Cookie 同意 + 外部送信ポリシー)** および **#193 (着手順 2: プライバシーポリシー本文)** の完了を待ってから本 change を本番デプロイする。Apply 自体は先行可能。
+- **ファーストリリース前提**: 本件と #192-#196 はファーストリリース前に揃って必要。本件単独のマージに法令 Issue 完了の前提はないため、順不同で進めて良い。
