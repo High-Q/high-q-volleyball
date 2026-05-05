@@ -7,6 +7,8 @@ import AlertDialogHeader from "@/shared/ui/AlertDialogHeader.vue";
 import AlertDialogFooter from "@/shared/ui/AlertDialogFooter.vue";
 import AlertDialogTitle from "@/shared/ui/AlertDialogTitle.vue";
 import AlertDialogDescription from "@/shared/ui/AlertDialogDescription.vue";
+import FormField from "@/shared/ui/FormField.vue";
+import Textarea from "@/shared/ui/Textarea.vue";
 import {
   useIdentityDocumentReject,
   getRejectErrorMessage,
@@ -108,32 +110,28 @@ defineExpose({ open });
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div class="flex flex-col gap-hq-2">
-          <label
-            for="reject-reason"
-            class="text-sm font-jp font-medium text-ink"
-          >
-            差し戻し理由 <span class="text-danger">*</span>
-          </label>
-          <textarea
-            id="reject-reason"
-            v-model="reason"
-            rows="4"
-            :maxlength="MAX_REASON_LENGTH + 50"
-            placeholder="例: 画像が不鮮明で氏名・住所が読み取れません"
-            class="w-full rounded-hq-sm border border-hairline bg-paper px-hq-3 py-hq-2 text-sm font-jp text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
-          />
-          <div
-            class="flex justify-between text-xs font-jp"
-            :class="isOverLimit ? 'text-danger' : 'text-muted'"
-          >
-            <span v-if="isOverLimit" role="alert">500 文字以内で入力してください</span>
-            <span v-else></span>
-            <span :aria-label="`文字数 ${reasonLength} / ${MAX_REASON_LENGTH}`">
-              {{ reasonLength }} / {{ MAX_REASON_LENGTH }}
-            </span>
-          </div>
-        </div>
+        <FormField
+          label="差し戻し理由 (必須)"
+          html-for="reject-reason"
+          :error="isOverLimit ? '500 文字以内で入力してください' : undefined"
+          :hint="
+            !isOverLimit
+              ? `${reasonLength} / ${MAX_REASON_LENGTH} 文字`
+              : undefined
+          "
+        >
+          <template #default="{ fieldId, messageId, ariaInvalid }">
+            <Textarea
+              :id="fieldId"
+              v-model="reason"
+              :rows="4"
+              :maxlength="MAX_REASON_LENGTH + 50"
+              :aria-invalid="ariaInvalid"
+              :aria-describedby="messageId"
+              placeholder="例: 画像が不鮮明で氏名・住所が読み取れません"
+            />
+          </template>
+        </FormField>
 
         <p
           v-if="errorMessage"

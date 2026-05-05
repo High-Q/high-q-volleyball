@@ -88,8 +88,13 @@ describe("IdentityDocumentRejectDialog — editing フェーズ", () => {
     textarea.value = "あ".repeat(501);
     textarea.dispatchEvent(new Event("input"));
     await flushPromises();
-    expect(document.body.textContent).toContain("501 / 500");
+    // 501 字超過時は error メッセージに切り替わる (HQ FormField 規約: hint→error)
     expect(document.body.textContent).toContain("500 文字以内で入力");
+    // textarea が aria-invalid=true で border-danger が起動 (赤枠)
+    const textareaEl = document.querySelector(
+      "textarea",
+    ) as HTMLTextAreaElement;
+    expect(textareaEl.getAttribute("aria-invalid")).toBe("true");
     const submitBtn = findButtonByText("差し戻す");
     expect(submitBtn?.disabled).toBe(true);
   });

@@ -336,7 +336,7 @@ signed URL 取得失敗時はタイル内に inline error「画像を取得で�
 
 #### Scenario: 理由 501 字でボタン disabled
 - **WHEN** 理由テキストエリアに 501 字入力
-- **THEN** 「差し戻す」ボタンは disabled、文字数カウンターが「501 / 500」に赤色表示
+- **THEN** 「差し戻す」ボタンは disabled。HQ グローバルフォームバリデーション規約 (`shared/ui/FormField` + `shared/ui/Textarea`) に従い、textarea の `aria-invalid="true"` が立ち、border が `var(--hq-danger)` に切り替わる。FormField の hint (文字数カウンタ) が error メッセージ「500 文字以内で入力してください」に置き換わる (赤色)。**初期表示 (空文字) では赤枠を出さず、grey の hairline border + grey の hint「0 / 500 文字」を表示する** (HQ 規約: 入力前は invalid 表示しない)
 
 #### Scenario: 既に rejected 書類でボタン disabled
 - **WHEN** `status === 'rejected'` の書類を開く
