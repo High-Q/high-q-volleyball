@@ -18,13 +18,13 @@ export type EventRow = {
   visibility: EventVisibility;
   venues: {
     name: string;
-    address: string | null;
+    meeting_point: string;
     default_fee: number | null;
   } | null;
 };
 
 /**
- * 一覧画面用の Event 型（camelCase）。会場住所は含まず、表示に必要な最小カラムに絞る。
+ * 一覧画面用の Event 型（camelCase）。集合場所は含まず、表示に必要な最小カラムに絞る。
  */
 export type EventListItem = {
   id: EventId;
@@ -40,8 +40,8 @@ export type EventListItem = {
 };
 
 /**
- * 詳細画面用の Event 型。一覧との差分要素として `venueAddress` を含む。
+ * 詳細画面用の Event 型。一覧との差分要素として `meetingPoint` (集合場所) を含む。
  */
 export type EventDetail = EventListItem & {
-  venueAddress: string | null;
+  meetingPoint: string;
 };

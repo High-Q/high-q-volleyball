@@ -48,10 +48,11 @@ describe("EventCard", () => {
     });
   });
 
-  it("会場住所は表示しない（一覧と詳細の差分要素のため詳細のみ）", async () => {
+  it("集合場所は表示しない（一覧と詳細の差分要素のため詳細のみ）", async () => {
     const wrapper = await mountWithRouter(EventCard, routes, "/", {
       props: { event: stubEvent },
     });
-    expect(wrapper.text()).not.toContain("address");
+    expect(wrapper.text()).not.toContain("MEETING POINT");
+    expect(wrapper.text()).not.toContain("meetingPoint");
   });
 });

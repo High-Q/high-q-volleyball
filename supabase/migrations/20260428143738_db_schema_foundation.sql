@@ -44,6 +44,8 @@ create table if not exists public.venues (
   default_fee   integer,
   access_note   text,
   map_url       text,
+  -- 会員サイトのイベント詳細画面に表示する集合場所。詳細は 20260505184227 migration 参照
+  meeting_point text        not null default '現地集合',
   is_primary    boolean     not null default false,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now(),

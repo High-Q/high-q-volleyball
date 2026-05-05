@@ -24,7 +24,7 @@ export async function fetchUpcomingEvents(): Promise<EventListItem[]> {
   return (data as unknown as EventRow[]).map(rowToEventListItem);
 }
 
-/** 詳細クエリ: 単一イベントの会場名 + 会場住所を含めた取得 */
+/** 詳細クエリ: 単一イベントの会場名 + 集合場所を含めた取得 */
 export async function fetchEventDetail(
   id: string,
 ): Promise<EventDetail | null> {
@@ -32,7 +32,7 @@ export async function fetchEventDetail(
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, name, start_at, end_at, venue_id, fee, status, visibility, venues(name, address, default_fee)",
+      "id, name, start_at, end_at, venue_id, fee, status, visibility, venues(name, meeting_point, default_fee)",
     )
     .eq("id", id)
     .eq("status", "scheduled")
@@ -69,6 +69,6 @@ function rowToEventListItem(row: EventRow): EventListItem {
 function rowToEventDetail(row: EventRow): EventDetail {
   return {
     ...rowToEventListItem(row),
-    venueAddress: row.venues?.address ?? null,
+    meetingPoint: row.venues?.meeting_point ?? "現地集合",
   };
 }

@@ -21,9 +21,9 @@ const items = computed(() => [
   },
   { key: "venue-name", label: "VENUE", value: props.event.venueName },
   {
-    key: "venue-address",
-    label: "ADDRESS",
-    value: props.event.venueAddress ?? "—",
+    key: "meeting-point",
+    label: "MEETING POINT",
+    value: props.event.meetingPoint,
   },
   { key: "fee", label: "FEE", value: feeLabel.value },
 ]);
