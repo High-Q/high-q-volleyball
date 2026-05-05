@@ -10,6 +10,9 @@ import EventsListPage from "@/pages/EventsListPage.vue";
 import EventCreatePage from "@/pages/EventCreatePage.vue";
 import EventEditPage from "@/pages/EventEditPage.vue";
 import EventDetailPage from "@/pages/EventDetailPage.vue";
+// IdentityDocuments 系は重い widget チェーン (Dialog プリミティブ + 詳細 widget の
+// 多数 sub-component) を持つため lazy import で起動コストを下げる。これにより
+// router.spec.ts の guard timeout (CI 弱 runner で 5s 超え) も回避する。
 import LoginPage from "@/pages/LoginPage.vue";
 import AuthCallbackPage from "@/pages/AuthCallbackPage.vue";
 import MfaChallengePage from "@/pages/MfaChallengePage.vue";
@@ -37,6 +40,17 @@ const routes: RouteRecordRaw[] = [
     path: "/events/:id",
     name: "events-detail",
     component: EventDetailPage,
+  },
+  // #171 admin-identity-document-review (lazy import で起動コスト最小化)
+  {
+    path: "/identity-documents",
+    name: "identity-documents",
+    component: () => import("@/pages/IdentityDocumentsListPage.vue"),
+  },
+  {
+    path: "/identity-documents/:id",
+    name: "identity-document-detail",
+    component: () => import("@/pages/IdentityDocumentDetailPage.vue"),
   },
   {
     path: "/login",

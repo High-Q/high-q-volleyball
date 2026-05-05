@@ -115,8 +115,10 @@ describe("IdentityDocument 型契約 (表裏 2 ファイル対応)", () => {
     expectTypeOf<HasOldPath>().toEqualTypeOf<false>();
   });
 
-  it("storage_path_front (string) を持つ", () => {
-    expectTypeOf<IdentityDocument["storage_path_front"]>().toEqualTypeOf<string>();
+  it("storage_path_front (string | null) を持つ — admin マスク漏れ削除時に NULL になる (#171)", () => {
+    expectTypeOf<
+      IdentityDocument["storage_path_front"]
+    >().toEqualTypeOf<string | null>();
   });
 
   it("storage_path_back (string | null) を持つ", () => {
