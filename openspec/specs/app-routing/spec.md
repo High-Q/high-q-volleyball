@@ -30,25 +30,33 @@ TBD - created by archiving change admin-reservation-ui-foundation. Update Purpos
 
 各アプリは、本基盤整備時点で以下の最低 2 ルートが動作しなければならない（SHALL）:
 
-- `path: '/'` → `HomePlaceholder.vue`（"準備中" 表示）
-- `path: '/login'` → **`apps/admin` および `apps/reservation` の両方で `LoginPage.vue`（マジックリンクログイン本実装）**
+- ホーム URL (`path: '/'`) の到達先:
+  - `apps/admin`: イベント一覧画面へリダイレクト（既存）
+  - `apps/reservation`: **イベント一覧画面へリダイレクト**（#90 で導入。従来の「準備中」プレースホルダは廃止 MUST）
+  - `apps/lp`: ランディングページ（既存）
+- ログイン URL (`path: '/login'`): `apps/admin` および `apps/reservation` の両方でログイン画面（マジックリンクログイン本実装）
 
 ルートのコンポーネント実装は HQ デザイントークン経由（Tailwind preset の utility または `@high-q/ui` プリミティブ経由）で描画される。マジックナンバー禁止。
 
-#### Scenario: トップルートが動作する
+#### Scenario: トップルートが LP で動作する
+- **WHEN** `apps/lp` でブラウザで `/` にアクセスする
+- **THEN** LP の本体ページが描画される
 
-- **WHEN** ブラウザで `/` にアクセスする
-- **THEN** `HomePlaceholder.vue` が描画され、HQ paper 色背景・Zen Kaku Gothic 書体で "準備中" 表示が確認できる
+#### Scenario: 会員サイトのトップがイベント一覧へリダイレクトされる
+- **WHEN** プロフィール完成済みユーザーが会員サイトのホーム URL にアクセスする
+- **THEN** イベント一覧画面に到達する
 
-#### Scenario: Login ルートが `apps/admin` で本実装される
+#### Scenario: 「準備中」プレースホルダが会員サイトから廃止されている
+- **WHEN** 会員サイトの画面群を確認
+- **THEN** 「準備中」プレースホルダ画面は存在しない
 
-- **WHEN** `apps/admin` でブラウザが `/login` にアクセスする
-- **THEN** `LoginPage.vue` が描画され、メール入力フォームと「マジックリンクを送る」CTA が表示される（旧 `LoginPlaceholder.vue` は削除）
+#### Scenario: ログイン画面が apps/admin で本実装されている
+- **WHEN** `apps/admin` でブラウザがログイン URL にアクセスする
+- **THEN** ログイン画面が描画され、メール入力フォームと「マジックリンクを送る」CTA が表示される
 
-#### Scenario: Login ルートが `apps/reservation` で本実装される
-
-- **WHEN** `apps/reservation` でブラウザが `/login` にアクセスする
-- **THEN** `LoginPage.vue` が描画され、メール入力フォームと「ログインリンクを送る」CTA が表示される（旧 `LoginPlaceholder.vue` は削除）
+#### Scenario: ログイン画面が apps/reservation で本実装されている
+- **WHEN** `apps/reservation` でブラウザがログイン URL にアクセスする
+- **THEN** ログイン画面が描画され、メール入力フォームと「ログインリンクを送る」CTA が表示される
 
 ### Requirement: navigation guard 拡張点が用意されている
 
@@ -309,13 +317,49 @@ guard は以下の判定を行う:
 
 ### Requirement: ルーティングのスモークテスト（apps/reservation の更新）
 
-`apps/reservation` のルーティングスモークテストは、`/signup/profile` / `/auth/callback` / `/auth/link-sent` の 3 ルート追加と auth guard の存在を SHALL 検証する。`/login` がプレースホルダではなく `LoginPage` であることを検証する。
+`apps/reservation` のルーティングスモークテストは、本 capability で追加されるイベント一覧・イベント詳細の 2 ルートと、ホーム URL からイベント一覧へのリダイレクトを SHALL 検証する。既存ルート (`/signup/profile` / `/auth/callback` / `/auth/link-sent`) の存続も SHALL 検証する。`/login` がプレースホルダではなく `LoginPage` であることを検証する。
 
 #### Scenario: 新ルート定義の検証
 - **WHEN** `apps/reservation/src/app/router.spec.ts` を実行
-- **THEN** `/signup/profile` / `/auth/callback` / `/auth/link-sent` の 3 ルートが定義されているテストが pass する
+- **THEN** `/events` / `/events/:id` / `/signup/profile` / `/auth/callback` / `/auth/link-sent` の各ルートが定義されているテストが pass する
 
 #### Scenario: LoginPage 描画の検証
 - **WHEN** スモークテストで `/login` にナビゲートする
 - **THEN** `LoginPage` がマウントされる（旧 `LoginPlaceholder` ではない）
+
+#### Scenario: トップルートのリダイレクト検証
+- **WHEN** スモークテストでホーム URL にナビゲートする
+- **THEN** イベント一覧画面 (`/events`) へリダイレクトされる
+
+### Requirement: イベント一覧ルート（apps/reservation のみ）
+
+会員サイトはイベント一覧画面を提供するルートを SHALL 持つ。本ルートは認証ガード配下に置かれ MUST、未認証ユーザーはログイン画面へ、プロフィール未完成ユーザーはプロフィール入力画面へリダイレクトされる。
+
+#### Scenario: ルートの定義
+- **WHEN** 会員サイトのルーティング設定を確認
+- **THEN** イベント一覧画面に対応するルート (`/events` / name `events-list`) が定義されている
+
+#### Scenario: 未認証ユーザーのアクセス
+- **WHEN** 未認証ユーザーがイベント一覧ルートにアクセス
+- **THEN** ログイン画面へリダイレクトされる
+
+#### Scenario: プロフィール未完成ユーザーのアクセス
+- **WHEN** プロフィール未完成ユーザーがイベント一覧ルートにアクセス
+- **THEN** プロフィール入力画面へリダイレクトされる
+
+#### Scenario: 正常系
+- **WHEN** プロフィール完成済みユーザーがイベント一覧ルートにアクセス
+- **THEN** イベント一覧画面が描画される
+
+### Requirement: イベント詳細ルート（apps/reservation のみ）
+
+会員サイトはイベント詳細画面を提供するルートを SHALL 持つ。URL パラメータでイベント識別子を受け取り、認証ガード配下に置かれる MUST。
+
+#### Scenario: ルートの定義
+- **WHEN** 会員サイトのルーティング設定を確認
+- **THEN** イベント識別子をパラメータに取る詳細画面ルート (`/events/:id` / name `event-detail`) が定義されている
+
+#### Scenario: 正常系
+- **WHEN** プロフィール完成済みユーザーが任意のイベント識別子で詳細ルートにアクセス
+- **THEN** イベント詳細画面が描画され、当該イベント情報の取得が開始される
 

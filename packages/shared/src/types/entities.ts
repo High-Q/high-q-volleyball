@@ -72,6 +72,8 @@ export type Venue = {
   access_note: string | null;
   /** Google Maps 等のリンク URL。MVP1 は NULL で投入。 */
   map_url: string | null;
+  /** 会員サイトのイベント詳細画面に表示する集合場所。default '現地集合'。 */
+  meeting_point: string;
   /** メイン会場フラグ。最大 1 件 (partial unique index で担保)。 */
   is_primary: boolean;
   created_at: string;
@@ -84,6 +86,7 @@ export type VenueInsert = {
   default_fee?: number | null;
   access_note?: string | null;
   map_url?: string | null;
+  meeting_point?: string;
   is_primary?: boolean;
 };
 

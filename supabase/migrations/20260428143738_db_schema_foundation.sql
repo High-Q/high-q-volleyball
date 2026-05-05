@@ -44,6 +44,8 @@ create table if not exists public.venues (
   default_fee   integer,
   access_note   text,
   map_url       text,
+  -- 会員サイトのイベント詳細画面に表示する集合場所。詳細は 20260505184227 migration 参照
+  meeting_point text        not null default '現地集合',
   is_primary    boolean     not null default false,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now(),
@@ -107,7 +109,7 @@ values
   ),
   (
     '有明会場',
-    '〒135-0063 東京都江東区有明 1-8-14 先',
+    '〒135-0063 東京都江東区有明 1-8-14',
     500,
     'ゆりかもめ「有明テニスの森」駅 / 詳細な会場位置は予約確定後にメールで通知',
     true
