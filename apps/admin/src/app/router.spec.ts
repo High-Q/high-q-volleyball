@@ -174,7 +174,7 @@ describe("router auth guard", () => {
 });
 
 describe("router routes", () => {
-  it("9 つのルートが定義されている（/ redirect + /events + /events/new + /events/:id + /events/:id/edit + 既存 4）", async () => {
+  it("11 つのルートが定義されている (events 5 + identity-documents 2 + auth 4)", async () => {
     const { routes } = await import("./router");
     const paths = routes.map((r) => r.path).sort();
     expect(paths).toEqual([
@@ -184,6 +184,8 @@ describe("router routes", () => {
       "/events/:id",
       "/events/:id/edit",
       "/events/new",
+      "/identity-documents",
+      "/identity-documents/:id",
       "/login",
       "/mfa",
       "/mfa/setup",
@@ -202,5 +204,81 @@ describe("router routes", () => {
     expect(routes.find((r) => r.path === "/auth/callback")?.meta?.public).toBe(
       true,
     );
+  });
+
+  it("/identity-documents は meta.public 無し (admin 認証下)", async () => {
+    const { routes } = await import("./router");
+    const route = routes.find((r) => r.path === "/identity-documents");
+    expect(route?.meta?.public).toBeUndefined();
+  });
+
+  it("/identity-documents/:id は meta.public 無し (admin 認証下)", async () => {
+    const { routes } = await import("./router");
+    const route = routes.find((r) => r.path === "/identity-documents/:id");
+    expect(route?.meta?.public).toBeUndefined();
+  });
+});
+
+describe("router auth guard — /identity-documents (#171)", () => {
+  it("未認証で /identity-documents にアクセスすると /login にリダイレクト", async () => {
+    const router = await createTestRouter();
+    await router.push("/identity-documents");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/login");
+  });
+
+  it("未認証で /identity-documents/:id にアクセスすると /login にリダイレクト", async () => {
+    const router = await createTestRouter();
+    await router.push("/identity-documents/abc");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/login");
+  });
+
+  it("AAL1 で /identity-documents にアクセスすると /mfa or /mfa/setup", async () => {
+    session.status.value = "authenticated";
+    session.aal.value = "aal1";
+    session.hasMfaFactor.value = true;
+
+    const router = await createTestRouter();
+    await router.push("/identity-documents");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/mfa");
+  });
+
+  it("AAL2 admin で /identity-documents が描画される (リダイレクトなし)", async () => {
+    session.status.value = "authenticated";
+    session.aal.value = "aal2";
+    session.isAdmin.value = true;
+
+    const router = await createTestRouter();
+    await router.push("/identity-documents");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/identity-documents");
+    expect(router.currentRoute.value.name).toBe("identity-documents");
+  });
+
+  it("AAL2 admin で /identity-documents/:id が描画される", async () => {
+    session.status.value = "authenticated";
+    session.aal.value = "aal2";
+    session.isAdmin.value = true;
+
+    const router = await createTestRouter();
+    await router.push("/identity-documents/doc-1");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/identity-documents/doc-1");
+    expect(router.currentRoute.value.name).toBe("identity-document-detail");
+    expect(router.currentRoute.value.params.id).toBe("doc-1");
+  });
+
+  it("AAL2 + 非 admin で /identity-documents → /login?reason=not-admin", async () => {
+    session.status.value = "authenticated";
+    session.aal.value = "aal2";
+    session.isAdmin.value = false;
+
+    const router = await createTestRouter();
+    await router.push("/identity-documents");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/login");
+    expect(router.currentRoute.value.query.reason).toBe("not-admin");
   });
 });

@@ -10,6 +10,8 @@ import EventsListPage from "@/pages/EventsListPage.vue";
 import EventCreatePage from "@/pages/EventCreatePage.vue";
 import EventEditPage from "@/pages/EventEditPage.vue";
 import EventDetailPage from "@/pages/EventDetailPage.vue";
+import IdentityDocumentsListPage from "@/pages/IdentityDocumentsListPage.vue";
+import IdentityDocumentDetailPage from "@/pages/IdentityDocumentDetailPage.vue";
 import LoginPage from "@/pages/LoginPage.vue";
 import AuthCallbackPage from "@/pages/AuthCallbackPage.vue";
 import MfaChallengePage from "@/pages/MfaChallengePage.vue";
@@ -37,6 +39,17 @@ const routes: RouteRecordRaw[] = [
     path: "/events/:id",
     name: "events-detail",
     component: EventDetailPage,
+  },
+  // #171 admin-identity-document-review
+  {
+    path: "/identity-documents",
+    name: "identity-documents",
+    component: IdentityDocumentsListPage,
+  },
+  {
+    path: "/identity-documents/:id",
+    name: "identity-document-detail",
+    component: IdentityDocumentDetailPage,
   },
   {
     path: "/login",
