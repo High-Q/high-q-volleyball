@@ -6,7 +6,8 @@ import {
   type RouteRecordRaw,
   type Router,
 } from "vue-router";
-import HomePlaceholder from "@/pages/HomePlaceholder.vue";
+import EventsListPage from "@/pages/EventsListPage.vue";
+import EventDetailPage from "@/pages/EventDetailPage.vue";
 import LoginPage from "@/pages/LoginPage.vue";
 import SignupProfilePage from "@/pages/SignupProfilePage.vue";
 import LinkSentPage from "@/pages/LinkSentPage.vue";
@@ -14,9 +15,19 @@ import AuthCallbackPage from "@/pages/AuthCallbackPage.vue";
 import { useAuthSession } from "@/features/auth";
 
 const routes: RouteRecordRaw[] = [
-  // / は認証必須 (2026-05-04 翔太郎くん指示でランディング画面廃止)。
-  // 未認証で / にアクセスしたら guard で /login にリダイレクトされる。
-  { path: "/", name: "home", component: HomePlaceholder },
+  // / は認証必須。プロフィール完成済みユーザーは /events にリダイレクトされる
+  // (#90: HomePlaceholder 廃止、イベント一覧をホームに昇格)。
+  { path: "/", name: "home", redirect: { name: "events-list" } },
+  {
+    path: "/events",
+    name: "events-list",
+    component: EventsListPage,
+  },
+  {
+    path: "/events/:id",
+    name: "event-detail",
+    component: EventDetailPage,
+  },
   {
     path: "/login",
     name: "login",
@@ -93,7 +104,7 @@ export function registerAuthGuard(router: Router): void {
         to.name === "signup-profile" ||
         to.name === "signup-identity"
       ) {
-        return { name: "home" };
+        return { name: "events-list" };
       }
 
       return true;
