@@ -63,6 +63,7 @@ openspec/specs/                                       ← 実装済み仕様
 docs/templates/                                       ← Proposal / Design / Task テンプレート
 docs/03-アーキテクチャ/04-開発・コーディング規約.md   ← FSD・Value Object・ESLint 設定
 docs/03-アーキテクチャ/05-開発ワークフロー.md         ← 人間×Claude 協働プロセス
+docs/08-移行/01-環境戦略・本番リリース計画.md         ← dev/prd 分離方針・Render Preview 制約・リリース Phase
 ```
 
 ---
@@ -191,6 +192,29 @@ Design フェーズで必ずチェック: 影響レイヤー / ビジネス異�
 修正フロー: ①構造全体を読む → ②根本原因の仮説 → ③影響範囲を grep で確認 → ④連鎖修正は 1 PR にまとめる。
 
 詳細は `docs/03-アーキテクチャ/03-インフラ・CICD構成.md`。
+
+### Apply 完了報告での Render Preview 言及ルール (厳守)
+
+現状 `render.yaml` の services に登録されているのは **LP (`apps/lp`) のみ**。Render は services 登録済サービス用にしか PR Preview を生成しない。
+
+Apply 完了後の翔太郎くん向け報告で「Render Preview で確認お願いします」と書いていいのは **PR の変更が `apps/lp` を含む場合のみ**。それ以外の場合は機械的に以下のように報告すること:
+
+| PR 変更範囲 | 報告に書くこと |
+|---|---|
+| `apps/lp` 含む | 「Render Preview で確認をお願いします」OK |
+| `apps/admin` のみ | ⚠️「`apps/admin` のみの変更のため Render PR Preview は生成されません (#139 待ち)。動作確認はローカル `pnpm --filter @high-q/admin dev` でお願いします」 |
+| `apps/reservation` のみ | ⚠️「`apps/reservation` のみの変更のため Render PR Preview は生成されません (#140 待ち)。動作確認はローカル `pnpm --filter @high-q/reservation dev` でお願いします」 |
+| `packages/*` / `supabase/*` / `docs/*` のみ | Render Preview に関する言及をしない (動作確認の必要があれば該当アプリのローカル起動を案内) |
+
+`#139` / `#140` がマージされたら本ルールは解消されるので、その時点で本セクションを更新する。
+
+詳細・背景: `docs/08-移行/01-環境戦略・本番リリース計画.md` §7
+
+### 環境戦略 (dev / prd 分離) — 新規 Issue 提案時の前提
+
+現状 Supabase は **dev 1 プロジェクトのみ運用** (本番 Supabase 未作成)。本番リリース時には dev / prd を完全分離し、Render env の `previewValue` で PR Preview だけ dev に向ける設計を取る。
+
+新機能の Design / Apply 時に Supabase / 環境変数 / Render 設定に触れる場合、**まず `docs/08-移行/01-環境戦略・本番リリース計画.md` を読み、現在のフェーズと方針に整合する提案** をすること。Phase 移行に絡む変更 (例: 本番 Supabase 作成、env var 切替) は単発 Apply で進めず、Phase 1 開始の専用 Issue として切り出す。
 
 ---
 
