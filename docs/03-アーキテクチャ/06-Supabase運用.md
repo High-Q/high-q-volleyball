@@ -31,6 +31,31 @@ pnpm exec supabase link --project-ref <dev-project-ref>
 
 `supabase link` 完了後、`supabase/.temp/` 配下にプロジェクト固有ファイルが生成されるが、`supabase/.gitignore` で除外済み。
 
+### 既存 migration の取り込み (本プロジェクト固有・初回のみ)
+
+本プロジェクトは CLI 整備 (Issue #203) 以前の期間、`supabase/migrations/` の SQL を Supabase 管理画面の SQL Editor で直接実行する運用だった。そのため `supabase_migrations.schema_migrations` テーブルに **CLI 管理の適用履歴が記録されていない** 状態でスタートする。
+
+このまま `supabase db push` を実行すると CLI が「全 migration 未適用」と誤認識し、既に適用済の SQL を二重実行しようとしてエラーになる (例: `event_detail_view` の v1 を v3 が動いている DB に `CREATE OR REPLACE` しようとして `cannot drop columns from view` エラー)。
+
+対策として、CLI 整備直後に以下を 1 度だけ実行し、CLI 整備時点で既に適用済だった全 migration を `repair` で「適用済」マークする:
+
+```bash
+# CLI 整備時点 (2026-05-06) で既に dev 適用済だった migration 群
+pnpm exec supabase migration repair --status applied 20260426000000
+pnpm exec supabase migration repair --status applied 20260428143738
+pnpm exec supabase migration repair --status applied 20260429000000
+pnpm exec supabase migration repair --status applied 20260430120000
+pnpm exec supabase migration repair --status applied 20260501210240
+pnpm exec supabase migration repair --status applied 20260502165034
+pnpm exec supabase migration repair --status applied 20260502172040
+pnpm exec supabase migration repair --status applied 20260504231456
+pnpm exec supabase migration repair --status applied 20260505030613
+```
+
+その後 `pnpm exec supabase migration list` で「Local + Remote 両方」表示になっていれば成功。以降は `pnpm db:push` で新規 migration のみが流れる正常運用に入れる。
+
+> ⚠️ 本手順は 1 つの Supabase プロジェクトに対して 1 度だけ実行する。CI / 別開発者の手元では `git pull` 後に `supabase link` するだけで `schema_migrations` テーブルが共有されるため、再 repair は不要。
+
 ## 日常運用
 
 ### 新規 migration の追加
