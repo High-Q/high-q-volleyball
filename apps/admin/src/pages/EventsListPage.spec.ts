@@ -3,13 +3,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 
-const { useEventsListDataMock, useVenuesMock, useAuthSessionMock, signOutMock } =
-  vi.hoisted(() => ({
-    useEventsListDataMock: vi.fn(),
-    useVenuesMock: vi.fn(),
-    useAuthSessionMock: vi.fn(),
-    signOutMock: vi.fn(),
-  }));
+const {
+  useEventsListDataMock,
+  useVenuesMock,
+  useAuthSessionMock,
+  signOutMock,
+  usePendingCountMock,
+} = vi.hoisted(() => ({
+  useEventsListDataMock: vi.fn(),
+  useVenuesMock: vi.fn(),
+  useAuthSessionMock: vi.fn(),
+  signOutMock: vi.fn(),
+  usePendingCountMock: vi.fn(),
+}));
 
 vi.mock("@/widgets/events-list/composables/useEventsListData", () => ({
   useEventsListData: useEventsListDataMock,
@@ -22,6 +28,15 @@ vi.mock("@/entities/venue", () => ({
 
 vi.mock("@/features/auth", () => ({
   useAuthSession: useAuthSessionMock,
+}));
+
+vi.mock("@/features/identity-document-pending-badge", () => ({
+  usePendingCount: () => usePendingCountMock(),
+  PendingCountBadge: {
+    name: "PendingCountBadge",
+    props: ["count"],
+    template: '<span data-testid="pending-badge">{{ count }}</span>',
+  },
 }));
 
 import EventsListPage from "./EventsListPage.vue";
@@ -44,6 +59,12 @@ beforeEach(() => {
   });
   signOutMock.mockReset();
   signOutMock.mockResolvedValue(undefined);
+  usePendingCountMock.mockReturnValue({
+    count: ref(0),
+    loading: ref(false),
+    error: ref(null),
+    refresh: vi.fn(),
+  });
 });
 
 afterEach(() => {
@@ -59,6 +80,11 @@ async function renderPage() {
       {
         path: "/events/:id/edit",
         name: "edit",
+        component: { template: "<div />" },
+      },
+      {
+        path: "/identity-documents",
+        name: "identity-documents",
         component: { template: "<div />" },
       },
       { path: "/login", name: "login", component: { template: "<div />" } },
