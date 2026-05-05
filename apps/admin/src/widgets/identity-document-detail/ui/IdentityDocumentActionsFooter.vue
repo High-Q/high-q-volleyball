@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { MemberId } from "@high-q/shared";
+import { DOCUMENT_TYPE_LABELS, type MemberId } from "@high-q/shared";
 import { IdentityDocumentApproveDialog } from "@/features/identity-document-approve";
 import { IdentityDocumentRejectDialog } from "@/features/identity-document-reject";
 import { IdentityDocumentMaskDeleteDialog } from "@/features/identity-document-mask-delete";
@@ -37,6 +37,10 @@ const storagePaths = computed(() => ({
   front: props.detail.storage_path_front,
   back: props.detail.storage_path_back,
 }));
+
+const documentTypeLabel = computed(
+  () => DOCUMENT_TYPE_LABELS[props.detail.document_type],
+);
 
 function onReviewed() {
   emit("reviewed");
@@ -78,7 +82,7 @@ function onReviewed() {
       :document-id="props.detail.id"
       :admin-member-id="props.adminMemberId"
       :member-name="props.detail.member.display_name"
-      :document-type-label="props.detail.document_type"
+      :document-type-label="documentTypeLabel"
       :disabled="isAlreadyReviewed"
       @approved="onReviewed"
     />
