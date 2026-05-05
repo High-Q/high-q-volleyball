@@ -74,8 +74,8 @@ defineExpose({ open });
       <AlertDialogHeader>
         <AlertDialogTitle>この書類を承認しますか?</AlertDialogTitle>
         <AlertDialogDescription>
-          {{ memberName }} さんの {{ documentTypeLabel }} を承認します。
-          承認後はユーザーが予約できる状態になります。
+          {{ memberName }} さんの {{ documentTypeLabel }} を本人確認完了として承認します。
+          承認後も引き続きサークル機能をご利用いただけます。
         </AlertDialogDescription>
       </AlertDialogHeader>
 

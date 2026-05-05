@@ -281,7 +281,7 @@ signed URL 取得失敗時はタイル内に inline error「画像を取得で�
 詳細画面の `IdentityDocumentActionsFooter` は MUST 「承認」ボタンを提供する。`status === 'pending'` のときのみ active、それ以外は disabled。
 
 押下時の挙動:
-1. `AlertDialog` 表示: タイトル「この書類を承認しますか?」 + 説明「{display_name} さんの {document_type} を承認します。承認後はユーザーが予約できる状態になります。」 + ボタン「キャンセル」「承認する」
+1. `AlertDialog` 表示: タイトル「この書類を承認しますか?」 + 説明「{display_name} さんの {document_type の日本語ラベル} を本人確認完了として承認します。承認後も引き続きサークル機能をご利用いただけます。」 + ボタン「キャンセル」「承認する」 — `document_type` は `DOCUMENT_TYPE_LABELS` (日本語) に変換して表示する MUST (生 enum 値の表示禁止)
 2. 「承認する」確定で `update identity_documents set status='approved', reviewed_at=now(), reviewed_by=<admin_member_id> where id=:id and status='pending'` を発行
 3. 成功 (1 行更新) 時: Toast「承認しました」を表示し、`/identity-documents` 一覧へ戻る
 4. WHERE 句で 0 行更新 (既に他 admin が処理済) の場合: AlertDialog 内に inline error「既に他の管理者が処理しました」+ 一覧へ戻る CTA
