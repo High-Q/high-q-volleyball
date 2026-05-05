@@ -64,7 +64,7 @@ async function handleCancel() {
       <div class="flex flex-col gap-hq-1 min-w-0">
         <PageBreadcrumb
           :items="[
-            { label: 'Workspace' },
+            { label: 'Workspace', to: { name: 'events' } },
             { label: 'Events', to: { name: 'events' } },
             { label: mode === 'create' ? '新規作成' : '編集' },
           ]"

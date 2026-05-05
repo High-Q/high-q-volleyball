@@ -161,6 +161,13 @@ app → pages → widgets → features → entities → shared
 
 Design フェーズで必ずチェック: 影響レイヤー / ビジネス異常系列挙 + UI フィードバック / Loading・Empty・Error・Success 4 状態 / モバイルファースト / アクセシビリティ AA / デザイントークン使用（マジックナンバー禁止）/ **E2E ハッピーパス試験の対象シナリオ列挙**。
 
+### グローバル UI 規約（厳守・違反したら revert）
+
+- **フォーム入力**: 生 `<label>` + `<input>` / `<textarea>` の直書き禁止。MUST `shared/ui/FormField` でラップし、`:error` prop で error 駆動。**初期表示で赤枠を出さない**。必須マーク `*` は使わずラベルに「(必須)」と書く。詳細: `docs/05-インターフェース/01-UI設計方針.md` 「admin / reservation のフォーム実装ルール」
+- **パンくず**: 各 Page / Widget で `<nav aria-label="パンくず">` を独自実装することを禁止。MUST `widgets/page-breadcrumb/PageBreadcrumb` widget のみで実装し、Page header の **1 箇所のみ**配置。Widget 側 (TopBar 等) で重複させない。第 1 セグメント `Workspace` は `to: { name: 'events' }` で admin TOP リンク化必須。詳細: `docs/05-インターフェース/01-UI設計方針.md` 「ナビゲーション規約」
+- **横遷移リンクの双方向性**: 画面 A から画面 B への遷移リンクを置いたら、B → A の戻り経路 (パンくず or 別リンク) も必ず用意する SHALL
+- **新規 Page / Widget 実装前**: 既存の同種 Page (例: EventDetailPage) を **必ず先に読み**、レイアウト構造 / breadcrumb 構造 / header 配置を踏襲する MUST。独自解釈で書かない
+
 新規 feature の Apply に E2E を含める際、**機能あたり 1〜2 件まで**（happy path + 主要 edge case）を上限とする。詳細バリエーションは component test に押し下げる。E2E が肥大化していると感じたら、追加でなく既存テストの component test 化を検討する。詳細は `docs/07-テスト/01-テスト戦略・方針.md` の「E2E スケーラビリティ運用ルール」を参照。
 
 詳細チェックリストは `docs/05-インターフェース/01-UI設計方針.md`。

@@ -39,7 +39,7 @@ async function onSignOut(): Promise<void> {
       <div>
         <PageBreadcrumb
           :items="[
-            { label: 'Workspace' },
+            { label: 'Workspace', to: { name: 'events' } },
             {
               label: 'Identity Documents',
               to: { name: 'identity-documents' },
