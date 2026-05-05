@@ -34,12 +34,12 @@ const EXPERIENCE_BADGE_CLASS: Record<string, string> = {
 
 <template>
   <section
-    class="flex flex-col gap-hq-3 rounded-hq-md border border-hairline bg-paper p-hq-6"
+    class="flex flex-col gap-hq-2 rounded-hq-md border border-hairline bg-paper p-hq-4"
     aria-labelledby="member-info-kicker"
   >
     <Kicker id="member-info-kicker">— 会員情報</Kicker>
     <div class="flex flex-col gap-hq-2">
-      <p class="font-jp text-lg font-medium text-ink">
+      <p class="font-jp text-base font-medium text-ink">
         {{ props.member.display_name }}
       </p>
       <dl class="grid grid-cols-1 gap-hq-2 sm:grid-cols-2">

@@ -119,26 +119,29 @@ function isMyNumber(type: string): boolean {
     <template v-else-if="detail">
       <IdentityDocumentDetailTopBar :detail="detail" />
 
-      <div class="flex flex-1 flex-col gap-hq-6 overflow-auto px-hq-8 py-hq-6">
-        <IdentityDocumentMemberCard :member="detail.member" />
+      <div class="flex flex-1 flex-col gap-hq-4 overflow-auto px-hq-8 py-hq-4">
+        <!-- 会員情報 + 書類情報 を 1 段に並べる (md 以上で横並び、密度を上げる) -->
+        <div class="grid grid-cols-1 gap-hq-3 md:grid-cols-2">
+          <IdentityDocumentMemberCard :member="detail.member" />
 
-        <section
-          class="flex flex-col gap-hq-3 rounded-hq-md border border-hairline bg-paper p-hq-6"
-          aria-labelledby="document-info-kicker"
-        >
-          <Kicker id="document-info-kicker">— 書類情報</Kicker>
-          <p class="font-jp text-base font-medium text-ink">
-            {{ DOCUMENT_TYPE_LABELS[detail.document_type] }}
-          </p>
-          <p class="font-jp text-sm text-muted">
-            <template v-if="isMyNumber(detail.document_type)">
-              個人番号 12 桁が完全マスク済みであること
-            </template>
-            <template v-else>
-              {{ DOCUMENT_TYPE_REQUIREMENTS[detail.document_type] }}
-            </template>
-          </p>
-        </section>
+          <section
+            class="flex flex-col gap-hq-2 rounded-hq-md border border-hairline bg-paper p-hq-4"
+            aria-labelledby="document-info-kicker"
+          >
+            <Kicker id="document-info-kicker">— 書類情報</Kicker>
+            <p class="font-jp text-base font-medium text-ink">
+              {{ DOCUMENT_TYPE_LABELS[detail.document_type] }}
+            </p>
+            <p class="font-jp text-sm text-muted">
+              <template v-if="isMyNumber(detail.document_type)">
+                個人番号 12 桁が完全マスク済みであること
+              </template>
+              <template v-else>
+                {{ DOCUMENT_TYPE_REQUIREMENTS[detail.document_type] }}
+              </template>
+            </p>
+          </section>
+        </div>
 
         <IdentityDocumentMynumberReminder
           v-if="isMyNumber(detail.document_type)"
@@ -158,7 +161,7 @@ function isMyNumber(type: string): boolean {
 
         <section
           v-if="detail.rejection_reason"
-          class="flex flex-col gap-hq-2 rounded-hq-md border border-danger/40 bg-danger-soft p-hq-4"
+          class="flex flex-col gap-hq-1 rounded-hq-md border border-danger/40 bg-danger-soft p-hq-3"
         >
           <p class="font-mono text-xs uppercase tracking-widest text-danger">
             差し戻し理由

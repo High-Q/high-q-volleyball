@@ -34,7 +34,7 @@ const STATUS_BADGE_CLASS: Record<string, string> = {
 
 <template>
   <header
-    class="flex flex-col gap-hq-3 border-b border-hairline bg-paper px-hq-8 py-hq-5"
+    class="flex flex-col gap-hq-2 border-b border-hairline bg-paper px-hq-8 py-hq-3"
   >
     <nav aria-label="パンくず" class="font-mono text-xs text-muted">
       <RouterLink
