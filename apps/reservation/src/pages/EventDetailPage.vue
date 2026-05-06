@@ -2,7 +2,6 @@
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Button, Kicker } from "@high-q/ui";
-import { useAuthSession } from "@/features/auth";
 import {
   EventInfoBlock,
   EventStickyCta,
@@ -14,7 +13,6 @@ import { formatJaDate } from "@/shared/lib/format-date";
 
 const route = useRoute();
 const router = useRouter();
-const session = useAuthSession();
 
 const idRef = computed(() => String(route.params.id ?? ""));
 const { event, loading, error, notFound, reload } = useEventDetail(idRef);
@@ -25,9 +23,8 @@ const dateLabel = computed(() =>
 
 const bookingSheetOpen = ref<boolean>(false);
 
-async function onLogout(): Promise<void> {
-  await session.signOut();
-  void router.push({ name: "login" });
+function goToProfile(): void {
+  void router.push({ name: "profile" });
 }
 
 function goToList(): void {
@@ -50,8 +47,8 @@ function goToList(): void {
         />
         <span class="font-jp-display text-lg text-ink mt-hq-1">High Q</span>
       </div>
-      <Button variant="ghost" type="button" @click="onLogout">
-        ログアウト
+      <Button variant="ghost" type="button" @click="goToProfile">
+        プロフィール
       </Button>
     </header>
 
