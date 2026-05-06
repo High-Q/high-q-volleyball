@@ -12,6 +12,7 @@ import LoginPage from "@/pages/LoginPage.vue";
 import SignupProfilePage from "@/pages/SignupProfilePage.vue";
 import LinkSentPage from "@/pages/LinkSentPage.vue";
 import AuthCallbackPage from "@/pages/AuthCallbackPage.vue";
+import ProfilePage from "@/pages/ProfilePage.vue";
 import { useAuthSession } from "@/features/auth";
 
 const routes: RouteRecordRaw[] = [
@@ -51,6 +52,11 @@ const routes: RouteRecordRaw[] = [
     path: "/signup/identity",
     name: "signup-identity",
     component: () => import("@/pages/SignupIdentityPage.vue"),
+  },
+  {
+    path: "/profile",
+    name: "profile",
+    component: ProfilePage,
   },
   {
     path: "/auth/callback",
