@@ -23,13 +23,13 @@
 
 ## 4. STATS セクション + 予約履歴データ取得
 
-- [ ] 4.1 `apps/reservation/src/entities/reservation/api/fetchMyReservations.ts` を新設し、`reservations × events × venues` JOIN で自分の予約を `start_at DESC` 順に取得する関数を実装
-- [ ] 4.2 `fetchMyReservations.spec.ts` で「自分の行のみ返る（RLS）」「JOIN フィールドが揃う」「降順ソート」をテスト
-- [ ] 4.3 `apps/reservation/src/features/profile-stats/lib/computeStats.ts` を新設し、予約配列から `attendedCount` / `lastAttendedAt` / `nextUpcoming` を算出する pure function を実装
-- [ ] 4.4 `computeStats.spec.ts` で「3 件 attended / 2 件 reserved 未来 / 1 件 cancelled」「0 件」「reserved だが過去（次回予定から除外）」の集計シナリオをテスト
-- [ ] 4.5 `apps/reservation/src/features/profile-stats/StatsSection.vue` で kicker + 数値 3 行 + 履歴一覧（開催日 / イベント名 / 状態バッジ）を実装。Empty 時は「まだ参加履歴がありません」表示
-- [ ] 4.6 状態バッジコンポーネント `apps/reservation/src/features/profile-stats/ui/ReservationStatusBadge.vue` で 5 種ステータス（reserved / attended / cancelled / no_show / waitlist）の表示ラベルを切り替え
-- [ ] 4.7 ProfilePage で `fetchMyReservations` を呼び、StatsSection に渡す
+- [x] 4.1 `apps/reservation/src/entities/reservation/api/fetchMyReservations.ts` を新設し、`reservations × events × venues` JOIN で自分の予約を `start_at DESC` 順に取得する関数を実装
+- [x] 4.2 `fetchMyReservations.spec.ts` で「自分の行のみ返る（RLS）」「JOIN フィールドが揃う」「降順ソート」をテスト
+- [x] 4.3 `apps/reservation/src/features/profile-stats/lib/computeStats.ts` を新設し、予約配列から `attendedCount` / `lastAttendedAt` / `nextUpcoming` を算出する pure function を実装
+- [x] 4.4 `computeStats.spec.ts` で「3 件 attended / 2 件 reserved 未来 / 1 件 cancelled」「0 件」「reserved だが過去（次回予定から除外）」の集計シナリオをテスト
+- [x] 4.5 `apps/reservation/src/features/profile-stats/StatsSection.vue` で kicker + 数値 3 行 + 履歴一覧（開催日 / イベント名 / 状態バッジ）を実装。Empty 時は「まだ参加履歴がありません」表示
+- [x] 4.6 状態バッジコンポーネント `apps/reservation/src/features/profile-stats/ui/ReservationStatusBadge.vue` で 5 種ステータス（reserved / attended / cancelled / no_show / waitlist）の表示ラベルを切り替え
+- [x] 4.7 ProfilePage で `fetchMyReservations` を呼び、StatsSection に渡す
 
 ## 5. キャンセル動線（履歴一覧から）
 
