@@ -6,6 +6,7 @@ const baseMember: Member = {
   id: "00000000-0000-0000-0000-000000000001" as MemberId,
   email: "test@example.com",
   displayName: "test",
+  nickname: null,
   birthday: "1995-03-15",
   phone: "090-1234-5678",
   experienceLevel: "beginner",

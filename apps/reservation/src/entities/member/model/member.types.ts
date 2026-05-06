@@ -16,6 +16,7 @@ export type Member = {
   id: MemberId;
   email: string;
   displayName: string;
+  nickname: string | null;
   birthday: string;
   phone: string | null;
   experienceLevel: ExperienceLevel;
@@ -29,6 +30,7 @@ export type MemberRow = {
   id: string;
   email: string;
   display_name: string;
+  nickname: string | null;
   birthday: string;
   phone: string | null;
   experience_level: string;

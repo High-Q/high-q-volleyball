@@ -18,6 +18,7 @@ vi.mock("./useAuthSession", () => ({
 
 const validForm = {
   display_name: "田中 美咲",
+  nickname: "",
   birthday: "1995-03-15",
   phone: "090-1234-5678",
   experience_level: "beginner",
@@ -61,12 +62,13 @@ describe("useCompleteProfile", () => {
     expect(updateMock).not.toHaveBeenCalled();
   });
 
-  it("成功時に updateMyMember + session.refresh を呼ぶ", async () => {
+  it("成功時に updateMyMember + session.refresh を呼ぶ（ニックネーム空欄は null で送信）", async () => {
     const { useCompleteProfile } = await import("./useCompleteProfile");
     const c = useCompleteProfile();
     await c.submit(validForm);
     expect(updateMock).toHaveBeenCalledWith("uid-1", {
       displayName: "田中 美咲",
+      nickname: null,
       birthday: "1995-03-15",
       phone: "090-1234-5678",
       experienceLevel: "beginner",
@@ -74,6 +76,49 @@ describe("useCompleteProfile", () => {
     });
     expect(refreshMock).toHaveBeenCalled();
     expect(c.status.value).toBe("success");
+  });
+
+  it("ニックネーム正常入力で payload に値が含まれる", async () => {
+    const { useCompleteProfile } = await import("./useCompleteProfile");
+    const c = useCompleteProfile();
+    await c.submit({ ...validForm, nickname: "ミサキ" });
+    expect(updateMock).toHaveBeenCalledWith(
+      "uid-1",
+      expect.objectContaining({ nickname: "ミサキ" }),
+    );
+    expect(c.status.value).toBe("success");
+  });
+
+  it("ニックネーム文字数オーバーで validation エラー", async () => {
+    const { useCompleteProfile } = await import("./useCompleteProfile");
+    const c = useCompleteProfile();
+    await c.submit({ ...validForm, nickname: "あ".repeat(16) });
+    expect(c.fieldErrors.value.nickname).toMatch(/15 文字/);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("ニックネームに数字を含むと validation エラー", async () => {
+    const { useCompleteProfile } = await import("./useCompleteProfile");
+    const c = useCompleteProfile();
+    await c.submit({ ...validForm, nickname: "たろ123" });
+    expect(c.fieldErrors.value.nickname).toMatch(/日本語と英字/);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("ニックネームに記号を含むと validation エラー", async () => {
+    const { useCompleteProfile } = await import("./useCompleteProfile");
+    const c = useCompleteProfile();
+    await c.submit({ ...validForm, nickname: "たろ★" });
+    expect(c.fieldErrors.value.nickname).toMatch(/日本語と英字/);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("ニックネームに絵文字を含むと validation エラー", async () => {
+    const { useCompleteProfile } = await import("./useCompleteProfile");
+    const c = useCompleteProfile();
+    await c.submit({ ...validForm, nickname: "たろ🏐" });
+    expect(c.fieldErrors.value.nickname).toMatch(/日本語と英字/);
+    expect(updateMock).not.toHaveBeenCalled();
   });
 
   it("session が無いとエラー (起動順異常)", async () => {

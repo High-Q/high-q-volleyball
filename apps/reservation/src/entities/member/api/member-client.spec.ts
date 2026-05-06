@@ -14,6 +14,7 @@ const memberRow = {
   id: UID,
   email: "test@example.com",
   display_name: "test",
+  nickname: "ミサキ",
   birthday: "1995-03-15",
   phone: "090-1234-5678",
   experience_level: "beginner",
@@ -42,7 +43,22 @@ describe("fetchMyMember", () => {
     expect(eq).toHaveBeenCalledWith("id", UID);
     expect(result?.id).toBe(UID);
     expect(result?.displayName).toBe("test");
+    expect(result?.nickname).toBe("ミサキ");
     expect(result?.profile.signup_completed).toBe(true);
+  });
+
+  it("nickname が NULL の行を Member 型に変換すると null として返す", async () => {
+    const single = vi.fn().mockResolvedValue({
+      data: { ...memberRow, nickname: null },
+      error: null,
+    });
+    supabaseMock.from.mockReturnValue({
+      select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: single })) })),
+    });
+
+    const { fetchMyMember } = await import("./member-client");
+    const result = await fetchMyMember(UID);
+    expect(result?.nickname).toBeNull();
   });
 
   it("行が無い場合は null を返す", async () => {
@@ -98,6 +114,7 @@ describe("updateMyMember", () => {
     const { updateMyMember } = await import("./member-client");
     await updateMyMember(UID, {
       displayName: "新しい名前",
+      nickname: "ミサキ",
       birthday: "1995-03-15",
       phone: "090-1234-5678",
       experienceLevel: "beginner",
@@ -108,6 +125,7 @@ describe("updateMyMember", () => {
     expect(updateFn).toHaveBeenCalledWith(
       expect.objectContaining({
         display_name: "新しい名前",
+        nickname: "ミサキ",
         profile: expect.objectContaining({
           existing_key: "preserved",
           signup_completed: true,
@@ -144,6 +162,7 @@ describe("updateMyMember", () => {
     const { updateMyMember } = await import("./member-client");
     await updateMyMember(UID, {
       displayName: "x",
+      nickname: null,
       birthday: "2000-01-01",
       phone: "090-0000-0000",
       experienceLevel: "intermediate",
@@ -152,6 +171,7 @@ describe("updateMyMember", () => {
 
     expect(updateFn).toHaveBeenCalledWith(
       expect.objectContaining({
+        nickname: null,
         profile: { signup_completed: true, terms_agreed_at: "2026-05-02T00:00:00Z" },
       }),
     );
