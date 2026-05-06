@@ -11,7 +11,17 @@
       <v-divider class="my-6" color="white" opacity="0.2" />
 
       <div class="footer-legal text-center mb-4">
-        <a href="/external-transmission" class="footer-legal__link">外部送信ポリシー</a>
+        <a
+          href="/privacy"
+          class="footer-legal__link"
+          data-testid="footer-privacy-link"
+        >プライバシーポリシー</a>
+        <span class="footer-legal__sep" aria-hidden="true">/</span>
+        <a
+          href="/external-transmission"
+          class="footer-legal__link"
+          data-testid="footer-external-transmission-link"
+        >外部送信ポリシー</a>
         <span class="footer-legal__sep" aria-hidden="true">/</span>
         <a
           href="#"

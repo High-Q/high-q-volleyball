@@ -74,6 +74,24 @@ describe("SignupProfilePage (段階2: 情報入力 + UPDATE)", () => {
     expect(cta?.attributes("disabled")).toBeUndefined();
   });
 
+  it("同意チェックボックスのプライバシーポリシーリンクが LP オリジン /privacy を新規タブで開く", async () => {
+    const { wrapper } = await mountAt();
+    const privacyLink = wrapper.find('[data-testid="signup-privacy-link"]');
+    expect(privacyLink.exists()).toBe(true);
+    expect(privacyLink.attributes("href")).toMatch(/\/privacy$/);
+    expect(privacyLink.attributes("target")).toBe("_blank");
+    expect(privacyLink.attributes("rel")).toBe("noreferrer");
+  });
+
+  it("PolicyFooter のプライバシーリンクが LP オリジン /privacy を新規タブで開く", async () => {
+    const { wrapper } = await mountAt();
+    const link = wrapper.find('[data-testid="policy-footer-privacy-link"]');
+    expect(link.exists()).toBe(true);
+    expect(link.attributes("href")).toMatch(/\/privacy$/);
+    expect(link.attributes("target")).toBe("_blank");
+    expect(link.attributes("rel")).toBe("noreferrer");
+  });
+
   it("送信時に submit が呼ばれ、success で /signup/identity (Step 3 of 3) に遷移", async () => {
     const { wrapper, router } = await mountAt();
     await wrapper.find('input[autocomplete="name"]').setValue("田中 美咲");

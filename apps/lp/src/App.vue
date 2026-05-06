@@ -4,6 +4,7 @@
     <v-main :class="{ 'main-no-pad': pathname === '/' }">
       <HomePage v-if="pathname === '/'"></HomePage>
       <ExternalTransmissionPage v-else-if="pathname === '/external-transmission'" />
+      <PrivacyPolicyPage v-else-if="pathname === '/privacy'" />
       <NotFoundView v-else />
     </v-main>
     <FooterLine></FooterLine>
@@ -18,6 +19,7 @@ import FooterLine from "@shared/ui/FooterLine.vue";
 import NotFoundView from "@shared/ui/NotFoundView.vue";
 import { HomePage } from "@pages/home";
 import { ExternalTransmissionPage } from "@pages/external-transmission";
+import { PrivacyPolicyPage } from "@pages/privacy";
 import { ConsentBanner } from "@widgets/consent-banner";
 import { getConsent, onConsentChange } from "@high-q/shared/consent";
 import { loadGtm } from "@shared/lib/loadGtm";

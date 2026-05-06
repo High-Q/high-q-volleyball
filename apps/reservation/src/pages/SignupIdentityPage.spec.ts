@@ -69,12 +69,6 @@ const Stub = defineComponent({ template: "<div/>" });
 const routes = [
   { path: "/", name: "home", component: Stub },
   { path: "/signup/identity", name: "signup-identity", component: Stub },
-  { path: "/privacy", name: "privacy", component: Stub },
-  {
-    path: "/external-transmission",
-    name: "external-transmission",
-    component: Stub,
-  },
 ];
 
 beforeEach(() => {
@@ -152,6 +146,15 @@ describe("SignupIdentityPage — 初期描画 (empty)", () => {
     expect(wrapper.text()).toContain("プライバシーポリシー");
     expect(wrapper.text()).toContain("外部送信ポリシー");
     expect(wrapper.text()).toContain("Supabase");
+  });
+
+  it("プライバシーポリシーリンクは LP オリジンの /privacy を新規タブで開く", async () => {
+    const { wrapper } = await mountPage();
+    const privacyLink = wrapper.find('[data-testid="policy-footer-privacy-link"]');
+    expect(privacyLink.exists()).toBe(true);
+    expect(privacyLink.attributes("href")).toMatch(/\/privacy$/);
+    expect(privacyLink.attributes("target")).toBe("_blank");
+    expect(privacyLink.attributes("rel")).toBe("noreferrer");
   });
 });
 

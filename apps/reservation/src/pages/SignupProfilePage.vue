@@ -5,6 +5,7 @@ import { Button, Kicker } from "@high-q/ui";
 import FormField from "@/shared/ui/FormField.vue";
 import Input from "@/shared/ui/Input.vue";
 import PolicyFooter from "@/shared/ui/PolicyFooter.vue";
+import { PRIVACY_POLICY_URL } from "@/shared/lib/externalLinks";
 import { useAuthSession, useCompleteProfile } from "@/features/auth";
 
 const profileLead =
@@ -202,7 +203,13 @@ async function onSubmit() {
           />
           <span>
             <a href="#" class="text-accent underline">利用規約</a> と
-            <a href="#" class="text-accent underline">プライバシーポリシー</a>
+            <a
+              :href="PRIVACY_POLICY_URL"
+              target="_blank"
+              rel="noreferrer"
+              class="text-accent underline"
+              data-testid="signup-privacy-link"
+            >プライバシーポリシー</a>
             に同意します。
           </span>
         </label>
