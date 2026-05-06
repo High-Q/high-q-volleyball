@@ -33,12 +33,12 @@
 
 ## 5. キャンセル動線（履歴一覧から）
 
-- [ ] 5.1 既存 `apps/reservation/src/features/booking/` のキャンセル UPDATE ロジックを `cancelReservation(reservationId)` として共通化（reservation-booking-flow と兼用）
-- [ ] 5.2 `cancelReservation.spec.ts` で「成功で status=cancelled」「他人の予約は RLS で失敗」「開始済イベントはアプリ層でも弾く」をテスト
-- [ ] 5.3 履歴一覧の各行で `status='reserved'` AND `events.start_at > now()` の予約にキャンセルボタンを表示
-- [ ] 5.4 ConfirmDialog（shadcn-vue Dialog 流用）→ 確定で `cancelReservation` 呼び出し → 対象行をローカルで `status='cancelled'` に書き換え + 完了トースト
-- [ ] 5.5 開催開始以降の予約はキャンセルボタン非表示（DOM 上に存在しない）
-- [ ] 5.6 キャンセル後 STATS の「次回予定」が再計算されることを確認
+- [x] 5.1 既存 `apps/reservation/src/features/booking/` のキャンセル UPDATE ロジックを `cancelReservation(reservationId)` として共通化（reservation-booking-flow と兼用）
+- [x] 5.2 `cancelReservation.spec.ts` で「成功で status=cancelled」「他人の予約は RLS で失敗」「開始済イベントはアプリ層でも弾く」をテスト
+- [x] 5.3 履歴一覧の各行で `status='reserved'` AND `events.start_at > now()` の予約にキャンセルボタンを表示
+- [x] 5.4 ConfirmDialog（shadcn-vue Dialog 流用）→ 確定で `cancelReservation` 呼び出し → 対象行をローカルで `status='cancelled'` に書き換え + 完了トースト
+- [x] 5.5 開催開始以降の予約はキャンセルボタン非表示（DOM 上に存在しない）
+- [x] 5.6 キャンセル後 STATS の「次回予定」が再計算されることを確認
 
 ## 6. ACCOUNT セクション（表示）
 

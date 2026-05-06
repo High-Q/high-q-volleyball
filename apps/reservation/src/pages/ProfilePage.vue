@@ -6,6 +6,7 @@ import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 import { ProfileHeader } from "@/widgets/profile-header";
 import { LevelEditSection } from "@/features/profile-level-edit";
 import { StatsSection } from "@/features/profile-stats";
+import { CancelBookingDialog, useCancelBooking } from "@/features/booking";
 import {
   fetchMyReservations,
   type MyReservationItem,
@@ -17,6 +18,14 @@ const member = computed(() => session.member.value);
 const reservations = ref<MyReservationItem[]>([]);
 const loading = ref<boolean>(true);
 const fetchError = ref<string | null>(null);
+
+const cancelTarget = ref<MyReservationItem | null>(null);
+const cancelDialogOpen = ref<boolean>(false);
+const { submitting: cancelSubmitting, error: cancelError, cancel } =
+  useCancelBooking();
+
+const successNotice = ref<string | null>(null);
+let successTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function load(): Promise<void> {
   if (member.value === null) return;
@@ -39,9 +48,48 @@ onMounted(() => {
 });
 
 function onRequestCancel(item: MyReservationItem): void {
-  // G5 で実装する。一旦 console に流す。
-  void item;
+  cancelTarget.value = item;
+  cancelDialogOpen.value = true;
 }
+
+function showSuccess(message: string): void {
+  successNotice.value = message;
+  if (successTimer !== null) clearTimeout(successTimer);
+  successTimer = setTimeout(() => {
+    successNotice.value = null;
+  }, 4000);
+}
+
+async function onConfirmCancel(): Promise<void> {
+  const target = cancelTarget.value;
+  if (target === null) return;
+  const ok = await cancel(target.id);
+  if (ok) {
+    // ローカルで対象行を 'cancelled' に書き換え (再 fetch 不要)
+    reservations.value = reservations.value.map((r) =>
+      r.id === target.id ? { ...r, status: "cancelled" } : r,
+    );
+    cancelDialogOpen.value = false;
+    cancelTarget.value = null;
+    showSuccess("予約をキャンセルしました。");
+  }
+}
+
+const cancelErrorMessage = computed(() => {
+  switch (cancelError.value) {
+    case "rls":
+      return "この予約はキャンセルできません。";
+    case "network":
+      return "通信エラーが発生しました。再試行してください。";
+    case "duplicate":
+    case "not_cancellable":
+    case "unknown":
+      return "キャンセル処理に失敗しました。";
+    case null:
+      return undefined;
+  }
+  return undefined;
+});
 </script>
 
 <template>
@@ -63,6 +111,13 @@ function onRequestCancel(item: MyReservationItem): void {
     <section class="flex-1 px-hq-5 py-hq-6 flex flex-col gap-hq-6">
       <template v-if="member !== null">
         <ProfileHeader :member="member" />
+
+        <p
+          v-if="successNotice !== null"
+          role="status"
+          class="bg-accent-soft text-accent border border-accent rounded-hq-md px-hq-4 py-hq-3 font-jp text-sm m-0"
+          data-testid="profile-success-notice"
+        >{{ successNotice }}</p>
 
         <div
           v-if="fetchError !== null"
@@ -88,5 +143,15 @@ function onRequestCancel(item: MyReservationItem): void {
         />
       </template>
     </section>
+
+    <CancelBookingDialog
+      v-if="cancelTarget !== null"
+      :open="cancelDialogOpen"
+      :event-start-at="cancelTarget.event.startAt"
+      :submitting="cancelSubmitting"
+      :error-message="cancelErrorMessage"
+      @update:open="cancelDialogOpen = $event"
+      @confirm="onConfirmCancel"
+    />
   </main>
 </template>
