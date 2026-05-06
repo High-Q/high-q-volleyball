@@ -1,5 +1,11 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import { useAuthSession } from "@/features/auth";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
+import { ProfileHeader } from "@/widgets/profile-header";
+
+const session = useAuthSession();
+const member = computed(() => session.member.value);
 </script>
 
 <template>
@@ -19,7 +25,8 @@ import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
     </header>
 
     <section class="flex-1 px-hq-5 py-hq-6 flex flex-col gap-hq-6">
-      <!-- 後続タスクで Header / LEVEL / ACCOUNT / STATS / SignOut を組み込む -->
+      <ProfileHeader v-if="member !== null" :member="member" />
+      <!-- 後続タスクで LEVEL / ACCOUNT / STATS / SignOut を組み込む -->
     </section>
   </main>
 </template>

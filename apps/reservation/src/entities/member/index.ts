@@ -15,3 +15,5 @@ export { createExperienceLevel } from "./model/experienceLevel";
 export { isProfileComplete } from "./model/isProfileComplete";
 export { fetchMyMember, updateMyMember } from "./api/member-client";
 export { fetchHasIdentityDocument } from "./api/identity-document-existence";
+export { resolveMemberDisplayName } from "./lib/resolveMemberDisplayName";
+export { formatMemberShortId } from "./lib/formatMemberShortId";

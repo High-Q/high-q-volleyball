@@ -7,11 +7,11 @@
 
 ## 2. ヘッダ Widget
 
-- [ ] 2.1 `apps/reservation/src/widgets/profile-header/ProfileHeader.vue` を新設（アバター + 表示名 + メール + ID 表示）
-- [ ] 2.2 表示名は reservation-member-auth の名前優先ルール（`nickname ?? display_name`）で導出するヘルパ `resolveMemberDisplayName(member)` を `apps/reservation/src/entities/member/lib/` に追加し、ユニットテストを書く
-- [ ] 2.3 アバターイニシャル（先頭 1 文字）は `resolveMemberDisplayName` の値から取得し、HQ accentSoft 背景 + accent 文字色で描画
-- [ ] 2.4 ID 表示は `members.id` の末尾 4 文字を大文字英数で `ID · XXXX` 形式に整形するヘルパ `formatMemberShortId(memberId)` を追加し、ユニットテストを書く
-- [ ] 2.5 ProfilePage に ProfileHeader を組み込み、`useAuthSession.member` を渡す
+- [x] 2.1 `apps/reservation/src/widgets/profile-header/ProfileHeader.vue` を新設（アバター + 表示名 + メール + ID 表示）
+- [x] 2.2 表示名は reservation-member-auth の名前優先ルール（`nickname ?? display_name`）で導出するヘルパ `resolveMemberDisplayName(member)` を `apps/reservation/src/entities/member/lib/` に追加し、ユニットテストを書く
+- [x] 2.3 アバターイニシャル（先頭 1 文字）は `resolveMemberDisplayName` の値から取得し、HQ accentSoft 背景 + accent 文字色で描画
+- [x] 2.4 ID 表示は `members.id` の末尾 4 文字を大文字英数で `ID · XXXX` 形式に整形するヘルパ `formatMemberShortId(memberId)` を追加し、ユニットテストを書く
+- [x] 2.5 ProfilePage に ProfileHeader を組み込み、`useAuthSession.member` を渡す
 
 ## 3. LEVEL セクション（経験レベル変更）
 
