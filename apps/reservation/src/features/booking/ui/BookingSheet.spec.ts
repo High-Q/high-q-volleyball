@@ -51,6 +51,7 @@ const member: Member = {
   id: "mb-1" as unknown as Member["id"],
   email: "misaki@example.com",
   displayName: "田中 美咲",
+  nickname: null,
   birthday: "1995-03-15",
   phone: "090-1234-5678",
   experienceLevel: "beginner",

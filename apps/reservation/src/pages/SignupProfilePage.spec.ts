@@ -105,6 +105,48 @@ describe("SignupProfilePage (段階2: 情報入力 + UPDATE)", () => {
     expect(router.currentRoute.value.name).toBe("signup-identity");
   });
 
+  it("ニックネーム入力欄が任意項目として描画される（必須マークなし + ヒント文）", async () => {
+    const { wrapper } = await mountAt();
+    const nickInput = wrapper.find('input[autocomplete="nickname"]');
+    expect(nickInput.exists()).toBe(true);
+    // ラベルに必須マーク * が付いていないこと（ヒント文に「未入力時は氏名で表示」が出ること）
+    expect(wrapper.text()).toContain("ニックネーム");
+    expect(wrapper.text()).toContain("未入力時は氏名で表示されます");
+    expect(wrapper.text()).not.toContain("ニックネーム *");
+  });
+
+  it("ニックネーム入力値が submit payload に渡る", async () => {
+    const { wrapper } = await mountAt();
+    await wrapper.find('input[autocomplete="name"]').setValue("田中 美咲");
+    await wrapper.find('input[autocomplete="nickname"]').setValue("ミサキ");
+    await wrapper.find('input[type="date"]').setValue("1995-03-15");
+    await wrapper.find('input[type="tel"]').setValue("090-1234-5678");
+    await wrapper.find('input[type="checkbox"]').setValue(true);
+    const cta = wrapper.findAll("button").find((b) => b.text().includes("登録する"));
+    await cta?.trigger("click");
+    await flushPromises();
+    expect(submitMock).toHaveBeenCalledWith(
+      expect.objectContaining({ nickname: "ミサキ" }),
+    );
+  });
+
+  it("ニックネームのバリデーションエラー表示", async () => {
+    submitMock.mockImplementation(async () => {
+      status.value = "error";
+      error.value = "validation";
+      fieldErrors.value = {
+        nickname:
+          "ニックネームは日本語と英字のみで入力してください（数字・記号・絵文字は使えません）",
+      };
+    });
+    const { wrapper } = await mountAt();
+    await wrapper.find('input[type="checkbox"]').setValue(true);
+    const cta = wrapper.findAll("button").find((b) => b.text().includes("登録する"));
+    await cta?.trigger("click");
+    await flushPromises();
+    expect(wrapper.text()).toContain("日本語と英字のみ");
+  });
+
   it("バリデーションエラー (氏名) 表示", async () => {
     submitMock.mockImplementation(async () => {
       status.value = "error";

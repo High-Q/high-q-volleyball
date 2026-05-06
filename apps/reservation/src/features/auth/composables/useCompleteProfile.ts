@@ -5,6 +5,7 @@ import {
   createExperienceLevel,
   createPhone,
   updateMyMember,
+  validateOptionalNickname,
 } from "@/entities/member";
 import type { ExperienceLevel } from "@/entities/member";
 import type { AuthError } from "../types";
@@ -12,6 +13,7 @@ import { useAuthSession } from "./useAuthSession";
 
 export type ProfileFormData = {
   display_name: string;
+  nickname: string;
   birthday: string;
   phone: string;
   experience_level: string;
@@ -22,7 +24,12 @@ type SubmitStatus = "idle" | "loading" | "success" | "error";
 
 export type ProfileFieldErrors = Partial<
   Record<
-    "display_name" | "birthday" | "phone" | "experience_level" | "terms",
+    | "display_name"
+    | "nickname"
+    | "birthday"
+    | "phone"
+    | "experience_level"
+    | "terms",
     string
   >
 >;
@@ -55,6 +62,13 @@ export function useCompleteProfile() {
       displayName = createDisplayName(form.display_name);
     } catch (e) {
       errs.display_name = (e as Error).message;
+    }
+
+    let nickname: string | null = null;
+    try {
+      nickname = validateOptionalNickname(form.nickname);
+    } catch (e) {
+      errs.nickname = (e as Error).message;
     }
 
     let birthday = "";
@@ -96,6 +110,7 @@ export function useCompleteProfile() {
     try {
       await updateMyMember(userId, {
         displayName,
+        nickname,
         birthday,
         phone,
         experienceLevel: experience as ExperienceLevel,

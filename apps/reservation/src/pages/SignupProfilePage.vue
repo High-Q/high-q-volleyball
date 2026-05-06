@@ -18,6 +18,7 @@ const { status, error, fieldErrors, submit } = useCompleteProfile();
 
 const form = reactive({
   display_name: "",
+  nickname: "",
   birthday: "",
   phone: "",
   experience_level: "beginner",
@@ -80,6 +81,7 @@ watch(status, (s) => {
 async function onSubmit() {
   await submit({
     display_name: form.display_name,
+    nickname: form.nickname,
     birthday: form.birthday,
     phone: form.phone,
     experience_level: form.experience_level,
@@ -115,6 +117,23 @@ async function onSubmit() {
               v-model="form.display_name"
               autocomplete="name"
               placeholder="例: 田中 美咲"
+              :aria-invalid="ariaInvalid"
+              :disabled="isLoading"
+            />
+          </template>
+        </FormField>
+
+        <FormField
+          label="ニックネーム"
+          hint="未入力時は氏名で表示されます · 1〜15 文字 · 日本語と英字のみ"
+          :error="fieldErrors.nickname"
+        >
+          <template #default="{ fieldId, ariaInvalid }">
+            <Input
+              :id="fieldId"
+              v-model="form.nickname"
+              autocomplete="nickname"
+              placeholder="例: ミサキ"
               :aria-invalid="ariaInvalid"
               :disabled="isLoading"
             />

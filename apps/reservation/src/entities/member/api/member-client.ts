@@ -13,6 +13,7 @@ function rowToMember(row: MemberRow): Member {
     id: createMemberId(row.id),
     email: row.email,
     displayName: row.display_name,
+    nickname: row.nickname,
     birthday: row.birthday,
     phone: row.phone,
     experienceLevel: createExperienceLevel(row.experience_level),
@@ -41,6 +42,7 @@ export async function fetchMyMember(uid: string): Promise<Member | null> {
 
 export type UpdateMemberPayload = {
   displayName: string;
+  nickname: string | null;
   birthday: string;
   phone: string;
   experienceLevel: "beginner" | "intermediate" | "experienced";
@@ -75,6 +77,7 @@ export async function updateMyMember(
     .from("members")
     .update({
       display_name: payload.displayName,
+      nickname: payload.nickname,
       birthday: payload.birthday,
       phone: payload.phone,
       experience_level: payload.experienceLevel,
