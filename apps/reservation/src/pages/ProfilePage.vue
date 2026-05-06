@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useAuthSession } from "@/features/auth";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 import { ProfileHeader } from "@/widgets/profile-header";
+import { LevelEditSection } from "@/features/profile-level-edit";
 
 const session = useAuthSession();
 const member = computed(() => session.member.value);
@@ -25,8 +26,14 @@ const member = computed(() => session.member.value);
     </header>
 
     <section class="flex-1 px-hq-5 py-hq-6 flex flex-col gap-hq-6">
-      <ProfileHeader v-if="member !== null" :member="member" />
-      <!-- 後続タスクで LEVEL / ACCOUNT / STATS / SignOut を組み込む -->
+      <template v-if="member !== null">
+        <ProfileHeader :member="member" />
+        <LevelEditSection
+          :member-id="member.id"
+          :initial-level="member.experienceLevel"
+        />
+      </template>
+      <!-- 後続タスクで ACCOUNT / STATS / SignOut を組み込む -->
     </section>
   </main>
 </template>

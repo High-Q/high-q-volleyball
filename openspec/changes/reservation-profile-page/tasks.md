@@ -15,11 +15,11 @@
 
 ## 3. LEVEL セクション（経験レベル変更）
 
-- [ ] 3.1 `apps/reservation/src/features/profile-level-edit/` を新設（`useLevelEdit.ts` + `LevelEditSection.vue`）
-- [ ] 3.2 `useLevelEdit` で 3 択ラジオの選択 → `supabase.from('members').update({ experience_level }).eq('id', auth.uid())` → `useAuthSession.refresh()` の即時保存ロジックを実装。Smart constructor `createExperienceLevel` を経由する
-- [ ] 3.3 `useLevelEdit.spec.ts` で「成功で UPDATE 発行」「失敗時にロールバック」「enum 外で例外」の 3 シナリオをテスト
-- [ ] 3.4 `LevelEditSection.vue` でデザインサンプル `ScreenRProfile` の LEVEL UI（kicker + 説明文 + 3 ラジオカード + サブテキスト）を実装
-- [ ] 3.5 ProfilePage に LevelEditSection を組み込む
+- [x] 3.1 `apps/reservation/src/features/profile-level-edit/` を新設（`useLevelEdit.ts` + `LevelEditSection.vue`）
+- [x] 3.2 `useLevelEdit` で 3 択ラジオの選択 → `supabase.from('members').update({ experience_level }).eq('id', auth.uid())` → `useAuthSession.refresh()` の即時保存ロジックを実装。Smart constructor `createExperienceLevel` を経由する
+- [x] 3.3 `useLevelEdit.spec.ts` で「成功で UPDATE 発行」「失敗時にロールバック」「enum 外で例外」の 3 シナリオをテスト
+- [x] 3.4 `LevelEditSection.vue` でデザインサンプル `ScreenRProfile` の LEVEL UI（kicker + 説明文 + 3 ラジオカード + サブテキスト）を実装
+- [x] 3.5 ProfilePage に LevelEditSection を組み込む
 
 ## 4. STATS セクション + 予約履歴データ取得
 
