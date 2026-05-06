@@ -48,4 +48,4 @@
 - [x] 7.4 ローカル `pnpm --filter @high-q/reservation dev` を起動し、認証済み + プロフィール未完成の状態で `/signup/profile` を開いてニックネーム入力欄が表示されること、空欄送信が成功すること、不正値（数字 / 記号 / 絵文字 / 16 文字超）でフィールドエラーが出ることを手動確認する（翔太郎くん 2026-05-07 OK サイン）
 - [x] 7.5 dev DB を直接確認し、ニックネーム入力ありで登録した会員行に nickname 列が正しく保存されていること、空欄送信した会員行が NULL になっていることを確認する（テスト終了後は手動で UPDATE で初期値「たろ」に戻す）
 - [x] 7.6 grep で会員視点で名前を表示している既存箇所がないことを再確認する（`apps/reservation/src/pages/` `apps/reservation/src/widgets/` `apps/reservation/src/features/` 配下で `displayName` / `display_name` 直書き、`member.displayName` 参照）
-- [ ] 7.7 翔太郎くんへの完了報告を作成する。`apps/reservation` のみの UI 変更 + DB migration のため CLAUDE.md ルールに従い「Render PR Preview は生成されないためローカル `pnpm --filter @high-q/reservation dev` で動作確認をお願いします」と明記する
+- [x] 7.7 翔太郎くんへの完了報告を作成する。`apps/reservation` のみの UI 変更 + DB migration のため CLAUDE.md ルールに従い「Render PR Preview は生成されないためローカル `pnpm --filter @high-q/reservation dev` で動作確認をお願いします」と明記する（PR #209 で起票）
