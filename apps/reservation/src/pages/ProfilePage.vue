@@ -6,6 +6,7 @@ import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 import { ProfileHeader } from "@/widgets/profile-header";
 import { LevelEditSection } from "@/features/profile-level-edit";
 import { StatsSection } from "@/features/profile-stats";
+import { AccountSection } from "@/features/profile-account";
 import { CancelBookingDialog, useCancelBooking } from "@/features/booking";
 import {
   fetchMyReservations,
@@ -50,6 +51,13 @@ onMounted(() => {
 function onRequestCancel(item: MyReservationItem): void {
   cancelTarget.value = item;
   cancelDialogOpen.value = true;
+}
+
+type EditField = "displayName" | "nickname" | "email" | "phone";
+const editField = ref<EditField | null>(null);
+
+function onEditAccount(field: EditField): void {
+  editField.value = field;
 }
 
 function showSuccess(message: string): void {
@@ -134,6 +142,8 @@ const cancelErrorMessage = computed(() => {
           :member-id="member.id"
           :initial-level="member.experienceLevel"
         />
+
+        <AccountSection :member="member" @edit="onEditAccount" />
 
         <div v-if="loading" class="bg-surface border border-hairline rounded-hq-lg h-32 animate-pulse" aria-label="読み込み中" />
         <StatsSection

@@ -42,10 +42,10 @@
 
 ## 6. ACCOUNT セクション（表示）
 
-- [ ] 6.1 `apps/reservation/src/features/profile-account/AccountSection.vue` を新設し、お名前 / ニックネーム / メール / 電話番号 の 4 行を表示（生年月日は描画しない）
-- [ ] 6.2 ニックネーム未設定（NULL）時は「未設定」を灰色表示
-- [ ] 6.3 各行右端に「編集」リンク（モーダル起動トリガ）を配置
-- [ ] 6.4 ProfilePage に AccountSection を組み込む
+- [x] 6.1 `apps/reservation/src/features/profile-account/AccountSection.vue` を新設し、お名前 / ニックネーム / メール / 電話番号 の 4 行を表示（生年月日は描画しない）
+- [x] 6.2 ニックネーム未設定（NULL）時は「未設定」を灰色表示
+- [x] 6.3 各行右端に「編集」リンク（モーダル起動トリガ）を配置
+- [x] 6.4 ProfilePage に AccountSection を組み込む
 
 ## 7. 編集モーダル群（shadcn-vue Dialog ベース）
 
