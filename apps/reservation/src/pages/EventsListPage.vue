@@ -1,21 +1,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { useRouter } from "vue-router";
 import { Button, Kicker } from "@high-q/ui";
-import { useAuthSession } from "@/features/auth";
 import { EventCard, useUpcomingEvents } from "@/features/event-listing";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 
-const router = useRouter();
-const session = useAuthSession();
 const { events, loading, error, reload } = useUpcomingEvents();
 
 const count = computed(() => events.value.length);
-
-async function onLogout(): Promise<void> {
-  await session.signOut();
-  void router.push({ name: "login" });
-}
 </script>
 
 <template>
@@ -32,9 +23,6 @@ async function onLogout(): Promise<void> {
         />
         <span class="font-jp-display text-lg text-ink mt-hq-1">High Q</span>
       </div>
-      <Button variant="ghost" type="button" @click="onLogout">
-        ログアウト
-      </Button>
     </header>
 
     <section class="px-hq-5 py-hq-6">

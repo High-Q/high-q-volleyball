@@ -10,6 +10,7 @@ vi.mock("@/features/auth", () => ({
   useAuthSession: () => ({
     status: { value: "authenticated" as const },
     isProfileComplete: { value: true },
+    hasIdentityDocument: { value: true },
     signOut: vi.fn(),
   }),
   useSendMagicLink: () => ({
@@ -49,6 +50,13 @@ const routes = [
   { path: "/", name: "home", redirect: { name: "events-list" } },
   { path: "/events", name: "events-list", component: EventsListPage },
   { path: "/login", name: "login", component: LoginPage },
+  // BottomTabBar が name="profile" を resolve できるよう、smoke test 用に
+  // 軽量プレースホルダで profile ルートを定義しておく (#91)
+  {
+    path: "/profile",
+    name: "profile",
+    component: { template: "<div/>" },
+  },
 ];
 
 describe("App routing smoke", () => {

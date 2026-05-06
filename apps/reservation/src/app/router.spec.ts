@@ -52,6 +52,11 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true },
   },
   {
+    path: "/profile",
+    name: "profile",
+    component: { template: "<div/>" },
+  },
+  {
     path: "/protected",
     name: "protected",
     component: { template: "<div/>" },
@@ -207,5 +212,36 @@ describe("auth guard — hasIdentityDocument 分岐 (#92)", () => {
     sessionState.hasIdentityDocument.value = true;
     const router = await createTestRouter("/signup/identity");
     expect(router.currentRoute.value.name).toBe("events-list");
+  });
+});
+
+describe("auth guard — /profile (#91)", () => {
+  it("未認証 + /profile → /login", async () => {
+    sessionState.status.value = "unauthenticated";
+    const router = await createTestRouter("/profile");
+    expect(router.currentRoute.value.name).toBe("login");
+  });
+
+  it("認証済 + プロフィール未完成 + /profile → /signup/profile", async () => {
+    sessionState.status.value = "authenticated";
+    sessionState.isProfileComplete.value = false;
+    const router = await createTestRouter("/profile");
+    expect(router.currentRoute.value.name).toBe("signup-profile");
+  });
+
+  it("認証済 + プロフィール完成 + 書類未提出 + /profile → /signup/identity", async () => {
+    sessionState.status.value = "authenticated";
+    sessionState.isProfileComplete.value = true;
+    sessionState.hasIdentityDocument.value = false;
+    const router = await createTestRouter("/profile");
+    expect(router.currentRoute.value.name).toBe("signup-identity");
+  });
+
+  it("認証済 + プロフィール完成 + 書類提出済 + /profile → 通過 (ProfilePage 描画)", async () => {
+    sessionState.status.value = "authenticated";
+    sessionState.isProfileComplete.value = true;
+    sessionState.hasIdentityDocument.value = true;
+    const router = await createTestRouter("/profile");
+    expect(router.currentRoute.value.name).toBe("profile");
   });
 });
