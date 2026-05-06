@@ -83,7 +83,8 @@ function reject() {
 
 <style scoped>
 .consent-banner :deep(.v-snackbar__wrapper) {
-  max-width: min(1000px, calc(100vw - 32px));
+  width: calc(100vw - 32px);
+  max-width: 1000px;
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(14px) saturate(1.5);
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
