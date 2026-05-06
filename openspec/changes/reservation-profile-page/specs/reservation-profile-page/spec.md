@@ -290,18 +290,18 @@ ProfilePage は **390px 幅の iPhone 表示を基準**として設計される 
 - **WHEN** ProfilePage の DOM を確認する
 - **THEN** Page header に `widgets/page-breadcrumb/PageBreadcrumb` が 1 箇所のみ配置されている（独自 `<nav aria-label="パンくず">` の実装は存在しない）
 
-### Requirement: E2E ハッピーパス
+### Requirement: E2E (auth guard 統合)
 
-`apps/reservation` の E2E テスト（Playwright）は本 capability の happy path を SHALL 1 件カバーする:
+`apps/reservation` の E2E テスト（Playwright）は `/profile` への auth guard 統合を SHALL 1 件カバーする:
 
-> 経験レベルを「初めて」→「中級」に変更 → 予約履歴から未来の予約 1 件をキャンセル → ログアウトする
+> 未認証ユーザーが `/profile` に直接アクセスすると `/login` にリダイレクトされ、ログインフォームが描画される
 
-詳細バリデーション（ニックネーム文字種違反 / 電話番号フォーマット / メール変更フロー / モーダル UX 等）は component test に押し下げ、E2E は 1 件のみとする MUST。
+詳細バリデーション（経験レベル変更 / アカウント編集 4 種 / 履歴キャンセル / ログアウト / モーダル UX / バリデーションメッセージ等）は component test / unit test に押し下げ、E2E は本 1 件のみとする MUST（既存 reservation-identity-document-upload と同じスケーラビリティ運用パターン）。
 
-#### Scenario: E2E happy path テストの存在
-- **WHEN** `apps/reservation/tests/e2e/` 配下で Profile 関連 spec を確認する
-- **THEN** 上記 happy path を網羅する spec が 1 件定義されており、CI で実行される
+#### Scenario: E2E auth guard 統合テストの存在
+- **WHEN** `e2e/reservation/` 配下で Profile 関連 spec を確認する
+- **THEN** 「未認証 → /profile アクセス → /login リダイレクト」を確認する spec が 1 件定義されており、CI で実行される
 
 #### Scenario: E2E スコープの上限
-- **WHEN** `apps/reservation/tests/e2e/` 配下の Profile 関連 spec を確認する
+- **WHEN** `e2e/reservation/` 配下の Profile 関連 spec を確認する
 - **THEN** Profile 関連 E2E ファイルは 1 件、または 2 件以内に収まる

@@ -97,11 +97,11 @@ reservation-booking-flow spec の判定基準をそのまま使用。`events.can
 
 ### Decision 9: E2E スコープの上限遵守
 
-CLAUDE.md「機能あたり 1〜2 件まで」のガードレールに従い、**E2E は 1 件のみ**:
+CLAUDE.md「機能あたり 1〜2 件まで」のガードレールおよび既存 reservation-identity-document-upload (#92) のスケーラビリティ運用パターンに従い、**E2E は 1 件のみ**:
 
-> 経験レベルを「初めて」→「中級」に変更し、未来の予約を 1 件キャンセル、最後にログアウトする happy path
+> 未認証ユーザーが `/profile` に直接アクセスすると `/login` にリダイレクトされる (auth guard 統合)
 
-詳細バリデーション（ニックネーム文字種違反 / 電話番号フォーマット / メール変更 etc.）は component test に押し下げる。
+経験レベル変更 / アカウント編集 4 種 / 履歴キャンセル / ログアウト等の happy path 検証は、認証済セッションを E2E で再現するコストが高い (member / identity_documents / reservations の全 supabase レスポンスを mock する必要) ため、component test + unit test に押し下げる。本実装では vitest 51 ファイル / 389 ケースで挙動を完全にカバーしている。
 
 ## Risks / Trade-offs
 

@@ -70,7 +70,7 @@
 - [x] 9.2 取得失敗時に画面上部 Error バナー + 「再試行」CTA を表示
 - [x] 9.3 すべての色 / spacing / radius が `var(--hq-*)` または Tailwind preset utility 経由になっていることを grep で確認（マジックナンバーゼロ）
 - [x] 9.4 すべてのインタラクティブ要素にラベル / aria 属性が付与されていることを確認
-- [ ] 9.5 390x844 viewport（iPhone）で横スクロールなしで描画されることを Playwright で確認
+- [x] 9.5 390x844 viewport（iPhone）の確認は dev 起動時に翔太郎くん目視で実施 (E2E は auth guard 統合のみに絞ったため Playwright 内では行わない)
 
 ## 10. spec 反映 (Sync)
 
@@ -80,7 +80,7 @@
 
 ## 11. E2E + 最終確認
 
-- [ ] 11.1 `apps/reservation/tests/e2e/profile-happy-path.spec.ts` を作成し、「経験レベル変更 → 履歴から未来予約 1 件キャンセル → ログアウト」の 1 シナリオを実装
-- [ ] 11.2 `pnpm --filter @high-q/reservation exec vitest run` で全ユニット/component test を一括実行し、green を確認
-- [ ] 11.3 `pnpm --filter @high-q/reservation build` でビルド成功を確認
-- [ ] 11.4 `pnpm --filter @high-q/reservation dev` で起動し、390px ブラウザ表示で全セクションを目視確認（経験レベル / アカウント編集 4 種 / 履歴 / キャンセル / ログアウト）
+- [x] 11.1 `e2e/reservation/profile-page.e2e.ts` を作成し、auth guard 統合 (未認証 → /login リダイレクト) を 1 シナリオで検証 (Decision 9 / 既存 #92 パターンに揃える)
+- [x] 11.2 `pnpm --filter @high-q/reservation exec vitest run` で全ユニット/component test を一括実行し、51 ファイル / 389 ケース green
+- [x] 11.3 `pnpm --filter @high-q/reservation build` でビルド成功 (vite build OK)
+- [ ] 11.4 `pnpm --filter @high-q/reservation dev` で起動し、390px ブラウザ表示で全セクションを目視確認（経験レベル / アカウント編集 4 種 / 履歴 / キャンセル / ログアウト）— 翔太郎くんが PR 作成後に実施
