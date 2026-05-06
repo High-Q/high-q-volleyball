@@ -292,7 +292,9 @@ TBD - created by archiving change reservation-member-auth-magic-link. Update Pur
 
 > ご入力いただいた情報は、本人確認・連絡・参加管理のためにのみ利用します。第三者への提供は法令に基づく場合を除き行いません。
 >
-> 詳細は[プライバシーポリシー](/privacy)・[外部送信ポリシー](`<lp-origin>/external-transmission`) をご覧ください。
+> 詳細は[プライバシーポリシー](`<lp-origin>/privacy`)・[外部送信ポリシー](`<lp-origin>/external-transmission`) をご覧ください。
+
+プライバシーポリシー / 外部送信ポリシーはともに LP に集約された単一 source of truth を別オリジンとして参照する MUST。reservation アプリ内に `/privacy` / `/external-transmission` ルートを持たない MUST NOT。
 
 実装は `SignupIdentityPage` の既存 `PolicyFooter` コンポーネントを `apps/reservation/src/shared/ui/` に共通プリミティブとして抽出して再利用する SHALL。
 
@@ -306,7 +308,7 @@ TBD - created by archiving change reservation-member-auth-magic-link. Update Pur
 
 #### Scenario: プライバシーポリシーリンクの遷移先
 - **WHEN** ユーザーが「プライバシーポリシー」リンクを押下する
-- **THEN** `/privacy` ルートに遷移する (ページ本文は別 Issue #193 で実装、リンク先存在は前提で 404 でも本要件は受入可)
+- **THEN** lp の `<lp-origin>/privacy` が新規タブで開かれる (`target="_blank"` + `rel="noreferrer"`)
 
 #### Scenario: PolicyFooter コンポーネントの共通化
 - **WHEN** `SignupIdentityPage` と `SignupProfilePage` の両方で PolicyFooter が描画される

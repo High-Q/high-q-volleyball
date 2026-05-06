@@ -43,4 +43,4 @@
 
 - [x] 7.1 `pnpm exec vitest run` を全アプリで通す（lp / admin / reservation 全 pass）
 - [x] 7.2 `pnpm build:lp` / `pnpm --filter @high-q/admin build` / `pnpm --filter @high-q/reservation build` を通す
-- [ ] 7.3 ローカルで lp を起動し `/privacy` の表示・mailto リンク・外部送信ポリシー相互参照リンク・3 アプリのフッターリンク導線（admin / reservation から新規タブで LP の `/privacy` が開くこと）を手動確認する（翔太郎くん）
+- [x] 7.3 ローカルで lp を起動し `/privacy` の表示・mailto リンク・外部送信ポリシー相互参照リンク・3 アプリのフッターリンク導線（admin / reservation から新規タブで LP の `/privacy` が開くこと）を手動確認する（翔太郎くん確認済 / ship 合図）

@@ -423,9 +423,9 @@ CTA「完了する」押下で `useAuthSession.refresh()` を呼び `hasIdentity
 >
 > 画像は Supabase (米国法人運営の SaaS、データは日本リージョン保管) を経由して安全に保管されます。
 >
-> 詳細は[プライバシーポリシー](/privacy)・[外部送信ポリシー](`<lp-origin>/external-transmission`)をご覧ください。
+> 詳細は[プライバシーポリシー](`<lp-origin>/privacy`)・[外部送信ポリシー](`<lp-origin>/external-transmission`)をご覧ください。
 
-外部送信ポリシーは LP に集約された単一 source of truth (`<lp-origin>/external-transmission`) を別オリジンとして参照する。reservation アプリ内には `/external-transmission` ルートを持たない MUST。プライバシーポリシー (`/privacy`) のページ本文は別 Issue #193 で reservation 内に実装される。
+プライバシーポリシー / 外部送信ポリシーはともに LP に集約された単一 source of truth (`<lp-origin>/privacy` / `<lp-origin>/external-transmission`) を別オリジンとして参照する。reservation アプリ内には `/privacy` / `/external-transmission` ルートを持たない MUST。
 
 実装は `apps/reservation/src/shared/ui/PolicyFooter.vue` に共通プリミティブとして抽出され、`SignupIdentityPage` と `SignupProfilePage` の両方から再利用される SHALL (テキストのリードのみ各ページで差し替え可能、リンク部は固定)。
 
@@ -435,7 +435,7 @@ CTA「完了する」押下で `useAuthSession.refresh()` を呼び `hasIdentity
 
 #### Scenario: プライバシーポリシーリンクの遷移先
 - **WHEN** ユーザーが「プライバシーポリシー」リンクをクリック
-- **THEN** reservation アプリの `/privacy` ルートに遷移する (ページ本文は別 Issue #193 で実装、リンク先 404 でも本要件は受入可)
+- **THEN** lp の `<lp-origin>/privacy` が新規タブで開かれる (`target="_blank"` + `rel="noreferrer"`)
 
 #### Scenario: 外部送信ポリシーリンクの遷移先
 - **WHEN** ユーザーが「外部送信ポリシー」リンクをクリック
