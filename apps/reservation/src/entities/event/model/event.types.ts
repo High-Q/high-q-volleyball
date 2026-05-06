@@ -20,6 +20,7 @@ export type EventRow = {
     name: string;
     meeting_point: string;
     default_fee: number | null;
+    map_url: string | null;
   } | null;
 };
 
@@ -41,7 +42,9 @@ export type EventListItem = {
 
 /**
  * 詳細画面用の Event 型。一覧との差分要素として `meetingPoint` (集合場所) を含む。
+ * `mapUrl` は予約完了画面 (#148) で「会場マップを開く」アクションを描画する際に使う。
  */
 export type EventDetail = EventListItem & {
   meetingPoint: string;
+  mapUrl: string | null;
 };

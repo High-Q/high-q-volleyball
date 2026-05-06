@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Button, Kicker } from "@high-q/ui";
 import { useAuthSession } from "@/features/auth";
@@ -8,6 +8,7 @@ import {
   EventStickyCta,
   useEventDetail,
 } from "@/features/event-detail";
+import { BookingSheet } from "@/features/booking";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 import { formatJaDate } from "@/shared/lib/format-date";
 
@@ -21,6 +22,8 @@ const { event, loading, error, notFound, reload } = useEventDetail(idRef);
 const dateLabel = computed(() =>
   event.value === null ? "" : formatJaDate(event.value.startAt),
 );
+
+const bookingSheetOpen = ref<boolean>(false);
 
 async function onLogout(): Promise<void> {
   await session.signOut();
@@ -102,6 +105,17 @@ function goToList(): void {
       </template>
     </section>
 
-    <EventStickyCta v-if="event !== null" :fee="event.fee" />
+    <EventStickyCta
+      v-if="event !== null"
+      :fee="event.fee"
+      @proceed="bookingSheetOpen = true"
+    />
+
+    <BookingSheet
+      v-if="event !== null"
+      :open="bookingSheetOpen"
+      :event="event"
+      @update:open="bookingSheetOpen = $event"
+    />
   </main>
 </template>

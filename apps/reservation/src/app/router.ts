@@ -29,6 +29,11 @@ const routes: RouteRecordRaw[] = [
     component: EventDetailPage,
   },
   {
+    path: "/events/:id/book/done",
+    name: "booking-done",
+    component: () => import("@/pages/BookingDonePage.vue"),
+  },
+  {
     path: "/login",
     name: "login",
     component: LoginPage,
