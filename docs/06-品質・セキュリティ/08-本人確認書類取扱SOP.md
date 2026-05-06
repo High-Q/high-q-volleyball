@@ -151,14 +151,16 @@ MVP1 では特別な監査ログテーブルは持たず、Supabase Dashboard �
 
 ## 6. 緊急時のエスカレーション
 
+> 漏洩等の事案を検知した場合の包括的な対応フロー (検知 → 暫定対応 → 個人情報保護委員会への報告 → 本人通知 → 再発防止) は [13-漏洩時対応SOP.md](./13-漏洩時対応SOP.md) を参照する。本節は本人確認書類に固有の初動のみを記載する。
+
 - 個人番号が見える画像が長期保管されていることが発覚した場合
   1. 翔太郎くんがオーナー権限で即時 Storage 削除
   2. 該当ユーザーにメールで謝罪と再提出依頼
   3. 削除日時 / 該当 member_id / 経緯を本 SOP の末尾に追記
+  4. 漏洩相当の事案 (第三者の閲覧があり得た場合等) は [13-漏洩時対応SOP.md](./13-漏洩時対応SOP.md) のフローを起動
 - 書類画像が外部に漏洩した場合
   1. 該当 Storage バケットを一時的に無効化（Supabase Dashboard）
-  2. 全ユーザーに告知メール
-  3. 個人情報保護委員会への報告検討
+  2. [13-漏洩時対応SOP.md](./13-漏洩時対応SOP.md) のフローに従い暫定対応 → 報告 → 本人通知 → 再発防止策を実施
 - **mutation 部分失敗による不整合 (#171 admin レビュー画面)**:
   - **Storage 削除済 / DB UPDATE 失敗** (マスク漏れ削除途中): admin に Toast「DB 更新に失敗しました。Storage は削除済みです」が表示される。Supabase Dashboard SQL Editor で `UPDATE identity_documents SET status='rejected', rejection_reason='個人番号がマスクされていないため削除しました。再提出をお願いします', storage_path_front=NULL, storage_path_back=NULL, reviewed_at=now(), reviewed_by='<admin>' WHERE id='<doc_id>'` を手動実行
   - **identity_documents UPDATE 済 / 連鎖予約キャンセル失敗** (差し戻し or マスク漏れ削除の最終段階): admin に Toast「予約のキャンセルに失敗しました。Supabase Dashboard で手動キャンセルしてください」が表示される。SQL Editor で `UPDATE reservations SET status='cancelled' WHERE member_id='<member_id>' AND status IN ('reserved', 'waitlist')` を手動実行
