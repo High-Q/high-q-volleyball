@@ -8,7 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./api": "./src/api/index.ts",
-    "./types": "./src/types/index.ts"
+    "./types": "./src/types/index.ts",
+    "./consent": "./src/consent/index.ts"
   },
   "scripts": {
     "lint": "echo 'lint via root config' && exit 0",
@@ -20,6 +21,7 @@
     "@supabase/supabase-js": "^2.45.0"
   },
   "devDependencies": {
+    "jsdom": "^25.0.0",
     "typescript": "^5.4.0",
     "vitest": "^2.1.9"
   }

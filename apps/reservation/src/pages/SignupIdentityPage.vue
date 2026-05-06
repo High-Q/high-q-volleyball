@@ -21,7 +21,12 @@ import UploadSlot from "./SignupIdentityPage/components/UploadSlot.vue";
 import ErrorBanner from "./SignupIdentityPage/components/ErrorBanner.vue";
 import SuccessBanner from "./SignupIdentityPage/components/SuccessBanner.vue";
 import StickyCta from "./SignupIdentityPage/components/StickyCta.vue";
-import PolicyFooter from "./SignupIdentityPage/components/PolicyFooter.vue";
+import PolicyFooter from "@/shared/ui/PolicyFooter.vue";
+
+const identityLead =
+  "アップロードいただいた画像は、参加者の身元確認 (安全担保) と、江東区・東京都への団体登録 (スポーツ団体・社会教育団体) の証憑提出のためにのみ使用します。第三者への提供は法令に基づく場合を除き行いません。";
+const identityStorageNote =
+  "画像は Supabase (米国法人運営の SaaS、データは日本リージョン保管) を経由して安全に保管されます。";
 
 const router = useRouter();
 const session = useAuthSession();
@@ -274,7 +279,7 @@ onUnmounted(() => {
       </section>
 
       <!-- footer 注記 -->
-      <PolicyFooter />
+      <PolicyFooter :lead="identityLead" :storage-note="identityStorageNote" />
     </div>
 
     <StickyCta

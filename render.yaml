@@ -37,6 +37,15 @@ services:
     buildCommand: corepack enable && pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/lp build
     staticPublishPath: dist
 
+    # SPA history routing (path-based switch in App.vue) で /external-transmission 等の
+    # サブパスへ直アクセスされた際、index.html を返してクライアント側でルーティング解決させる。
+    # 静的ファイル (assets/img/favicon 等) のリクエストは publish path 内に存在すれば
+    # そのまま配信され、無い場合のみ index.html にフォールバックする (Render 標準挙動)。
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
     # 自動デプロイ設定:
     # - autoDeployTrigger: checksPass で GitHub Actions CI が緑になった時のみデプロイ
     #   #80 で GitHub Actions CI を構築完了したため、#128 の暫定対応（commit）から本来の挙動に戻した
