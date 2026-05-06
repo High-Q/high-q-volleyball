@@ -151,6 +151,9 @@
         受付窓口:
         <a :href="`mailto:${contactEmail}`" data-testid="rights-mailto">{{ contactEmail }}</a>
       </p>
+      <p class="text-body-1 mb-3">
+        本請求に係る手数料は、MVP1 期間中は無料です。
+      </p>
     </section>
 
     <!-- 8-10. 外部送信 / 改定履歴 / お問い合わせ -->
