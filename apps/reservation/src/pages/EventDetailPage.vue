@@ -23,10 +23,6 @@ const dateLabel = computed(() =>
 
 const bookingSheetOpen = ref<boolean>(false);
 
-function goToProfile(): void {
-  void router.push({ name: "profile" });
-}
-
 function goToList(): void {
   void router.push({ name: "events-list" });
 }
@@ -47,9 +43,6 @@ function goToList(): void {
         />
         <span class="font-jp-display text-lg text-ink mt-hq-1">High Q</span>
       </div>
-      <Button variant="ghost" type="button" @click="goToProfile">
-        プロフィール
-      </Button>
     </header>
 
     <section class="flex-1 px-hq-5 py-hq-6 flex flex-col gap-hq-5">

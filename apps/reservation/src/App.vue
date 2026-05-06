@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ConsentBanner } from "@/widgets/consent-banner";
 import { AppFooter } from "@/widgets/app-footer";
+import { BottomTabBar } from "@/widgets/bottom-tab-bar";
 </script>
 
 <template>
@@ -8,6 +9,7 @@ import { AppFooter } from "@/widgets/app-footer";
     <div class="flex-1">
       <RouterView />
     </div>
+    <BottomTabBar />
     <AppFooter />
   </div>
   <ConsentBanner />

@@ -1,18 +1,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { useRouter } from "vue-router";
 import { Button, Kicker } from "@high-q/ui";
 import { EventCard, useUpcomingEvents } from "@/features/event-listing";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 
-const router = useRouter();
 const { events, loading, error, reload } = useUpcomingEvents();
 
 const count = computed(() => events.value.length);
-
-function goToProfile(): void {
-  void router.push({ name: "profile" });
-}
 </script>
 
 <template>
@@ -29,9 +23,6 @@ function goToProfile(): void {
         />
         <span class="font-jp-display text-lg text-ink mt-hq-1">High Q</span>
       </div>
-      <Button variant="ghost" type="button" @click="goToProfile">
-        プロフィール
-      </Button>
     </header>
 
     <section class="px-hq-5 py-hq-6">

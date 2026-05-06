@@ -1,0 +1,136 @@
+<script setup lang="ts">
+import { computed } from "vue";
+import { useRoute, type RouteLocationRaw } from "vue-router";
+import { useAuthSession } from "@/features/auth";
+
+/**
+ * 会員サイトの Bottom Tab Bar (ホーム / 履歴 / プロフィール)。
+ *
+ * デザインサンプル: docs/10-デザインサンプル/reservation/hq-reserve-screens.jsx の
+ *   `ScreenRHomeV2` / `ScreenRHistory` / `ScreenRProfile` 末尾に共通配置されている
+ *   3 タブ navigation。
+ *
+ * 表示条件:
+ *   - 認証済 + プロフィール完成 + 書類提出済 (auth guard を通過した正規会員のみ)
+ *   - 認証フロー (/login, /signup/*, /auth/*) では非表示
+ *
+ * 暫定:
+ *   - 「履歴」タブは現状 /profile にリンクしている (プロフィール画面の STATS
+ *     セクションに予約履歴一覧が含まれているため)。後続 Issue で
+ *     `/history` 独立画面を実装し、プロフィール画面 STATS は集計値のみに整理する。
+ */
+
+type TabKey = "home" | "history" | "profile";
+
+const route = useRoute();
+const session = useAuthSession();
+
+const isVisible = computed(() => {
+  if (session.status.value !== "authenticated") return false;
+  if (session.isProfileComplete.value !== true) return false;
+  if (session.hasIdentityDocument.value !== true) return false;
+  // 認証フロー系のルートでは非表示
+  const name = String(route.name ?? "");
+  if (
+    name === "login" ||
+    name === "signup-profile" ||
+    name === "signup-identity" ||
+    name === "auth-callback" ||
+    name === "auth-link-sent"
+  ) {
+    return false;
+  }
+  return true;
+});
+
+const activeTab = computed<TabKey | null>(() => {
+  const path = route.path;
+  if (path.startsWith("/events")) return "home";
+  if (path.startsWith("/profile")) return "profile";
+  return null;
+});
+
+type Tab = {
+  key: TabKey;
+  label: string;
+  to: RouteLocationRaw;
+};
+
+const TABS: ReadonlyArray<Tab> = [
+  { key: "home", label: "ホーム", to: { name: "events-list" } },
+  // 暫定: 履歴タブは /profile を指す (履歴一覧がプロフィール画面 STATS にあるため)
+  { key: "history", label: "履歴", to: { name: "profile" } },
+  { key: "profile", label: "プロフィール", to: { name: "profile" } },
+];
+</script>
+
+<template>
+  <nav
+    v-if="isVisible"
+    aria-label="メインナビゲーション"
+    class="border-t border-hairline bg-paper flex"
+    style="padding-bottom: 18px;"
+    data-testid="bottom-tab-bar"
+  >
+    <router-link
+      v-for="tab in TABS"
+      :key="tab.key"
+      :to="tab.to"
+      class="flex-1 no-underline flex flex-col items-center gap-hq-1 py-hq-2 transition-colors"
+      :class="
+        activeTab === tab.key ? 'text-ink font-semibold' : 'text-muted'
+      "
+      :aria-current="activeTab === tab.key ? 'page' : undefined"
+      :data-tab="tab.key"
+    >
+      <svg
+        v-if="tab.key === 'home'"
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        :stroke-width="activeTab === 'home' ? 1.7 : 1.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-7H9v7H4a1 1 0 01-1-1v-9z" />
+      </svg>
+      <svg
+        v-else-if="tab.key === 'history'"
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        :stroke-width="activeTab === 'history' ? 1.7 : 1.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+      <svg
+        v-else
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        :stroke-width="activeTab === 'profile' ? 1.7 : 1.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="9" r="3.5" />
+        <path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" />
+      </svg>
+      <span
+        class="font-jp text-xs"
+        style="letter-spacing: 0.05em;"
+      >{{ tab.label }}</span>
+    </router-link>
+  </nav>
+</template>
