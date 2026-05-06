@@ -1,24 +1,25 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import { Button } from "@high-q/ui";
 import { formatFee } from "@/shared/lib/format-date";
+
+/**
+ * イベント詳細画面の sticky bottom CTA。
+ *
+ * 「予約に進む」押下で `proceed` event を emit する。実際のシート開閉は親
+ * (EventDetailPage) が制御する。
+ *
+ * 関連:
+ *   openspec/changes/reservation-booking-flow/specs/reservation-booking-flow/spec.md
+ *   openspec/changes/reservation-booking-flow/specs/reservation-events-and-booking/spec.md
+ */
 
 const props = defineProps<{
   fee: number | null;
 }>();
 
-const showPendingMessage = ref<boolean>(false);
-let pendingTimer: ReturnType<typeof setTimeout> | null = null;
-
-function handleProceed(): void {
-  showPendingMessage.value = true;
-  if (pendingTimer !== null) {
-    clearTimeout(pendingTimer);
-  }
-  pendingTimer = setTimeout(() => {
-    showPendingMessage.value = false;
-  }, 3000);
-}
+const emit = defineEmits<{
+  (e: "proceed"): void;
+}>();
 </script>
 
 <template>
@@ -27,20 +28,11 @@ function handleProceed(): void {
     role="region"
     aria-label="予約アクション"
   >
-    <p
-      v-if="showPendingMessage"
-      class="font-jp text-xs text-ink-soft m-0 bg-accent-soft border border-hairline rounded-hq-sm px-hq-3 py-hq-2 text-center"
-      role="status"
-      aria-live="polite"
-    >
-      予約機能は準備中です
-    </p>
-
     <div class="flex items-center justify-between gap-hq-4">
       <span class="font-mono text-sm text-ink-soft">
         {{ formatFee(props.fee) }}
       </span>
-      <Button variant="primary" size="md" @click="handleProceed">
+      <Button variant="primary" size="md" @click="emit('proceed')">
         予約に進む
       </Button>
     </div>
