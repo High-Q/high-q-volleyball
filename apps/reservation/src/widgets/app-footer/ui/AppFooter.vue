@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { useConsentPanel } from "@/shared/lib/consentPanel";
-import { EXTERNAL_TRANSMISSION_URL } from "@/shared/lib/externalLinks";
+import {
+  EXTERNAL_TRANSMISSION_URL,
+  PRIVACY_POLICY_URL,
+} from "@/shared/lib/externalLinks";
 
 const consent = useConsentPanel();
 
@@ -17,6 +20,16 @@ function openConsent(): void {
     <div class="mx-auto max-w-screen-xl flex flex-wrap items-center justify-between gap-hq-2 px-hq-6 py-hq-4 text-xs">
       <p>© {{ new Date().getFullYear() }} High Q.</p>
       <nav aria-label="法務リンク" class="flex items-center gap-hq-3">
+        <a
+          :href="PRIVACY_POLICY_URL"
+          target="_blank"
+          rel="noreferrer"
+          class="text-accent underline"
+          data-testid="footer-privacy-link"
+        >
+          プライバシーポリシー
+        </a>
+        <span aria-hidden="true">/</span>
         <a
           :href="EXTERNAL_TRANSMISSION_URL"
           target="_blank"
