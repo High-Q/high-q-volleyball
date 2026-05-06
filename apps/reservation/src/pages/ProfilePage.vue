@@ -14,6 +14,7 @@ import {
   EmailEditDialog,
 } from "@/features/profile-account";
 import { SignOutButton } from "@/features/profile-sign-out";
+import { AppFooter } from "@/widgets/app-footer";
 import { CancelBookingDialog, useCancelBooking } from "@/features/booking";
 import {
   fetchMyReservations,
@@ -179,6 +180,14 @@ const cancelErrorMessage = computed(() => {
         <SignOutButton />
       </template>
     </section>
+
+    <!--
+      法令対応 (個人情報保護法 / 改正電気通信事業法) のため、メイン画面で
+      AppFooter が非表示になっているタブバー表示中でも、プロフィール画面には
+      AppFooter (プライバシーポリシー / 外部送信ポリシー / Cookie 設定) を
+      確実に表示し、ユーザーが容易に到達できる状態を保つ。
+    -->
+    <AppFooter />
 
     <CancelBookingDialog
       v-if="cancelTarget !== null"
