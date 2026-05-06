@@ -49,14 +49,14 @@
 
 ## 7. 編集モーダル群（shadcn-vue Dialog ベース）
 
-- [ ] 7.1 `apps/reservation/src/features/profile-account/ui/DisplayNameEditDialog.vue` 実装（display_name UPDATE / 空欄エラー）
-- [ ] 7.2 `apps/reservation/src/features/profile-account/ui/NicknameEditDialog.vue` 実装（nickname UPDATE + 「クリア」ボタン + 空文字 → NULL 化 + 文字種/文字数バリデーション）
-- [ ] 7.3 `NicknameEditDialog.spec.ts` で「新規設定」「クリアボタン」「空文字保存で NULL」「文字種違反」「文字数違反」の 5 シナリオをテスト
-- [ ] 7.4 `apps/reservation/src/features/profile-account/ui/PhoneEditDialog.vue` 実装（`createPhone()` 経由の正規化保存 / 固定電話/桁数不足のエラー）
-- [ ] 7.5 `PhoneEditDialog.spec.ts` で「区切りなし正規化」「固定電話拒否」「桁数不足」をテスト
-- [ ] 7.6 `apps/reservation/src/features/profile-account/ui/EmailEditDialog.vue` 実装。`supabase.auth.updateUser({ email })` 呼び出し → Success 状態で「確認メール送信済み」表示（モーダルは閉じない）
-- [ ] 7.7 `EmailEditDialog.spec.ts` で「成功で送信完了表示」「形式不正エラー」「現在のメールと同一エラー」「rate-limit エラー」「members.email は即時更新されない」の 5 シナリオをテスト
-- [ ] 7.8 各モーダルを AccountSection の編集リンクから起動
+- [x] 7.1 `apps/reservation/src/features/profile-account/ui/DisplayNameEditDialog.vue` 実装（display_name UPDATE / 空欄エラー）
+- [x] 7.2 `apps/reservation/src/features/profile-account/ui/NicknameEditDialog.vue` 実装（nickname UPDATE + 「クリア」ボタン + 空文字 → NULL 化 + 文字種/文字数バリデーション）
+- [x] 7.3 `NicknameEditDialog.spec.ts` で「新規設定」「クリアボタン」「空文字保存で NULL」「文字種違反」「文字数違反」の 5 シナリオをテスト
+- [x] 7.4 `apps/reservation/src/features/profile-account/ui/PhoneEditDialog.vue` 実装（`createPhone()` 経由の正規化保存 / 固定電話/桁数不足のエラー）
+- [x] 7.5 `PhoneEditDialog.spec.ts` で「区切りなし正規化」「固定電話拒否」「桁数不足」をテスト
+- [x] 7.6 `apps/reservation/src/features/profile-account/ui/EmailEditDialog.vue` 実装。`supabase.auth.updateUser({ email })` 呼び出し → Success 状態で「確認メール送信済み」表示（モーダルは閉じない）
+- [x] 7.7 `EmailEditDialog.spec.ts` で「成功で送信完了表示」「形式不正エラー」「現在のメールと同一エラー」「rate-limit エラー」「members.email は即時更新されない」の 5 シナリオをテスト
+- [x] 7.8 各モーダルを AccountSection の編集リンクから起動
 
 ## 8. ログアウト動線
 

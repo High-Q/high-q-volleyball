@@ -6,7 +6,13 @@ import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 import { ProfileHeader } from "@/widgets/profile-header";
 import { LevelEditSection } from "@/features/profile-level-edit";
 import { StatsSection } from "@/features/profile-stats";
-import { AccountSection } from "@/features/profile-account";
+import {
+  AccountSection,
+  DisplayNameEditDialog,
+  NicknameEditDialog,
+  PhoneEditDialog,
+  EmailEditDialog,
+} from "@/features/profile-account";
 import { CancelBookingDialog, useCancelBooking } from "@/features/booking";
 import {
   fetchMyReservations,
@@ -58,6 +64,14 @@ const editField = ref<EditField | null>(null);
 
 function onEditAccount(field: EditField): void {
   editField.value = field;
+}
+
+function closeEdit(): void {
+  editField.value = null;
+}
+
+function onAccountSaved(): void {
+  showSuccess("変更を保存しました。");
 }
 
 function showSuccess(message: string): void {
@@ -163,5 +177,34 @@ const cancelErrorMessage = computed(() => {
       @update:open="cancelDialogOpen = $event"
       @confirm="onConfirmCancel"
     />
+
+    <template v-if="member !== null">
+      <DisplayNameEditDialog
+        :open="editField === 'displayName'"
+        :member-id="member.id"
+        :initial-value="member.displayName"
+        @update:open="(v) => (v ? null : closeEdit())"
+        @saved="onAccountSaved"
+      />
+      <NicknameEditDialog
+        :open="editField === 'nickname'"
+        :member-id="member.id"
+        :initial-value="member.nickname"
+        @update:open="(v) => (v ? null : closeEdit())"
+        @saved="onAccountSaved"
+      />
+      <PhoneEditDialog
+        :open="editField === 'phone'"
+        :member-id="member.id"
+        :initial-value="member.phone"
+        @update:open="(v) => (v ? null : closeEdit())"
+        @saved="onAccountSaved"
+      />
+      <EmailEditDialog
+        :open="editField === 'email'"
+        :current-email="member.email"
+        @update:open="(v) => (v ? null : closeEdit())"
+      />
+    </template>
   </main>
 </template>
