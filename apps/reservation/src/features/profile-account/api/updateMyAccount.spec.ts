@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { unsafeMemberId } from "@high-q/shared";
+import { createMemberId } from "@/entities/member";
 
 const supabaseMock = {
   from: vi.fn(),
@@ -28,7 +28,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const memberId = unsafeMemberId("00000000-0000-0000-0000-00000000ffff");
+const memberId = createMemberId("00000000-0000-0000-0000-00000000ffff");
 
 describe("updateMyDisplayName", () => {
   it("空欄は createDisplayName が例外を投げ、UPDATE 発行されない", async () => {

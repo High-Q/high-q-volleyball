@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { unsafeMemberId } from "@high-q/shared";
+import { createMemberId } from "@/entities/member";
 
 const apiMock = {
   updateMyExperienceLevel: vi.fn(),
@@ -25,7 +25,7 @@ afterEach(() => {
 });
 
 describe("useLevelEdit", () => {
-  const memberId = unsafeMemberId(
+  const memberId = createMemberId(
     "00000000-0000-0000-0000-000000000001",
   );
 
