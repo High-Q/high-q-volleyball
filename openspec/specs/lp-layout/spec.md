@@ -1,5 +1,8 @@
-## ADDED Requirements
+# lp-layout Specification
 
+## Purpose
+LP (apps/lp) の主要セクション・ヘッダー・フッター・ナビゲーション・デザイントークン参照のレイアウト要件を定義する。
+## Requirements
 ### Requirement: Hero セクションに CTA ボタンが2つ表示される
 
 Hero セクションには、訪問者を主要アクションに誘導する CTA ボタンが2つ表示されなければならない（SHALL）。1つ目は X (Twitter) でのお問い合わせ、2つ目は EVENT セクションへのアンカーリンク。
@@ -70,11 +73,11 @@ LP の各セクション（Hero を除く）は、ビューポートに 15% 以�
 
 ### Requirement: フッターが3カラム構成でリッチに表示される
 
-フッターには、サークル名／アンカーナビ／SNS リンクの3要素がレスポンシブに配置されなければならない（SHALL）。
+フッターには、サークル名／アンカーナビ／SNS リンク／**法務リンク**の4要素がレスポンシブに配置されなければならない（SHALL）。法務リンクには「外部送信ポリシー」「Cookie 設定」を最低限含む MUST。
 
 #### Scenario: lg 以上での3カラム表示
 - **WHEN** ユーザーが lg 以上の画面幅で LP を開いたとき
-- **THEN** フッター内に「サークル名＋紹介文」「ナビ（CONCEPT/ACTIVITIES/EVENT）」「X SNS リンク」の3カラムが横並びで表示される
+- **THEN** フッター内に「サークル名＋紹介文」「ナビ（CONCEPT/ACTIVITIES/EVENT）」「X SNS リンク」の3カラムが横並びで表示され、法務リンク群がカラム下部または独立行に表示される
 
 #### Scenario: md での2カラム表示
 - **WHEN** ユーザーが md の画面幅で LP を開いたとき
@@ -82,7 +85,11 @@ LP の各セクション（Hero を除く）は、ビューポートに 15% 以�
 
 #### Scenario: sm 以下での1カラム表示
 - **WHEN** ユーザーが sm 以下の画面幅で LP を開いたとき
-- **THEN** フッター内の3要素が縦に積み上げて表示される
+- **THEN** フッター内の要素が縦に積み上げて表示される
+
+#### Scenario: 法務リンクの常設
+- **WHEN** いずれの画面幅でも LP のフッターが表示される
+- **THEN** 「外部送信ポリシー」「Cookie 設定」リンクが押下可能な状態で常設されている
 
 ### Requirement: X (Twitter) アイコンは公式ロゴで統一される
 
@@ -111,8 +118,6 @@ LP の Vue コンポーネントには、`#F5F8FA` / `#6A96A4` / `#182F43` / `#8
 #### Scenario: トークン経由での色参照
 - **WHEN** コンポーネントが primary 色を必要とするとき
 - **THEN** `color="primary"` または `rgb(var(--v-theme-primary))` 形式でトークン経由で参照される
-
-## MODIFIED Requirements
 
 ### Requirement: コンセプトカードが3列横並びで表示される
 
@@ -144,8 +149,25 @@ LP の各セクション（Hero・Concept・Activities・Event）の横幅はヘ
 
 ### Requirement: フッターが表示される
 
-LP の最下部にフッターが表示されなければならない（SHALL）。フッターには、サークル名・アンカーナビ・SNS リンク・コピーライト表記が含まれる。
+LP の最下部にフッターが表示されなければならない（SHALL）。フッターには、サークル名・アンカーナビ・SNS リンク・コピーライト表記・**法務リンク群（外部送信ポリシー / Cookie 設定）**が含まれる。
 
 #### Scenario: フッター表示
 - **WHEN** ユーザーが LP を開いた場合
-- **THEN** ページ最下部にフッターコンポーネントが表示され、サークル名・ナビ・SNS・コピーライト表記が確認できる
+- **THEN** ページ最下部にフッターコンポーネントが表示され、サークル名・ナビ・SNS・コピーライト表記・法務リンク群が確認できる
+
+### Requirement: GTM は Cookie 同意取得後にのみロードされる
+
+LP は Google Tag Manager (`GTM-WNNF9RP` 系) を、ユーザーが analytics 同意を与えた後にのみ動的にロードする MUST。`apps/lp/index.html` の `<head>` に GTM の inline script を直書きしてはならない MUST NOT。
+
+#### Scenario: 同意前は未ロード
+- **WHEN** consent 未決定または analytics 拒否のユーザーが LP を開く
+- **THEN** ページからは `googletagmanager.com` へのネットワークリクエストが一切発生しない
+
+#### Scenario: 同意後にロード
+- **WHEN** ユーザーが「すべて受け入れる」または analytics トグル ON で同意を保存する
+- **THEN** 同イベントを契機に動的 script tag が挿入され `googletagmanager.com/gtm.js` がロードされる
+
+#### Scenario: 同意済再訪
+- **WHEN** analytics 同意済のユーザーが再訪する
+- **THEN** ページ初期化シーケンスの中で動的 script tag 経由で GTM がロードされる（inline 直書きではない）
+

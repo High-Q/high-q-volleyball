@@ -4,7 +4,11 @@ import { useRoute, useRouter } from "vue-router";
 import { Button, Kicker } from "@high-q/ui";
 import FormField from "@/shared/ui/FormField.vue";
 import Input from "@/shared/ui/Input.vue";
+import PolicyFooter from "@/shared/ui/PolicyFooter.vue";
 import { useAuthSession, useCompleteProfile } from "@/features/auth";
+
+const profileLead =
+  "ご入力いただいた情報は、本人確認・連絡・参加管理のためにのみ利用します。第三者への提供は法令に基づく場合を除き行いません。";
 
 const route = useRoute();
 const router = useRouter();
@@ -206,6 +210,8 @@ async function onSubmit() {
           {{ fieldErrors.terms }}
         </p>
       </form>
+
+      <PolicyFooter :lead="profileLead" />
     </div>
     <div class="border-t border-hairline bg-paper px-hq-6 py-hq-3">
       <div class="mx-auto w-full max-w-md">

@@ -102,6 +102,9 @@ importers:
       '@high-q/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
+      '@high-q/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@tanstack/vue-query':
         specifier: ^5.100.1
         version: 5.100.1(vue@3.5.33(typescript@5.9.3))
@@ -252,6 +255,9 @@ importers:
         specifier: ^2.45.0
         version: 2.104.1
     devDependencies:
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
       typescript:
         specifier: ^5.4.0
         version: 5.9.3

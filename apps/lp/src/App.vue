@@ -1,25 +1,57 @@
 <template>
   <v-app>
     <HeaderLine></HeaderLine>
-    <v-main class="main-no-pad">
-      <HomePage></HomePage>
+    <v-main :class="{ 'main-no-pad': pathname === '/' }">
+      <HomePage v-if="pathname === '/'"></HomePage>
+      <ExternalTransmissionPage v-else-if="pathname === '/external-transmission'" />
+      <NotFoundView v-else />
     </v-main>
     <FooterLine></FooterLine>
+    <ConsentBanner />
   </v-app>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted, onUnmounted } from "vue";
 import HeaderLine from "@shared/ui/HeaderLine.vue";
 import FooterLine from "@shared/ui/FooterLine.vue";
+import NotFoundView from "@shared/ui/NotFoundView.vue";
 import { HomePage } from "@pages/home";
+import { ExternalTransmissionPage } from "@pages/external-transmission";
+import { ConsentBanner } from "@widgets/consent-banner";
+import { getConsent, onConsentChange } from "@high-q/shared/consent";
+import { loadGtm } from "@shared/lib/loadGtm";
 
-export default {
-  components: {
-    HeaderLine,
-    HomePage,
-    FooterLine,
-  },
-};
+const pathname = ref(
+  typeof window === "undefined" ? "/" : window.location.pathname,
+);
+
+let unsubConsent = null;
+let popHandler = null;
+
+function syncGtmFromConsent() {
+  const current = getConsent();
+  if (current?.analytics === true) {
+    loadGtm();
+  }
+}
+
+onMounted(() => {
+  syncGtmFromConsent();
+  unsubConsent = onConsentChange((decision) => {
+    if (decision.analytics) loadGtm();
+  });
+
+  popHandler = () => {
+    pathname.value = window.location.pathname;
+  };
+  window.addEventListener("popstate", popHandler);
+});
+
+onUnmounted(() => {
+  if (unsubConsent) unsubConsent();
+  if (popHandler) window.removeEventListener("popstate", popHandler);
+});
 </script>
 
 <style>
