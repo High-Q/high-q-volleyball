@@ -423,9 +423,11 @@ CTA「完了する」押下で `useAuthSession.refresh()` を呼び `hasIdentity
 >
 > 画像は Supabase (米国法人運営の SaaS、データは日本リージョン保管) を経由して安全に保管されます。
 >
-> 詳細は[プライバシーポリシー](/privacy)・[外部送信ポリシー](/external-transmission)をご覧ください。
+> 詳細は[プライバシーポリシー](/privacy)・[外部送信ポリシー](`<lp-origin>/external-transmission`)をご覧ください。
 
-リンク先 (`/privacy` / `/external-transmission`) のページ本文は **本 change のスコープ外** で、別 Issue (#193 / #192) で実装される。本 change では footer のリンク張りまでを完了させる SHALL。本件マージ時点でリンク先が 404 でも本件単独の受け入れには影響しない (順不同で進めて良い)。ファーストリリース時点で全 Issue が揃っていれば良い。
+外部送信ポリシーは LP に集約された単一 source of truth (`<lp-origin>/external-transmission`) を別オリジンとして参照する。reservation アプリ内には `/external-transmission` ルートを持たない MUST。プライバシーポリシー (`/privacy`) のページ本文は別 Issue #193 で reservation 内に実装される。
+
+実装は `apps/reservation/src/shared/ui/PolicyFooter.vue` に共通プリミティブとして抽出され、`SignupIdentityPage` と `SignupProfilePage` の両方から再利用される SHALL (テキストのリードのみ各ページで差し替え可能、リンク部は固定)。
 
 #### Scenario: footer 注記の存在
 - **WHEN** 画面が描画される
@@ -433,11 +435,11 @@ CTA「完了する」押下で `useAuthSession.refresh()` を呼び `hasIdentity
 
 #### Scenario: プライバシーポリシーリンクの遷移先
 - **WHEN** ユーザーが「プライバシーポリシー」リンクをクリック
-- **THEN** `/privacy` ルートに遷移する (ページ本文は別 Issue で実装、リンク先存在は前提)
+- **THEN** reservation アプリの `/privacy` ルートに遷移する (ページ本文は別 Issue #193 で実装、リンク先 404 でも本要件は受入可)
 
 #### Scenario: 外部送信ポリシーリンクの遷移先
 - **WHEN** ユーザーが「外部送信ポリシー」リンクをクリック
-- **THEN** `/external-transmission` ルートに遷移する (ページ本文は別 Issue で実装)
+- **THEN** lp の `<lp-origin>/external-transmission` が新規タブで開かれる (`target="_blank"` + `rel="noreferrer"`)
 
 ### Requirement: アクセシビリティ AA 準拠
 
