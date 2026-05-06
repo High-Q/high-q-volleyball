@@ -143,7 +143,7 @@ TBD - created by archiving change privacy-policy-page. Update Purpose after arch
 
 ### Requirement: 開示・訂正・利用停止等の請求窓口を明示する
 
-本人による開示・訂正・利用停止等の請求窓口を明示する MUST。
+本人による開示・訂正・利用停止等の請求窓口を明示する MUST。請求に係る手数料の有無についても明示する MUST（個人情報保護法 §38 関連: 本人が請求権の行使条件を知り得る状態を確保するため）。
 
 #### Scenario: 請求権の明示
 - **WHEN** ページが描画される
@@ -156,6 +156,10 @@ TBD - created by archiving change privacy-policy-page. Update Purpose after arch
 #### Scenario: 対応プロセスの説明
 - **WHEN** ページが描画される
 - **THEN** 本人確認のうえ合理的期間内に対応する旨が記載されている
+
+#### Scenario: 手数料の明示
+- **WHEN** ページが描画される
+- **THEN** 請求に係る手数料の有無（MVP1 期間中は無料である旨）が記載されている
 
 ### Requirement: 外部送信ポリシーへの相互参照を持つ
 

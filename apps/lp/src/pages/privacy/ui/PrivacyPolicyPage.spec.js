@@ -179,4 +179,12 @@ describe("PrivacyPolicyPage", () => {
     expect(mailto.exists()).toBe(true);
     expect(mailto.attributes("href")).toMatch(/^mailto:/);
   });
+
+  it("開示請求セクションに手数料が MVP1 期間中は無料である旨が記載される", () => {
+    const wrapper = mountWithVuetify(PrivacyPolicyPage);
+    const text = wrapper.find('[data-testid="section-rights"]').text();
+    expect(text).toContain("手数料");
+    expect(text).toContain("無料");
+    expect(text).toContain("MVP1");
+  });
 });
