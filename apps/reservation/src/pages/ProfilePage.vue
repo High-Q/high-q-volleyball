@@ -132,7 +132,16 @@ const cancelErrorMessage = computed(() => {
     </header>
 
     <section class="flex-1 px-hq-5 py-hq-6 flex flex-col gap-hq-6">
-      <template v-if="member !== null">
+      <div
+        v-if="member === null"
+        class="flex flex-col gap-hq-4"
+        aria-label="プロフィールを読み込み中"
+      >
+        <div class="bg-surface border border-hairline rounded-hq-lg h-16 animate-pulse" />
+        <div class="bg-surface border border-hairline rounded-hq-lg h-40 animate-pulse" />
+        <div class="bg-surface border border-hairline rounded-hq-lg h-32 animate-pulse" />
+      </div>
+      <template v-else>
         <ProfileHeader :member="member" />
 
         <p

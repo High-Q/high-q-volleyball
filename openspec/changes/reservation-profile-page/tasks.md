@@ -66,10 +66,10 @@
 
 ## 9. 4 状態 + a11y + デザイントークン仕上げ
 
-- [ ] 9.1 ProfilePage 初期ロード時に Loading skeleton を表示（ヘッダ / 各セクション領域）
-- [ ] 9.2 取得失敗時に画面上部 Error バナー + 「再試行」CTA を表示
-- [ ] 9.3 すべての色 / spacing / radius が `var(--hq-*)` または Tailwind preset utility 経由になっていることを grep で確認（マジックナンバーゼロ）
-- [ ] 9.4 すべてのインタラクティブ要素にラベル / aria 属性が付与されていることを確認
+- [x] 9.1 ProfilePage 初期ロード時に Loading skeleton を表示（ヘッダ / 各セクション領域）
+- [x] 9.2 取得失敗時に画面上部 Error バナー + 「再試行」CTA を表示
+- [x] 9.3 すべての色 / spacing / radius が `var(--hq-*)` または Tailwind preset utility 経由になっていることを grep で確認（マジックナンバーゼロ）
+- [x] 9.4 すべてのインタラクティブ要素にラベル / aria 属性が付与されていることを確認
 - [ ] 9.5 390x844 viewport（iPhone）で横スクロールなしで描画されることを Playwright で確認
 
 ## 10. spec 反映 (Sync)
