@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRoute, type RouteLocationRaw } from "vue-router";
-import { useAuthSession } from "@/features/auth";
+import { useBottomTabBarVisible } from "@/shared/lib/useBottomTabBarVisible";
 
 /**
  * 会員サイトの Bottom Tab Bar (ホーム / 履歴 / プロフィール)。
@@ -10,9 +10,8 @@ import { useAuthSession } from "@/features/auth";
  *   `ScreenRHomeV2` / `ScreenRHistory` / `ScreenRProfile` 末尾に共通配置されている
  *   3 タブ navigation。
  *
- * 表示条件:
- *   - 認証済 + プロフィール完成 + 書類提出済 (auth guard を通過した正規会員のみ)
- *   - 認証フロー (/login, /signup/*, /auth/*) では非表示
+ * - position: fixed で常に画面下部に固定 (スクロールしても見える)
+ * - 表示条件は useBottomTabBarVisible() に集約 (App.vue の pb 切替と共通化)
  *
  * 暫定:
  *   - 「履歴」タブは現状 /profile にリンクしている (プロフィール画面の STATS
@@ -23,25 +22,7 @@ import { useAuthSession } from "@/features/auth";
 type TabKey = "home" | "history" | "profile";
 
 const route = useRoute();
-const session = useAuthSession();
-
-const isVisible = computed(() => {
-  if (session.status.value !== "authenticated") return false;
-  if (session.isProfileComplete.value !== true) return false;
-  if (session.hasIdentityDocument.value !== true) return false;
-  // 認証フロー系のルートでは非表示
-  const name = String(route.name ?? "");
-  if (
-    name === "login" ||
-    name === "signup-profile" ||
-    name === "signup-identity" ||
-    name === "auth-callback" ||
-    name === "auth-link-sent"
-  ) {
-    return false;
-  }
-  return true;
-});
+const isVisible = useBottomTabBarVisible();
 
 const activeTab = computed<TabKey | null>(() => {
   const path = route.path;
@@ -68,8 +49,8 @@ const TABS: ReadonlyArray<Tab> = [
   <nav
     v-if="isVisible"
     aria-label="メインナビゲーション"
-    class="border-t border-hairline bg-paper flex"
-    style="padding-bottom: 18px;"
+    class="fixed bottom-0 left-0 right-0 z-40 border-t border-hairline bg-paper flex"
+    style="padding-bottom: env(safe-area-inset-bottom, 18px);"
     data-testid="bottom-tab-bar"
   >
     <router-link
