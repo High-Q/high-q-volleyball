@@ -60,9 +60,9 @@
 
 ## 8. ログアウト動線
 
-- [ ] 8.1 `apps/reservation/src/features/profile-sign-out/SignOutButton.vue` 実装（画面下部の outline ボタン + ConfirmDialog）
-- [ ] 8.2 確定で `useAuthSession.signOut()` → `router.push({ name: 'login' })`
-- [ ] 8.3 ProfilePage の最下部に SignOutButton を配置
+- [x] 8.1 `apps/reservation/src/features/profile-sign-out/SignOutButton.vue` 実装（画面下部の outline ボタン + ConfirmDialog）
+- [x] 8.2 確定で `useAuthSession.signOut()` → `router.push({ name: 'login' })`
+- [x] 8.3 ProfilePage の最下部に SignOutButton を配置
 
 ## 9. 4 状態 + a11y + デザイントークン仕上げ
 

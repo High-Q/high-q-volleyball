@@ -13,6 +13,7 @@ import {
   PhoneEditDialog,
   EmailEditDialog,
 } from "@/features/profile-account";
+import { SignOutButton } from "@/features/profile-sign-out";
 import { CancelBookingDialog, useCancelBooking } from "@/features/booking";
 import {
   fetchMyReservations,
@@ -165,6 +166,8 @@ const cancelErrorMessage = computed(() => {
           :reservations="reservations"
           @request-cancel="onRequestCancel"
         />
+
+        <SignOutButton />
       </template>
     </section>
 
