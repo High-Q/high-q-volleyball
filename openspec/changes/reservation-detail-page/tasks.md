@@ -7,18 +7,18 @@
 
 ## 2. .ics 生成ユーティリティ
 
-- [ ] 2.1 `features/calendar-export/lib/build-ics.ts` を新規作成し、`buildIcs({ reservationNumber, eventName, startAt, endAt, venueName, venueAddress })` を実装する。VERSION:2.0 / PRODID / VEVENT / UID (`reservation-{reservationId}@high-q.example` 相当) / DTSTART / DTEND (UTC + Z) / SUMMARY / LOCATION / DESCRIPTION
-- [ ] 2.2 `build-ics.spec.ts` で TDD (各行存在 / UID の同一性 / UTC 表記 / LOCATION 連結 / address NULL 時の会場名のみ表記)
-- [ ] 2.3 `features/calendar-export/composables/useIcsDownload.ts` を新規作成し、Blob → URL.createObjectURL → `<a download>` クリックでダウンロードを起動する composable を実装する
-- [ ] 2.4 `features/calendar-export/ui/CalendarExportButton.vue` を新規作成し、`@high-q/ui` の `Button` でラップした「カレンダーに追加 (.ics)」CTA を提供する。押下で `useIcsDownload` を呼び出す
-- [ ] 2.5 `features/calendar-export/index.ts` に Public API を集約
+- [x] 2.1 `features/calendar-export/lib/build-ics.ts` を新規作成し、`buildIcs({ reservationNumber, eventName, startAt, endAt, venueName, venueAddress })` を実装する。VERSION:2.0 / PRODID / VEVENT / UID (`reservation-{reservationId}@high-q.example` 相当) / DTSTART / DTEND (UTC + Z) / SUMMARY / LOCATION / DESCRIPTION
+- [x] 2.2 `build-ics.spec.ts` で TDD (各行存在 / UID の同一性 / UTC 表記 / LOCATION 連結 / address NULL 時の会場名のみ表記)
+- [x] 2.3 `features/calendar-export/composables/useIcsDownload.ts` を新規作成し、Blob → URL.createObjectURL → `<a download>` クリックでダウンロードを起動する composable を実装する
+- [x] 2.4 `features/calendar-export/ui/CalendarExportButton.vue` を新規作成し、`@high-q/ui` の `Button` でラップした「カレンダーに追加 (.ics)」CTA を提供する。押下で `useIcsDownload` を呼び出す
+- [x] 2.5 `features/calendar-export/index.ts` に Public API を集約
 
 ## 3. 会場地図リンク
 
-- [ ] 3.1 `features/venue-map-link/lib/build-map-url.ts` を新規作成し、`buildMapUrl(venue: { name, address, mapUrl })` を実装する。`mapUrl` 優先 / 未登録時は `https://www.google.com/maps/search/?api=1&query=` + URI エンコード済 `name + " " + address`（address NULL なら name のみ）
-- [ ] 3.2 `build-map-url.spec.ts` で TDD (mapUrl 優先 / address NULL 時の fallback / address 登録時の連結)
-- [ ] 3.3 `features/venue-map-link/ui/VenueMapLink.vue` を新規作成し、`<a target="_blank" rel="noopener noreferrer">` で「会場の地図を見る」リンクを描画する
-- [ ] 3.4 `features/venue-map-link/index.ts` に Public API を集約
+- [x] 3.1 `features/venue-map-link/lib/build-map-url.ts` を新規作成し、`buildMapUrl(venue: { name, address, mapUrl })` を実装する。`mapUrl` 優先 / 未登録時は `https://www.google.com/maps/search/?api=1&query=` + URI エンコード済 `name + " " + address`（address NULL なら name のみ）
+- [x] 3.2 `build-map-url.spec.ts` で TDD (mapUrl 優先 / address NULL 時の fallback / address 登録時の連結)
+- [x] 3.3 `features/venue-map-link/ui/VenueMapLink.vue` を新規作成し、`<a target="_blank" rel="noopener noreferrer">` で「会場の地図を見る」リンクを描画する
+- [x] 3.4 `features/venue-map-link/index.ts` に Public API を集約
 
 ## 4. 詳細画面 widgets
 
