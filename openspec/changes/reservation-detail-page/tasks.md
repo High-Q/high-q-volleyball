@@ -1,9 +1,9 @@
 ## 1. データ層 — 単一取得 API
 
-- [ ] 1.1 `entities/reservation/api/myReservation.ts` を新規作成し、`fetchMyReservation(reservationId, uid)` を実装する。`reservations × events × venues × members` JOIN + `.eq("member_id", uid)` 二重防衛 / 0 行ヒット時 `null` 返却 / Branded Type 経由で `MyReservationDetail` に変換
-- [ ] 1.2 `MyReservationDetail` 型を `entities/reservation/model/reservation.types.ts` に追加。`MyReservationItem` を拡張し、`note` / `createdAt` / `event.venueAddress` / `event.venueMapUrl` / `member.experienceLevel` を追加する
-- [ ] 1.3 `entities/reservation/index.ts` の Public API に `fetchMyReservation` / `MyReservationDetail` を re-export する
-- [ ] 1.4 `myReservation.spec.ts` で TDD (RLS による他会員 0 行 / 自分の予約 1 行 / 存在しない UUID 0 行 / member_id 条件がクエリに含まれることの検証)
+- [x] 1.1 `entities/reservation/api/myReservation.ts` を新規作成し、`fetchMyReservation(reservationId, uid)` を実装する。`reservations × events × venues × members` JOIN + `.eq("member_id", uid)` 二重防衛 / 0 行ヒット時 `null` 返却 / Branded Type 経由で `MyReservationDetail` に変換
+- [x] 1.2 `MyReservationDetail` 型を `entities/reservation/model/reservation.types.ts` に追加。`MyReservationItem` を拡張し、`note` / `createdAt` / `event.venueAddress` / `event.venueMapUrl` / `member.experienceLevel` を追加する
+- [x] 1.3 `entities/reservation/index.ts` の Public API に `fetchMyReservation` / `MyReservationDetail` を re-export する
+- [x] 1.4 `myReservation.spec.ts` で TDD (RLS による他会員 0 行 / 自分の予約 1 行 / 存在しない UUID 0 行 / member_id 条件がクエリに含まれることの検証)
 
 ## 2. .ics 生成ユーティリティ
 
