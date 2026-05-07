@@ -63,7 +63,6 @@ const baseReservation: MyReservationDetail = {
   id: unsafeReservationId(RID),
   status: "reserved",
   guestCount: 0,
-  note: null,
   createdAt: "2026-04-27T05:32:00Z",
   cancelledAt: null,
   event: {
@@ -73,8 +72,6 @@ const baseReservation: MyReservationDetail = {
     endAt: FUTURE_END,
     fee: 1000,
     venueName: "亀戸スポーツセンター",
-    venueAddress: "東京都江東区亀戸2-35-7",
-    venueMapUrl: "https://maps.example.com/kameido",
   },
   member: { experienceLevel: "intermediate" },
 };
@@ -129,7 +126,7 @@ describe("ReservationDetailPage - Loading / Success", () => {
     );
   });
 
-  it("Success: イベント名 / Dark Fact Card / Meta / アクション / Cancel CTA を描画する", async () => {
+  it("Success: イベント名 / Dark Fact Card / Meta / Cancel Policy / Cancel CTA を描画する", async () => {
     fetchMyReservationMock.mockResolvedValueOnce(baseReservation);
     const { wrapper } = await mountPage();
 
@@ -140,14 +137,19 @@ describe("ReservationDetailPage - Loading / Success", () => {
     expect(wrapper.find('[data-testid="reservation-meta-table"]').exists()).toBe(
       true,
     );
-    expect(wrapper.find('[data-testid="calendar-export-button"]').exists()).toBe(
-      true,
-    );
-    expect(wrapper.find('[data-testid="venue-map-link"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="cancel-policy-box"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="detail-cancel-button"]').exists()).toBe(
       true,
     );
+  });
+
+  it("地図 / カレンダー追加 CTA は描画されない (本 change でドロップ)", async () => {
+    fetchMyReservationMock.mockResolvedValueOnce(baseReservation);
+    const { wrapper } = await mountPage();
+    expect(wrapper.find('[data-testid="venue-map-link"]').exists()).toBe(false);
+    expect(
+      wrapper.find('[data-testid="calendar-export-button"]').exists(),
+    ).toBe(false);
   });
 
   it("予約番号 kicker は #HQ-XXXX-XXXX 形式で生 UUID を出さない", async () => {
@@ -167,26 +169,6 @@ describe("ReservationDetailPage - Loading / Success", () => {
     const { wrapper } = await mountPage();
     expect(wrapper.find('[data-testid="detail-cancel-button"]').exists()).toBe(
       false,
-    );
-  });
-
-  it("会場地図リンクの href は mapUrl 登録済ならそれを使う", async () => {
-    fetchMyReservationMock.mockResolvedValueOnce(baseReservation);
-    const { wrapper } = await mountPage();
-    const link = wrapper.find('[data-testid="venue-map-link"]');
-    expect(link.attributes("href")).toBe("https://maps.example.com/kameido");
-    expect(link.attributes("target")).toBe("_blank");
-  });
-
-  it("mapUrl が NULL なら Google Maps 検索 URL に fallback する", async () => {
-    fetchMyReservationMock.mockResolvedValueOnce({
-      ...baseReservation,
-      event: { ...baseReservation.event, venueMapUrl: null },
-    });
-    const { wrapper } = await mountPage();
-    const link = wrapper.find('[data-testid="venue-map-link"]');
-    expect(link.attributes("href")).toMatch(
-      /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=/,
     );
   });
 });

@@ -7,10 +7,10 @@ describe("CancelPolicyBox", () => {
   it("CANCEL POLICY kicker と説明文を描画する", () => {
     const wrapper = mount(CancelPolicyBox);
     expect(wrapper.text()).toContain("CANCEL POLICY");
-    expect(wrapper.text()).toContain("開催開始までキャンセル可能");
+    expect(wrapper.text()).toContain("キャンセル期限は開催前日中");
   });
 
-  it("文言には cancel_deadline 由来の「24 時間」表記を含まない", () => {
+  it("文言には cancel_deadline 由来の「24 時間」表記とキャンセル料の言及を含まない", () => {
     const wrapper = mount(CancelPolicyBox);
     expect(wrapper.text()).not.toContain("24 時間");
     expect(wrapper.text()).not.toContain("24時間");

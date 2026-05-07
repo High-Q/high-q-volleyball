@@ -38,7 +38,7 @@ describe("fetchMyReservation", () => {
     expect(supabaseMock.from).toHaveBeenCalledWith("reservations");
     expect(builderMock.select).toHaveBeenCalledWith(
       expect.stringContaining(
-        "events(id, name, start_at, end_at, fee, venue_id, venues(name, address, map_url, default_fee))",
+        "events(id, name, start_at, end_at, fee, venue_id, venues(name, default_fee))",
       ),
     );
     expect(builderMock.select).toHaveBeenCalledWith(
@@ -63,7 +63,6 @@ describe("fetchMyReservation", () => {
         id: RESERVATION_ID,
         status: "reserved",
         guest_count: 1,
-        note: "初参加です",
         created_at: "2026-04-27T05:32:00Z",
         cancelled_at: null,
         member_id: UID,
@@ -76,8 +75,6 @@ describe("fetchMyReservation", () => {
           venue_id: "33333333-3333-3333-3333-333333333333",
           venues: {
             name: "亀戸スポーツセンター",
-            address: "東京都江東区亀戸2-35-7",
-            map_url: "https://maps.example.com/kameido",
             default_fee: 1200,
           },
         },
@@ -93,11 +90,8 @@ describe("fetchMyReservation", () => {
 
     expect(result).not.toBeNull();
     expect(result?.id).toBe(RESERVATION_ID);
-    expect(result?.note).toBe("初参加です");
     expect(result?.event.name).toBe("ゆる練 vol.43");
     expect(result?.event.venueName).toBe("亀戸スポーツセンター");
-    expect(result?.event.venueAddress).toBe("東京都江東区亀戸2-35-7");
-    expect(result?.event.venueMapUrl).toBe("https://maps.example.com/kameido");
     expect(result?.event.fee).toBe(1000);
     expect(result?.member.experienceLevel).toBe("intermediate");
   });
@@ -108,7 +102,6 @@ describe("fetchMyReservation", () => {
         id: RESERVATION_ID,
         status: "reserved",
         guest_count: 0,
-        note: null,
         created_at: "2026-04-27T05:32:00Z",
         cancelled_at: null,
         member_id: UID,
@@ -121,8 +114,6 @@ describe("fetchMyReservation", () => {
           venue_id: "33333333-3333-3333-3333-333333333333",
           venues: {
             name: "板橋区立体育館",
-            address: null,
-            map_url: null,
             default_fee: 1500,
           },
         },
@@ -137,8 +128,6 @@ describe("fetchMyReservation", () => {
     const result = await fetchMyReservation(RESERVATION_ID, UID);
 
     expect(result?.event.fee).toBe(1500);
-    expect(result?.event.venueAddress).toBeNull();
-    expect(result?.event.venueMapUrl).toBeNull();
   });
 
   it("events JOIN が NULL の場合は null を返す (foreign key 不整合の防御)", async () => {
@@ -147,7 +136,6 @@ describe("fetchMyReservation", () => {
         id: RESERVATION_ID,
         status: "reserved",
         guest_count: 0,
-        note: null,
         created_at: "2026-04-27T05:32:00Z",
         cancelled_at: null,
         member_id: UID,

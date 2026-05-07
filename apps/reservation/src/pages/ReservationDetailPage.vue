@@ -11,11 +11,6 @@ import {
   type MyReservationDetail,
 } from "@/entities/reservation";
 import {
-  CalendarExportButton,
-  type BuildIcsInput,
-} from "@/features/calendar-export";
-import { VenueMapLink } from "@/features/venue-map-link";
-import {
   CancelPolicyBox,
   DarkFactCard,
   ReservationMetaTable,
@@ -81,30 +76,6 @@ const reservationNumber = computed(() =>
     ? ""
     : formatReservationNumber(reservation.value.id),
 );
-
-const icsInput = computed<BuildIcsInput | null>(() => {
-  const r = reservation.value;
-  if (r === null) return null;
-  return {
-    reservationId: r.id as unknown as string,
-    reservationNumber: reservationNumber.value,
-    eventName: r.event.name,
-    startAt: r.event.startAt,
-    endAt: r.event.endAt,
-    venueName: r.event.venueName,
-    venueAddress: r.event.venueAddress,
-  };
-});
-
-const venueInput = computed(() => {
-  const r = reservation.value;
-  if (r === null) return null;
-  return {
-    name: r.event.venueName,
-    address: r.event.venueAddress,
-    mapUrl: r.event.venueMapUrl,
-  };
-});
 
 const cancelDialogOpen = ref<boolean>(false);
 const {
@@ -289,12 +260,6 @@ function goHistory(): void {
           :experience-level="reservation.member.experienceLevel"
           :reserved-at="reservation.createdAt"
         />
-
-        <!-- Actions -->
-        <div class="flex flex-col gap-hq-3">
-          <CalendarExportButton v-if="icsInput !== null" :input="icsInput" />
-          <VenueMapLink v-if="venueInput !== null" :venue="venueInput" />
-        </div>
 
         <!-- Cancel Policy -->
         <CancelPolicyBox />

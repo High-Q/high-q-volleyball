@@ -34,9 +34,8 @@
 
 返却値はパンくず / Dark Fact Card / Meta テーブルの描画に必要な以下を含む MUST:
 
-- 予約: `id` / `status` / `guestCount` / `note` / `createdAt`（予約日時表示用）/ `cancelledAt`
-- イベント: `id` / `name` / `startAt` / `endAt` / `fee`（NULL なら `venues.default_fee` で COALESCE）
-- 会場: `id` / `name` / `address` / `mapUrl`（地図リンク fallback 用）
+- 予約: `id` / `status` / `guestCount` / `createdAt`（予約日時表示用）/ `cancelledAt`
+- イベント: `id` / `name` / `startAt` / `endAt` / `fee`（NULL なら `venues.default_fee` で COALESCE）/ `venueName`
 - 会員: `experienceLevel`（経験レベル表示用 — `members.experience_level` を都度参照する）
 
 #### Scenario: 自分の予約は取得できる
@@ -45,11 +44,11 @@
 
 #### Scenario: 他会員の予約は 0 行ヒット
 - **WHEN** 会員 A が会員 B の予約 ID を指定して `fetchMyReservation` を呼び出す
-- **THEN** RLS により 0 行となり、API は 404 を意味する `NotFound` 型の Result / null を返す
+- **THEN** RLS により 0 行となり、API は 404 を意味する `null` を返す
 
 #### Scenario: 存在しない予約 ID
 - **WHEN** ランダム UUID で `fetchMyReservation` を呼び出す
-- **THEN** 0 行となり、API は 404 を意味する `NotFound` 型の Result / null を返す
+- **THEN** 0 行となり、API は 404 を意味する `null` を返す
 
 #### Scenario: アプリ層 member_id 条件の明示
 - **WHEN** `fetchMyReservation` の実装ファイルを確認する
@@ -140,86 +139,21 @@ ReservationDetailPage は Dark Fact Card の下に Meta テーブルを SHALL �
 - **WHEN** `reservations.guest_count = 0` の予約を表示
 - **THEN** 同伴者に「0 名」が描画される
 
-### Requirement: カレンダー追加（.ics ダウンロード）
-
-ReservationDetailPage は「カレンダーに追加 (.ics)」CTA を SHALL 提供する。押下でクライアントサイドで `.ics` ファイルを生成し、ブラウザのダウンロード動作で会員のローカルに保存させる MUST。
-
-`.ics` ファイル仕様:
-
-- `VERSION:2.0` / `PRODID` 固定値（例: `-//High Q//Reservation//JP`）
-- 単一 `VEVENT` ブロック
-- `UID`: `reservation-{reservationId}@high-q.example` 形式（再ダウンロード時にカレンダー側で同一イベントとして上書きされる）
-- `DTSTART` / `DTEND`: UTC で出力（`YYYYMMDDTHHMMSSZ` 形式）。タイムゾーン VTIMEZONE ブロックは持たない MUST NOT（Apple / Google / Outlook 全てで JST 表示が再現されるため UTC 単独で十分）
-- `SUMMARY`: `events.name` をそのまま使用
-- `LOCATION`: `{venues.name} / {venues.address}` 形式（住所が NULL のときは会場名のみ）
-- `DESCRIPTION`: 予約番号 `#HQ-XXXX-XXXX` を 1 行目に含める
-
-ファイル名は `high-q-{reservationNumber}.ics`（例: `high-q-HQ-2605-A8F2.ics`）とする MUST。
-
-サーバー API は介在しない MUST NOT（クライアント完結）。`.ics` 生成は手書き TS モジュール `features/calendar-export/lib/build-ics.ts` で実装する MUST。
-
-#### Scenario: .ics ダウンロードの起動
-- **WHEN** 会員が「カレンダーに追加 (.ics)」CTA を押下
-- **THEN** `text/calendar` MIME のファイルダウンロードが起動し、ファイル名は `high-q-{reservationNumber}.ics` となる
-
-#### Scenario: VEVENT 内容
-- **WHEN** ダウンロードされた `.ics` ファイルを確認
-- **THEN** `VERSION:2.0` / `PRODID` / `BEGIN:VEVENT` / `UID` / `DTSTART` / `DTEND` / `SUMMARY` / `LOCATION` / `DESCRIPTION` / `END:VEVENT` の各行が含まれる
-
-#### Scenario: UID の同一性
-- **WHEN** 同一予約に対して `.ics` ダウンロードを 2 回実行
-- **THEN** 両ファイルの `UID` 行は完全一致し、カレンダー側で同一イベントとして扱える
-
-#### Scenario: タイムゾーン表現
-- **WHEN** `events.start_at = 2026-05-15 19:30 JST`（= `2026-05-15 10:30 UTC`）の予約を `.ics` ダウンロード
-- **THEN** `DTSTART` 行は `DTSTART:20260515T103000Z` 形式で出力される（UTC + Z サフィックス）
-
-#### Scenario: 開催終了済イベントでも .ics は生成可
-- **WHEN** `events.start_at <= now()` の過去予約で「カレンダーに追加 (.ics)」CTA を押下
-- **THEN** `.ics` ファイルは正常にダウンロードされる（過去開催イベントの記録目的を許容する）
-
-### Requirement: 会場地図リンク
-
-ReservationDetailPage は「会場の地図を見る」リンクを SHALL 提供する。押下で `target="_blank" rel="noopener noreferrer"` の新規タブ遷移とする MUST。
-
-遷移先 URL は以下の優先順で MUST 決定する:
-
-1. `venues.map_url` が NULL でなく長さ 1 以上 → そのまま使用
-2. それ以外 → `https://www.google.com/maps/search/?api=1&query={encodeURIComponent(会場名 + " " + 住所)}` の Google Maps 検索 URL を生成。住所が NULL のときは会場名のみで検索
-
-`venues.map_url` 列の参照のみで会場名固有のハードコード分岐は行わない MUST NOT。
-
-#### Scenario: map_url 登録済の優先
-- **WHEN** `venues.map_url = "https://maps.example.com/kameido"` の予約で「会場の地図を見る」を押下
-- **THEN** 当該 URL が新規タブで開かれる
-
-#### Scenario: map_url 未登録時の Google Maps fallback
-- **WHEN** `venues.map_url = NULL` AND `venues.name = "亀戸スポーツセンター"` AND `venues.address = "東京都江東区亀戸..."` の予約で「会場の地図を見る」を押下
-- **THEN** `https://www.google.com/maps/search/?api=1&query=` で始まり、会場名 + 住所が URI エンコードされたクエリパラメータを持つ URL が新規タブで開かれる
-
-#### Scenario: 住所未登録時の fallback
-- **WHEN** `venues.map_url = NULL` AND `venues.address = NULL` の予約で「会場の地図を見る」を押下
-- **THEN** Google Maps 検索 URL のクエリは会場名のみとなる
-
-#### Scenario: 新規タブで開く
-- **WHEN** 「会場の地図を見る」リンクの DOM 属性を確認
-- **THEN** `target="_blank"` AND `rel="noopener noreferrer"` が設定されている
-
 ### Requirement: Cancel Policy ボックス
 
-ReservationDetailPage はアクション群の下に Cancel Policy ボックスを SHALL 表示する。kicker `— CANCEL POLICY` + 説明文 1 段落で構成される MUST。
+ReservationDetailPage は Meta テーブルの下に Cancel Policy ボックスを SHALL 表示する。kicker `— CANCEL POLICY` + 説明文 1 段落で構成される MUST。
 
-説明文は MVP1 の実挙動に整合させ、`events.cancel_deadline` を参照しない事実を反映する MUST。具体的には「開催開始までキャンセル可能です。やむを得ず当日キャンセルが必要な場合は LINE オープンチャット『社会人バレーボールサークル High Q』までご連絡ください。」相当の文言とする。LINE オープンチャットの URL / 名称は `shared/lib/contact-channels` 経由で参照する MUST（ハードコード禁止 MUST NOT）。
+説明文は MVP1 のキャンセル運用ポリシー (キャンセル期限は **開催前日中**) と整合させる MUST。具体的には「キャンセル期限は開催前日中です。当日キャンセルが必要な場合は LINE オープンチャット『社会人バレーボールサークル High Q』までご連絡ください。」相当の文言とする。LINE オープンチャットの URL / 名称は `shared/lib/contact-channels` 経由で参照する MUST（ハードコード禁止 MUST NOT）。
 
-デザインサンプル (`docs/10-デザインサンプル/reservation/hq-reserve-screens.jsx`) の「開催 24 時間前まで」表記は本 capability では採用しない MUST NOT（cancel_deadline 列を参照しない MVP1 方針との不整合を避けるため）。
+デザインサンプル (`docs/10-デザインサンプル/reservation/hq-reserve-screens.jsx`) の「開催 24 時間前まで」「キャンセル料」表記は本 capability では採用しない MUST NOT (運用実態と不整合 + High Q はキャンセル料を取らない方針)。
 
 #### Scenario: Cancel Policy の表示
 - **WHEN** ReservationDetailPage に到達
-- **THEN** `— CANCEL POLICY` kicker と説明文段落が描画される
+- **THEN** `— CANCEL POLICY` kicker と「キャンセル期限は開催前日中」を含む説明文段落が描画される
 
 #### Scenario: 文言の整合性
 - **WHEN** Cancel Policy 説明文を確認する
-- **THEN** 「開催 24 時間前」「24 時間以内」等の cancel_deadline 由来の表現は含まれない
+- **THEN** 「24 時間」「キャンセル料」等の運用と乖離する表現は含まれない
 
 #### Scenario: LINE オープンチャットへの誘導
 - **WHEN** Cancel Policy 説明文中の LINE オープンチャットリンクを確認
@@ -227,34 +161,34 @@ ReservationDetailPage はアクション群の下に Cancel Policy ボックス�
 
 ### Requirement: 予約キャンセル動線
 
-ReservationDetailPage はメインアクションの末尾に「予約をキャンセル」ボタンを SHALL 配置する。判定基準は `events.start_at > now()` のみ MUST（`events.cancel_deadline` 列は参照しない MUST NOT — 既存 reservation-booking-flow / reservation-history-page 方針と整合）。
+ReservationDetailPage はメインアクションの末尾に「予約をキャンセル」ボタンを SHALL 配置する。判定基準は `useCancelBooking.isCancellable(eventStartAt)` の戻り値とし、本関数は **JST カレンダー基準で `now の JST 日 < start_at の JST 日`** のときのみ `true` を返す MUST（= 開催前日 23:59 JST までキャンセル可、開催当日 00:00 JST 以降は不可）。`events.cancel_deadline` 列は参照しない MUST NOT。
 
 押下で既存 `features/booking/CancelBookingDialog` を開き、確定操作で `useCancelBooking` 経由で `reservations.status` を `'reserved' → 'cancelled'` に UPDATE する MUST。コードは履歴画面 (#211) のキャンセル動線と完全共通化する MUST。
 
-キャンセル成功時は `/history` に `router.replace`（履歴置換）で遷移し、完了トーストを表示する MUST。詳細画面に留まらない理由: 当該予約は既にキャンセル済となり「キャンセル」CTA が再度押せない状態となるため、上位リストへ戻すのが自然な導線である。
+キャンセル成功時は `/history` に `router.replace`（履歴置換）で遷移し、完了トーストを表示する MUST。
 
-`status !== 'reserved'` または `events.start_at <= now()` のとき、ボタンは disabled となり、CancelBookingDialog 既存の「不可案内」UI（LINE オープンチャットへの誘導）を通る MUST。
+`status !== 'reserved'` または `isCancellable === false` のとき、CancelBookingDialog 既存の「不可案内」UI（LINE オープンチャットへの誘導）を通る MUST。
 
 エラー時の文言は既存 `features/booking` 挙動を継承する SHALL（`rls`→「この予約はキャンセルできません」/ `network`→「通信エラーが発生しました。再試行してください」/ その他→「キャンセル処理に失敗しました」）。
 
-#### Scenario: キャンセル可能時の表示
-- **WHEN** `status='reserved'` AND `events.start_at > now()` の予約を表示
+#### Scenario: 開催前日 23:59 JST はキャンセル可能
+- **WHEN** `status='reserved'` AND 現在時刻が `events.start_at` の JST カレンダー日の前日 23:59 JST 以前の予約を表示
 - **THEN** 「予約をキャンセル」ボタンが活性で描画される
+
+#### Scenario: 開催当日 00:00 JST 以降はキャンセル不可
+- **WHEN** `status='reserved'` AND 現在時刻が `events.start_at` の JST 開催日 00:00 以降の予約を表示
+- **THEN** 「予約をキャンセル」ボタン押下時に CancelBookingDialog が「キャンセル期限を過ぎています」案内 (LINE オープンチャットリンク付き) を表示し、確定 CTA は描画されない
 
 #### Scenario: キャンセル成功後の遷移
 - **WHEN** ReservationDetailPage の「予約をキャンセル」を押し、Dialog で確定する
 - **THEN** `reservations.status` が `'cancelled'` に UPDATE され、`/history` に `router.replace` で遷移し、完了トーストが表示される
 
-#### Scenario: キャンセル不可時の表示
-- **WHEN** `events.start_at <= now()` の予約を表示
-- **THEN** 「予約をキャンセル」ボタンは disabled となり、押下しても CancelBookingDialog の不可案内 UI が表示される
-
 #### Scenario: 既にキャンセル済予約の表示
 - **WHEN** `status='cancelled'` の予約を表示
-- **THEN** 「予約をキャンセル」ボタンは描画されない（DOM に存在しない）か disabled となる
+- **THEN** 「予約をキャンセル」ボタンは描画されない（DOM に存在しない）
 
 #### Scenario: cancel_deadline は判定に使われない
-- **WHEN** `events.cancel_deadline` に過去日時が設定されているが `events.start_at` は未来の予約を表示
+- **WHEN** `events.cancel_deadline` に過去日時が設定されているが現在時刻が `events.start_at` の JST 前日中の予約を表示
 - **THEN** 「予約をキャンセル」ボタンは活性で描画され、押下で正常にキャンセルできる
 
 ### Requirement: 4 状態 UI
@@ -304,11 +238,11 @@ ReservationDetailPage は以下 4 状態を SHALL 持つ:
 
 ReservationDetailPage は 390px viewport（mobile）を first target とする MUST。HQ デザイントークン（`var(--hq-*)` および Tailwind preset utility）のみを使用し、マジックナンバー（生の色コード / px 値 / rem 値の直書き）を含めない MUST NOT。
 
-カラーコントラスト比は AA（4.5:1）以上を満たす MUST。Dark Fact Card は ink 背景 + paper 文字色のため、accent kicker と本文の双方で AA を満たす MUST。Meta テーブルは `<dl>` / `<dt>` / `<dd>` でセマンティック化する MUST。`.ics` ダウンロードボタンは `<button type="button">`、会場地図リンクは `<a href>`（ボタン的見た目でも `<a>` を SHALL 使用）。
+カラーコントラスト比は AA（4.5:1）以上を満たす MUST。Dark Fact Card は ink 背景 + paper 文字色のため、accent kicker と本文の双方で AA を満たす MUST。Meta テーブルは `<dl>` / `<dt>` / `<dd>` でセマンティック化する MUST。
 
 #### Scenario: 横スクロールなしで描画
 - **WHEN** 390px viewport で `/reservations/<uuid>` を開く
-- **THEN** Top Bar・Reservation Header・Dark Fact Card・Meta テーブル・アクション 2 つ・Cancel Policy・キャンセルボタンが横スクロールなしで描画される
+- **THEN** Top Bar・Reservation Header・Dark Fact Card・Meta テーブル・Cancel Policy・キャンセルボタンが横スクロールなしで描画される
 
 #### Scenario: デザイントークンの使用
 - **WHEN** 本 capability で新規追加するファイル群を `grep` で検査する
@@ -322,7 +256,7 @@ ReservationDetailPage は 390px viewport（mobile）を first target とする M
 
 ReservationDetailPage の E2E は **1 件のみ** 追加する MUST: 「未認証ユーザーが `/reservations/<任意 uuid>` に直接アクセスすると `/login` にリダイレクトされる」。
 
-詳細表示 / Dark Fact Card のカウントダウン / Meta テーブルの COALESCE / .ics 生成 / 会場地図リンクの fallback / キャンセル動線の詳細検証は component test + unit test に押し下げる MUST（既存 reservation-history-page / reservation-profile-page と同じスケーラビリティ運用パターン）。
+詳細表示 / Dark Fact Card のカウントダウン / Meta テーブルの COALESCE / キャンセル動線の詳細検証は component test + unit test に押し下げる MUST（既存 reservation-history-page / reservation-profile-page と同じスケーラビリティ運用パターン）。
 
 #### Scenario: 未認証で `/reservations/<uuid>` アクセス
 - **WHEN** 未認証ユーザーが Playwright で `/reservations/<任意 uuid>` を開く

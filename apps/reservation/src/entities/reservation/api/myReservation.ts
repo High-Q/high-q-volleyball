@@ -27,7 +27,6 @@ type MyReservationDetailRow = {
   id: string;
   status: ReservationStatus;
   guest_count: number;
-  note: string | null;
   created_at: string;
   cancelled_at: string | null;
   member_id: string;
@@ -40,8 +39,6 @@ type MyReservationDetailRow = {
     venue_id: string;
     venues: {
       name: string;
-      address: string | null;
-      map_url: string | null;
       default_fee: number | null;
     } | null;
   } | null;
@@ -58,7 +55,7 @@ export async function fetchMyReservation(
   const { data, error } = await supabase
     .from("reservations")
     .select(
-      "id, status, guest_count, note, created_at, cancelled_at, member_id, events(id, name, start_at, end_at, fee, venue_id, venues(name, address, map_url, default_fee)), members(experience_level)",
+      "id, status, guest_count, created_at, cancelled_at, member_id, events(id, name, start_at, end_at, fee, venue_id, venues(name, default_fee)), members(experience_level)",
     )
     .eq("id", reservationId as string)
     .eq("member_id", uid as string)
@@ -91,7 +88,6 @@ function rowToDetail(
     id: unsafeReservationId(row.id),
     status: row.status,
     guestCount: row.guest_count,
-    note: row.note,
     createdAt: row.created_at,
     cancelledAt: row.cancelled_at,
     event: {
@@ -101,8 +97,6 @@ function rowToDetail(
       endAt: row.events.end_at,
       fee: row.events.fee ?? row.events.venues?.default_fee ?? null,
       venueName: row.events.venues?.name ?? "",
-      venueAddress: row.events.venues?.address ?? null,
-      venueMapUrl: row.events.venues?.map_url ?? null,
     },
     member: {
       experienceLevel: row.members.experience_level,

@@ -61,10 +61,8 @@ export type Reservation = {
 /**
  * 予約詳細画面 (`/reservations/:reservationId`) で表示する自分の予約 + 紐付くイベント / 会場 / 会員情報。
  *
- * `MyReservationItem` (履歴一覧用) を拡張し、詳細画面 UI で必要な以下の追加フィールドを含む:
- * - `note` / `createdAt`: Meta テーブルの「予約日時」「連絡事項」表示用
- * - `event.venueAddress` / `event.venueMapUrl`: 会場地図リンク fallback 用
- * - `member.experienceLevel`: Meta テーブルの「経験レベル」表示用
+ * `MyReservationItem` (履歴一覧用) を拡張し、詳細画面 Meta テーブル用に
+ * `createdAt` (予約日時) と `member.experienceLevel` を追加する。
  *
  * 関連:
  *   openspec/changes/reservation-detail-page/specs/reservation-detail-page/spec.md
@@ -73,7 +71,6 @@ export type MyReservationDetail = {
   id: ReservationId;
   status: ReservationStatus;
   guestCount: number;
-  note: string | null;
   createdAt: string;
   cancelledAt: string | null;
   event: {
@@ -83,8 +80,6 @@ export type MyReservationDetail = {
     endAt: string;
     fee: number | null;
     venueName: string;
-    venueAddress: string | null;
-    venueMapUrl: string | null;
   };
   member: {
     experienceLevel: "beginner" | "intermediate" | "experienced";
