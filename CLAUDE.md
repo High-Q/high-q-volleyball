@@ -82,39 +82,11 @@ docs/08-移行/01-環境戦略・本番リリース計画.md         ← dev/prd
 | `/opsx:archive` | change を archive/ へ移動（Sync 後） |
 | `/opsx-ship` | PR レビュー OK 後の出荷フロー（sync/archive/push/merge/後始末を一気に） |
 
-### Issue & ブランチ命名
+### Issue 作成 / マージ後の後始末
 
-```bash
-gh issue create --title "feat: ..." --label "enhancement"
-git checkout -b feature/<issue番号>-<kebab-case-summary>
-```
-
-### Issue 新規作成時のルール（親 Epic 配置の提案必須）
-
-Issue を新規作成する前に、**必ず親 Issue (Epic) との関係を翔太郎くんに提案する**:
-
-1. **Epic 一覧を必ず先に確認**する: `gh issue list --label epic --state all`
-2. 後続 Issue の **作業ドメイン・前提条件** に応じて Epic を選定する
-   - 例: 「admin デプロイ」は admin アプリ実装が前提 → 管理画面開発 Epic 配下
-   - 例: 「reservation デプロイ」は reservation アプリ実装が前提 → 予約サイト開発 Epic 配下
-   - 例: 横断インフラ整備（CI / モノレポ基盤等）→ プロジェクト基盤構築 Epic 配下
-3. **元 Issue の Epic を機械的に踏襲しない**。スコープ縮小で分離した後続 Issue は、作業ドメインが元 Issue と異なる可能性が高いため都度判断する
-4. 配置候補が複数 or 不明な場合は候補を提示して翔太郎くんに確認
-5. 完全に独立した新規タスクなら「親 Issue なし」と明示
-
-提案フォーマット例:
-> 「以下の Issue を作成します。Epic 一覧を確認しました（#75 基盤 / #83 管理画面 / #88 予約サイト）。本 Issue は admin アプリ実装後のデプロイ作業のため、配置: **Epic #83 (管理画面開発) の下**」
-
-承認後、Issue 本文の最終行に `Epic: #<親番号>` を記載する。これにより GitHub 上で Epic から後続 Issue を辿れる状態を保つ。
-
-### マージ後の後始末（必須）
-
-```bash
-git checkout master && git pull
-git branch -d feature/<issue番号>-<...>
-git push origin --delete feature/<issue番号>-<...>   # gh pr merge --delete-branch を使った場合は不要
-gh issue close <issue番号> --comment "Done in #<PR番号>"
-```
+- **新規 Issue 作成は `/create-issue` Skill 経由**で行う。Epic 配置 / Milestone / 着手順 / Project Status の 4 必須項目を漏らさずセットする
+- **マージ後の後始末（ブランチ削除 + Issue クローズ）は `/opsx-ship` Skill が一括処理**する
+- ブランチ命名: `feature/<issue番号>-<kebab-case>` / `fix/<番号>-<...>` / `chore/<番号>-<...>`
 
 ### Apply 中のテスト・ビルド実行ルール
 
@@ -162,16 +134,16 @@ app → pages → widgets → features → entities → shared
 
 Design フェーズで必ずチェック: 影響レイヤー / ビジネス異常系列挙 + UI フィードバック / Loading・Empty・Error・Success 4 状態 / モバイルファースト / アクセシビリティ AA / デザイントークン使用（マジックナンバー禁止）/ **E2E ハッピーパス試験の対象シナリオ列挙**。
 
-### グローバル UI 規約（厳守・違反したら revert）
+### グローバル UI 規約（違反したら revert・MUST）
 
-- **フォーム入力**: 生 `<label>` + `<input>` / `<textarea>` の直書き禁止。MUST `shared/ui/FormField` でラップし、`:error` prop で error 駆動。**初期表示で赤枠を出さない**。必須マーク `*` は使わずラベルに「(必須)」と書く。詳細: `docs/05-インターフェース/01-UI設計方針.md` 「admin / reservation のフォーム実装ルール」
-- **パンくず**: 各 Page / Widget で `<nav aria-label="パンくず">` を独自実装することを禁止。MUST `widgets/page-breadcrumb/PageBreadcrumb` widget のみで実装し、Page header の **1 箇所のみ**配置。Widget 側 (TopBar 等) で重複させない。第 1 セグメント `Workspace` は `to: { name: 'events' }` で admin TOP リンク化必須。詳細: `docs/05-インターフェース/01-UI設計方針.md` 「ナビゲーション規約」
-- **横遷移リンクの双方向性**: 画面 A から画面 B への遷移リンクを置いたら、B → A の戻り経路 (パンくず or 別リンク) も必ず用意する SHALL
-- **新規 Page / Widget 実装前**: 既存の同種 Page (例: EventDetailPage) を **必ず先に読み**、レイアウト構造 / breadcrumb 構造 / header 配置を踏襲する MUST。独自解釈で書かない
+- フォーム入力は `shared/ui/FormField` でラップ（生 `<label>`+`<input>` 直書き禁止・初期表示で赤枠出さない）
+- パンくずは `widgets/page-breadcrumb/PageBreadcrumb` のみ・Page header 1 箇所のみ
+- 横遷移リンクは双方向対称性を確保
+- 新規 Page / Widget 実装前は既存同種 Page を必ず Read してから着手
 
-新規 feature の Apply に E2E を含める際、**機能あたり 1〜2 件まで**（happy path + 主要 edge case）を上限とする。詳細バリエーションは component test に押し下げる。E2E が肥大化していると感じたら、追加でなく既存テストの component test 化を検討する。詳細は `docs/07-テスト/01-テスト戦略・方針.md` の「E2E スケーラビリティ運用ルール」を参照。
+詳細・参考実装・違反検出 grep は `docs/05-インターフェース/01-UI設計方針.md`「ナビゲーション規約」「フォーム実装ルール」「新規 Page 実装前の既存踏襲ルール」。
 
-詳細チェックリストは `docs/05-インターフェース/01-UI設計方針.md`。
+新規 feature Apply の E2E は機能あたり 1〜2 件まで（happy path + 主要 edge case）。詳細バリエーションは component test。詳細: `docs/07-テスト/01-テスト戦略・方針.md`「E2E スケーラビリティ運用ルール」。
 
 ---
 
@@ -193,28 +165,10 @@ Design フェーズで必ずチェック: 影響レイヤー / ビジネス異�
 
 詳細は `docs/03-アーキテクチャ/03-インフラ・CICD構成.md`。
 
-### Apply 完了報告での Render Preview 言及ルール (厳守)
+### Apply 完了報告 / 環境戦略
 
-現状 `render.yaml` の services に登録されているのは **LP (`apps/lp`) のみ**。Render は services 登録済サービス用にしか PR Preview を生成しない。
-
-Apply 完了後の翔太郎くん向け報告で「Render Preview で確認お願いします」と書いていいのは **PR の変更が `apps/lp` を含む場合のみ**。それ以外の場合は機械的に以下のように報告すること:
-
-| PR 変更範囲 | 報告に書くこと |
-|---|---|
-| `apps/lp` 含む | 「Render Preview で確認をお願いします」OK |
-| `apps/admin` のみ | ⚠️「`apps/admin` のみの変更のため Render PR Preview は生成されません (#139 待ち)。動作確認はローカル `pnpm --filter @high-q/admin dev` でお願いします」 |
-| `apps/reservation` のみ | ⚠️「`apps/reservation` のみの変更のため Render PR Preview は生成されません (#140 待ち)。動作確認はローカル `pnpm --filter @high-q/reservation dev` でお願いします」 |
-| `packages/*` / `supabase/*` / `docs/*` のみ | Render Preview に関する言及をしない (動作確認の必要があれば該当アプリのローカル起動を案内) |
-
-`#139` / `#140` がマージされたら本ルールは解消されるので、その時点で本セクションを更新する。
-
-詳細・背景: `docs/08-移行/01-環境戦略・本番リリース計画.md` §7
-
-### 環境戦略 (dev / prd 分離) — 新規 Issue 提案時の前提
-
-現状 Supabase は **dev 1 プロジェクトのみ運用** (本番 Supabase 未作成)。本番リリース時には dev / prd を完全分離し、Render env の `previewValue` で PR Preview だけ dev に向ける設計を取る。
-
-新機能の Design / Apply 時に Supabase / 環境変数 / Render 設定に触れる場合、**まず `docs/08-移行/01-環境戦略・本番リリース計画.md` を読み、現在のフェーズと方針に整合する提案** をすること。Phase 移行に絡む変更 (例: 本番 Supabase 作成、env var 切替) は単発 Apply で進めず、Phase 1 開始の専用 Issue として切り出す。
+- **Render Preview 言及は PR 変更ファイル次第**で機械的に切り替える（LP 含む時だけ「Preview で確認」OK・admin/reservation のみは Preview 出ない）。判定表と文言テンプレは memory `feedback_render_preview_scope.md`（#139/#140 マージで本ルール削除予定）
+- **dev / prd 分離方針**: Supabase / 環境変数 / Render 設定に触れる Design / Apply 前に必ず `docs/08-移行/01-環境戦略・本番リリース計画.md` を読む。Phase 移行に絡む変更は専用 Issue として切り出す
 
 ---
 

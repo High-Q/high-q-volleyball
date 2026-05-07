@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { ReservationStatus } from "@/entities/reservation";
+import type { ReservationStatus } from "../model/reservation.types";
 
 const props = defineProps<{
   status: ReservationStatus;

@@ -183,66 +183,37 @@ ProfilePage は ACCOUNT セクションで以下 4 行を SHALL 表示する:
 - **WHEN** 「090-1234」を入力して「保存」を押す
 - **THEN** API は呼ばれず、フィールドに「電話番号の桁数が正しくありません」のエラーが表示される
 
-### Requirement: STATS セクション（参加統計と予約履歴）
+### Requirement: STATS セクション（参加統計）
 
-ProfilePage は STATS セクションで以下を SHALL 表示する:
+ProfilePage は STATS セクションで以下 3 行のみを SHALL 表示する:
 
 - 累計参加回数（`status = 'attended'` の予約数）
 - 最終参加日（`status = 'attended'` の中で `events.start_at` が最大の日付。0 件のとき「—」）
 - 次回予定（`status = 'reserved'` AND `events.start_at > now()` の中で最早の `events.start_at` + イベント名。0 件のとき「—」）
-- 予約履歴一覧（自分のすべての予約を `events.start_at DESC` 順に表示。各行に開催日 / イベント名 / 状態バッジ / キャンセルボタン）
 
 集計はクライアント側で予約配列から JS で算出する MUST。`event_participants_view` には依存しない MUST NOT。
 
+予約履歴一覧（個別行）と個別行のキャンセルボタンは本セクションに表示しない MUST NOT。これらは別画面 `/history` (reservation-history-page spec) に移管されている。
+
 #### Scenario: 統計値の表示
 - **WHEN** 会員が `attended` 3 件 / `reserved`（未来）2 件 / `cancelled` 1 件 を持つ状態で `/profile` を開く
-- **THEN** 累計参加「3 回」/ 最終参加（attended の最新の events.start_at）/ 次回予定（reserved の最早 events.start_at + イベント名） が表示される
+- **THEN** 累計参加「3 回」/ 最終参加（attended の最新の events.start_at）/ 次回予定（reserved の最早 events.start_at + イベント名） の 3 行が表示される
 
 #### Scenario: 参加履歴 0 件の表示
 - **WHEN** 予約を 1 件も持たない会員が `/profile` を開く
-- **THEN** STATS の数値部分は「— 回 / — / —」、履歴一覧領域は「まだ参加履歴がありません」が表示される
+- **THEN** STATS の数値部分は「— / — / —」が表示される
 
-#### Scenario: 予約履歴の並び順
-- **WHEN** 複数の予約を持つ会員が `/profile` を開いて履歴一覧を確認する
-- **THEN** `events.start_at` の降順（最新→過去）に並び、未来の予約が一覧の先頭に来る
+#### Scenario: 履歴一覧が描画されない
+- **WHEN** プロフィール画面で STATS セクションを確認する
+- **THEN** 個別予約行のリスト（開催日 / イベント名 / 状態バッジを含む各行）は描画されない
 
-#### Scenario: 状態バッジ表示
-- **WHEN** 履歴一覧の各行を確認する
-- **THEN** `status='reserved'` は「予約中」、`'attended'` は「参加済」、`'cancelled'` は「キャンセル済」、`'no_show'` は「未参加」、`'waitlist'` は「キャンセル待ち」のバッジが表示される
+#### Scenario: 個別キャンセルボタンが描画されない
+- **WHEN** プロフィール画面の STATS セクションを確認する
+- **THEN** 「予約をキャンセル」ボタン（行ごとの個別キャンセル UI）は描画されない（DOM に存在しない）
 
 #### Scenario: 他人の予約は表示されない（RLS）
 - **WHEN** 会員 A が `/profile` を開いて取得した予約配列を確認する
 - **THEN** すべての予約の `member_id` が `auth.uid()` に一致する（RLS により他会員の行は返らない）
-
-### Requirement: 予約履歴からのキャンセル動線
-
-履歴一覧の各行で、`status = 'reserved'` AND `events.start_at > now()` の予約には「キャンセル」ボタンが SHALL 表示される。押下で ConfirmDialog を経由し、確定操作で `reservations.status` を `'reserved' → 'cancelled'` に UPDATE する MUST。
-
-`events.start_at <= now()` の予約には「キャンセル」ボタンを表示しない MUST NOT。`status` が `'reserved'` 以外の予約にもキャンセルボタンを表示しない MUST NOT。
-
-キャンセル成功時は対象行を UI 上で `status='cancelled'` に書き換えて再描画し、再 fetch を発行しない SHALL（ネットワーク往復を削るため）。完了トーストを表示する MUST。
-
-判定基準は `events.start_at` のみ。`events.cancel_deadline` 列は参照しない MUST NOT（reservation-booking-flow spec と整合）。
-
-#### Scenario: 未来の予約にキャンセルボタン表示
-- **WHEN** `status='reserved'` AND `events.start_at = '2026-06-01 19:00'`（未来）の予約行を確認する（現在は 2026-05-07）
-- **THEN** 「キャンセル」ボタンが表示される
-
-#### Scenario: 開始済イベントにキャンセルボタン非表示
-- **WHEN** `status='reserved'` AND `events.start_at = '2026-05-01 19:00'`（過去）の予約行を確認する
-- **THEN** 「キャンセル」ボタンは表示されない
-
-#### Scenario: キャンセル済予約にキャンセルボタン非表示
-- **WHEN** `status='cancelled'` の予約行を確認する
-- **THEN** 「キャンセル」ボタンは表示されない
-
-#### Scenario: キャンセル動線
-- **WHEN** 未来予約の「キャンセル」ボタンを押し、ConfirmDialog で「キャンセルする」を選択する
-- **THEN** `reservations.status` が `'cancelled'` に UPDATE され、UI 上の対象行が「キャンセル済」バッジに切り替わり、完了トーストが表示される
-
-#### Scenario: キャンセル後の累計再計算
-- **WHEN** キャンセル成功後の STATS セクションを確認する
-- **THEN** 次回予定の集計が再計算され、キャンセルした予約は次回予定候補から除外される
 
 ### Requirement: ログアウト動線
 

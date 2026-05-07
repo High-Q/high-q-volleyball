@@ -14,3 +14,4 @@ export {
   fetchMyReservations,
   type MyReservationItem,
 } from "./api/myReservations";
+export { default as ReservationStatusBadge } from "./ui/ReservationStatusBadge.vue";

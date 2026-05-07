@@ -13,6 +13,7 @@ import SignupProfilePage from "@/pages/SignupProfilePage.vue";
 import LinkSentPage from "@/pages/LinkSentPage.vue";
 import AuthCallbackPage from "@/pages/AuthCallbackPage.vue";
 import ProfilePage from "@/pages/ProfilePage.vue";
+import HistoryPage from "@/pages/HistoryPage.vue";
 import { useAuthSession } from "@/features/auth";
 
 const routes: RouteRecordRaw[] = [
@@ -57,6 +58,11 @@ const routes: RouteRecordRaw[] = [
     path: "/profile",
     name: "profile",
     component: ProfilePage,
+  },
+  {
+    path: "/history",
+    name: "history",
+    component: HistoryPage,
   },
   {
     path: "/auth/callback",
