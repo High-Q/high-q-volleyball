@@ -43,9 +43,9 @@
 
 ## 6. 履歴画面 (#211) からの遷移化
 
-- [ ] 6.1 `features/history-list/ui/HistoryRow.vue` の最外側 `<article>` を `<router-link :to="{ name: 'reservation-detail', params: { reservationId: item.id } }">` に置換し、cursor: pointer / hover / focus 可視リングのスタイルを再活性化
-- [ ] 6.2 行内のキャンセルボタンに `@click.stop` を追加し、router-link への伝播を抑制
-- [ ] 6.3 `HistoryRow.spec.ts` の既存「行は押下不可」スペックを「行押下で `/reservations/<id>` に遷移する」スペックに置換し、キャンセルボタン押下時に router-link が発火しないことも検証
+- [x] 6.1 `features/history-list/ui/HistoryRow.vue` の最外側 `<article>` を `<router-link :to="{ name: 'reservation-detail', params: { reservationId: item.id } }">` に置換し、cursor: pointer / hover / focus 可視リングのスタイルを再活性化
+- [x] 6.2 行内のキャンセルボタンに `@click.stop` を追加し、router-link への伝播を抑制
+- [x] 6.3 `HistoryRow.spec.ts` の既存「行は押下不可」スペックを「行押下で `/reservations/<id>` に遷移する」スペックに置換し、キャンセルボタン押下時に router-link が発火しないことも検証
 
 ## 7. 最終検証
 

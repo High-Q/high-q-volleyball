@@ -62,8 +62,9 @@ function onCancelClick(): void {
 </script>
 
 <template>
-  <article
-    class="bg-surface border border-hairline rounded-hq-lg px-hq-4 py-hq-3 flex items-stretch gap-hq-3"
+  <router-link
+    :to="{ name: 'reservation-detail', params: { reservationId: item.id } }"
+    class="bg-surface border border-hairline rounded-hq-lg px-hq-4 py-hq-3 flex items-stretch gap-hq-3 cursor-pointer no-underline text-inherit hover:border-accent/40 hover:bg-paper-warm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent transition-colors"
     :data-status="item.status"
     data-testid="history-row"
   >
@@ -102,12 +103,12 @@ function onCancelClick(): void {
         type="button"
         class="self-start font-jp text-xs text-accent border border-accent rounded-full px-hq-3 py-hq-1 hover:bg-accent-soft transition-colors mt-hq-2"
         data-testid="history-row-cancel"
-        @click="onCancelClick"
+        @click.stop.prevent="onCancelClick"
       >予約をキャンセル</button>
     </div>
 
     <div class="flex items-start shrink-0">
       <ReservationStatusBadge :status="item.status" />
     </div>
-  </article>
+  </router-link>
 </template>
