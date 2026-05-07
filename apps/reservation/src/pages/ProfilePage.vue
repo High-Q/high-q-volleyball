@@ -15,7 +15,6 @@ import {
 } from "@/features/profile-account";
 import { SignOutButton } from "@/features/profile-sign-out";
 import { AppFooter } from "@/widgets/app-footer";
-import { CancelBookingDialog, useCancelBooking } from "@/features/booking";
 import {
   fetchMyReservations,
   type MyReservationItem,
@@ -27,11 +26,6 @@ const member = computed(() => session.member.value);
 const reservations = ref<MyReservationItem[]>([]);
 const loading = ref<boolean>(true);
 const fetchError = ref<string | null>(null);
-
-const cancelTarget = ref<MyReservationItem | null>(null);
-const cancelDialogOpen = ref<boolean>(false);
-const { submitting: cancelSubmitting, error: cancelError, cancel } =
-  useCancelBooking();
 
 const successNotice = ref<string | null>(null);
 let successTimer: ReturnType<typeof setTimeout> | null = null;
@@ -56,11 +50,6 @@ onMounted(() => {
   void load();
 });
 
-function onRequestCancel(item: MyReservationItem): void {
-  cancelTarget.value = item;
-  cancelDialogOpen.value = true;
-}
-
 type EditField = "displayName" | "nickname" | "email" | "phone";
 const editField = ref<EditField | null>(null);
 
@@ -83,37 +72,6 @@ function showSuccess(message: string): void {
     successNotice.value = null;
   }, 4000);
 }
-
-async function onConfirmCancel(): Promise<void> {
-  const target = cancelTarget.value;
-  if (target === null) return;
-  const ok = await cancel(target.id);
-  if (ok) {
-    // ローカルで対象行を 'cancelled' に書き換え (再 fetch 不要)
-    reservations.value = reservations.value.map((r) =>
-      r.id === target.id ? { ...r, status: "cancelled" } : r,
-    );
-    cancelDialogOpen.value = false;
-    cancelTarget.value = null;
-    showSuccess("予約をキャンセルしました。");
-  }
-}
-
-const cancelErrorMessage = computed(() => {
-  switch (cancelError.value) {
-    case "rls":
-      return "この予約はキャンセルできません。";
-    case "network":
-      return "通信エラーが発生しました。再試行してください。";
-    case "duplicate":
-    case "not_cancellable":
-    case "unknown":
-      return "キャンセル処理に失敗しました。";
-    case null:
-      return undefined;
-  }
-  return undefined;
-});
 </script>
 
 <template>
@@ -171,11 +129,7 @@ const cancelErrorMessage = computed(() => {
         <AccountSection :member="member" @edit="onEditAccount" />
 
         <div v-if="loading" class="bg-surface border border-hairline rounded-hq-lg h-32 animate-pulse" aria-label="読み込み中" />
-        <StatsSection
-          v-else
-          :reservations="reservations"
-          @request-cancel="onRequestCancel"
-        />
+        <StatsSection v-else :reservations="reservations" />
 
         <SignOutButton />
       </template>
@@ -188,16 +142,6 @@ const cancelErrorMessage = computed(() => {
       確実に表示し、ユーザーが容易に到達できる状態を保つ。
     -->
     <AppFooter />
-
-    <CancelBookingDialog
-      v-if="cancelTarget !== null"
-      :open="cancelDialogOpen"
-      :event-start-at="cancelTarget.event.startAt"
-      :submitting="cancelSubmitting"
-      :error-message="cancelErrorMessage"
-      @update:open="cancelDialogOpen = $event"
-      @confirm="onConfirmCancel"
-    />
 
     <template v-if="member !== null">
       <DisplayNameEditDialog

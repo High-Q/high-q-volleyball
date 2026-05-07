@@ -50,11 +50,16 @@ const routes = [
   { path: "/", name: "home", redirect: { name: "events-list" } },
   { path: "/events", name: "events-list", component: EventsListPage },
   { path: "/login", name: "login", component: LoginPage },
-  // BottomTabBar が name="profile" を resolve できるよう、smoke test 用に
-  // 軽量プレースホルダで profile ルートを定義しておく (#91)
+  // BottomTabBar が name="profile" / name="history" を resolve できるよう、
+  // smoke test 用に軽量プレースホルダでルートを定義しておく (#91 / #211)
   {
     path: "/profile",
     name: "profile",
+    component: { template: "<div/>" },
+  },
+  {
+    path: "/history",
+    name: "history",
     component: { template: "<div/>" },
   },
 ];

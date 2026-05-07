@@ -12,11 +12,6 @@ import { useBottomTabBarVisible } from "@/shared/lib/useBottomTabBarVisible";
  *
  * - position: fixed で常に画面下部に固定 (スクロールしても見える)
  * - 表示条件は useBottomTabBarVisible() に集約 (App.vue の pb 切替と共通化)
- *
- * 暫定:
- *   - 「履歴」タブは現状 /profile にリンクしている (プロフィール画面の STATS
- *     セクションに予約履歴一覧が含まれているため)。後続 Issue で
- *     `/history` 独立画面を実装し、プロフィール画面 STATS は集計値のみに整理する。
  */
 
 type TabKey = "home" | "history" | "profile";
@@ -27,6 +22,7 @@ const isVisible = useBottomTabBarVisible();
 const activeTab = computed<TabKey | null>(() => {
   const path = route.path;
   if (path.startsWith("/events")) return "home";
+  if (path.startsWith("/history")) return "history";
   if (path.startsWith("/profile")) return "profile";
   return null;
 });
@@ -39,8 +35,7 @@ type Tab = {
 
 const TABS: ReadonlyArray<Tab> = [
   { key: "home", label: "ホーム", to: { name: "events-list" } },
-  // 暫定: 履歴タブは /profile を指す (履歴一覧がプロフィール画面 STATS にあるため)
-  { key: "history", label: "履歴", to: { name: "profile" } },
+  { key: "history", label: "履歴", to: { name: "history" } },
   { key: "profile", label: "プロフィール", to: { name: "profile" } },
 ];
 </script>
