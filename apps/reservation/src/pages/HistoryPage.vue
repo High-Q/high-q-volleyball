@@ -4,7 +4,6 @@ import { Button } from "@high-q/ui";
 import { useRouter } from "vue-router";
 import { useAuthSession } from "@/features/auth";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
-import { AppFooter } from "@/widgets/app-footer";
 import { HistoryStatsStrip } from "@/widgets/history-stats-strip";
 import { computeHistoryStats } from "@/features/history-stats-strip";
 import { HistoryGroup, splitReservations } from "@/features/history-list";
@@ -209,14 +208,6 @@ function goEvents(): void {
         />
       </template>
     </section>
-
-    <!--
-      法令対応 (個人情報保護法 / 改正電気通信事業法) のため、メイン画面で
-      AppFooter が非表示になっているタブバー表示中でも、履歴画面には
-      AppFooter (プライバシーポリシー / 外部送信ポリシー / Cookie 設定) を
-      確実に表示し、ユーザーが容易に到達できる状態を保つ。
-    -->
-    <AppFooter />
 
     <CancelBookingDialog
       v-if="cancelTarget !== null"
