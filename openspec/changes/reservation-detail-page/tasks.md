@@ -22,14 +22,14 @@
 
 ## 4. 詳細画面 widgets
 
-- [ ] 4.1 `widgets/reservation-detail-card/` ディレクトリを新規作成し、Dark Fact Card / Meta テーブル / Cancel Policy ボックスをそれぞれ独立した Vue コンポーネントに分割する
-- [ ] 4.2 `widgets/reservation-detail-card/lib/format-countdown.ts` を新規作成し、`formatCountdownLabel(startAt, now)` で「— あと N 日」/ 「— 当日」/ 「— 開催終了」を返す pure function を実装する。JST カレンダー日数差で算出
-- [ ] 4.3 `format-countdown.spec.ts` で TDD (8 日後 / 同日 / 開催終了 / JST 跨ぎの境界)
-- [ ] 4.4 `widgets/reservation-detail-card/ui/DarkFactCard.vue` を新規作成。kicker (countdown) + 開催日 (MM / DD + 曜日略号) + 時間 + 会場名を ink 背景で描画
-- [ ] 4.5 `widgets/reservation-detail-card/ui/ReservationMetaTable.vue` を新規作成。`<dl>` / `<dt>` / `<dd>` で 4 行（参加費 / 同伴者 / 経験レベル / 予約日時）を描画。経験レベルラベルマップを内包
-- [ ] 4.6 `widgets/reservation-detail-card/ui/CancelPolicyBox.vue` を新規作成。kicker `— CANCEL POLICY` + 説明文 (LINE オープンチャット URL は `shared/lib/contact-channels` 経由)
-- [ ] 4.7 各 widget に component test を追加（描画内容 / props 変化での再描画）
-- [ ] 4.8 `widgets/reservation-detail-card/index.ts` に Public API を集約
+- [x] 4.1 `widgets/reservation-detail-card/` ディレクトリを新規作成し、Dark Fact Card / Meta テーブル / Cancel Policy ボックスをそれぞれ独立した Vue コンポーネントに分割する
+- [x] 4.2 `widgets/reservation-detail-card/lib/format-countdown.ts` を新規作成し、`formatCountdownLabel(startAt, now)` で「— あと N 日」/ 「— 当日」/ 「— 開催終了」を返す pure function を実装する。JST カレンダー日数差で算出
+- [x] 4.3 `format-countdown.spec.ts` で TDD (8 日後 / 同日 / 開催終了 / JST 跨ぎの境界)
+- [x] 4.4 `widgets/reservation-detail-card/ui/DarkFactCard.vue` を新規作成。kicker (countdown) + 開催日 (MM / DD + 曜日略号) + 時間 + 会場名を ink 背景で描画
+- [x] 4.5 `widgets/reservation-detail-card/ui/ReservationMetaTable.vue` を新規作成。`<dl>` / `<dt>` / `<dd>` で 4 行（参加費 / 同伴者 / 経験レベル / 予約日時）を描画。経験レベルラベルマップを内包
+- [x] 4.6 `widgets/reservation-detail-card/ui/CancelPolicyBox.vue` を新規作成。kicker `— CANCEL POLICY` + 説明文 (LINE オープンチャット URL は `shared/lib/contact-channels` 経由)
+- [x] 4.7 各 widget に component test を追加（描画内容 / props 変化での再描画）
+- [x] 4.8 `widgets/reservation-detail-card/index.ts` に Public API を集約
 
 ## 5. ルーティングと Page
 
