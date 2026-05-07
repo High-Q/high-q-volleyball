@@ -9,30 +9,18 @@ import {
 } from "@/shared/lib/jst-calendar";
 
 /**
- * 予約詳細画面の Meta テーブル (参加費 / 同伴者 / 経験レベル / 予約日時)。
+ * 予約詳細画面の Meta テーブル (参加費 / 同伴者 / 予約日時)。
  *
- * `<dl>` / `<dt>` / `<dd>` のセマンティック構造で 4 行を順序固定で描画する。
- * 経験レベルラベルマップを内包し、`'beginner' / 'intermediate' / 'experienced'` を
- * 日本語ラベルに変換する。
+ * `<dl>` / `<dt>` / `<dd>` のセマンティック構造で 3 行を順序固定で描画する。
  *
  * 関連:
- *   openspec/changes/reservation-detail-page/specs/reservation-detail-page/spec.md
+ *   openspec/specs/reservation-detail-page/spec.md
  *     Requirement: Meta テーブル
  */
-
-const EXPERIENCE_LEVEL_LABEL: Record<
-  "beginner" | "intermediate" | "experienced",
-  string
-> = {
-  beginner: "初めて",
-  intermediate: "経験あり",
-  experienced: "上級",
-};
 
 const props = defineProps<{
   fee: number | null;
   guestCount: number;
-  experienceLevel: "beginner" | "intermediate" | "experienced";
   /** ISO 8601 (UTC)。reservations.created_at */
   reservedAt: string;
 }>();
@@ -43,10 +31,6 @@ const feeLabel = computed(() => {
 });
 
 const guestCountLabel = computed(() => `${props.guestCount} 名`);
-
-const experienceLabel = computed(
-  () => EXPERIENCE_LEVEL_LABEL[props.experienceLevel],
-);
 
 const reservedAtLabel = computed(() => {
   const d = new Date(props.reservedAt);
@@ -67,12 +51,6 @@ const rows = computed<Row[]>(() => [
     label: "同伴者",
     value: guestCountLabel.value,
     testid: "meta-guests",
-  },
-  {
-    key: "level",
-    label: "経験レベル",
-    value: experienceLabel.value,
-    testid: "meta-level",
   },
   {
     key: "reservedAt",

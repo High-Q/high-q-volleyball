@@ -41,7 +41,8 @@ describe("fetchMyReservation", () => {
         "events(id, name, start_at, end_at, fee, venue_id, venues(name, default_fee))",
       ),
     );
-    expect(builderMock.select).toHaveBeenCalledWith(
+    // 経験レベルは予約画面に不要のため JOIN しない (#212)
+    expect(builderMock.select).not.toHaveBeenCalledWith(
       expect.stringContaining("members(experience_level)"),
     );
     expect(builderMock.eq).toHaveBeenCalledWith("id", RESERVATION_ID);
@@ -78,9 +79,6 @@ describe("fetchMyReservation", () => {
             default_fee: 1200,
           },
         },
-        members: {
-          experience_level: "intermediate",
-        },
       },
       error: null,
     });
@@ -93,7 +91,8 @@ describe("fetchMyReservation", () => {
     expect(result?.event.name).toBe("ゆる練 vol.43");
     expect(result?.event.venueName).toBe("亀戸スポーツセンター");
     expect(result?.event.fee).toBe(1000);
-    expect(result?.member.experienceLevel).toBe("intermediate");
+    // member.experienceLevel フィールドは存在しない (#212)
+    expect((result as unknown as { member?: unknown })?.member).toBeUndefined();
   });
 
   it("events.fee が NULL のとき venues.default_fee で COALESCE する", async () => {
@@ -117,9 +116,6 @@ describe("fetchMyReservation", () => {
             default_fee: 1500,
           },
         },
-        members: {
-          experience_level: "beginner",
-        },
       },
       error: null,
     });
@@ -140,7 +136,6 @@ describe("fetchMyReservation", () => {
         cancelled_at: null,
         member_id: UID,
         events: null,
-        members: { experience_level: "beginner" },
       },
       error: null,
     });
