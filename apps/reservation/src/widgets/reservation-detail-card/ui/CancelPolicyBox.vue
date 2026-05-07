@@ -23,7 +23,7 @@ import {
     data-testid="cancel-policy-box"
   >
     <Kicker color="muted">— CANCEL POLICY</Kicker>
-    <p class="font-jp text-xs text-ink-soft m-0 leading-relaxed">
+    <p class="font-jp text-sm text-ink-soft m-0 leading-relaxed">
       キャンセル期限は開催前日中です。当日キャンセルが必要な場合は、LINE オープンチャット
       <a
         :href="HIGH_Q_OPEN_CHAT_URL"
