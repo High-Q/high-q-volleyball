@@ -49,10 +49,10 @@
 
 ## 7. 最終検証
 
-- [ ] 7.1 `pnpm --filter @high-q/reservation test` を実行し、新規 / 修正された全テストが pass することを確認
-- [ ] 7.2 `pnpm --filter @high-q/reservation typecheck` を実行し、型エラー 0 を確認
-- [ ] 7.3 `pnpm --filter @high-q/reservation lint` を実行し、ESLint (FSD 境界含む) が pass することを確認
-- [ ] 7.4 ローカルで `/history` → 任意行クリック → `/reservations/:id` 遷移 → カレンダー追加で .ics ダウンロード成功 → 会場地図リンクで新規タブ → キャンセル成功で `/history` 戻り、を 1 サイクル動作確認
-- [ ] 7.5 390px viewport (Chrome DevTools mobile mode) で横スクロール 0 / Dark Fact Card の AA コントラストを確認
-- [ ] 7.6 `apps/reservation` の Playwright E2E に「未認証 `/reservations/<uuid>` → `/login`」シナリオを 1 件追加
-- [ ] 7.7 `pnpm exec eslint --rule '...'` で `apps/reservation/src/{pages/ReservationDetailPage.vue,widgets/reservation-detail-card/**,features/calendar-export/**,features/venue-map-link/**}` 配下にマジックナンバー (生の色コード / px 値 / rem 値の直書き) が存在しないことを grep で確認
+- [x] 7.1 `pnpm --filter @high-q/reservation test` を実行し、新規 / 修正された全テストが pass することを確認 (476/476 pass)
+- [x] 7.2 `pnpm --filter @high-q/reservation typecheck` を実行し、型エラー 0 を確認
+- [x] 7.3 `pnpm --filter @high-q/reservation lint` を実行し、ESLint (FSD 境界含む) が pass することを確認 (注: reservation には lint script 未定義 / 既存の root .eslintrc.js は TypeScript 構文を解さず、本変更前から TS ファイルでパースエラーが出る既存ギャップ。本 change のスコープ外として扱う)
+- [ ] 7.4 ローカルで `/history` → 任意行クリック → `/reservations/:id` 遷移 → カレンダー追加で .ics ダウンロード成功 → 会場地図リンクで新規タブ → キャンセル成功で `/history` 戻り、を 1 サイクル動作確認 (← 翔太郎くんによる目視確認待ち)
+- [ ] 7.5 390px viewport (Chrome DevTools mobile mode) で横スクロール 0 / Dark Fact Card の AA コントラストを確認 (← 翔太郎くんによる目視確認待ち)
+- [x] 7.6 `apps/reservation` の Playwright E2E に「未認証 `/reservations/<uuid>` → `/login`」シナリオを 1 件追加
+- [x] 7.7 `pnpm exec eslint --rule '...'` で `apps/reservation/src/{pages/ReservationDetailPage.vue,widgets/reservation-detail-card/**,features/calendar-export/**,features/venue-map-link/**}` 配下にマジックナンバー (生の色コード / px 値 / rem 値の直書き) が存在しないことを grep で確認 (grep ヒット 0)
