@@ -1,4 +1,9 @@
 import type { MyReservationItem } from "@/entities/reservation";
+import {
+  jstMonth,
+  jstStartOfDay,
+  jstYear,
+} from "@/shared/lib/jst-calendar";
 
 export type HistoryStats = {
   /** `status='attended'` の予約数 */
@@ -44,16 +49,12 @@ function computeDaysToNext(
     }
   }
   if (earliest === null) return null;
-  // カレンダー日付差: 「同日中は 0 日」「翌日 0 時以降は 1 日」になるよう、
-  // 時刻成分を切り捨てた日付同士の差を返す。Math.ceil(ms/day) だと 12 時間
+  // カレンダー日付差 (JST): 「同日中は 0 日」「翌日 0 時以降は 1 日」になるよう、
+  // JST の 0 時起点に丸めた日付同士の差を返す。Math.ceil(ms/day) だと 12 時間
   // 後を 1 日、5 日 10 時間後を 6 日として丸めるため UX の直感と乖離する。
-  const startDate = new Date(
-    earliest.getFullYear(),
-    earliest.getMonth(),
-    earliest.getDate(),
-  );
-  const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.round((startDate.getTime() - nowDate.getTime()) / MS_PER_DAY);
+  const startDay = jstStartOfDay(earliest);
+  const nowDay = jstStartOfDay(now);
+  return Math.round((startDay.getTime() - nowDay.getTime()) / MS_PER_DAY);
 }
 
 function computeStreakMonths(
@@ -65,32 +66,43 @@ function computeStreakMonths(
     if (r.status !== "attended") continue;
     const d = new Date(r.event.startAt);
     if (Number.isNaN(d.getTime())) continue;
-    monthKeys.add(monthKey(d));
+    monthKeys.add(monthKeyFromDate(d));
   }
   if (monthKeys.size === 0) return 0;
 
-  // 最新月から逆順にカウント。現在月から始め、参加月であればカウント、なければ
-  // 1 月だけ前にずらして再判定 (現在月に未参加でも前月に参加があれば streak は継続)。
-  let cursor = new Date(now.getFullYear(), now.getMonth(), 1);
+  // 最新月から逆順にカウント (JST 暦)。現在月から始め、参加月であればカウント、
+  // なければ 1 月だけ前にずらして再判定 (現在月に未参加でも前月に参加があれば
+  // streak は継続)。
+  let cursorYear = jstYear(now);
+  let cursorMonth = jstMonth(now); // 0-indexed
   let count = 0;
 
-  // 現在月に参加なし AND 前月に参加なしなら streak は 0
-  if (!monthKeys.has(monthKey(cursor))) {
-    const prev = new Date(cursor);
-    prev.setMonth(prev.getMonth() - 1);
-    if (!monthKeys.has(monthKey(prev))) return 0;
-    cursor = prev;
+  if (!monthKeys.has(formatMonthKey(cursorYear, cursorMonth))) {
+    // 1 ヶ月前へ
+    cursorMonth -= 1;
+    if (cursorMonth < 0) {
+      cursorMonth = 11;
+      cursorYear -= 1;
+    }
+    if (!monthKeys.has(formatMonthKey(cursorYear, cursorMonth))) return 0;
   }
 
-  while (monthKeys.has(monthKey(cursor))) {
+  while (monthKeys.has(formatMonthKey(cursorYear, cursorMonth))) {
     count += 1;
-    cursor.setMonth(cursor.getMonth() - 1);
+    cursorMonth -= 1;
+    if (cursorMonth < 0) {
+      cursorMonth = 11;
+      cursorYear -= 1;
+    }
   }
   return count;
 }
 
-function monthKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = (d.getMonth() + 1).toString().padStart(2, "0");
-  return `${y}-${m}`;
+function monthKeyFromDate(d: Date): string {
+  return formatMonthKey(jstYear(d), jstMonth(d));
+}
+
+function formatMonthKey(year: number, monthZeroIndexed: number): string {
+  const m = (monthZeroIndexed + 1).toString().padStart(2, "0");
+  return `${year}-${m}`;
 }

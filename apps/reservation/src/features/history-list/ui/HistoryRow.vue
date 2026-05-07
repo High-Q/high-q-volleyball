@@ -5,6 +5,13 @@ import {
   ReservationStatusBadge,
   type MyReservationItem,
 } from "@/entities/reservation";
+import {
+  jstDay,
+  jstHours,
+  jstMinutes,
+  jstMonth,
+  jstWeekday,
+} from "@/shared/lib/jst-calendar";
 
 const props = defineProps<{
   item: MyReservationItem;
@@ -22,21 +29,21 @@ const endDate = computed(() => new Date(props.item.event.endAt));
 const monthDay = computed(() => {
   const d = startDate.value;
   if (Number.isNaN(d.getTime())) return "—";
-  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(
-    d.getDate(),
+  return `${String(jstMonth(d) + 1).padStart(2, "0")}/${String(
+    jstDay(d),
   ).padStart(2, "0")}`;
 });
 
 const dayOfWeek = computed(() => {
   const d = startDate.value;
   if (Number.isNaN(d.getTime())) return "";
-  return ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][d.getDay()];
+  return ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][jstWeekday(d)];
 });
 
 const timeRange = computed(() => {
   const fmt = (d: Date) =>
-    `${String(d.getHours()).padStart(2, "0")}:${String(
-      d.getMinutes(),
+    `${String(jstHours(d)).padStart(2, "0")}:${String(
+      jstMinutes(d),
     ).padStart(2, "0")}`;
   if (Number.isNaN(startDate.value.getTime())) return "";
   if (Number.isNaN(endDate.value.getTime())) return fmt(startDate.value);
