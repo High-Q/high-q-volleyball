@@ -71,6 +71,8 @@ export type MyReservationDetail = {
   id: ReservationId;
   status: ReservationStatus;
   guestCount: number;
+  /** 連絡事項。Meta テーブルでは表示しないが、編集 sheet の初期値供給に必要 */
+  note: string;
   createdAt: string;
   cancelledAt: string | null;
   event: {
@@ -107,8 +109,9 @@ export type CreateBookingInput = {
  * 予約フロー全体で発生し得るエラー分類。
  *
  * - `duplicate`: 同一会員が同一イベントに対して既に reserved 状態の予約を持つ (UNIQUE 違反 23505)
- * - `rls`: RLS WITH CHECK 違反 (member_id 改ざん等)
- * - `not_cancellable`: events.start_at <= now() でキャンセル不可
+ * - `rls`: RLS WITH CHECK 違反 (member_id 改ざん等) または 0 行更新
+ * - `not_cancellable`: 開催当日 0:00 JST 以降でキャンセル不可
+ * - `not_editable`: 開催当日 0:00 JST 以降で編集不可 (キャンセル可否と同基準)
  * - `network`: 上記に分類できない通信エラー
  * - `unknown`: 想定外のエラー
  */
@@ -116,5 +119,16 @@ export type BookingError =
   | "duplicate"
   | "rls"
   | "not_cancellable"
+  | "not_editable"
   | "network"
   | "unknown";
+
+/**
+ * `useUpdateBooking.update()` の入力。同伴者数 / 連絡事項のみ編集可能。
+ */
+export type UpdateBookingInput = {
+  reservationId: ReservationId;
+  memberId: MemberId;
+  guestCount: number;
+  note: string;
+};

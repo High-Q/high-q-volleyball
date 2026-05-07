@@ -6,6 +6,7 @@ import type {
   Reservation,
   ReservationId,
   ReservationRow,
+  UpdateBookingInput,
 } from "@/entities/reservation";
 
 /**
@@ -129,6 +130,40 @@ async function reactivateCancelledReservation(
     throw new BookingApiError("network", null, "Empty update response");
   }
   return rowToReservation(data as unknown as ReservationRow);
+}
+
+/**
+ * 自分の予約 (status='reserved') の `guest_count` / `note` を UPDATE する。
+ *
+ * - WHERE 句に `id = reservationId` AND `member_id = uid` AND `status = 'reserved'` を明示し、
+ *   RLS への単独依存を避けて二重防衛とする。
+ * - 0 行更新は RLS 違反 (他人の id 改ざん) / status が reserved ではない等のため `rls` として扱う。
+ * - 期限判定 (`isCancellable`) は本層では行わない。UI / composable 層の責務。
+ */
+export async function updateReservation(
+  input: UpdateBookingInput,
+): Promise<Reservation> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("reservations")
+    .update({
+      guest_count: input.guestCount,
+      note: input.note.length === 0 ? null : input.note,
+    })
+    .eq("id", input.reservationId as string)
+    .eq("member_id", input.memberId as string)
+    .eq("status", "reserved")
+    .select(
+      "id, event_id, member_id, status, guest_count, phone_at_booking, note, checked_in_at, cancelled_at, created_at, updated_at",
+    );
+
+  if (error !== null) {
+    throw mapPostgrestError(error);
+  }
+  if (data === null || data.length === 0) {
+    throw new BookingApiError("rls", null, "No row updated");
+  }
+  return rowToReservation(data[0] as unknown as ReservationRow);
 }
 
 /**

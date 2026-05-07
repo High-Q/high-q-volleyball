@@ -1,15 +1,23 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { unsafeVenueId } from "@high-q/shared";
 import { Button, Kicker } from "@high-q/ui";
 import { useAuthSession } from "@/features/auth";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
-import { CancelBookingDialog, useCancelBooking } from "@/features/booking";
+import {
+  BookingSheet,
+  CancelBookingDialog,
+  isCancellable,
+  useCancelBooking,
+} from "@/features/booking";
 import {
   fetchMyReservation,
   formatReservationNumber,
   type MyReservationDetail,
+  type Reservation,
 } from "@/entities/reservation";
+import type { EventDetail } from "@/entities/event";
 import {
   CancelPolicyBox,
   DarkFactCard,
@@ -129,6 +137,59 @@ function showSuccess(message: string): void {
   successTimer = setTimeout(() => {
     successNotice.value = null;
   }, 4000);
+}
+
+// ---------- 編集動線 ----------
+const editSheetOpen = ref<boolean>(false);
+
+const editButtonVisible = computed(() => {
+  const r = reservation.value;
+  if (r === null) return false;
+  return r.status === "reserved";
+});
+
+const isEditable = computed(() => {
+  const r = reservation.value;
+  if (r === null) return false;
+  return r.status === "reserved" && isCancellable(r.event.startAt);
+});
+
+/**
+ * BookingSheet が要求する `EventDetail` 形に詰め替える。
+ * edit モードでは venueId / meetingPoint / mapUrl は使われないため、
+ * fetchMyReservation の戻り値に存在しないフィールドはダミー値で埋める。
+ */
+const editEvent = computed<EventDetail | null>(() => {
+  const r = reservation.value;
+  if (r === null) return null;
+  return {
+    id: r.event.id,
+    name: r.event.name,
+    startAt: r.event.startAt,
+    endAt: r.event.endAt,
+    fee: r.event.fee,
+    venueId: unsafeVenueId(""),
+    venueName: r.event.venueName,
+    meetingPoint: "",
+    mapUrl: null,
+  };
+});
+
+function openEditSheet(): void {
+  editSheetOpen.value = true;
+}
+
+function onEditSaved(updated: Reservation): void {
+  // 楽観的にローカルキャッシュを差し替え。Meta テーブルが新値で再描画される。
+  const r = reservation.value;
+  if (r !== null) {
+    reservation.value = {
+      ...r,
+      guestCount: updated.guestCount,
+      note: updated.note ?? "",
+    };
+  }
+  showSuccess("変更を保存しました。");
 }
 
 function goBack(): void {
@@ -257,23 +318,36 @@ function goHistory(): void {
         <ReservationMetaTable
           :fee="reservation.event.fee"
           :guest-count="reservation.guestCount"
-          :reserved-at="reservation.createdAt"
         />
+
+        <!-- 編集 CTA: 前向きアクションをプライマリに昇格 (#215) -->
+        <Button
+          v-if="editButtonVisible"
+          variant="primary"
+          size="md"
+          type="button"
+          class="w-full"
+          :disabled="!isEditable"
+          data-testid="detail-edit-button"
+          @click="openEditSheet"
+        >
+          予約内容を変更する
+        </Button>
 
         <!-- Cancel Policy -->
         <CancelPolicyBox />
 
-        <!-- Cancel CTA -->
+        <!-- Cancel CTA: 破壊的アクションは目立たせず、テキストリンク調に控える (#215 feedback) -->
         <Button
           v-if="isCancelButtonVisible"
-          variant="danger"
-          size="md"
+          variant="ghost"
+          size="sm"
           type="button"
-          class="w-full"
+          class="w-full text-muted"
           data-testid="detail-cancel-button"
           @click="openCancelDialog"
         >
-          予約をキャンセル
+          予約をキャンセルする
         </Button>
       </template>
     </section>
@@ -286,6 +360,21 @@ function goHistory(): void {
       :error-message="cancelErrorMessage"
       @update:open="cancelDialogOpen = $event"
       @confirm="onConfirmCancel"
+    />
+
+    <!-- 編集 Bottom Sheet (edit モード) -->
+    <BookingSheet
+      v-if="reservation !== null && editEvent !== null"
+      :open="editSheetOpen"
+      :event="editEvent"
+      mode="edit"
+      :edit="{
+        reservationId: reservation.id,
+        initialGuestCount: reservation.guestCount,
+        initialNote: reservation.note,
+      }"
+      @update:open="editSheetOpen = $event"
+      @saved="onEditSaved"
     />
   </main>
 </template>

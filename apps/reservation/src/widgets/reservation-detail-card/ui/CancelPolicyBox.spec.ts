@@ -24,4 +24,14 @@ describe("CancelPolicyBox", () => {
     expect(link.attributes("target")).toBe("_blank");
     expect(link.attributes("rel")).toBe("noopener noreferrer");
   });
+
+  it("LINE リンクは控えめな装飾 (下線なし・カギ括弧なし) で描画される (#215)", () => {
+    const wrapper = mount(CancelPolicyBox);
+    const link = wrapper.find("a");
+    // 下線クラスは持たない
+    expect(link.classes()).not.toContain("underline");
+    expect(link.classes()).not.toContain("underline-offset-2");
+    // カギ括弧でリンクテキストを囲んでいない
+    expect(link.text()).not.toMatch(/^「.*」$/);
+  });
 });

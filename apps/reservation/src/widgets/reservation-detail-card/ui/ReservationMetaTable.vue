@@ -1,28 +1,21 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import {
-  jstDay,
-  jstHours,
-  jstMinutes,
-  jstMonth,
-  jstYear,
-} from "@/shared/lib/jst-calendar";
 
 /**
- * 予約詳細画面の Meta テーブル (参加費 / 同伴者 / 予約日時)。
+ * 予約詳細画面の Meta テーブル (参加費 / 同伴者)。
  *
- * `<dl>` / `<dt>` / `<dd>` のセマンティック構造で 3 行を順序固定で描画する。
+ * `<dl>` / `<dt>` / `<dd>` のセマンティック構造で 2 行を順序固定で描画する。
+ * 「予約日時」は重要度が低い割に行を専有していたため #215 で削除した
+ * (履歴画面で参照可能・必要なら詳細フッター注釈で再導入を検討)。
  *
  * 関連:
- *   openspec/specs/reservation-detail-page/spec.md
+ *   openspec/changes/reservation-detail-edit/specs/reservation-detail-page/spec.md
  *     Requirement: Meta テーブル
  */
 
 const props = defineProps<{
   fee: number | null;
   guestCount: number;
-  /** ISO 8601 (UTC)。reservations.created_at */
-  reservedAt: string;
 }>();
 
 const feeLabel = computed(() => {
@@ -32,17 +25,6 @@ const feeLabel = computed(() => {
 
 const guestCountLabel = computed(() => `${props.guestCount} 名`);
 
-const reservedAtLabel = computed(() => {
-  const d = new Date(props.reservedAt);
-  if (Number.isNaN(d.getTime())) return "—";
-  const yyyy = jstYear(d);
-  const mm = String(jstMonth(d) + 1).padStart(2, "0");
-  const dd = String(jstDay(d)).padStart(2, "0");
-  const hh = String(jstHours(d)).padStart(2, "0");
-  const mi = String(jstMinutes(d)).padStart(2, "0");
-  return `${yyyy} / ${mm} / ${dd} ${hh}:${mi}`;
-});
-
 type Row = { key: string; label: string; value: string; testid: string };
 const rows = computed<Row[]>(() => [
   { key: "fee", label: "参加費", value: feeLabel.value, testid: "meta-fee" },
@@ -51,12 +33,6 @@ const rows = computed<Row[]>(() => [
     label: "同伴者",
     value: guestCountLabel.value,
     testid: "meta-guests",
-  },
-  {
-    key: "reservedAt",
-    label: "予約日時",
-    value: reservedAtLabel.value,
-    testid: "meta-reserved-at",
   },
 ]);
 </script>
