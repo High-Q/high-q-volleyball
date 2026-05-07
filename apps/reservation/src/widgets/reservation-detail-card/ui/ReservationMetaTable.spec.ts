@@ -3,21 +3,17 @@ import { mount } from "@vue/test-utils";
 import ReservationMetaTable from "./ReservationMetaTable.vue";
 
 describe("ReservationMetaTable", () => {
-  it("3 行 (参加費 / 同伴者 / 予約日時) を描画する", () => {
+  it("2 行 (参加費 / 同伴者) を描画する", () => {
     const wrapper = mount(ReservationMetaTable, {
       props: {
         fee: 1000,
         guestCount: 0,
-        reservedAt: "2026-04-27T05:32:00Z",
       },
     });
     expect(wrapper.find('[data-testid="meta-fee"]').text()).toBe(
       "¥1,000（当日現金）",
     );
     expect(wrapper.find('[data-testid="meta-guests"]').text()).toBe("0 名");
-    expect(wrapper.find('[data-testid="meta-reserved-at"]').text()).toBe(
-      "2026 / 04 / 27 14:32",
-    );
   });
 
   it("同伴者人数を反映する", () => {
@@ -25,7 +21,6 @@ describe("ReservationMetaTable", () => {
       props: {
         fee: 1000,
         guestCount: 1,
-        reservedAt: "2026-04-27T05:32:00Z",
       },
     });
     expect(wrapper.find('[data-testid="meta-guests"]').text()).toBe("1 名");
@@ -36,7 +31,6 @@ describe("ReservationMetaTable", () => {
       props: {
         fee: null,
         guestCount: 0,
-        reservedAt: "2026-04-27T05:32:00Z",
       },
     });
     expect(wrapper.find('[data-testid="meta-fee"]').text()).toBe("—");
@@ -47,7 +41,6 @@ describe("ReservationMetaTable", () => {
       props: {
         fee: 1000,
         guestCount: 0,
-        reservedAt: "2026-04-27T05:32:00Z",
       },
     });
     expect(wrapper.find('[data-testid="meta-level"]').exists()).toBe(false);
@@ -57,12 +50,22 @@ describe("ReservationMetaTable", () => {
     expect(wrapper.text()).not.toContain("上級");
   });
 
+  it("予約日時行は描画されない (#215 で撤廃)", () => {
+    const wrapper = mount(ReservationMetaTable, {
+      props: {
+        fee: 1000,
+        guestCount: 0,
+      },
+    });
+    expect(wrapper.find('[data-testid="meta-reserved-at"]').exists()).toBe(false);
+    expect(wrapper.text()).not.toContain("予約日時");
+  });
+
   it("guestCount props の変化で同伴者行が即時に再描画される (#215 編集後の楽観的更新)", async () => {
     const wrapper = mount(ReservationMetaTable, {
       props: {
         fee: 1000,
         guestCount: 0,
-        reservedAt: "2026-04-27T05:32:00Z",
       },
     });
     expect(wrapper.find('[data-testid="meta-guests"]').text()).toBe("0 名");
@@ -70,21 +73,19 @@ describe("ReservationMetaTable", () => {
     await wrapper.setProps({
       fee: 1000,
       guestCount: 2,
-      reservedAt: "2026-04-27T05:32:00Z",
     });
     expect(wrapper.find('[data-testid="meta-guests"]').text()).toBe("2 名");
   });
 
-  it("dl / dt / dd 構造を持つ (3 行)", () => {
+  it("dl / dt / dd 構造を持つ (2 行)", () => {
     const wrapper = mount(ReservationMetaTable, {
       props: {
         fee: 1000,
         guestCount: 0,
-        reservedAt: "2026-04-27T05:32:00Z",
       },
     });
     expect(wrapper.find("dl").exists()).toBe(true);
-    expect(wrapper.findAll("dt").length).toBe(3);
-    expect(wrapper.findAll("dd").length).toBe(3);
+    expect(wrapper.findAll("dt").length).toBe(2);
+    expect(wrapper.findAll("dd").length).toBe(2);
   });
 });

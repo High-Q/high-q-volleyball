@@ -7,7 +7,7 @@ import {
   jstMonth,
   jstWeekday,
 } from "@/shared/lib/jst-calendar";
-import { formatCountdownLabel } from "../lib/format-countdown";
+import { formatCountdown } from "../lib/format-countdown";
 
 /**
  * 予約詳細画面の Dark Fact Card。
@@ -36,9 +36,18 @@ const props = defineProps<{
 const startDate = computed(() => new Date(props.startAt));
 const endDate = computed(() => new Date(props.endAt));
 
-const countdownLabel = computed(() =>
-  formatCountdownLabel(props.startAt, props.now ?? new Date()),
+const countdown = computed(() =>
+  formatCountdown(props.startAt, props.now ?? new Date()),
 );
+
+const countdownClass = computed(() => {
+  // 7 日以内 (= imminent / 当日 / 開催終了直後) のみ accent、それ以遠は muted
+  if (countdown.value.tone === "imminent") {
+    return "text-accent";
+  }
+  // ended は控えめに (灰色)、normal も同様
+  return "text-paper opacity-60";
+});
 
 const monthDay = computed(() => {
   const d = startDate.value;
@@ -71,9 +80,10 @@ const timeRange = computed(() => {
     data-testid="dark-fact-card"
   >
     <p
-      class="font-mono text-xs text-accent tracking-widest m-0"
+      class="font-mono text-xs tracking-widest m-0"
+      :class="countdownClass"
       data-testid="countdown-label"
-    >{{ countdownLabel }}</p>
+    >{{ countdown.label }}</p>
     <p class="font-jp-display text-3xl font-medium m-0 leading-tight">
       <span data-testid="month-day">{{ monthDay }}</span>
       <span

@@ -29,8 +29,8 @@ import {
         :href="HIGH_Q_OPEN_CHAT_URL"
         target="_blank"
         rel="noopener noreferrer"
-        class="text-accent underline underline-offset-2"
-      >「{{ HIGH_Q_OPEN_CHAT_NAME }}」</a>
+        class="text-ink hover:text-accent transition-colors"
+      >{{ HIGH_Q_OPEN_CHAT_NAME }}</a>
       までご連絡ください。
     </p>
   </section>

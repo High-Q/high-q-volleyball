@@ -318,13 +318,12 @@ function goHistory(): void {
         <ReservationMetaTable
           :fee="reservation.event.fee"
           :guest-count="reservation.guestCount"
-          :reserved-at="reservation.createdAt"
         />
 
-        <!-- 編集 CTA: Meta テーブル直下、destructive キャンセル CTA とは視覚的に階層分離 (#215) -->
+        <!-- 編集 CTA: 前向きアクションをプライマリに昇格 (#215) -->
         <Button
           v-if="editButtonVisible"
-          variant="secondary"
+          variant="primary"
           size="md"
           type="button"
           class="w-full"
@@ -338,17 +337,17 @@ function goHistory(): void {
         <!-- Cancel Policy -->
         <CancelPolicyBox />
 
-        <!-- Cancel CTA -->
+        <!-- Cancel CTA: 破壊的アクションは目立たせず、テキストリンク調に控える (#215 feedback) -->
         <Button
           v-if="isCancelButtonVisible"
-          variant="danger"
-          size="md"
+          variant="ghost"
+          size="sm"
           type="button"
-          class="w-full"
+          class="w-full text-muted"
           data-testid="detail-cancel-button"
           @click="openCancelDialog"
         >
-          予約をキャンセル
+          予約をキャンセルする
         </Button>
       </template>
     </section>

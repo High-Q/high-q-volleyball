@@ -44,4 +44,44 @@ describe("DarkFactCard", () => {
       "— 開催終了",
     );
   });
+
+  it("8 日以上先のカウントダウンは accent 色を使わず muted (opacity-60) で描画される (#215)", () => {
+    const wrapper = mount(DarkFactCard, {
+      props: {
+        startAt: "2026-05-15T10:30:00Z", // 8 日後
+        endAt: "2026-05-15T12:30:00Z",
+        venueName: "板橋区立体育館",
+        now: new Date("2026-05-07T00:00:00Z"),
+      },
+    });
+    const cd = wrapper.find('[data-testid="countdown-label"]');
+    expect(cd.classes()).not.toContain("text-accent");
+    expect(cd.classes()).toContain("opacity-60");
+  });
+
+  it("7 日以内のカウントダウンは accent 色で描画される (#215)", () => {
+    const wrapper = mount(DarkFactCard, {
+      props: {
+        startAt: "2026-05-12T10:30:00Z", // 5 日後
+        endAt: "2026-05-12T12:30:00Z",
+        venueName: "板橋区立体育館",
+        now: new Date("2026-05-07T00:00:00Z"),
+      },
+    });
+    const cd = wrapper.find('[data-testid="countdown-label"]');
+    expect(cd.classes()).toContain("text-accent");
+  });
+
+  it("当日は accent 色で描画される (#215)", () => {
+    const wrapper = mount(DarkFactCard, {
+      props: {
+        startAt: "2026-05-07T12:00:00Z",
+        endAt: "2026-05-07T14:00:00Z",
+        venueName: "板橋区立体育館",
+        now: new Date("2026-05-07T00:00:00Z"),
+      },
+    });
+    const cd = wrapper.find('[data-testid="countdown-label"]');
+    expect(cd.classes()).toContain("text-accent");
+  });
 });

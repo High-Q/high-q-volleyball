@@ -1,5 +1,91 @@
 ## MODIFIED Requirements
 
+### Requirement: Meta テーブル（参加費 / 同伴者）
+
+ReservationDetailPage は Dark Fact Card の下に Meta テーブルを SHALL 表示する。`<dl>` / `<dt>` / `<dd>` のセマンティック構造で以下 2 行を順序固定で表示する MUST:
+
+- 参加費: `¥{fee}（当日現金）` 形式。`events.fee` が NULL のとき `venues.default_fee` を使用する MUST。両方 NULL のとき `—` を表示する MUST
+- 同伴者: `{guest_count} 名`
+
+「経験レベル」行は本テーブルから撤廃する MUST NOT (#212)。「予約日時」行も #215 で撤廃する MUST NOT — 重要度が低い割に行を専有しており、視認性向上のため削除する。予約日時自体は履歴画面で参照可能であり、必要があれば後続 change で詳細フッター注釈として再導入を検討する。
+
+ラベル列はモノスペース大文字の kicker トーンを SHALL 使用する。値列は和文書体。マジックナンバーは禁止 MUST NOT。
+
+#### Scenario: 2 行の描画
+- **WHEN** ReservationDetailPage に到達
+- **THEN** 参加費 / 同伴者 の 2 行が `<dl>` 構造で順序固定で描画される
+
+#### Scenario: 参加費の COALESCE
+- **WHEN** `events.fee = NULL` AND `venues.default_fee = 1000` の予約を表示
+- **THEN** 参加費に「¥1,000（当日現金）」が描画される
+
+#### Scenario: 経験レベル行の非表示
+- **WHEN** ReservationDetailPage の Meta テーブル DOM を確認する
+- **THEN** 「経験レベル」ラベルおよび `'初めて' / '経験あり' / '上級'` のいずれの値も描画されない
+
+#### Scenario: 予約日時行の非表示
+- **WHEN** ReservationDetailPage の Meta テーブル DOM を確認する
+- **THEN** 「予約日時」ラベルは描画されず、`<dl>` の行数は 2 行以下となる
+
+#### Scenario: 同伴者 0 名の表示
+- **WHEN** `reservations.guest_count = 0` の予約を表示
+- **THEN** 同伴者に「0 名」が描画される
+
+### Requirement: Dark Fact Card（あと N 日 + 開催日 + 時間 + 会場）
+
+ReservationDetailPage は Reservation Header の直下に Dark Fact Card を SHALL 表示する。Card は ink 背景 + paper 文字色とし、以下を順序固定で表示する MUST:
+
+- カウントダウン kicker: `— あと N 日` / `— 当日` / `— 開催終了`。`N` は `events.start_at` と現在時刻の **JST カレンダー日数差**（時刻成分を 0 時に丸めた日付差）。同日中は「— 当日」、`events.start_at` が現在時刻以降かつ同日でないときは `— あと N 日` (N >= 1)、`events.start_at <= now()` のときは `— 開催終了`
+- 開催日: `MM / DD` 形式 + 曜日略号（`MON` / `TUE` 等の 3 文字大文字、モノスペース）
+- 時間 + 会場: `HH:mm – HH:mm · {会場名}`（モノスペース時間 + 中点 + 和文会場名）
+
+カウントダウン kicker の **色** は残日数に応じて出し分ける MUST:
+- 「— 当日」および「— あと N 日 (N ≤ 7)」: accent 系（緊急性のあるトーン）
+- 「— あと N 日 (N ≥ 8)」: muted 系（緊急性のない、落ち着いたトーン）
+- 「— 開催終了」: muted 系
+
+これは「2 ヶ月先の予約に accent 色を使うと緊急性のノイズになる」観点に基づく。
+
+`events.start_at` / `events.end_at` の表示は JST 固定とする MUST（`@/shared/lib/jst-calendar` を流用）。
+
+#### Scenario: 7 日以内のカウントダウンは accent 色
+- **WHEN** 現在時刻が `2026-05-07 09:00 JST` で `events.start_at = 2026-05-12 19:30 JST` (= 5 日後)
+- **THEN** Dark Fact Card に「— あと 5 日」が accent 系の色で描画される
+
+#### Scenario: 8 日以上先のカウントダウンは muted 色
+- **WHEN** 現在時刻が `2026-05-07 09:00 JST` で `events.start_at = 2026-05-15 19:30 JST` (= 8 日後)
+- **THEN** Dark Fact Card に「— あと 8 日」が muted 系の色で描画され、accent 色は使われない
+
+#### Scenario: 当日は accent 色
+- **WHEN** 現在時刻が `events.start_at` と同日（JST カレンダー日付一致）
+- **THEN** Dark Fact Card に「— 当日」が accent 色で描画される
+
+#### Scenario: 開催開始以降の表示
+- **WHEN** `events.start_at <= now()` の予約を表示
+- **THEN** Dark Fact Card に「— 開催終了」が muted 色で描画される
+
+### Requirement: Cancel Policy ボックス
+
+ReservationDetailPage は Meta テーブルの下に Cancel Policy ボックスを SHALL 表示する。kicker `— CANCEL POLICY` + 説明文 1 段落で構成される MUST。
+
+説明文は MVP1 のキャンセル運用ポリシー (キャンセル期限は **開催前日中**) と整合させる MUST。具体的には「キャンセル期限は開催前日中です。当日キャンセルが必要な場合は LINE オープンチャット社会人バレーボールサークル High Q までご連絡ください。」相当の文言とする。LINE オープンチャットの URL / 名称は `shared/lib/contact-channels` 経由で参照する MUST（ハードコード禁止 MUST NOT）。
+
+LINE オープンチャットへのリンクは「文章に溶け込む控えめな装飾」を SHALL 採用する MUST: 下線は付けず、文字色は本文と同じ ink 系を基本とし、hover 時のみ accent 色に切り替える。カギ括弧（「」）でリンクテキストを囲む装飾は **使わない** MUST NOT — 過度な強調になるため。本ボックスは説明テキストであり、CTA ではないため、「リンクを目立たせて押させる」設計意図はないことを反映する。
+
+デザインサンプル (`docs/10-デザインサンプル/reservation/hq-reserve-screens.jsx`) の「開催 24 時間前まで」「キャンセル料」表記は本 capability では採用しない MUST NOT (運用実態と不整合 + High Q はキャンセル料を取らない方針)。
+
+#### Scenario: Cancel Policy の表示
+- **WHEN** ReservationDetailPage に到達
+- **THEN** `— CANCEL POLICY` kicker と「キャンセル期限は開催前日中」を含む説明文段落が描画される
+
+#### Scenario: 文言の整合性
+- **WHEN** Cancel Policy 説明文を確認する
+- **THEN** 「24 時間」「キャンセル料」等の運用と乖離する表現は含まれない
+
+#### Scenario: LINE オープンチャットリンクは控えめな装飾
+- **WHEN** Cancel Policy 説明文中の LINE オープンチャットリンクを確認
+- **THEN** リンクは下線を持たず、カギ括弧で囲まれず、`HIGH_Q_OPEN_CHAT_URL` 経由で `target="_blank" rel="noopener noreferrer"` で新規タブを開く
+
 ### Requirement: 単一予約取得 API と RLS 二重防衛
 
 会員サイトは予約単一取得 API `fetchMyReservation(reservationId, uid)` を `entities/reservation/api/` 配下で SHALL 提供する。`reservations × events × venues` を JOIN し、`reservations.id = reservationId` AND `reservations.member_id = auth.uid()` の条件で 1 行を取得する MUST。
@@ -51,7 +137,7 @@ ReservationDetailPage は Meta テーブルの直下に「予約内容を変更�
 
 `status !== 'reserved'` または `isCancellable === false` のとき、本 CTA は非活性で描画する MUST、または押下時にキャンセル不可ダイアログ相当の案内（LINE オープンチャットへの誘導を含む）を SHALL 表示する。いずれの実装を採用してもよいが、ユーザーが「期限切れの後追い操作はすべて LINE 連絡に集約される」と直感的に理解できる UX を保つ MUST。
 
-CTA の視覚的強さはキャンセル CTA より控えめなトーン（neutral / outlined 系）を SHALL 採用し、画面末尾の destructive 系キャンセル CTA との階層を明確に分ける MUST。マジックナンバー（直書きの色コード / px 値）は禁止 MUST NOT、HQ デザイントークンのみ使用する MUST。
+CTA の視覚的強さは **primary 系 (黒塗り)** を SHALL 採用し、画面末尾のキャンセル CTA より目立たせる MUST。「予約内容を変更する」は前向きな日常調整アクションであり、ユーザーが選びやすい状態にする (= プライマリに昇格)。逆に「予約をキャンセル」は破壊的アクションだが、UI で誘発する設計はとらず、テキストリンク調 (ghost) に控える方針とする (#215 feedback で視線誘導の修正方針を確定)。マジックナンバー（直書きの色コード / px 値）は禁止 MUST NOT、HQ デザイントークンのみ使用する MUST。
 
 保存成功時は本 capability 側で Meta テーブルが新値で再描画される MUST。具体的には、edit sheet からの保存成功通知を受けて、表示中の `guest_count` / `note` の値をローカルキャッシュ更新（楽観的）または `fetchMyReservation` 再呼び出しで反映する。完了トースト（「変更を保存しました」相当）は本 capability の予約詳細画面側で表示する MUST。トースト表示の責務は予約詳細画面に集約し、BookingSheet 側は完了トーストを直接発火 SHALL NOT（二重表示防止）。
 
@@ -89,10 +175,10 @@ CTA の視覚的強さはキャンセル CTA より控えめなトーン（neutr
 
 ### Requirement: 編集 CTA とキャンセル CTA の視覚的階層
 
-ReservationDetailPage は同一画面に「予約内容を変更する」CTA と「予約をキャンセル」CTA の 2 つを配置する。両 CTA はそれぞれ役割と破壊度が異なるため、視覚的階層を明確に分けて表示する MUST。
+ReservationDetailPage は同一画面に「予約内容を変更する」CTA と「予約をキャンセルする」CTA の 2 つを配置する。両 CTA はそれぞれ役割と破壊度が異なるため、視覚的階層を明確に分けて表示する MUST。
 
-- 編集 CTA: Meta テーブル直下に配置し、neutral / outlined 系のトーンで「日常的な調整操作」として控えめに見せる MUST
-- キャンセル CTA: 画面末尾（メインアクション末尾）に配置し、destructive 系のトーンで「予約取消」の重さを伝える MUST
+- 編集 CTA: Meta テーブル直下に配置し、**primary トーン (黒塗り)** を採用してユーザーが最も選びやすい状態にする MUST。前向きな日常調整アクションのため
+- キャンセル CTA: 画面末尾に配置し、**ghost トーン (テキストリンク調・muted 文字)** を採用して誘発を控える MUST。破壊的アクションを赤塗りで目立たせる設計は採用 SHALL NOT (視線誘導が逆になり UX を毀損する)
 
 両 CTA を視覚的に同列・同色で並べる SHALL NOT。CTA 内の文字サイズ・パディングなどは HQ デザイントークン経由で指定し、マジックナンバーを書かない MUST NOT。
 
@@ -102,7 +188,7 @@ ReservationDetailPage は同一画面に「予約内容を変更する」CTA と
 
 #### Scenario: 視覚的トーンの差別化
 - **WHEN** 両 CTA のスタイルを確認
-- **THEN** キャンセル CTA は destructive 系トーン、編集 CTA はそれより控えめなトーンで描画される
+- **THEN** 編集 CTA は primary (黒塗り) トーン、キャンセル CTA は ghost (テキストリンク調) トーンで描画され、キャンセル CTA は赤塗り (destructive / danger) トーンを使わない
 
 ### Requirement: 編集動線の自動テストカバレッジ
 
