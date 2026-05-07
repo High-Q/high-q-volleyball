@@ -1,6 +1,6 @@
 ## MODIFIED Requirements
 
-### Requirement: Meta テーブル（参加費 / 同伴者）
+### Requirement: Meta テーブル（参加費 / 同伴者 / 予約日時）
 
 ReservationDetailPage は Dark Fact Card の下に Meta テーブルを SHALL 表示する。`<dl>` / `<dt>` / `<dd>` のセマンティック構造で以下 2 行を順序固定で表示する MUST:
 
