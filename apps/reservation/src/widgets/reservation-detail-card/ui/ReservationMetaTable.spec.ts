@@ -57,6 +57,24 @@ describe("ReservationMetaTable", () => {
     expect(wrapper.text()).not.toContain("上級");
   });
 
+  it("guestCount props の変化で同伴者行が即時に再描画される (#215 編集後の楽観的更新)", async () => {
+    const wrapper = mount(ReservationMetaTable, {
+      props: {
+        fee: 1000,
+        guestCount: 0,
+        reservedAt: "2026-04-27T05:32:00Z",
+      },
+    });
+    expect(wrapper.find('[data-testid="meta-guests"]').text()).toBe("0 名");
+
+    await wrapper.setProps({
+      fee: 1000,
+      guestCount: 2,
+      reservedAt: "2026-04-27T05:32:00Z",
+    });
+    expect(wrapper.find('[data-testid="meta-guests"]').text()).toBe("2 名");
+  });
+
   it("dl / dt / dd 構造を持つ (3 行)", () => {
     const wrapper = mount(ReservationMetaTable, {
       props: {

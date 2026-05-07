@@ -8,6 +8,7 @@
 export {
   BookingApiError,
   insertReservation,
+  updateReservation,
   cancelReservation,
 } from "./api/booking-client";
 export {
@@ -19,6 +20,10 @@ export {
   useCreateBooking,
 } from "./composables/useCreateBooking";
 export type { UseCreateBookingReturn } from "./composables/useCreateBooking";
+export {
+  useUpdateBooking,
+} from "./composables/useUpdateBooking";
+export type { UseUpdateBookingReturn } from "./composables/useUpdateBooking";
 export {
   useCancelBooking,
   isCancellable,

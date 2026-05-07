@@ -34,6 +34,22 @@ vi.mock("../composables/useCreateBooking", () => ({
   }),
 }));
 
+const updateMock = vi.fn();
+const updateSubmitting = ref(false);
+const updateError = ref<string | null>(null);
+const updateReservationRef = ref<Reservation | null>(null);
+const updateReset = vi.fn();
+
+vi.mock("../composables/useUpdateBooking", () => ({
+  useUpdateBooking: () => ({
+    submitting: updateSubmitting,
+    error: updateError,
+    reservation: updateReservationRef,
+    update: updateMock,
+    reset: updateReset,
+  }),
+}));
+
 // ---------- fixtures ----------
 const sampleEvent: EventDetail = {
   id: unsafeEventId("ev-1"),
@@ -84,6 +100,9 @@ beforeEach(() => {
   createSubmitting.value = false;
   createError.value = null;
   createReservationRef.value = null;
+  updateSubmitting.value = false;
+  updateError.value = null;
+  updateReservationRef.value = null;
   window.localStorage.clear();
 });
 
@@ -122,6 +141,58 @@ async function mountSheet(open = true) {
   });
   await flushPromises();
   return { wrapper, router };
+}
+
+async function mountEditSheet(opts: {
+  open?: boolean;
+  startAt?: string;
+  initialGuestCount?: number;
+  initialNote?: string;
+} = {}) {
+  const BookingSheet = (await import("./BookingSheet.vue")).default;
+  const router = createRouter({ history: createMemoryHistory(), routes });
+  await router.push("/reservations/rs-1");
+  await router.isReady();
+
+  const evt: EventDetail = {
+    ...sampleEvent,
+    startAt: opts.startAt ?? sampleEvent.startAt,
+  };
+
+  const savedEvents: Reservation[] = [];
+
+  const Host = defineComponent({
+    components: { BookingSheet },
+    props: { initialOpen: { type: Boolean, default: true } },
+    setup(props) {
+      const isOpen = ref<boolean>(props.initialOpen);
+      return () =>
+        h(BookingSheet, {
+          open: isOpen.value,
+          event: evt,
+          mode: "edit",
+          edit: {
+            reservationId: unsafeReservationId("rs-1"),
+            initialGuestCount: opts.initialGuestCount ?? 1,
+            initialNote: opts.initialNote ?? "アレルギー: 卵",
+          },
+          "onUpdate:open": (v: boolean) => {
+            isOpen.value = v;
+          },
+          onSaved: (r: Reservation) => {
+            savedEvents.push(r);
+          },
+        });
+    },
+  });
+
+  const wrapper = mount(Host, {
+    props: { initialOpen: opts.open ?? true },
+    global: { plugins: [router] },
+    attachTo: document.body,
+  });
+  await flushPromises();
+  return { wrapper, router, savedEvents };
 }
 
 function findInBody(selector: string): HTMLElement | null {
@@ -275,5 +346,183 @@ describe("BookingSheet - ローカル保持", () => {
     expect(stored).not.toBeNull();
     const parsed = JSON.parse(stored ?? "{}") as { guestCount: number };
     expect(parsed.guestCount).toBe(2);
+  });
+});
+
+// ---------- edit モード ----------
+
+describe("BookingSheet - edit モードの基本表示", () => {
+  it("kicker が '— Edit'、CTA が '変更を保存する' で描画される", async () => {
+    await mountEditSheet({ initialGuestCount: 1, initialNote: "メモ" });
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("— Edit");
+    expect(text).toContain("変更を保存する");
+    expect(text).not.toContain("予約を確定する");
+  });
+
+  it("初期値 (guestCount / note) が描画に反映される", async () => {
+    await mountEditSheet({ initialGuestCount: 2, initialNote: "アレルギー" });
+    const text = document.body.textContent ?? "";
+    // 合計人数表記は本人 + 同伴者 = 1 + 2 = 3 名
+    expect(text).toContain("3 名 × 1,000 円");
+    const ta = document.body.querySelector("textarea") as HTMLTextAreaElement | null;
+    expect(ta?.value).toBe("アレルギー");
+  });
+
+  it("自己プロフィール (氏名 / 電話) は描画されない", async () => {
+    await mountEditSheet();
+    const text = document.body.textContent ?? "";
+    expect(text).not.toContain("田中 美咲");
+    expect(text).not.toContain("090-1234-5678");
+  });
+});
+
+describe("BookingSheet - edit モードの差分検知", () => {
+  it("差分なしの初期状態では「変更を保存する」CTA が disabled", async () => {
+    await mountEditSheet({ initialGuestCount: 1, initialNote: "メモ" });
+    const submit = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.textContent?.includes("変更を保存する")) as
+      | HTMLButtonElement
+      | undefined;
+    expect(submit?.hasAttribute("disabled")).toBe(true);
+  });
+
+  it("guestCount を変えると CTA が活性化、元に戻すと再 disabled", async () => {
+    await mountEditSheet({ initialGuestCount: 1, initialNote: "メモ" });
+    const inc = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.getAttribute("aria-label") === "同伴者人数を増やす") as
+      | HTMLButtonElement
+      | undefined;
+    const dec = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.getAttribute("aria-label") === "同伴者人数を減らす") as
+      | HTMLButtonElement
+      | undefined;
+    inc?.click();
+    await flushPromises();
+
+    let submit = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.textContent?.includes("変更を保存する")) as
+      | HTMLButtonElement
+      | undefined;
+    expect(submit?.hasAttribute("disabled")).toBe(false);
+
+    dec?.click();
+    await flushPromises();
+    submit = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.textContent?.includes("変更を保存する")) as
+      | HTMLButtonElement
+      | undefined;
+    expect(submit?.hasAttribute("disabled")).toBe(true);
+  });
+});
+
+describe("BookingSheet - edit モードの localStorage 非接触", () => {
+  it("edit モードで sheet を開いて値を変更しても localStorage に書き込まれない", async () => {
+    await mountEditSheet({ initialGuestCount: 1, initialNote: "" });
+    const inc = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.getAttribute("aria-label") === "同伴者人数を増やす") as
+      | HTMLButtonElement
+      | undefined;
+    inc?.click();
+    inc?.click();
+    await flushPromises();
+    expect(
+      window.localStorage.getItem("hq:reservation-booking:ev-1"),
+    ).toBeNull();
+  });
+});
+
+describe("BookingSheet - edit モードの保存", () => {
+  it("「変更を保存する」で update() が呼ばれ、成功で saved emit + sheet close", async () => {
+    updateMock.mockResolvedValueOnce(sampleReservation);
+    const { savedEvents, wrapper } = await mountEditSheet({
+      initialGuestCount: 1,
+      initialNote: "",
+    });
+    const inc = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.getAttribute("aria-label") === "同伴者人数を増やす") as
+      | HTMLButtonElement
+      | undefined;
+    inc?.click();
+    await flushPromises();
+
+    const submit = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.textContent?.includes("変更を保存する")) as
+      | HTMLButtonElement
+      | undefined;
+    submit?.click();
+    await flushPromises();
+
+    expect(updateMock).toHaveBeenCalledTimes(1);
+    const args = updateMock.mock.calls[0];
+    expect(args?.[0]).toMatchObject({
+      reservationId: "rs-1",
+      guestCount: 2,
+      note: "",
+    });
+    expect(savedEvents).toHaveLength(1);
+    expect(savedEvents[0]?.id).toBe(sampleReservation.id);
+    expect(findInBody('[role="dialog"]')).toBeNull();
+    void wrapper;
+  });
+
+  it("RLS エラー時は sheet に留まりエラー表示", async () => {
+    updateMock.mockImplementationOnce(async () => {
+      updateError.value = "rls";
+      return null;
+    });
+    await mountEditSheet({ initialGuestCount: 1, initialNote: "" });
+    const inc = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.getAttribute("aria-label") === "同伴者人数を増やす") as
+      | HTMLButtonElement
+      | undefined;
+    inc?.click();
+    await flushPromises();
+    const submit = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.textContent?.includes("変更を保存する")) as
+      | HTMLButtonElement
+      | undefined;
+    submit?.click();
+    await flushPromises();
+    expect(findInBody('[role="dialog"]')).not.toBeNull();
+    expect(document.body.textContent ?? "").toContain("変更できません");
+  });
+});
+
+describe("BookingSheet - edit モードの期限切れ案内", () => {
+  it("開催当日 0:00 JST 以降 (= 過去 startAt) では期限切れ案内が描画され、CTA が disabled", async () => {
+    await mountEditSheet({
+      startAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+      initialGuestCount: 1,
+      initialNote: "",
+    });
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("キャンセル期限");
+    expect(text).toContain("LINE オープンチャット");
+
+    // 値を変えても CTA は disabled
+    const inc = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.getAttribute("aria-label") === "同伴者人数を増やす") as
+      | HTMLButtonElement
+      | undefined;
+    inc?.click();
+    await flushPromises();
+    const submit = Array.from(
+      document.body.querySelectorAll("button"),
+    ).find((b) => b.textContent?.includes("変更を保存する")) as
+      | HTMLButtonElement
+      | undefined;
+    expect(submit?.hasAttribute("disabled")).toBe(true);
   });
 });

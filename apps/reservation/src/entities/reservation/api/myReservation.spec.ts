@@ -41,6 +41,10 @@ describe("fetchMyReservation", () => {
         "events(id, name, start_at, end_at, fee, venue_id, venues(name, default_fee))",
       ),
     );
+    // 編集 sheet 初期値供給のため note も SELECT する (#215)
+    expect(builderMock.select).toHaveBeenCalledWith(
+      expect.stringContaining("note"),
+    );
     // 経験レベルは予約画面に不要のため JOIN しない (#212)
     expect(builderMock.select).not.toHaveBeenCalledWith(
       expect.stringContaining("members(experience_level)"),
@@ -64,6 +68,7 @@ describe("fetchMyReservation", () => {
         id: RESERVATION_ID,
         status: "reserved",
         guest_count: 1,
+        note: "アレルギーあり",
         created_at: "2026-04-27T05:32:00Z",
         cancelled_at: null,
         member_id: UID,
@@ -91,8 +96,41 @@ describe("fetchMyReservation", () => {
     expect(result?.event.name).toBe("ゆる練 vol.43");
     expect(result?.event.venueName).toBe("亀戸スポーツセンター");
     expect(result?.event.fee).toBe(1000);
+    expect(result?.note).toBe("アレルギーあり");
     // member.experienceLevel フィールドは存在しない (#212)
     expect((result as unknown as { member?: unknown })?.member).toBeUndefined();
+  });
+
+  it("note が NULL の場合は空文字に正規化される", async () => {
+    builderMock.maybeSingle.mockResolvedValueOnce({
+      data: {
+        id: RESERVATION_ID,
+        status: "reserved",
+        guest_count: 0,
+        note: null,
+        created_at: "2026-04-27T05:32:00Z",
+        cancelled_at: null,
+        member_id: UID,
+        events: {
+          id: "22222222-2222-2222-2222-222222222222",
+          name: "test",
+          start_at: "2026-05-15T10:30:00Z",
+          end_at: "2026-05-15T12:30:00Z",
+          fee: 1000,
+          venue_id: "33333333-3333-3333-3333-333333333333",
+          venues: {
+            name: "亀戸",
+            default_fee: 1000,
+          },
+        },
+      },
+      error: null,
+    });
+
+    const { fetchMyReservation } = await import("./myReservation");
+    const result = await fetchMyReservation(RESERVATION_ID, UID);
+
+    expect(result?.note).toBe("");
   });
 
   it("events.fee が NULL のとき venues.default_fee で COALESCE する", async () => {

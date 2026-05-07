@@ -1,9 +1,20 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { unsafeEventId, unsafeMemberId } from "@high-q/shared";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+import {
+  unsafeEventId,
+  unsafeMemberId,
+  unsafeReservationId,
+} from "@high-q/shared";
 
 /**
  * booking-client の supabase クエリビルダを mock する。
- * 各テストは insertSpec / updateSpec / fetchSpec を差し替えて挙動を制御する。
+ * 各テストは insertSpec / updateSpec / fetchSpec / cancelUpdateSpec を差し替えて挙動を制御する。
  */
 
 type Spec = {
@@ -13,9 +24,51 @@ type Spec = {
 
 const insertSpec: { current: Spec } = { current: { data: null, error: null } };
 const fetchSpec: { current: Spec } = { current: { data: null, error: null } };
-const updateSpec: { current: Spec } = { current: { data: null, error: null } };
+const reactivateUpdateSpec: { current: Spec } = {
+  current: { data: null, error: null },
+};
+const editUpdateSpec: { current: Spec } = {
+  current: { data: null, error: null },
+};
+const cancelUpdateSpec: { current: Spec } = {
+  current: { data: null, error: null },
+};
 
-function buildInsertChain() {
+const updateCalls: { type: "edit" | "reactivate" | "cancel" | "unknown"; payload: unknown }[] = [];
+
+function buildChain() {
+  // .update(payload) → ターミナルが何かによって返値を決定する chainable mock
+  const update = vi.fn((payload: Record<string, unknown>) => {
+    let kind: "edit" | "reactivate" | "cancel" | "unknown" = "unknown";
+    if ("guest_count" in payload && "note" in payload && !("status" in payload)) {
+      kind = "edit";
+    } else if (payload.status === "cancelled") {
+      kind = "cancel";
+    } else if (payload.status === "reserved" && "cancelled_at" in payload) {
+      kind = "reactivate";
+    }
+    updateCalls.push({ type: kind, payload });
+
+    const eqChain: Record<string, unknown> = {};
+    eqChain.eq = vi.fn(() => eqChain);
+    eqChain.select = vi.fn(() => {
+      // edit (updateReservation) と cancel (cancelReservation) は配列返し (.select() 末端)
+      // reactivate は .single() を使う
+      if (kind === "reactivate") {
+        return {
+          single: vi.fn(async () => reactivateUpdateSpec.current),
+        };
+      }
+      const target =
+        kind === "edit" ? editUpdateSpec.current : cancelUpdateSpec.current;
+      // .select() は thenable でなければならない (await で即時消費される)
+      return {
+        then: (resolve: (v: Spec) => void) => resolve(target),
+      };
+    });
+    return eqChain;
+  });
+
   return {
     insert: vi.fn(() => ({
       select: vi.fn(() => ({
@@ -29,19 +82,13 @@ function buildInsertChain() {
         })),
       })),
     })),
-    update: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(async () => updateSpec.current),
-        })),
-      })),
-    })),
+    update,
   };
 }
 
 vi.mock("@/shared/api/supabase", () => ({
   getSupabase: () => ({
-    from: () => buildInsertChain(),
+    from: () => buildChain(),
   }),
 }));
 
@@ -70,7 +117,10 @@ const sampleRow = {
 beforeEach(() => {
   insertSpec.current = { data: null, error: null };
   fetchSpec.current = { data: null, error: null };
-  updateSpec.current = { data: null, error: null };
+  reactivateUpdateSpec.current = { data: null, error: null };
+  editUpdateSpec.current = { data: null, error: null };
+  cancelUpdateSpec.current = { data: null, error: null };
+  updateCalls.length = 0;
 });
 
 afterEach(() => {
@@ -97,7 +147,7 @@ describe("insertReservation - 重複 (UNIQUE 違反) ハンドリング", () => 
       data: { id: "rs-existing", status: "cancelled" },
       error: null,
     };
-    updateSpec.current = {
+    reactivateUpdateSpec.current = {
       data: { ...sampleRow, id: "rs-existing", status: "reserved" },
       error: null,
     };
@@ -150,6 +200,92 @@ describe("insertReservation - その他のエラー", () => {
     };
     const { insertReservation } = await import("./booking-client");
     await expect(insertReservation(sampleInput)).rejects.toMatchObject({
+      kind: "network",
+    });
+  });
+});
+
+describe("updateReservation - 同伴者数 / 連絡事項の編集", () => {
+  const editInput = {
+    reservationId: unsafeReservationId("rs-1"),
+    memberId: unsafeMemberId("mb-1"),
+    guestCount: 2,
+    note: "アレルギー: 卵",
+  };
+
+  it("自分の reserved 行を更新成功で Reservation を返す", async () => {
+    editUpdateSpec.current = {
+      data: [{ ...sampleRow, guest_count: 2, note: "アレルギー: 卵" }],
+      error: null,
+    };
+    const { updateReservation } = await import("./booking-client");
+    const r = await updateReservation(editInput);
+
+    expect(r.id).toBe("rs-1");
+    expect(r.guestCount).toBe(2);
+    expect(r.note).toBe("アレルギー: 卵");
+  });
+
+  it("status を payload に含めず guest_count と note のみを送る", async () => {
+    editUpdateSpec.current = {
+      data: [sampleRow],
+      error: null,
+    };
+    const { updateReservation } = await import("./booking-client");
+    await updateReservation(editInput);
+
+    const editCall = updateCalls.find((c) => c.type === "edit");
+    expect(editCall).toBeDefined();
+    expect(editCall?.payload).toEqual({
+      guest_count: 2,
+      note: "アレルギー: 卵",
+    });
+  });
+
+  it("空文字 note は NULL として送信する", async () => {
+    editUpdateSpec.current = {
+      data: [sampleRow],
+      error: null,
+    };
+    const { updateReservation } = await import("./booking-client");
+    await updateReservation({ ...editInput, note: "" });
+
+    const editCall = updateCalls.find((c) => c.type === "edit");
+    expect(editCall?.payload).toEqual({
+      guest_count: 2,
+      note: null,
+    });
+  });
+
+  it("0 行更新 (他人の id 改ざん / 既に cancelled) は 'rls' で投げる", async () => {
+    editUpdateSpec.current = {
+      data: [],
+      error: null,
+    };
+    const { updateReservation } = await import("./booking-client");
+    await expect(updateReservation(editInput)).rejects.toMatchObject({
+      kind: "rls",
+    });
+  });
+
+  it("RLS WITH CHECK 違反 (42501) を 'rls' で投げる", async () => {
+    editUpdateSpec.current = {
+      data: null,
+      error: { code: "42501", message: "rls" },
+    };
+    const { updateReservation } = await import("./booking-client");
+    await expect(updateReservation(editInput)).rejects.toMatchObject({
+      kind: "rls",
+    });
+  });
+
+  it("ネットワークエラーを 'network' で投げる", async () => {
+    editUpdateSpec.current = {
+      data: null,
+      error: { code: "08000", message: "down" },
+    };
+    const { updateReservation } = await import("./booking-client");
+    await expect(updateReservation(editInput)).rejects.toMatchObject({
       kind: "network",
     });
   });

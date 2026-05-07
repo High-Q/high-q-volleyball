@@ -7,6 +7,7 @@ export type {
   MemberId,
   BookingDraft,
   CreateBookingInput,
+  UpdateBookingInput,
   BookingError,
   MyReservationDetail,
 } from "./model/reservation.types";
