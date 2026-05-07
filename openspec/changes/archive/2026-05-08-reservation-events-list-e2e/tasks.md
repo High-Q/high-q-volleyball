@@ -15,6 +15,6 @@
 
 ## 3. CI 確認 / 後始末
 
-- [ ] 3.1 PR push 後、CI の `e2e` ジョブ (smoke) が green であることを確認 (本 test は smoke 対象外なのでタイムロスは数秒以内のはず)
-- [ ] 3.2 master push 時の full E2E で本 test が実行されることを (PR description / Issue クローズコメントで) 言及する
-- [ ] 3.3 PR description に Issue #201 close 句 (`Closes #201`) を含める
+- [x] 3.1 PR push 後、CI の `e2e` ジョブ (smoke) が green であることを確認 (PR #219 / e2e: pass / 1m4s)
+- [x] 3.2 master push 時の full E2E で本 test が実行されることを (PR description / Issue クローズコメントで) 言及する (PR description Test plan に明記)
+- [x] 3.3 PR description に Issue #201 close 句 (`Closes #201`) を含める
