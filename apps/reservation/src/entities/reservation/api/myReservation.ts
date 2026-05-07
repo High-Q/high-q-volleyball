@@ -42,9 +42,6 @@ type MyReservationDetailRow = {
       default_fee: number | null;
     } | null;
   } | null;
-  members: {
-    experience_level: "beginner" | "intermediate" | "experienced";
-  } | null;
 };
 
 export async function fetchMyReservation(
@@ -55,7 +52,7 @@ export async function fetchMyReservation(
   const { data, error } = await supabase
     .from("reservations")
     .select(
-      "id, status, guest_count, created_at, cancelled_at, member_id, events(id, name, start_at, end_at, fee, venue_id, venues(name, default_fee)), members(experience_level)",
+      "id, status, guest_count, created_at, cancelled_at, member_id, events(id, name, start_at, end_at, fee, venue_id, venues(name, default_fee))",
     )
     .eq("id", reservationId as string)
     .eq("member_id", uid as string)
@@ -67,13 +64,12 @@ export async function fetchMyReservation(
     return null;
   }
   const row = data as unknown as MyReservationDetailRow;
-  if (row.events === null || row.members === null) {
+  if (row.events === null) {
     return null;
   }
   return rowToDetail(
     row as MyReservationDetailRow & {
       events: NonNullable<MyReservationDetailRow["events"]>;
-      members: NonNullable<MyReservationDetailRow["members"]>;
     },
   );
 }
@@ -81,7 +77,6 @@ export async function fetchMyReservation(
 function rowToDetail(
   row: MyReservationDetailRow & {
     events: NonNullable<MyReservationDetailRow["events"]>;
-    members: NonNullable<MyReservationDetailRow["members"]>;
   },
 ): MyReservationDetail {
   return {
@@ -97,9 +92,6 @@ function rowToDetail(
       endAt: row.events.end_at,
       fee: row.events.fee ?? row.events.venues?.default_fee ?? null,
       venueName: row.events.venues?.name ?? "",
-    },
-    member: {
-      experienceLevel: row.members.experience_level,
     },
   };
 }

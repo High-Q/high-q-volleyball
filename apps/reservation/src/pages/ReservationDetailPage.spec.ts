@@ -73,7 +73,6 @@ const baseReservation: MyReservationDetail = {
     fee: 1000,
     venueName: "亀戸スポーツセンター",
   },
-  member: { experienceLevel: "intermediate" },
 };
 
 // ---------- routing ----------

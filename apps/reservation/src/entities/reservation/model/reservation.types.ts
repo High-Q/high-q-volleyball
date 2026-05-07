@@ -59,13 +59,13 @@ export type Reservation = {
 };
 
 /**
- * 予約詳細画面 (`/reservations/:reservationId`) で表示する自分の予約 + 紐付くイベント / 会場 / 会員情報。
+ * 予約詳細画面 (`/reservations/:reservationId`) で表示する自分の予約 + 紐付くイベント / 会場情報。
  *
  * `MyReservationItem` (履歴一覧用) を拡張し、詳細画面 Meta テーブル用に
- * `createdAt` (予約日時) と `member.experienceLevel` を追加する。
+ * `createdAt` (予約日時) を追加する。
  *
  * 関連:
- *   openspec/changes/reservation-detail-page/specs/reservation-detail-page/spec.md
+ *   openspec/specs/reservation-detail-page/spec.md
  */
 export type MyReservationDetail = {
   id: ReservationId;
@@ -80,9 +80,6 @@ export type MyReservationDetail = {
     endAt: string;
     fee: number | null;
     venueName: string;
-  };
-  member: {
-    experienceLevel: "beginner" | "intermediate" | "experienced";
   };
 };
 

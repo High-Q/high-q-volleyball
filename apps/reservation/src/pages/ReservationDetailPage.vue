@@ -257,7 +257,6 @@ function goHistory(): void {
         <ReservationMetaTable
           :fee="reservation.event.fee"
           :guest-count="reservation.guestCount"
-          :experience-level="reservation.member.experienceLevel"
           :reserved-at="reservation.createdAt"
         />
 
