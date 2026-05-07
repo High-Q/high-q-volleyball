@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { ref } from "vue";
 import App from "./App.vue";
 import EventsListPage from "./pages/EventsListPage.vue";
 import LoginPage from "./pages/LoginPage.vue";
@@ -8,29 +9,31 @@ import { mountWithRouter } from "./test/mountWithRouter";
 // EventsListPage が描画されることを検証する (#90)。/login は未認証で OK。
 vi.mock("@/features/auth", () => ({
   useAuthSession: () => ({
-    status: { value: "authenticated" as const },
-    isProfileComplete: { value: true },
-    hasIdentityDocument: { value: true },
+    status: ref("authenticated"),
+    isProfileComplete: ref(true),
+    hasIdentityDocument: ref(true),
+    member: ref({ displayName: "山田 太郎", nickname: null }),
+    session: ref({ user: { id: "00000000-0000-0000-0000-000000000001" } }),
     signOut: vi.fn(),
   }),
   useSendMagicLink: () => ({
-    status: { value: "idle" as const },
-    error: { value: null },
-    submittedEmail: { value: "" },
+    status: ref("idle"),
+    error: ref(null),
+    submittedEmail: ref(""),
     send: vi.fn(),
     reset: vi.fn(),
   }),
   useCompleteProfile: () => ({
-    status: { value: "idle" as const },
-    error: { value: null },
-    fieldErrors: { value: {} },
+    status: ref("idle"),
+    error: ref(null),
+    fieldErrors: ref({}),
     submit: vi.fn(),
     reset: vi.fn(),
   }),
 }));
 
-// `useUpcomingEvents` は entity の Supabase クエリを呼ぶため、smoke test では
-// 一覧空の状態で描画できる軽量モックに差し替える。
+// `useUpcomingEvents` / `useNextReservation` は entity の Supabase クエリを呼ぶため、
+// smoke test では「予約 0 件 + イベント 0 件」の状態で描画できる軽量モックに差し替える。
 vi.mock("@/features/event-listing", async () => {
   const actual = await vi.importActual<
     typeof import("@/features/event-listing")
@@ -38,9 +41,15 @@ vi.mock("@/features/event-listing", async () => {
   return {
     ...actual,
     useUpcomingEvents: () => ({
-      events: { value: [] },
-      loading: { value: false },
-      error: { value: null },
+      events: ref([]),
+      loading: ref(false),
+      error: ref(null),
+      reload: vi.fn(),
+    }),
+    useNextReservation: () => ({
+      reservation: ref(null),
+      loading: ref(false),
+      error: ref(null),
       reload: vi.fn(),
     }),
   };
@@ -65,10 +74,12 @@ const routes = [
 ];
 
 describe("App routing smoke", () => {
-  it("'/' で /events に redirect され EventsListPage が描画される (#90)", async () => {
+  it("'/' で /events に redirect され EventsListPage が描画される (#90 / #212)", async () => {
     const wrapper = await mountWithRouter(App, routes, "/");
     expect(wrapper.findComponent(EventsListPage).exists()).toBe(true);
-    expect(wrapper.text()).toContain("次の練習を、");
+    // ホーム V2 (#212): ヘッダロゴ + 挨拶 kicker が描画される
+    expect(wrapper.text()).toContain("High Q");
+    expect(wrapper.text()).toContain("こんにちは");
   });
 
   it("'/login' で LoginPage が描画される", async () => {
