@@ -2,9 +2,7 @@
 
 ## Purpose
 予約履歴画面 `/history` を独立画面として提供し、会員が自分の参加統計と予約履歴（予約中 + 過去）を 1 画面で確認・管理できるようにする。Bottom Tab Bar の「履歴」タブの正規遷移先。プロフィール画面 (`/profile`) は会員自身の属性管理（LEVEL / ACCOUNT）と参加サマリ（集計 3 行）に専念する形に整理し、履歴 + 個別キャンセル動線は本画面に集約する。
-
 ## Requirements
-
 ### Requirement: `/history` ルートとアクセス制限
 
 `apps/reservation` は `/history` ルートを SHALL 提供する。本ルートは **認証済 + プロフィール完成 + 本人確認書類提出済** の会員のみアクセス可能とする MUST。未認証 / プロフィール未完成 / 書類未提出のユーザーがアクセスした場合は、既存の auth guard チェーン（`/login` / `/signup/profile` / `/signup/identity`）に従ってリダイレクトされる SHALL。
@@ -136,15 +134,25 @@ HistoryPage は予約中グループの下に「過去」グループを SHALL �
 - 予約番号（`#HQ-...` 形式・`formatReservationNumber(reservation.id)` で生成・既存ヘルパ流用）
 - 状態バッジ（前述）
 
-本 change 段階では行は **非リンク** として描画し、押下フィードバック（hover / cursor: pointer / active）を与えない MUST。詳細画面（Issue #213・MVP1）実装時に `<router-link :to="{ name: 'reservation-detail', params: { reservationId: row.id } }">` へ単純置換できる構造にする。
+行は予約詳細画面 (`reservation-detail-page` capability) への `<router-link :to="{ name: 'reservation-detail', params: { reservationId: row.id } }">` として描画する MUST。押下フィードバックとして cursor: pointer / hover スタイル / focus 可視リングを SHALL 提供する。
+
+行内のキャンセルボタン（予約中グループのみ）押下時は親 router-link への伝播を `event.stopPropagation()` 相当で抑制する MUST。これにより「行クリック → 詳細遷移」「キャンセルボタンクリック → ダイアログ起動」が独立して動作する。
 
 #### Scenario: 行の表示構成
 - **WHEN** 任意の予約行を確認する
 - **THEN** 日付セル / イベント名 / 会場 / 時間 / 予約番号 / 状態バッジ がすべて描画される
 
-#### Scenario: 行は押下不可
+#### Scenario: 行押下で予約詳細へ遷移
 - **WHEN** 履歴行をクリックする
-- **THEN** 何も発生しない（遷移しない / cursor: pointer も付かない）
+- **THEN** `/reservations/<row.id>` に遷移する
+
+#### Scenario: 押下フィードバック
+- **WHEN** 履歴行にホバー / フォーカスする
+- **THEN** cursor: pointer / hover スタイル / focus 可視リングが適用される
+
+#### Scenario: キャンセルボタンの伝播抑制
+- **WHEN** 予約中グループの「予約をキャンセル」ボタンを押下
+- **THEN** CancelBookingDialog が開き、詳細画面への遷移は発生しない
 
 ### Requirement: 予約中グループからのキャンセル動線
 
@@ -220,3 +228,4 @@ HistoryPage は 390px viewport（mobile）を first target とする MUST。HQ �
 #### Scenario: 未認証で `/history` アクセス
 - **WHEN** 未認証ユーザーが Playwright で `/history` を開く
 - **THEN** `/login` にリダイレクトされ、URL が `/login` で停止する
+

@@ -65,7 +65,7 @@ function onConfirm(): void {
             キャンセル後、同じイベントへ再度予約することができます。
           </template>
           <template v-else>
-            イベント開催が始まっているためキャンセルできません。やむを得ない事情がある場合は、LINE オープンチャット
+            キャンセル期限 (開催前日中) を過ぎているためキャンセルできません。やむを得ない事情がある場合は、LINE オープンチャット
             <a
               :href="HIGH_Q_OPEN_CHAT_URL"
               target="_blank"

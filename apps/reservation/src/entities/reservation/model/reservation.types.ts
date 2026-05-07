@@ -59,6 +59,34 @@ export type Reservation = {
 };
 
 /**
+ * 予約詳細画面 (`/reservations/:reservationId`) で表示する自分の予約 + 紐付くイベント / 会場 / 会員情報。
+ *
+ * `MyReservationItem` (履歴一覧用) を拡張し、詳細画面 Meta テーブル用に
+ * `createdAt` (予約日時) と `member.experienceLevel` を追加する。
+ *
+ * 関連:
+ *   openspec/changes/reservation-detail-page/specs/reservation-detail-page/spec.md
+ */
+export type MyReservationDetail = {
+  id: ReservationId;
+  status: ReservationStatus;
+  guestCount: number;
+  createdAt: string;
+  cancelledAt: string | null;
+  event: {
+    id: EventId;
+    name: string;
+    startAt: string;
+    endAt: string;
+    fee: number | null;
+    venueName: string;
+  };
+  member: {
+    experienceLevel: "beginner" | "intermediate" | "experienced";
+  };
+};
+
+/**
  * 確認画面で入力されるフォーム値。phone は members.phone 未登録時のみ入力される。
  */
 export type BookingDraft = {
