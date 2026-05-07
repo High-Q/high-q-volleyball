@@ -65,6 +65,11 @@ const routes: RouteRecordRaw[] = [
     component: HistoryPage,
   },
   {
+    path: "/reservations/:reservationId",
+    name: "reservation-detail",
+    component: () => import("@/pages/ReservationDetailPage.vue"),
+  },
+  {
     path: "/auth/callback",
     name: "auth-callback",
     component: AuthCallbackPage,

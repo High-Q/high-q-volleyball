@@ -33,13 +33,13 @@
 
 ## 5. ルーティングと Page
 
-- [ ] 5.1 `apps/reservation/src/app/router.ts` に `/reservations/:reservationId` (name: `reservation-detail`) のルートを追加し、`meta.public` を持たないことで auth guard チェーン配下に置く
-- [ ] 5.2 `pages/ReservationDetailPage.vue` を新規作成。状態 (loading / notFound / error / reservation) を ref 管理し、`fetchMyReservation` を `onMounted` で呼ぶ。`router.params.reservationId` を Branded Type に変換
-- [ ] 5.3 ReservationDetailPage に PageBreadcrumb (`マイページ > 履歴 > 予約詳細`) + Top Bar (戻る矢印 + 「予約詳細」見出し) を配置。戻る矢印は `router.back()` 相当、履歴空時は `/history` への代替遷移
-- [ ] 5.4 ReservationDetailPage の Success 状態で Reservation Header (kicker + h1) / DarkFactCard / ReservationMetaTable / CalendarExportButton / VenueMapLink / CancelPolicyBox / 「予約をキャンセル」ボタンの順に組み立てる
-- [ ] 5.5 ReservationDetailPage に CancelBookingDialog + useCancelBooking 連携を実装。成功時 `router.replace({ name: 'history' })` + 完了トースト
-- [ ] 5.6 4 状態 (Loading / 404 / Error / Success) の skeleton / メッセージ / 再試行 / 履歴に戻る CTA を実装
-- [ ] 5.7 `ReservationDetailPage.spec.ts` を作成し、各状態描画 / .ics 起動 / 地図リンク URL / キャンセル成功後遷移 / 他会員予約 ID で 404 を検証
+- [x] 5.1 `apps/reservation/src/app/router.ts` に `/reservations/:reservationId` (name: `reservation-detail`) のルートを追加し、`meta.public` を持たないことで auth guard チェーン配下に置く
+- [x] 5.2 `pages/ReservationDetailPage.vue` を新規作成。状態 (loading / notFound / error / reservation) を ref 管理し、`fetchMyReservation` を `onMounted` で呼ぶ。`router.params.reservationId` を Branded Type に変換
+- [x] 5.3 ReservationDetailPage に PageBreadcrumb (`マイページ > 履歴 > 予約詳細`) + Top Bar (戻る矢印 + 「予約詳細」見出し) を配置。戻る矢印は `router.back()` 相当、履歴空時は `/history` への代替遷移
+- [x] 5.4 ReservationDetailPage の Success 状態で Reservation Header (kicker + h1) / DarkFactCard / ReservationMetaTable / CalendarExportButton / VenueMapLink / CancelPolicyBox / 「予約をキャンセル」ボタンの順に組み立てる
+- [x] 5.5 ReservationDetailPage に CancelBookingDialog + useCancelBooking 連携を実装。成功時 `router.replace({ name: 'history' })` + 完了トースト
+- [x] 5.6 4 状態 (Loading / 404 / Error / Success) の skeleton / メッセージ / 再試行 / 履歴に戻る CTA を実装
+- [x] 5.7 `ReservationDetailPage.spec.ts` を作成し、各状態描画 / .ics 起動 / 地図リンク URL / キャンセル成功後遷移 / 他会員予約 ID で 404 を検証
 
 ## 6. 履歴画面 (#211) からの遷移化
 
