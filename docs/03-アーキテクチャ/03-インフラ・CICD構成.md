@@ -5,12 +5,12 @@
 | コンポーネント | サービス | Render サービス名 | 状態 | プラン |
 |-------------|---------|------------------|------|--------|
 | LP | Render（Static Site） | `high-q-volleyball` | デプロイ済み | 無料枠 |
-| Admin | Render（Static Site） | （未デプロイ） | 機能実装と認証ゲート完了後に追加 | 無料枠 |
+| Admin | Render（Static Site） | `high-q-admin` | デプロイ済み（#139） | 無料枠 |
 | Reservation | Render（Static Site） | （未デプロイ） | 機能実装と公開判断完了後に追加 | 無料枠 |
 | DB / Auth / Storage | Supabase | — | 利用中 | 無料枠 |
 | 既存イベントAPI | AWS API Gateway + DynamoDB | — | 既存 | 既存 |
 
-LP のみ Render Static Site としてデプロイ済み。admin / reservation は無料枠内で運用予定だが、**未完成アプリを商用公開しないガバナンス方針**（後述）により、現時点では `render.yaml` の `services` 配列に追加していない。雛形は `render.yaml` 末尾コメントに保持。
+LP / admin が Render Static Site としてデプロイ済み。reservation は無料枠内で運用予定だが、**未完成アプリを商用公開しないガバナンス方針**（後述）により、現時点では `render.yaml` の `services` 配列に追加していない。雛形は `render.yaml` 末尾コメントに保持。
 
 ### 未完成アプリの商用公開禁止ガバナンス
 
@@ -26,7 +26,7 @@ Render Static Site はデフォルトで完全公開され、URL (`<service-name
 
 ## Render デプロイ設定（render.yaml）
 
-リポジトリルートの `render.yaml` が **真実の源（Blueprint mode）**。Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。現状 LP のみ `services` 配列に定義し、admin / reservation は雛形コメントとして末尾に保持する。
+リポジトリルートの `render.yaml` が **真実の源（Blueprint mode）**。Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。現状 LP / admin が `services` 配列に定義され、reservation は雛形コメントとして末尾に保持する。
 
 ### LP サービス定義（デプロイ済み）
 
@@ -42,6 +42,24 @@ Render Static Site はデフォルトで完全公開され、URL (`<service-name
 | `previews.generation` | `automatic` | 全 PR に Preview 環境を自動生成 |
 | `envVars[].NODE_VERSION` | `"22"` | ビルド時 Node バージョン統一 |
 
+### admin サービス定義（デプロイ済み・#139）
+
+| 設定項目 | 値 | 役割 |
+|---|---|---|
+| `name` | `high-q-admin` | admin 用 Render サービス名。**不変厳守** |
+| `runtime` | `static` | Static Site として配信（無料枠） |
+| `rootDir` | `apps/admin` | 該当ディレクトリ配下の変更のみが admin デプロイをトリガー |
+| `branch` | `master` | master 向け変更を deploy 対象とする |
+| `buildCommand` | `corepack enable && pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/admin build` | pnpm workspace のフィルタで admin のみビルド |
+| `staticPublishPath` | `dist` | Vite ビルド出力を公開 |
+| `routes` | `/* → /index.html` rewrite | vue-router history mode のサブパス直アクセス対応 |
+| `autoDeployTrigger` | `checksPass` | GitHub Actions CI 緑のときだけ deploy 起動 |
+| `previews.generation` | `automatic` | 全 PR に Preview 環境を自動生成 |
+| `envVars[].NODE_VERSION` | `"22"` | ビルド時 Node バージョン統一 |
+| `envVars[].SKIP_INSTALL_DEPS` | `"true"` | pnpm workspace のため自動 npm install を skip（#84 で確立） |
+| `envVars[].VITE_SUPABASE_URL` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd)、PR Preview は dev URL |
+| `envVars[].VITE_SUPABASE_PUBLISHABLE_KEY` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd)、PR Preview は dev 公開キー |
+
 ### Render 運用上の注意
 
 - **`name` 不変厳守**: Blueprint mode は `name` で既存サービスを識別する。変更すると新規サービスが二重作成される（#125 で経験済）
@@ -54,23 +72,23 @@ Render Static Site はデフォルトで完全公開され、URL (`<service-name
 - buildCommand の `pnpm --filter @high-q/lp build` → モノレポ workspace 依存（`@high-q/shared` 等）も含めて LP のみビルド。将来 admin / reservation 追加時もこの形式を踏襲
 - ビルドが3回連続失敗した場合は CLAUDE.md Pillar 5 の「デプロイ 3 回連続失敗時の対応」に従う
 
-### 将来 admin / reservation を追加する際の手順
+### 将来 reservation を追加する際の手順
 
-機能実装と公開判断が完了した後、`render.yaml` 末尾の雛形コメントを参考に `services` 配列へ追加する。追加 PR では以下を必ず確認すること:
+reservation の最低限の予約フロー実装と公開判断が完了した後、`render.yaml` 末尾の雛形コメントを参考に `services` 配列へ追加する（#140）。admin は #139 で完了済。追加 PR では以下を必ず確認すること:
 
 1. **追加対象アプリの状態確認**:
-   - admin: Supabase Auth ゲート実装済み + 最低限の管理機能実装済み
    - reservation: 最低限の予約フロー実装済み + 公開判断 OK
-2. **PR 作成前**: Render Dashboard で既存 LP の env var 一覧をスクリーンショット or テキスト退避
+2. **PR 作成前**: Render Dashboard で既存 LP / admin の env var 一覧をスクリーンショット or テキスト退避
 3. **PR 内容**:
    - `render.yaml` 末尾の雛形コメントから `services` 配列に該当ブロックを移動
    - SPA history routing 利用時は `routes` で `/* → /index.html` リライト設定済みであることを確認
-   - Supabase 系 env var は `sync: false` で枠だけ定義（CLAUDE.md の `.env を読まない` ルール準拠）
-4. **PR Preview 確認**: 新サービス分の Preview URL が立ち上がることを確認
+   - Supabase 系 env var は `sync: false`（本番値）+ `previewValue`（dev 値）の 2 段構造で定義（CLAUDE.md の `.env を読まない` ルール準拠、#184 / #139 で確立）
+4. **PR Preview 確認**: 新サービス分の Preview URL が立ち上がること、Network タブで Supabase URL が dev プロジェクトを指していることを確認
 5. **マージ後の Dashboard 操作**:
    - Blueprint Instance Re-sync で新規サービスが作成されることを確認
-   - 新規サービスの Supabase 系 env var 値を Dashboard で設定
-   - 既存 LP の env var 値が保持されていることを確認
+   - 新規サービスの Supabase 系 env var 値（prd）を Dashboard で設定
+   - 既存 LP / admin の env var 値が保持されていることを確認
+   - Supabase Auth → Redirect URLs に reservation 本番ドメインを追加
    - 本番 URL が 200 を返すことを確認
 
 ---
