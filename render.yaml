@@ -79,6 +79,16 @@ services:
 # 3. CLAUDE.md の「.env を読まない」ルール準拠で env var は sync: false で枠だけ定義
 # 4. SPA history routing 利用時は routes に /* → /index.html リライト追加
 # 5. PR レビューで「公開して問題ない状態か」を明示確認
+# 6. dev/prd 切替の envVars 構造は #184 で確立済（本番値は sync:false で Dashboard 設定、
+#    PR Preview 用 dev 値は previewValue で記載。Publishable Key は公開キーなのでコミット可、
+#    Secret Key は絶対に previewValue に書かない）
+#
+# 環境変数の dev/prd 切替方針 (#184 で確立):
+# - 本番デプロイ (master push) → sync: false で Dashboard に設定された値 (= prd Supabase) を使う
+# - PR Preview                  → previewValue の値 (= dev Supabase) を使う
+# これにより PR Preview は dev に、本番は prd にのみ書き込む安全構造が成立する。
+# 参考: docs/08-移行/01-環境戦略・本番リリース計画.md §3.2
+# 参考: https://render.com/docs/preview-environments
 #
 # admin 雛形:
 #   - type: web
@@ -102,8 +112,10 @@ services:
 #       - key: SKIP_INSTALL_DEPS
 #         value: "true"
 #       - key: VITE_SUPABASE_URL
-#         sync: false
+#         sync: false                                              # 本番値 (prd) は Render Dashboard で設定
+#         previewValue: https://<dev-project-ref>.supabase.co      # PR Preview 用 dev 値 (#139 着手時に実値に置換)
 #       - key: VITE_SUPABASE_PUBLISHABLE_KEY
-#         sync: false
+#         sync: false                                              # 本番値 (prd) は Render Dashboard で設定
+#         previewValue: sb_publishable_<dev-publishable-key>       # PR Preview 用 dev 値 (#139 着手時に実値に置換)
 #
-# reservation 雛形: 上記の name / rootDir / --filter を reservation に置換
+# reservation 雛形: 上記の name / rootDir / --filter を reservation に置換 (#140 で実施)
