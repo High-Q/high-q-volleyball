@@ -200,12 +200,46 @@ node -v              # v22.x.x であること
 
 ## 環境変数管理
 
-| 変数 | 配置 | 用途 |
+### Supabase 接続情報の dev / prd 切替（#184 で確立）
+
+| 変数 | 値の出どころ | 用途 |
 |------|------|------|
-| `VITE_SUPABASE_URL` | `.env.local` / Render env | Supabase プロジェクト URL |
-| `VITE_SUPABASE_ANON_KEY` | `.env.local` / Render env | Supabase 公開キー |
+| `VITE_SUPABASE_URL` | dev/prd でそれぞれ別プロジェクト URL | Supabase プロジェクト URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | dev/prd でそれぞれ別 Publishable Key (公開キー) | Supabase クライアント認証用キー |
 | `NODE_VERSION` | render.yaml | ビルド時の Node バージョン指定 |
+
+#### 値の配置先
+
+| 環境 | 配置 | 値 |
+|---|---|---|
+| 本番デプロイ (master) | `render.yaml` の `envVars: sync: false` + Render Dashboard で実値設定 | **prd** プロジェクトの URL/Key |
+| PR Preview | `render.yaml` の `envVars: previewValue:` で git コミット | **dev** プロジェクトの URL/Key (公開キーなのでコミット可) |
+| ローカル開発 | リポジトリ root の `.env.local` (gitignore 対象) | **dev** プロジェクトの URL/Key |
+
+アプリ側 `shared/api/supabase.ts` は `import.meta.env.VITE_SUPABASE_*` を読むだけで dev/prd を判別しない。環境変数の値で透過的に切替わる。
+
+#### セキュリティ運用ルール
 
 - `.env.local` は `.gitignore` に含まれており、コミット禁止
 - `VITE_` プレフィックスの変数はバンドルに含まれる（公開して問題ないもののみ設定）
-- `service_role` キーはクライアントサイドで絶対に使わない
+- Publishable Key は **公開キー** (RLS で保護) なので `previewValue` に書いて git にコミットしてよい
+- **Secret Key** (`sbs_xxx`、旧 `service_role` 相当) は `previewValue` を含むあらゆる場所に書いてはならない (RLS バイパス)
+- prd の URL/Key は翔太郎くん本人のみが Supabase Dashboard で所有し、Claude には共有しない
+
+### Migration の dev / prd 同期運用ルール（#184 で確立）
+
+新規 migration を `supabase/migrations/<timestamp>_<name>.sql` として追加した際は、**dev に push したら同セッションで prd にも push する**。スキーマドリフト禁止。
+
+```bash
+# 1. dev にリンク済の状態で migration を追加して dev に push
+pnpm db:push   # = supabase db push (現在のリンク先 = dev)
+
+# 2. 同セッションで prd に切替して push
+pnpm exec supabase link --project-ref <prd-project-ref>   # 翔太郎くん作業 (DB password 入力)
+pnpm exec supabase db push                                # レム作業
+
+# 3. 完了後、必ず dev に戻す (誤操作防止)
+pnpm exec supabase link --project-ref <dev-project-ref>
+```
+
+CI 自動化（master マージ時に prd へ自動 push）は Phase 3 別 Issue で検討。当面は手動運用。
