@@ -9,7 +9,8 @@ import {
 import EventsListPage from "@/pages/EventsListPage.vue";
 import EventDetailPage from "@/pages/EventDetailPage.vue";
 import LoginPage from "@/pages/LoginPage.vue";
-import SignupProfilePage from "@/pages/SignupProfilePage.vue";
+import SignupPage from "@/pages/SignupPage.vue";
+import SignupVerifyPage from "@/pages/SignupVerifyPage.vue";
 import LinkSentPage from "@/pages/LinkSentPage.vue";
 import AuthCallbackPage from "@/pages/AuthCallbackPage.vue";
 import ProfilePage from "@/pages/ProfilePage.vue";
@@ -41,13 +42,22 @@ const routes: RouteRecordRaw[] = [
     component: LoginPage,
     meta: { public: true },
   },
-  // /signup ルートは撤廃 (2026-05-03 翔太郎くん指示)。
-  // 段階 1 (メール送信) は /login で兼用するため不要。
-  // /signup/profile は段階 2、/signup/identity は段階 3 (#92) として運用。
+  // 会員登録 3 段階:
+  //   段階 1 (/signup): 全項目入力 → 認証コード送信 (#189 ゼロ滞留 signup フロー)
+  //   段階 2 (/signup/verify): 6 桁コード入力 → auth.users + members 一括作成
+  //   段階 3 (/signup/identity): 本人確認書類アップロード (#92)
+  // /signup/profile は #189 で撤廃済み。
   {
-    path: "/signup/profile",
-    name: "signup-profile",
-    component: SignupProfilePage,
+    path: "/signup",
+    name: "signup",
+    component: SignupPage,
+    meta: { public: true },
+  },
+  {
+    path: "/signup/verify",
+    name: "signup-verify",
+    component: SignupVerifyPage,
+    meta: { public: true },
   },
   {
     path: "/signup/identity",
@@ -93,7 +103,6 @@ export function registerAuthGuard(router: Router): void {
 
       const isPublic = to.meta?.public === true;
       const authed = session.status.value === "authenticated";
-      const profileDone = session.isProfileComplete.value;
       const hasIdDoc = session.hasIdentityDocument.value;
 
       // 未認証
@@ -102,16 +111,11 @@ export function registerAuthGuard(router: Router): void {
         return { name: "login" };
       }
 
-      // 認証済み + プロフィール未完成 → /signup/profile 強制誘導
-      // ただし /auth/callback は通過 (callback 内でリダイレクト判定)
-      if (!profileDone) {
-        if (to.name === "signup-profile" || to.name === "auth-callback") {
-          return true;
-        }
-        return { name: "signup-profile" };
-      }
+      // #189 ゼロ滞留 signup フロー導入後、認証済み = プロフィール完成済みが
+      // 不変条件となるため「プロフィール未完成→ /signup/profile 誘導」分岐は
+      // 撤廃済み。Phase 1 で作成された既存会員行は signup_completed=true 持ち。
 
-      // 認証済み + プロフィール完成 + 書類未提出 → /signup/identity 強制誘導 (#92)
+      // 認証済み + 書類未提出 → /signup/identity 強制誘導 (#92)
       if (!hasIdDoc) {
         if (to.name === "signup-identity" || to.name === "auth-callback") {
           return true;
@@ -119,11 +123,12 @@ export function registerAuthGuard(router: Router): void {
         return { name: "signup-identity" };
       }
 
-      // 認証済み + プロフィール完成 + 書類提出済み:
-      // ログイン / 段階 2 / 段階 3 系は / へ
+      // 認証済み + 書類提出済み:
+      // ログイン / 新規登録 / 段階 3 系は / へ（重複登録防止）
       if (
         to.name === "login" ||
-        to.name === "signup-profile" ||
+        to.name === "signup" ||
+        to.name === "signup-verify" ||
         to.name === "signup-identity"
       ) {
         return { name: "events-list" };

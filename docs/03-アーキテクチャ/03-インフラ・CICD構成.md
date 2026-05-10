@@ -278,3 +278,52 @@ pnpm exec supabase link --project-ref <dev-project-ref>
 ```
 
 CI 自動化（master マージ時に prd へ自動 push）は Phase 3 別 Issue で検討。当面は手動運用。
+
+## Supabase Edge Functions（#189 で導入）
+
+`supabase/functions/<name>/index.ts` に Edge Function を配置し、`supabase functions deploy` でデプロイする。共通モジュールは `supabase/functions/_shared/` に置く。
+
+現在の Function 一覧:
+
+| Function 名 | 役割 | JWT 検証 | エンドポイント |
+|---|---|---|---|
+| `request-signup` | 「ゼロ滞留」signup フローのコード発行（#189） | OFF（未認証ユーザーが叩く） | `https://<project-ref>.supabase.co/functions/v1/request-signup` |
+| `verify-signup` | 同フローのコード検証 + auth.users / members 一括作成（#189） | OFF | `https://<project-ref>.supabase.co/functions/v1/verify-signup` |
+
+### デプロイ手順
+
+```bash
+# dev / prd 共通。--project-ref を切り替えて両方に同じ手順を適用する。
+pnpm exec supabase functions deploy request-signup --project-ref <project-ref> --no-verify-jwt
+pnpm exec supabase functions deploy verify-signup  --project-ref <project-ref> --no-verify-jwt
+```
+
+`--no-verify-jwt` を付けるのは未認証ユーザーが直接呼び出すフロー（signup）だから。認証済みユーザー向け Function を追加する際はこのフラグを外す。
+
+### Edge Function Secrets
+
+Supabase Dashboard → Edge Functions → Secrets に以下を登録する MUST:
+
+| Name | 値 | 用途 |
+|---|---|---|
+| `GMAIL_USER` | `high.q.volleyball@gmail.com` | Gmail SMTP 送信元 |
+| `GMAIL_APP_PASSWORD` | Google アプリパスワード（16 文字） | Gmail SMTP 認証 |
+
+`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` は Supabase が自動注入するため設定不要。
+
+`MAIL_FROM_NAME` 等の**日本語含む値は Secret に登録しない**：Supabase Dashboard の Secret 入力欄で日本語マルチバイト文字が U+FFFD に壊れる事象あり。日本語含むブランド名は `supabase/functions/_shared/mailer.ts` のソースコード内ハードコードで運用する。
+
+### Gmail アプリパスワード発行手順
+
+詳細手順は `docs/06-品質・セキュリティ/10-メール送信設定SOP.md` 参照。要点:
+
+1. Google アカウント `high.q.volleyball@gmail.com` で 2 要素認証を有効化
+2. `https://myaccount.google.com/apppasswords` で「High Q Edge Functions」等の判別名を付けて発行
+3. 発行された 16 文字を Supabase Dashboard → Edge Functions → Secrets の `GMAIL_APP_PASSWORD` として登録
+4. **重要**: Supabase Auth の SMTP 設定（既存運用）に登録されているアプリパスワードと**同じ値で問題ないが、Edge Function には別途登録**する必要がある（Auth 設定と Edge Function は別系統で credentials を管理する）
+
+### service_role の table GRANT 補正（#189 で発見）
+
+Phase 1 の `20260429000000_table_grants.sql` では anon / authenticated への GRANT のみ行っており、service_role には明示 GRANT が無く、Edge Function から `members` 等を直接 SELECT すると `permission denied` で失敗する事象があった。
+
+`20260511000100_grant_service_role.sql` で全 public schema テーブルに対し service_role に CRUD 権限を付与済み。新規テーブル追加時は `alter default privileges in schema public grant ... to service_role` が効くため通常は再度の GRANT 不要だが、`signup_pending` のように個別 REVOKE する特殊テーブルでは service_role には GRANT を残すこと。

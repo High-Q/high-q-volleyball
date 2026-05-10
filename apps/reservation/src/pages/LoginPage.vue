@@ -7,23 +7,17 @@ import Input from "@/shared/ui/Input.vue";
 import { useSendMagicLink } from "@/features/auth";
 
 /**
- * 予約サイトの認証エントリーポイント (ログイン / 新規会員登録 兼用) +
- * サービス紹介を兼ねた入口ページ。
+ * 予約サイトのログイン専用ページ。
  *
- * デザインは翔太郎くん 2026-05-04 提示のスクリーンショットに準拠。
- *  - ヘッダー: "High Q EST.21" / "START"
- *  - 大見出し「はじめる」 + サブ「メールアドレスを入力してください。」
- *  - 説明文 + メール入力 + 黒 CTA「メールでリンクを受け取る →」
- *  - ABOUT カード (月1〜2回 / 初心者歓迎 / 会費無料)
- *  - フッター「サークルについて詳しく ›」(LP へのリンク・後続実装で配線)
- *
- * 既存会員も新規会員も同じフォーム。Supabase の signInWithOtp に
- * shouldCreateUser:true を渡すことで、Supabase 側が email の既存判定を
- * 行い自動振り分けする。
+ * #189 ゼロ滞留 signup フロー導入後、新規会員登録は /signup（全項目入力 + 6 桁
+ * コード認証）に分離された。本ページは既存会員のマジックリンクログイン専用となり、
+ * Supabase signInWithOtp に shouldCreateUser:false を渡して未登録メールでは
+ * Supabase 側が "未登録" エラーを返す挙動に頼る。未登録の場合は会員登録への導線を
+ * 案内する。
  *
  * 関連:
- *   openspec/changes/reservation-member-auth-magic-link/design.md (D7, D10.1, D11)
- *   openspec/changes/reservation-member-auth-magic-link/specs/reservation-member-auth/spec.md
+ *   openspec/changes/reservation-signup-zero-stale/specs/reservation-member-auth/spec.md
+ *   - Requirement: ログインフローはマジックリンク方式を維持
  */
 const route = useRoute();
 const router = useRouter();
@@ -45,11 +39,17 @@ onMounted(() => {
   }
 });
 
+const isUnregistered = computed(
+  () => isError.value && error.value === "unregistered",
+);
+
 const errorMessage = computed<string | null>(() => {
   if (isError.value) {
     switch (error.value) {
       case "invalid-email":
         return "メールアドレスの形式が正しくありません。";
+      case "unregistered":
+        return "このメールアドレスは登録されていません。新規会員登録をご利用ください。";
       case "rate-limit":
         return "送信回数の上限に達しました。約 60 秒お待ちいただいてから再試行してください。";
       case "network":
@@ -76,7 +76,7 @@ const aboutItems = [
 ] as const;
 
 async function onSubmit() {
-  await send(email.value, { shouldCreateUser: true });
+  await send(email.value, { shouldCreateUser: false });
   if (status.value === "success") {
     void router.push({
       name: "auth-link-sent",
@@ -150,12 +150,31 @@ async function onSubmit() {
             </template>
           </FormField>
           <p class="text-xs text-muted leading-relaxed">
-            ご入力のメールにログイン用リンクをお送りします。リンクから 1 タップで続行できます。<br />
-            初めての方は、そのまま会員登録に進みます。
+            ご入力のメールにログイン用リンクをお送りします。リンクから 1 タップで続行できます。
           </p>
           <Button type="submit" :disabled="isLoading">
             {{ isLoading ? "送信中…" : "メールでリンクを受け取る →" }}
           </Button>
+          <p
+            v-if="isUnregistered"
+            class="text-xs text-muted leading-relaxed text-center"
+          >
+            <router-link
+              :to="{ name: 'signup', query: { email } }"
+              class="text-accent underline"
+              data-testid="login-go-signup"
+            >新規会員登録へ</router-link>
+            お進みください。
+          </p>
+          <p v-else class="text-xs text-muted leading-relaxed text-center">
+            初めての方は
+            <router-link
+              :to="{ name: 'signup' }"
+              class="text-accent underline"
+              data-testid="login-go-signup"
+            >新規会員登録</router-link>
+            へお進みください。
+          </p>
         </form>
       </section>
 

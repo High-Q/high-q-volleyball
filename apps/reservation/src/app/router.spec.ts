@@ -7,7 +7,10 @@ import {
 
 const sessionState = {
   status: { value: "unauthenticated" as "loading" | "authenticated" | "unauthenticated" },
-  isProfileComplete: { value: false as boolean },
+  // #189 ゼロ滞留 signup フロー導入後、認証済み = プロフィール完成済みが
+  // 不変条件のため isProfileComplete 分岐は guard で参照されない。状態は残すが
+  // テスト上は常に true を維持する（admin / Phase 1 既存会員と同じ振る舞い）。
+  isProfileComplete: { value: true as boolean },
   hasIdentityDocument: { value: false as boolean },
   ready: vi.fn(async () => {}),
 };
@@ -30,9 +33,16 @@ const routes: RouteRecordRaw[] = [
   },
   { path: "/login", name: "login", component: { template: "<div/>" }, meta: { public: true } },
   {
-    path: "/signup/profile",
-    name: "signup-profile",
+    path: "/signup",
+    name: "signup",
     component: { template: "<div/>" },
+    meta: { public: true },
+  },
+  {
+    path: "/signup/verify",
+    name: "signup-verify",
+    component: { template: "<div/>" },
+    meta: { public: true },
   },
   {
     path: "/signup/identity",
@@ -71,6 +81,7 @@ const routes: RouteRecordRaw[] = [
 beforeEach(() => {
   vi.clearAllMocks();
   sessionState.ready.mockResolvedValue(undefined);
+  sessionState.isProfileComplete.value = true;
   sessionState.hasIdentityDocument.value = false;
 });
 
@@ -100,52 +111,41 @@ describe("auth guard", () => {
     expect(router.currentRoute.value.name).toBe("login");
   });
 
-  it("未認証 + /signup/profile → /login (認証必須)", async () => {
+  it("未認証 + /signup → 通過 (新規登録は public)", async () => {
     sessionState.status.value = "unauthenticated";
-    const router = await createTestRouter("/signup/profile");
-    expect(router.currentRoute.value.name).toBe("login");
+    const router = await createTestRouter("/signup");
+    expect(router.currentRoute.value.name).toBe("signup");
   });
 
-  it("認証済み + プロフィール未完成 + / → /signup/profile", async () => {
-    sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = false;
-    const router = await createTestRouter("/");
-    expect(router.currentRoute.value.name).toBe("signup-profile");
-  });
-
-  it("認証済み + プロフィール未完成 + /signup/profile → 通過", async () => {
-    sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = false;
-    const router = await createTestRouter("/signup/profile");
-    expect(router.currentRoute.value.name).toBe("signup-profile");
-  });
-
-  it("認証済み + プロフィール未完成 + /auth/callback → 通過", async () => {
-    sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = false;
-    const router = await createTestRouter("/auth/callback");
-    expect(router.currentRoute.value.name).toBe("auth-callback");
+  it("未認証 + /signup/verify → 通過 (コード検証は public)", async () => {
+    sessionState.status.value = "unauthenticated";
+    const router = await createTestRouter("/signup/verify?email=x@example.com");
+    expect(router.currentRoute.value.name).toBe("signup-verify");
   });
 
   it("認証済み + プロフィール完成 + 書類提出済 + /login → /events", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = true;
     const router = await createTestRouter("/login");
     expect(router.currentRoute.value.name).toBe("events-list");
   });
 
-  it("認証済み + プロフィール完成 + 書類提出済 + /signup/profile → /events", async () => {
+  it("認証済み + プロフィール完成 + 書類提出済 + /signup → /events (重複登録防止)", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = true;
-    const router = await createTestRouter("/signup/profile");
+    const router = await createTestRouter("/signup");
+    expect(router.currentRoute.value.name).toBe("events-list");
+  });
+
+  it("認証済み + プロフィール完成 + 書類提出済 + /signup/verify → /events", async () => {
+    sessionState.status.value = "authenticated";
+    sessionState.hasIdentityDocument.value = true;
+    const router = await createTestRouter("/signup/verify");
     expect(router.currentRoute.value.name).toBe("events-list");
   });
 
   it("認証済み + プロフィール完成 + /protected → 通過 (書類提出済み)", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = true;
     const router = await createTestRouter("/protected");
     expect(router.currentRoute.value.name).toBe("protected");
@@ -153,7 +153,6 @@ describe("auth guard", () => {
 
   it("認証済み + プロフィール完成 + 書類提出済 + / → /events に redirect", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = true;
     const router = await createTestRouter("/");
     expect(router.currentRoute.value.name).toBe("events-list");
@@ -161,7 +160,6 @@ describe("auth guard", () => {
 
   it("認証済み + プロフィール完成 + 書類提出済 + /events → 通過 (#90)", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = true;
     const router = await createTestRouter("/events");
     expect(router.currentRoute.value.name).toBe("events-list");
@@ -169,7 +167,6 @@ describe("auth guard", () => {
 
   it("認証済み + プロフィール完成 + 書類提出済 + /events/:id → 通過 (#90)", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = true;
     const router = await createTestRouter(
       "/events/11111111-1111-1111-1111-111111111111",
@@ -179,41 +176,36 @@ describe("auth guard", () => {
 });
 
 describe("auth guard — hasIdentityDocument 分岐 (#92)", () => {
-  it("認証済 + プロフィール完成 + 書類未提出 + / → /signup/identity 強制誘導", async () => {
+  it("認証済 + 書類未提出 + / → /signup/identity 強制誘導", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = false;
     const router = await createTestRouter("/");
     expect(router.currentRoute.value.name).toBe("signup-identity");
   });
 
-  it("認証済 + プロフィール完成 + 書類未提出 + /protected → /signup/identity 強制誘導", async () => {
+  it("認証済 + 書類未提出 + /protected → /signup/identity 強制誘導", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = false;
     const router = await createTestRouter("/protected");
     expect(router.currentRoute.value.name).toBe("signup-identity");
   });
 
-  it("認証済 + プロフィール完成 + 書類未提出 + /signup/identity → 通過 (無限ループ防止)", async () => {
+  it("認証済 + 書類未提出 + /signup/identity → 通過 (無限ループ防止)", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = false;
     const router = await createTestRouter("/signup/identity");
     expect(router.currentRoute.value.name).toBe("signup-identity");
   });
 
-  it("認証済 + プロフィール完成 + 書類未提出 + /auth/callback → 通過", async () => {
+  it("認証済 + 書類未提出 + /auth/callback → 通過", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = false;
     const router = await createTestRouter("/auth/callback");
     expect(router.currentRoute.value.name).toBe("auth-callback");
   });
 
-  it("認証済 + プロフィール完成 + 書類提出済 + /signup/identity 直リン → /events", async () => {
+  it("認証済 + 書類提出済 + /signup/identity 直リン → /events", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = true;
     const router = await createTestRouter("/signup/identity");
     expect(router.currentRoute.value.name).toBe("events-list");
@@ -227,24 +219,15 @@ describe("auth guard — /profile (#91)", () => {
     expect(router.currentRoute.value.name).toBe("login");
   });
 
-  it("認証済 + プロフィール未完成 + /profile → /signup/profile", async () => {
+  it("認証済 + 書類未提出 + /profile → /signup/identity", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = false;
-    const router = await createTestRouter("/profile");
-    expect(router.currentRoute.value.name).toBe("signup-profile");
-  });
-
-  it("認証済 + プロフィール完成 + 書類未提出 + /profile → /signup/identity", async () => {
-    sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = false;
     const router = await createTestRouter("/profile");
     expect(router.currentRoute.value.name).toBe("signup-identity");
   });
 
-  it("認証済 + プロフィール完成 + 書類提出済 + /profile → 通過 (ProfilePage 描画)", async () => {
+  it("認証済 + 書類提出済 + /profile → 通過 (ProfilePage 描画)", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = true;
     const router = await createTestRouter("/profile");
     expect(router.currentRoute.value.name).toBe("profile");
@@ -258,24 +241,15 @@ describe("auth guard — /history (#211)", () => {
     expect(router.currentRoute.value.name).toBe("login");
   });
 
-  it("認証済 + プロフィール未完成 + /history → /signup/profile", async () => {
+  it("認証済 + 書類未提出 + /history → /signup/identity", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = false;
-    const router = await createTestRouter("/history");
-    expect(router.currentRoute.value.name).toBe("signup-profile");
-  });
-
-  it("認証済 + プロフィール完成 + 書類未提出 + /history → /signup/identity", async () => {
-    sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = false;
     const router = await createTestRouter("/history");
     expect(router.currentRoute.value.name).toBe("signup-identity");
   });
 
-  it("認証済 + プロフィール完成 + 書類提出済 + /history → 通過 (HistoryPage 描画)", async () => {
+  it("認証済 + 書類提出済 + /history → 通過 (HistoryPage 描画)", async () => {
     sessionState.status.value = "authenticated";
-    sessionState.isProfileComplete.value = true;
     sessionState.hasIdentityDocument.value = true;
     const router = await createTestRouter("/history");
     expect(router.currentRoute.value.name).toBe("history");
