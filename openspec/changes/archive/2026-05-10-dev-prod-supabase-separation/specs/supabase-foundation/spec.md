@@ -2,7 +2,7 @@
 
 ### Requirement: Supabase プロジェクトの設置
 
-システムは ap-northeast-1（東京）リージョンに Supabase プロジェクトを **dev / prd の 2 つ**作成し、無料枠で運用する。dev は開発検証用、prd は本番運用用に物理分離する。
+システムは ap-northeast-1（東京）リージョンに Supabase プロジェクトを **dev / prd の 2 つ**作成しなければならない (MUST)。無料枠で運用し、dev は開発検証用、prd は本番運用用に物理分離する。
 
 #### Scenario: dev プロジェクトが存在する
 - **WHEN** Supabase Dashboard にアクセス
@@ -10,7 +10,7 @@
 
 #### Scenario: prd プロジェクトが存在する
 - **WHEN** Supabase Dashboard にアクセス
-- **THEN** プロジェクト名 `high-q-prod` が ap-northeast-1 で作成されており、PostgreSQL バージョンは 16 系である
+- **THEN** プロジェクト名 `high-q-prd` が ap-northeast-1 で作成されており、PostgreSQL バージョンは 16 系である
 
 #### Scenario: 2 プロジェクトが Free プラン枠内で運用される
 - **WHEN** Supabase の billing / project 設定を確認
