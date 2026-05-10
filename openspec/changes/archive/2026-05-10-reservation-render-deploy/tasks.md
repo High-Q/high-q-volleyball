@@ -52,8 +52,8 @@
 
 ## 8. PR 作成 + レビュー（翔太郎くん）
 
-- [ ] 8.1 ブランチ `feature/140-reservation-render-deploy` で PR 作成（CI 全パス必須）
-- [ ] 8.2 ~~PR Preview で reservation URL を確認~~ → **本 PR では構造的に Preview 不可**: reservation は本 PR で初めて services に追加されるため Render Blueprint Instance がマージ後の Re-sync まで認識しない（memory `feedback_render_preview_first_pr_caveat.md` 該当）。**検証は CI 緑 + コードレビューのみ**で行い、本番動作確認は §9 のマージ後 Dashboard 操作後に実施
+- [x] 8.1 ブランチ `feature/140-reservation-render-deploy` で PR 作成（CI 全パス必須） — PR #222
+- [x] 8.2 ~~PR Preview で reservation URL を確認~~ → **本 PR では構造的に Preview 不可**: reservation は本 PR で初めて services に追加されるため Render Blueprint Instance がマージ後の Re-sync まで認識しない（memory `feedback_render_preview_first_pr_caveat.md` 該当）。**検証は CI 緑 + コードレビューのみ**で行い、本番動作確認は §9 のマージ後 Dashboard 操作後に実施
 - [ ] 8.3 PR レビュー時、翔太郎くんが「reservation を商用公開して問題ない状態か」（UI / コンテンツ / 主要フロー成立性 / 利用規約等）を明示確認
 
 ## 9. マージ後の Render Dashboard / Supabase 操作（翔太郎くん手動）

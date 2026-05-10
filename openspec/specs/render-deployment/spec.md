@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Render を Static Site ホスティングとして採用し、`render.yaml` を Blueprint mode の真実の源として運用する。LP / admin は本番デプロイ済、reservation は #140 で追加予定。dev / prd 切替の `envVars` 構造、PR Preview 自動生成、未完成アプリの商用公開禁止ガバナンスなど、安全なデプロイ運用に必要な要件を定義する。
+Render を Static Site ホスティングとして採用し、`render.yaml` を Blueprint mode の真実の源として運用する。3 アプリ（LP / admin / reservation）すべてが `services` 配列へ昇格済（admin: #139、reservation: #140）。dev / prd 切替の `envVars` 構造、PR Preview 自動生成、未完成アプリの商用公開禁止ガバナンスなど、安全なデプロイ運用に必要な要件を定義する。
 ## Requirements
 ### Requirement: render.yaml が真実の源 (Blueprint mode)
 
@@ -50,6 +50,34 @@ Render を Static Site ホスティングとして採用し、`render.yaml` を 
 
 #### Scenario: admin サービスの previewValue に Secret Key が含まれない
 - **WHEN** admin サービスの全 `previewValue` を確認する
+- **THEN** `service_role`、`secret`、`sbs_` プレフィックスのいずれも含まれない
+
+### Requirement: reservation サービスの定義
+
+システムは `apps/reservation` を Render Static Site としてデプロイする定義を `render.yaml` の `services` 配列に持たなければならない (MUST)。サービス名は `high-q-reservation` とし、SPA history routing 用のリライト・dev/prd 切替の `envVars` 構造・LP / admin と同等のビルド設定を備える。
+
+#### Scenario: reservation サービスが services 配列に定義される
+- **WHEN** `render.yaml` の `services` 配列を確認する
+- **THEN** `name: high-q-reservation`、`rootDir: apps/reservation`、`runtime: static`、`branch: master`、`staticPublishPath: dist` を持つ service が含まれている
+
+#### Scenario: reservation サービスが SPA リライトを持つ
+- **WHEN** reservation サービスの `routes` 設定を確認する
+- **THEN** `routes: [{ type: rewrite, source: /*, destination: /index.html }]` が設定されている
+
+#### Scenario: reservation サービスが LP / admin と同一の build / 自動デプロイ規約に従う
+- **WHEN** reservation サービスの設定を確認する
+- **THEN** `buildCommand` は `corepack enable && pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/reservation build` 形式であり、`autoDeployTrigger: checksPass`、`previews.generation: automatic`、`envVars` に `NODE_VERSION: "22"` と `SKIP_INSTALL_DEPS: "true"` を含む
+
+#### Scenario: reservation サービスが dev/prd 切替の envVars 構造を持つ
+- **WHEN** reservation サービスの `envVars` を確認する
+- **THEN** `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` の両方が `sync: false` で本番値の Dashboard 設定枠を確保し、かつ `previewValue` に dev プロジェクトの実値を持つ
+
+#### Scenario: reservation サービスの previewValue が admin と同一の dev プロジェクトを参照する
+- **WHEN** reservation サービスと admin サービスの `previewValue` を比較する
+- **THEN** `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` の `previewValue` 値はそれぞれ完全一致している（dev は単一プロジェクト共有方針 — `docs/08-移行/01-環境戦略・本番リリース計画.md` §3.2）
+
+#### Scenario: reservation サービスの previewValue に Secret Key が含まれない
+- **WHEN** reservation サービスの全 `previewValue` を確認する
 - **THEN** `service_role`、`secret`、`sbs_` プレフィックスのいずれも含まれない
 
 ### Requirement: モノレポ対応のビルドコマンド
@@ -129,19 +157,3 @@ Render Static Site はデフォルトで完全公開され URL を知ってい�
 #### Scenario: SPA サービス追加時にリライトが必須となる
 - **WHEN** vue-router history mode を利用する SPA（admin / reservation 等）を `services` に追加する
 - **THEN** 当該サービスは `routes: [{ type: rewrite, source: /*, destination: /index.html }]` を含めなければならない
-
-### Requirement: admin / reservation 雛形コメントは dev/prd 切替構造を含む
-
-`render.yaml` 末尾の reservation 雛形コメントは、`envVars` セクションに `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` の両方を含み、各エントリに `sync: false` および `previewValue: <dev-value>` の 2 段構造を含めなければならない (MUST)。これにより #140 でコメント解除して `services` 配列に移すだけで正しい dev/prd 切替構造が立ち上がる。admin の雛形コメントは services 配列への昇格に伴い削除される (MUST)。
-
-#### Scenario: reservation 雛形が dev/prd 切替構造を持つ
-- **WHEN** `render.yaml` 末尾の reservation 雛形コメントを確認
-- **THEN** `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` の両方が `sync: false` と `previewValue` を持つ形式でコメント記載されている
-
-#### Scenario: 雛形コメントの previewValue は dev の URL コメントヒントを含む
-- **WHEN** reservation 雛形コメントの `previewValue` 行を確認
-- **THEN** dev プロジェクトの URL を `previewValue: https://<dev-project-ref>.supabase.co` 等のコメントヒントとして含み、#140 着手者がそのまま埋められる状態である
-
-#### Scenario: admin 雛形コメントは末尾から削除されている
-- **WHEN** `render.yaml` 末尾の雛形コメント領域を確認
-- **THEN** admin 用の雛形ブロックは存在せず、reservation 用ブロックのみが残っている
