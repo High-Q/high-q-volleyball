@@ -6,11 +6,11 @@
 |-------------|---------|------------------|------|--------|
 | LP | Render（Static Site） | `high-q-volleyball` | デプロイ済み | 無料枠 |
 | Admin | Render（Static Site） | `high-q-admin` | デプロイ済み（#139） | 無料枠 |
-| Reservation | Render（Static Site） | （未デプロイ） | 機能実装と公開判断完了後に追加 | 無料枠 |
+| Reservation | Render（Static Site） | `high-q-reservation` | デプロイ済み（#140） | 無料枠 |
 | DB / Auth / Storage | Supabase | — | 利用中 | 無料枠 |
 | 既存イベントAPI | AWS API Gateway + DynamoDB | — | 既存 | 既存 |
 
-LP / admin が Render Static Site としてデプロイ済み。reservation は無料枠内で運用予定だが、**未完成アプリを商用公開しないガバナンス方針**（後述）により、現時点では `render.yaml` の `services` 配列に追加していない。雛形は `render.yaml` 末尾コメントに保持。
+3 アプリ（LP / admin / reservation）すべてが Render Static Site としてデプロイ済み。**未完成アプリを商用公開しないガバナンス方針**（後述）に基づき、admin は #139、reservation は #140 でそれぞれ前提条件（認証ゲート / 主要フロー実装 + 公開判断 OK）を満たしてから `render.yaml` の `services` 配列へ昇格させた。`render.yaml` 末尾の雛形コメントは 3 アプリ完了に伴い消化済。
 
 ### 未完成アプリの商用公開禁止ガバナンス
 
@@ -26,7 +26,7 @@ Render Static Site はデフォルトで完全公開され、URL (`<service-name
 
 ## Render デプロイ設定（render.yaml）
 
-リポジトリルートの `render.yaml` が **真実の源（Blueprint mode）**。Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。現状 LP / admin が `services` 配列に定義され、reservation は雛形コメントとして末尾に保持する。
+リポジトリルートの `render.yaml` が **真実の源（Blueprint mode）**。Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。3 アプリ（LP / admin / reservation）すべてが `services` 配列に定義済で、`render.yaml` 末尾の雛形コメントは消化済。
 
 ### LP サービス定義（デプロイ済み）
 
@@ -60,6 +60,24 @@ Render Static Site はデフォルトで完全公開され、URL (`<service-name
 | `envVars[].VITE_SUPABASE_URL` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd)、PR Preview は dev URL |
 | `envVars[].VITE_SUPABASE_PUBLISHABLE_KEY` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd)、PR Preview は dev 公開キー |
 
+### reservation サービス定義（デプロイ済み・#140）
+
+| 設定項目 | 値 | 役割 |
+|---|---|---|
+| `name` | `high-q-reservation` | reservation 用 Render サービス名。**不変厳守** |
+| `runtime` | `static` | Static Site として配信（無料枠） |
+| `rootDir` | `apps/reservation` | 該当ディレクトリ配下の変更のみが reservation デプロイをトリガー |
+| `branch` | `master` | master 向け変更を deploy 対象とする |
+| `buildCommand` | `corepack enable && pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/reservation build` | pnpm workspace のフィルタで reservation のみビルド |
+| `staticPublishPath` | `dist` | Vite ビルド出力を公開 |
+| `routes` | `/* → /index.html` rewrite | vue-router history mode のサブパス直アクセス対応 |
+| `autoDeployTrigger` | `checksPass` | GitHub Actions CI 緑のときだけ deploy 起動 |
+| `previews.generation` | `automatic` | 全 PR に Preview 環境を自動生成 |
+| `envVars[].NODE_VERSION` | `"22"` | ビルド時 Node バージョン統一 |
+| `envVars[].SKIP_INSTALL_DEPS` | `"true"` | pnpm workspace のため自動 npm install を skip（#84 で確立） |
+| `envVars[].VITE_SUPABASE_URL` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd)、PR Preview は dev URL（admin と同一の dev プロジェクトを共有） |
+| `envVars[].VITE_SUPABASE_PUBLISHABLE_KEY` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd)、PR Preview は dev 公開キー（admin と同値） |
+
 ### Render 運用上の注意
 
 - **`name` 不変厳守**: Blueprint mode は `name` で既存サービスを識別する。変更すると新規サービスが二重作成される（#125 で経験済）
@@ -72,23 +90,22 @@ Render Static Site はデフォルトで完全公開され、URL (`<service-name
 - buildCommand の `pnpm --filter @high-q/lp build` → モノレポ workspace 依存（`@high-q/shared` 等）も含めて LP のみビルド。将来 admin / reservation 追加時もこの形式を踏襲
 - ビルドが3回連続失敗した場合は CLAUDE.md Pillar 5 の「デプロイ 3 回連続失敗時の対応」に従う
 
-### 将来 reservation を追加する際の手順
+### 新規 Static Site アプリを追加する際の手順
 
-reservation の最低限の予約フロー実装と公開判断が完了した後、`render.yaml` 末尾の雛形コメントを参考に `services` 配列へ追加する（#140）。admin は #139 で完了済。追加 PR では以下を必ず確認すること:
+3 アプリ（LP / admin / reservation）はすべて `services` 配列へ昇格済（admin: #139、reservation: #140）。今後さらに新規 Static Site を追加する場合は、既存 3 サービスのいずれか（特に admin / reservation）の定義を参照テンプレートとして利用し、以下を必ず確認する:
 
-1. **追加対象アプリの状態確認**:
-   - reservation: 最低限の予約フロー実装済み + 公開判断 OK
-2. **PR 作成前**: Render Dashboard で既存 LP / admin の env var 一覧をスクリーンショット or テキスト退避
+1. **追加対象アプリの状態確認**: 認証ゲート実装済み（管理画面系）、または公開判断 OK（公開サイト系）。「未完成アプリの商用公開禁止ガバナンス」を再読
+2. **PR 作成前**: Render Dashboard で既存 3 サービスの env var 一覧をスクリーンショット or テキスト退避
 3. **PR 内容**:
-   - `render.yaml` 末尾の雛形コメントから `services` 配列に該当ブロックを移動
-   - SPA history routing 利用時は `routes` で `/* → /index.html` リライト設定済みであることを確認
-   - Supabase 系 env var は `sync: false`（本番値）+ `previewValue`（dev 値）の 2 段構造で定義（CLAUDE.md の `.env を読まない` ルール準拠、#184 / #139 で確立）
-4. **PR Preview 確認**: 新サービス分の Preview URL が立ち上がること、Network タブで Supabase URL が dev プロジェクトを指していることを確認
+   - `services` 配列に新サービスブロックを追加（既存サービスを参考）
+   - SPA history routing 利用時は `routes` で `/* → /index.html` リライト設定
+   - Supabase 系 env var は `sync: false`（本番値）+ `previewValue`（dev 値）の 2 段構造で定義（CLAUDE.md の `.env を読まない` ルール準拠、#184 で確立）
+4. **PR Preview の制約**: 新サービスを services 配列に**初めて追加する PR** は構造的に Preview が出ない（Render Blueprint Instance がマージ後の Re-sync まで認識しない）。CI 緑 + コードレビューで進め、本番動作確認はマージ後 Dashboard 操作後に実施
 5. **マージ後の Dashboard 操作**:
    - Blueprint Instance Re-sync で新規サービスが作成されることを確認
    - 新規サービスの Supabase 系 env var 値（prd）を Dashboard で設定
-   - 既存 LP / admin の env var 値が保持されていることを確認
-   - Supabase Auth → Redirect URLs に reservation 本番ドメインを追加
+   - 既存サービスの env var 値が保持されていることを確認
+   - Supabase Auth → Redirect URLs に新サービス本番ドメインを追加
    - 本番 URL が 200 を返すことを確認
 
 ---

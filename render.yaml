@@ -3,11 +3,10 @@
 # Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。
 # Blueprint Instance の Auto-sync で本ファイルの変更が即反映される。
 #
-# 現状デプロイ対象: LP (apps/lp) + admin (apps/admin)。
-# reservation (apps/reservation) は公開判断完了後に services 配列へ追加する
-# (#140 で実施予定。未完成サイトを商用環境に公開しないための判断)。
-#
-# 将来 reservation を追加する際の雛形は本ファイル末尾のコメント参照。
+# 現状デプロイ対象: 3 アプリ (LP / admin / reservation) すべてを Render Static Site でデプロイ済。
+# - LP        (apps/lp)          → high-q-volleyball
+# - admin     (apps/admin)       → high-q-admin       (#139 で services 配列へ昇格)
+# - reservation (apps/reservation) → high-q-reservation (#140 で services 配列へ昇格)
 
 # 共通ビルド方針:
 # - corepack enable: root package.json の packageManager (pnpm@10.33.2) を強制
@@ -108,53 +107,45 @@ services:
         sync: false
         previewValue: sb_publishable_JXCTRAx7ECO7-dZEsquKrg_VTdyXdfG
 
-# ============================================================
-# 将来追加用の雛形（reservation）
-# ============================================================
-# 公開判断完了後、以下のテンプレートを services 配列に追加する。
-# 未完成サイトを商用公開しないため、現状はコメントアウトで保持。
-#
-# 追加時のチェックリスト:
-# 1. apps/reservation に最低限の予約フローが実装済み（スキャフォールドではない）
-# 2. 公開判断 OK（UI / コンテンツ / 利用規約等）
-# 3. CLAUDE.md の「.env を読まない」ルール準拠で env var は sync: false で枠だけ定義
-# 4. SPA history routing 利用時は routes に /* → /index.html リライト追加
-# 5. PR レビューで「公開して問題ない状態か」を明示確認
-# 6. dev/prd 切替の envVars 構造は #184 で確立、#139 で admin に適用済（本番値は sync:false で
-#    Dashboard 設定、PR Preview 用 dev 値は previewValue で記載。Publishable Key は公開キーなので
-#    コミット可、Secret Key は絶対に previewValue に書かない）
-#
-# 環境変数の dev/prd 切替方針 (#184 で確立):
-# - 本番デプロイ (master push) → sync: false で Dashboard に設定された値 (= prd Supabase) を使う
-# - PR Preview                  → previewValue の値 (= dev Supabase) を使う
-# これにより PR Preview は dev に、本番は prd にのみ書き込む安全構造が成立する。
-# 参考: docs/08-移行/01-環境戦略・本番リリース計画.md §3.2
-# 参考: https://render.com/docs/preview-environments
-#
-# reservation 雛形:
-#   - type: web
-#     name: high-q-reservation
-#     runtime: static
-#     rootDir: apps/reservation
-#     branch: master
-#     buildCommand: corepack enable && pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/reservation build
-#     staticPublishPath: dist
-#     routes:
-#       - type: rewrite
-#         source: /*
-#         destination: /index.html
-#     autoDeployTrigger: checksPass
-#     previews:
-#       generation: automatic
-#     envVars:
-#       - key: NODE_VERSION
-#         value: "22"
-#       # pnpm workspaces のため自動 npm install を skip させる (#84 で確立)
-#       - key: SKIP_INSTALL_DEPS
-#         value: "true"
-#       - key: VITE_SUPABASE_URL
-#         sync: false                                              # 本番値 (prd) は Render Dashboard で設定
-#         previewValue: https://ydkejnlivlzypizrmhwh.supabase.co   # PR Preview 用 dev 値
-#       - key: VITE_SUPABASE_PUBLISHABLE_KEY
-#         sync: false                                              # 本番値 (prd) は Render Dashboard で設定
-#         previewValue: sb_publishable_<dev-publishable-key>       # PR Preview 用 dev 値 (#140 着手時に実値に置換)
+  # ============================================================
+  # reservation (apps/reservation) — Vue Router + Supabase Auth (Magic Link) 付き予約サイト
+  # ============================================================
+  # #140 で services 配列へ昇格。マジックリンク認証 (registerAuthGuard) と
+  # 本人確認書類アップロード・イベント一覧/詳細・予約/キャンセル・予約履歴・プロフィール編集の
+  # 主要フローが完成したため、未完成アプリの商用公開禁止ガバナンスをクリア。
+  - type: web
+    name: high-q-reservation
+    runtime: static
+    rootDir: apps/reservation
+    branch: master
+
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/reservation build
+    staticPublishPath: dist
+
+    # SPA history routing (vue-router) で /events/:id 等のサブパスへ直アクセスされた際、
+    # index.html を返してクライアント側でルーティング解決させる。
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+    autoDeployTrigger: checksPass
+    previews:
+      generation: automatic
+
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # pnpm workspaces のため自動 npm install を skip させる (#84 で確立)
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
+      # dev/prd 切替 (#184 で確立、#139 で admin に適用済):
+      # - 本番デプロイ (master push) → sync: false で Dashboard 設定された prd 値
+      # - PR Preview                  → previewValue の dev 値 (admin と同一の dev プロジェクトを共有 — §3.2)
+      # Publishable Key は公開キー (RLS で保護) のためコミット可。Secret Key は絶対に書かない。
+      - key: VITE_SUPABASE_URL
+        sync: false
+        previewValue: https://ydkejnlivlzypizrmhwh.supabase.co
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+        previewValue: sb_publishable_JXCTRAx7ECO7-dZEsquKrg_VTdyXdfG
