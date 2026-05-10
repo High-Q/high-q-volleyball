@@ -167,7 +167,6 @@ Design フェーズで必ずチェック: 影響レイヤー / ビジネス異�
 
 ### Apply 完了報告 / 環境戦略
 
-- **Render Preview 言及は PR 変更ファイル次第**で機械的に切り替える（LP 含む時だけ「Preview で確認」OK・admin/reservation のみは Preview 出ない）。判定表と文言テンプレは memory `feedback_render_preview_scope.md`（#139/#140 マージで本ルール削除予定）
 - **dev / prd 分離方針**: Supabase / 環境変数 / Render 設定に触れる Design / Apply 前に必ず `docs/08-移行/01-環境戦略・本番リリース計画.md` を読む。Phase 移行に絡む変更は専用 Issue として切り出す
 
 ---
