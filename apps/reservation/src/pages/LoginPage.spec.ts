@@ -48,38 +48,48 @@ async function mountAt(path = "/login") {
   return { wrapper, router };
 }
 
-describe("LoginPage (login = signup 兼用)", () => {
-  it("Empty 状態: ヘッダー + 「はじめる」見出し + 入力 + CTA + ABOUT カード", async () => {
+describe("LoginPage (#189 ログイン専用化)", () => {
+  it("Empty 状態: ヘッダー + 「はじめる」見出し + 入力 + CTA + ABOUT カード + 新規登録導線", async () => {
     const { wrapper } = await mountAt();
     expect(wrapper.find('input[type="email"]').exists()).toBe(true);
-    // ヘッダー
     expect(wrapper.text()).toContain("High Q");
     expect(wrapper.text()).toContain("EST.21");
-    // メイン見出し (デザインサンプル: 「はじめる」)
     expect(wrapper.text()).toContain("はじめる");
     expect(wrapper.text()).toContain("メールアドレスを入力してください");
-    // 説明
     expect(wrapper.text()).toContain("社会人バレーボールサークル");
-    // CTA (新文言)
     expect(wrapper.text()).toContain("メールでリンクを受け取る");
-    // ABOUT カード
     expect(wrapper.text()).toContain("月1〜2回");
     expect(wrapper.text()).toContain("初心者歓迎");
     expect(wrapper.text()).toContain("会費無料");
-    // フッター
     expect(wrapper.text()).toContain("サークルについて詳しく");
-    // 廃止された要素
     expect(wrapper.text()).not.toContain("ゲストとして");
+    // #189: 新規会員登録への導線
+    expect(wrapper.find('[data-testid="login-go-signup"]').exists()).toBe(true);
   });
 
-  it("CTA 押下で send が shouldCreateUser:true で呼ばれ、success で /auth/link-sent に遷移", async () => {
+  it("CTA 押下で send が shouldCreateUser:false で呼ばれ、success で /auth/link-sent に遷移", async () => {
     const { wrapper, router } = await mountAt();
     await wrapper.find('input[type="email"]').setValue("a@example.com");
     await wrapper.find("form").trigger("submit");
     await flushPromises();
-    expect(sendMock).toHaveBeenCalledWith("a@example.com", { shouldCreateUser: true });
+    expect(sendMock).toHaveBeenCalledWith("a@example.com", { shouldCreateUser: false });
     expect(router.currentRoute.value.name).toBe("auth-link-sent");
     expect(router.currentRoute.value.query.email).toBe("a@example.com");
+  });
+
+  it("Error 状態 (unregistered) で /signup への導線を email 付きで表示", async () => {
+    sendMock.mockImplementation(async () => {
+      status.value = "error";
+      error.value = "unregistered";
+    });
+    const { wrapper } = await mountAt();
+    await wrapper.find('input[type="email"]').setValue("new@example.com");
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect(wrapper.text()).toContain("登録されていません");
+    const link = wrapper.find('[data-testid="login-go-signup"]');
+    expect(link.exists()).toBe(true);
+    expect(link.attributes("href")).toContain("/signup");
   });
 
   it("Loading 中は CTA 「送信中…」", async () => {

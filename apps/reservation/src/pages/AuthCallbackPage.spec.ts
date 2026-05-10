@@ -20,7 +20,6 @@ const Stub = defineComponent({ template: "<div/>" });
 const routes = [
   { path: "/", name: "home", component: Stub },
   { path: "/login", name: "login", component: Stub },
-  { path: "/signup/profile", name: "signup-profile", component: Stub },
   { path: "/auth/callback", name: "auth-callback", component: Stub },
 ];
 
@@ -63,19 +62,11 @@ describe("AuthCallbackPage", () => {
     expect(router.currentRoute.value.query.reason).toBe("link-invalid");
   });
 
-  it("session 確立 + プロフィール完成で /", async () => {
+  it("session 確立で / にリダイレクト (#189: プロフィール未完成分岐は廃止)", async () => {
     sessionState.status.value = "authenticated";
     sessionState.session.value = { user: { id: "u1", email: "u@example.com" } };
     sessionState.isProfileComplete.value = true;
     const { router } = await mountPage();
     expect(router.currentRoute.value.name).toBe("home");
-  });
-
-  it("session 確立 + プロフィール未完成で /signup/profile", async () => {
-    sessionState.status.value = "authenticated";
-    sessionState.session.value = { user: { id: "u1", email: "u@example.com" } };
-    sessionState.isProfileComplete.value = false;
-    const { router } = await mountPage();
-    expect(router.currentRoute.value.name).toBe("signup-profile");
   });
 });

@@ -23,7 +23,8 @@ export function useBottomTabBarVisible(): ComputedRef<boolean> {
     const name = String(route.name ?? "");
     if (
       name === "login" ||
-      name === "signup-profile" ||
+      name === "signup" ||
+      name === "signup-verify" ||
       name === "signup-identity" ||
       name === "auth-callback" ||
       name === "auth-link-sent"

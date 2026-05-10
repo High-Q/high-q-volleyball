@@ -19,11 +19,9 @@ onMounted(async () => {
     return;
   }
 
-  if (session.isProfileComplete.value) {
-    void router.replace({ name: "home" });
-  } else {
-    void router.replace({ name: "signup-profile" });
-  }
+  // #189 ゼロ滞留 signup フロー導入後、認証済み = プロフィール完成済みが
+  // 不変条件のため「未完成 → /signup/profile 誘導」分岐は撤廃。
+  void router.replace({ name: "home" });
 });
 </script>
 

@@ -56,6 +56,15 @@ function classifyError(e: unknown): AuthError {
     const message = typeof obj.message === "string" ? obj.message : "";
     const status = typeof obj.status === "number" ? obj.status : 0;
     const code = typeof obj.code === "string" ? obj.code : "";
+    // shouldCreateUser:false で未登録メールに対し Supabase が返すエラー
+    // (`otp_disabled` / `Signups not allowed for otp` / `User not found` 系)
+    if (
+      code === "otp_disabled" ||
+      code === "user_not_found" ||
+      /not.allowed|not.found|signup/i.test(message)
+    ) {
+      return "unregistered";
+    }
     if (
       status === 429 ||
       code === "over_email_send_rate_limit" ||

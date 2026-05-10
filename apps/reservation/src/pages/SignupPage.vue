@@ -1,22 +1,34 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { computed, reactive } from "vue";
+import { useRouter } from "vue-router";
 import { Button, Kicker } from "@high-q/ui";
 import FormField from "@/shared/ui/FormField.vue";
 import Input from "@/shared/ui/Input.vue";
 import PolicyFooter from "@/shared/ui/PolicyFooter.vue";
 import { PRIVACY_POLICY_URL } from "@/shared/lib/externalLinks";
-import { useAuthSession, useCompleteProfile } from "@/features/auth";
+import { useRequestSignupCode } from "@/features/auth";
+
+/**
+ * Issue #189 ゼロ滞留 signup フローの段階 1。
+ *
+ * 全項目（メール / 氏名 / 生年月日 / 電話 / 経験レベル / 任意ニックネーム / 同意）を
+ * 1 ページで受け取り、Edge Function `request-signup` を呼んで認証コードメールを送信する。
+ * 成功で /signup/verify?email=<encoded> に遷移する。
+ *
+ * 関連:
+ *   openspec/changes/reservation-signup-zero-stale/specs/reservation-member-auth/spec.md
+ *   - Requirement: /signup ページ（1 ページ全項目入力）
+ */
+
+const router = useRouter();
+const { status, errorCode, fieldErrors, retryAfterSec, submit } =
+  useRequestSignupCode();
 
 const profileLead =
   "ご入力いただいた情報は、本人確認・連絡・参加管理のためにのみ利用します。第三者への提供は法令に基づく場合を除き行いません。";
 
-const route = useRoute();
-const router = useRouter();
-const session = useAuthSession();
-const { status, error, fieldErrors, submit } = useCompleteProfile();
-
 const form = reactive({
+  email: "",
   display_name: "",
   nickname: "",
   birthday: "",
@@ -25,33 +37,24 @@ const form = reactive({
   terms_agreed: false,
 });
 
-const reasonBanner = ref<string | null>(null);
 const isLoading = computed(() => status.value === "loading");
 
-onMounted(() => {
-  // session の display_name placeholder (メール由来) は無視。空欄スタートで翔太郎くんに正式名を入れてもらう
-  const reason = route.query.reason;
-  if (typeof reason === "string" && reason.length > 0) {
-    reasonBanner.value = reason;
-    const url = new URL(window.location.href);
-    url.search = "";
-    window.history.replaceState({}, "", url.toString());
-  }
-});
-
 const bannerMessage = computed<string | null>(() => {
-  if (status.value === "error" && error.value && error.value !== "validation") {
-    switch (error.value) {
-      case "network":
-        return "ネットワークエラーが発生しました。接続を確認してください。";
-      default:
-        return "登録に失敗しました。時間をおいて再試行してください。";
-    }
+  if (status.value !== "error") return null;
+  switch (errorCode.value) {
+    case "rate-limited":
+      return retryAfterSec.value
+        ? `送信回数の上限に達しました。約 ${retryAfterSec.value} 秒お待ちいただいてから再試行してください。`
+        : "送信回数の上限に達しました。少し時間を空けてから再試行してください。";
+    case "mail-send-failed":
+      return "認証コードメールの送信に失敗しました。時間をおいて再試行してください。";
+    case "network":
+      return "ネットワークエラーが発生しました。接続を確認してください。";
+    case "unknown":
+      return "送信中にエラーが発生しました。時間をおいて再試行してください。";
+    default:
+      return null;
   }
-  if (reasonBanner.value === "profile-update-failed") {
-    return "プロフィールの登録に失敗しました。お手数ですがもう一度お試しください。";
-  }
-  return null;
 });
 
 const experienceOptions = [
@@ -72,14 +75,9 @@ const experienceOptions = [
   },
 ] as const;
 
-watch(status, (s) => {
-  if (s === "success") {
-    void router.push({ name: "signup-identity" });
-  }
-});
-
 async function onSubmit() {
-  await submit({
+  const ok = await submit({
+    email: form.email,
     display_name: form.display_name,
     nickname: form.nickname,
     birthday: form.birthday,
@@ -87,29 +85,61 @@ async function onSubmit() {
     experience_level: form.experience_level,
     terms_agreed: form.terms_agreed,
   });
+  if (ok) {
+    void router.push({
+      name: "signup-verify",
+      query: { email: form.email.trim().toLowerCase() },
+    });
+  }
 }
 </script>
 
 <template>
   <main class="flex min-h-screen flex-col bg-paper text-ink font-jp">
     <div class="mx-auto flex w-full max-w-md flex-1 flex-col gap-hq-6 px-hq-6 py-hq-10">
-      <Kicker>— Almost there</Kicker>
+      <Kicker>— Sign up · Step 1 / 3</Kicker>
       <h1 class="font-jp-display text-2xl text-ink leading-snug">
-        はじめまして。<br />あなたのことを<br />少しだけ教えてください。
+        会員登録を<br />はじめましょう。
       </h1>
       <p class="text-sm text-muted leading-relaxed">
-        メール認証が完了しました（{{ session.session.value?.user.email ?? "" }}）。続けて、予約に必要な情報をご入力ください。
+        全項目をご入力後、認証コードを記載したメールをお送りします。
+        メール内の 6 桁コードを次の画面で入力すると登録が完了します。
       </p>
 
       <div
         v-if="bannerMessage"
         role="alert"
+        data-testid="signup-banner"
         class="rounded-md border border-hairline bg-paper-warm px-hq-4 py-hq-3 text-sm text-danger"
       >
         {{ bannerMessage }}
       </div>
 
       <form class="flex flex-col gap-hq-5" @submit.prevent="onSubmit">
+        <FormField label="メールアドレス" :error="fieldErrors.email">
+          <template #default="{ fieldId, ariaInvalid }">
+            <Input
+              :id="fieldId"
+              v-model="form.email"
+              type="email"
+              autocomplete="email"
+              placeholder="example@mail.com"
+              :aria-invalid="ariaInvalid"
+              :disabled="isLoading"
+            />
+          </template>
+        </FormField>
+        <p
+          v-if="errorCode === 'already-registered'"
+          class="-mt-hq-3 text-xs text-muted leading-relaxed"
+        >
+          既に登録済みの場合は
+          <router-link :to="{ name: 'login' }" class="text-accent underline">
+            ログイン画面
+          </router-link>
+          へお進みください。
+        </p>
+
         <FormField label="お名前" :error="fieldErrors.display_name">
           <template #default="{ fieldId, ariaInvalid }">
             <Input
@@ -246,7 +276,7 @@ async function onSubmit() {
           :disabled="!form.terms_agreed || isLoading"
           @click="onSubmit"
         >
-          {{ isLoading ? "登録中…" : "登録する" }}
+          {{ isLoading ? "送信中…" : "認証コードを送信する" }}
         </Button>
       </div>
     </div>

@@ -23,10 +23,19 @@ vi.mock("@/features/auth", () => ({
     send: vi.fn(),
     reset: vi.fn(),
   }),
-  useCompleteProfile: () => ({
+  useRequestSignupCode: () => ({
     status: ref("idle"),
-    error: ref(null),
+    errorCode: ref(null),
     fieldErrors: ref({}),
+    expiresAt: ref(null),
+    retryAfterSec: ref(null),
+    submit: vi.fn(),
+    reset: vi.fn(),
+  }),
+  useVerifySignupCode: () => ({
+    status: ref("idle"),
+    errorCode: ref(null),
+    remainingAttempts: ref(null),
     submit: vi.fn(),
     reset: vi.fn(),
   }),
@@ -59,6 +68,8 @@ const routes = [
   { path: "/", name: "home", redirect: { name: "events-list" } },
   { path: "/events", name: "events-list", component: EventsListPage },
   { path: "/login", name: "login", component: LoginPage },
+  // LoginPage が router-link で参照する /signup（#189）
+  { path: "/signup", name: "signup", component: { template: "<div/>" } },
   // BottomTabBar が name="profile" / name="history" を resolve できるよう、
   // smoke test 用に軽量プレースホルダでルートを定義しておく (#91 / #211)
   {
