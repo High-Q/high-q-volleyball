@@ -42,10 +42,10 @@
 - [x] 6.3 `pnpm --filter @high-q/lp build` が成功（LP 設定無変更の回帰確認）
 - [x] 6.4 `git diff render.yaml` を読み返し、変更が「admin ブロック追加 + 末尾 admin 雛形削除」のみであることを最終確認
 
-## 7. PR 作成 + Render Preview 確認（翔太郎くん）
+## 7. PR 作成 + レビュー（翔太郎くん）
 
-- [ ] 7.1 ブランチ `feature/139-render-admin-deploy` で PR 作成（CI 全パス必須）
-- [ ] 7.2 翔太郎くんが PR Preview で admin URL が立ち上がること、未認証アクセスで `/login` にリダイレクトされること、認証後に管理画面が表示されること、Network タブで Supabase URL が **dev プロジェクト**を指していることを確認
+- [x] 7.1 ブランチ `feature/139-render-admin-deploy` で PR 作成（CI 全パス必須） — PR #221
+- [x] 7.2 ~~PR Preview で admin URL を確認~~ → **本 PR では構造的に Preview 不可**: (a) LP は `rootDir: apps/lp` フィルタで LP 配下無変更の本 PR は LP Preview も生成されない、(b) admin は本 PR で初めて services に追加されるため Render Blueprint Instance がマージ後の Re-sync まで認識しない。**検証は CI 緑 + コードレビューのみ**で行い、本番動作確認は §8 のマージ後 Dashboard 操作後に実施する
 
 ## 8. マージ後の Render Dashboard / Supabase 操作（翔太郎くん手動）
 
