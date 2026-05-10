@@ -3,12 +3,11 @@
 # Dashboard 側での個別変更は禁止し、すべて本ファイルへの PR 経由で管理する。
 # Blueprint Instance の Auto-sync で本ファイルの変更が即反映される。
 #
-# 現状デプロイ対象: LP (apps/lp) のみ。
-# admin (apps/admin) / reservation (apps/reservation) は機能実装と認証ゲートが
-# 揃った後で services 配列に追加する（#81 で意図的に LP のみに限定。
-# 未完成サイトを商用環境に公開しないための判断）。
+# 現状デプロイ対象: LP (apps/lp) + admin (apps/admin)。
+# reservation (apps/reservation) は公開判断完了後に services 配列へ追加する
+# (#140 で実施予定。未完成サイトを商用環境に公開しないための判断)。
 #
-# 将来 admin / reservation を追加する際の雛形は本ファイル末尾のコメント参照。
+# 将来 reservation を追加する際の雛形は本ファイル末尾のコメント参照。
 
 # 共通ビルド方針:
 # - corepack enable: root package.json の packageManager (pnpm@10.33.2) を強制
@@ -67,21 +66,63 @@ services:
       - key: SKIP_INSTALL_DEPS
         value: "true"
 
+  # ============================================================
+  # admin (apps/admin) — Vue Router + Supabase Auth ゲート付き管理画面
+  # ============================================================
+  # #139 で services 配列へ昇格。Supabase Auth ゲート (registerAuthGuard) と
+  # 最低限の管理機能が完成したため、未完成アプリの商用公開禁止ガバナンスをクリア。
+  - type: web
+    name: high-q-admin
+    runtime: static
+    rootDir: apps/admin
+    branch: master
+
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/admin build
+    staticPublishPath: dist
+
+    # SPA history routing (vue-router) で /members/:id 等のサブパスへ直アクセスされた際、
+    # index.html を返してクライアント側でルーティング解決させる。
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+    autoDeployTrigger: checksPass
+    previews:
+      generation: automatic
+
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # pnpm workspaces のため自動 npm install を skip させる (#84 で確立)
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
+      # dev/prd 切替 (#184 で確立):
+      # - 本番デプロイ (master push) → sync: false で Dashboard 設定された prd 値
+      # - PR Preview                  → previewValue の dev 値
+      # Publishable Key は公開キー (RLS で保護) のためコミット可。Secret Key は絶対に書かない。
+      - key: VITE_SUPABASE_URL
+        sync: false
+        previewValue: https://ydkejnlivlzypizrmhwh.supabase.co
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+        previewValue: sb_publishable_JXCTRAx7ECO7-dZEsquKrg_VTdyXdfG
+
 # ============================================================
-# 将来追加用の雛形（admin / reservation）
+# 将来追加用の雛形（reservation）
 # ============================================================
-# 機能実装と認証ゲート完了後、以下のテンプレートを services 配列に追加する。
+# 公開判断完了後、以下のテンプレートを services 配列に追加する。
 # 未完成サイトを商用公開しないため、現状はコメントアウトで保持。
 #
 # 追加時のチェックリスト:
-# 1. 対象アプリで Supabase Auth ゲート（admin）または公開判断（reservation）完了
-# 2. apps/<app> に最低限の機能が実装済み（スキャフォールドではない）
+# 1. apps/reservation に最低限の予約フローが実装済み（スキャフォールドではない）
+# 2. 公開判断 OK（UI / コンテンツ / 利用規約等）
 # 3. CLAUDE.md の「.env を読まない」ルール準拠で env var は sync: false で枠だけ定義
 # 4. SPA history routing 利用時は routes に /* → /index.html リライト追加
 # 5. PR レビューで「公開して問題ない状態か」を明示確認
-# 6. dev/prd 切替の envVars 構造は #184 で確立済（本番値は sync:false で Dashboard 設定、
-#    PR Preview 用 dev 値は previewValue で記載。Publishable Key は公開キーなのでコミット可、
-#    Secret Key は絶対に previewValue に書かない）
+# 6. dev/prd 切替の envVars 構造は #184 で確立、#139 で admin に適用済（本番値は sync:false で
+#    Dashboard 設定、PR Preview 用 dev 値は previewValue で記載。Publishable Key は公開キーなので
+#    コミット可、Secret Key は絶対に previewValue に書かない）
 #
 # 環境変数の dev/prd 切替方針 (#184 で確立):
 # - 本番デプロイ (master push) → sync: false で Dashboard に設定された値 (= prd Supabase) を使う
@@ -90,13 +131,13 @@ services:
 # 参考: docs/08-移行/01-環境戦略・本番リリース計画.md §3.2
 # 参考: https://render.com/docs/preview-environments
 #
-# admin 雛形:
+# reservation 雛形:
 #   - type: web
-#     name: high-q-admin
+#     name: high-q-reservation
 #     runtime: static
-#     rootDir: apps/admin
+#     rootDir: apps/reservation
 #     branch: master
-#     buildCommand: corepack enable && pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/admin build
+#     buildCommand: corepack enable && pnpm install --frozen-lockfile --ignore-scripts && pnpm --filter @high-q/reservation build
 #     staticPublishPath: dist
 #     routes:
 #       - type: rewrite
@@ -113,9 +154,7 @@ services:
 #         value: "true"
 #       - key: VITE_SUPABASE_URL
 #         sync: false                                              # 本番値 (prd) は Render Dashboard で設定
-#         previewValue: https://<dev-project-ref>.supabase.co      # PR Preview 用 dev 値 (#139 着手時に実値に置換)
+#         previewValue: https://ydkejnlivlzypizrmhwh.supabase.co   # PR Preview 用 dev 値
 #       - key: VITE_SUPABASE_PUBLISHABLE_KEY
 #         sync: false                                              # 本番値 (prd) は Render Dashboard で設定
-#         previewValue: sb_publishable_<dev-publishable-key>       # PR Preview 用 dev 値 (#139 着手時に実値に置換)
-#
-# reservation 雛形: 上記の name / rootDir / --filter を reservation に置換 (#140 で実施)
+#         previewValue: sb_publishable_<dev-publishable-key>       # PR Preview 用 dev 値 (#140 着手時に実値に置換)
