@@ -3,150 +3,34 @@
 ## Purpose
 TBD - created by archiving change reservation-member-auth-magic-link. Update Purpose after archive.
 ## Requirements
-### Requirement: マジックリンク送信フロー（Login = Signup 段階1 兼用）
-
-`apps/reservation` の `/login` ページは、既存会員のログインと新規会員のサインアップ段階 1 を **兼用** する SHALL。ユーザーが入力したメールアドレスに対して Supabase Auth の `signInWithOtp` を呼び、`shouldCreateUser: true` で送信する。`emailRedirectTo` は `window.location.origin + '/auth/callback'`。Supabase 側の email 既存判定により、既存会員にはログインリンク、新規にはサインアップリンクが自動的に送信される。
-
-#### Scenario: 既存会員 / 新規共通でマジックリンク送信
-- **WHEN** ユーザーが `/login` で `member@example.com` を入力し「ログインリンクを送る」を押す
-- **THEN** `supabase.auth.signInWithOtp` が `{ email: 'member@example.com', options: { shouldCreateUser: true, emailRedirectTo: 'http://<host>/auth/callback' } }` で呼ばれる（既存会員ならログイン、新規ならサインアップに Supabase 側で自動振り分け）
-
-#### Scenario: 空のメールで送信を試みる
-- **WHEN** メール入力が空のまま CTA を押す
-- **THEN** API は呼ばれず、Error 状態で「メールアドレスを入力してください」が表示される
-
-#### Scenario: 形式不正のメール
-- **WHEN** `not-an-email` のような形式不正なメールで CTA を押す
-- **THEN** API は呼ばれず、Error 状態で「メールアドレスの形式が正しくありません」が表示される
-
-#### Scenario: 未登録のメールでも送信成功（新規ユーザー扱い）
-- **WHEN** `auth.users` に存在しないメールで CTA を押す（`shouldCreateUser: true`）
-- **THEN** Supabase が `auth.users` に未確認状態で行を作成 + マジックリンク送信、UI は Success 状態に遷移し「ログインリンクを送信しました」と表示される
-
 ### Requirement: 会員登録フロー = `/login` 段階 1 + `/signup/profile` 段階 2
 
-会員登録フローは **3 段階** で構成する SHALL:
-- 段階 1: `/login` でメール送信（既存会員ログインと共通フォーム）
-- 段階 2（`/signup/profile`）: マジックリンク認証完了後、氏名 / 生年月日 / 電話 / 経験レベル / **任意のニックネーム** / 利用規約同意を入力 → `members` UPDATE
-- 段階 3（`/signup/identity`）: プロフィール完成後、本人確認書類 1 点をアップロード（詳細は `reservation-identity-document-upload` capability を参照）
+会員登録フローは **3 段階** で構成する SHALL（#189 ゼロ滞留 signup フロー導入により段階 1 / 2 のルートが置き換わる）:
+- 段階 1（`/signup`）: 全項目入力 + 利用規約同意 → 認証コード送信
+- 段階 2（`/signup/verify`）: メールで届いた 6 桁コードを入力 → `auth.users` + `members` の一括作成
+- 段階 3（`/signup/identity`）: 本人確認書類 1 点をアップロード（詳細は `reservation-identity-document-upload` capability を参照）
 
-`/signup` 単独ルートは **撤廃** する SHALL。HomePlaceholder 等の「会員登録」CTA は `/login` を指す。
+`/signup/profile` ルートは **撤廃** する SHALL（#189 で削除）。`/login` は既存会員ログイン専用となり、新規会員登録の入口は HomePlaceholder 等の「会員登録」CTA から `/signup` を指す MUST。
 
 電話番号は事件・トラブル発生時の連絡先を確保する目的で **必須** とする。SMS による実在確認は MVP1 では実施しない。
 
-ニックネームは**任意項目**であり、空欄のままで段階 2 を完了できる SHALL。空欄送信時はニックネーム属性が NULL として保持され、会員視点表示は氏名 fallback で行われる。
+ニックネームは**任意項目**であり、空欄のままで段階 1 を完了できる SHALL。空欄送信時はニックネーム属性が NULL として保持され、会員視点表示は氏名 fallback で行われる。
 
-#### Scenario: /signup ルートは存在しない
+#### Scenario: /signup ルートが存在する
 - **WHEN** `apps/reservation/src/app/router.ts` の `routes` 配列を確認する
-- **THEN** `path: '/signup'` のルート定義は存在しない（撤廃済み）
+- **THEN** `path: '/signup'` のルート定義が存在し、本 change の SignupPage を component に持つ
+
+#### Scenario: /signup/profile ルートは存在しない
+- **WHEN** `apps/reservation/src/app/router.ts` の `routes` 配列を確認する
+- **THEN** `path: '/signup/profile'` のルート定義は存在しない（撤廃済み）
+
+#### Scenario: /signup/verify ルートが存在する
+- **WHEN** `apps/reservation/src/app/router.ts` の `routes` 配列を確認する
+- **THEN** `path: '/signup/verify'` / `name: 'signup-verify'` のルートが定義されている (Step 2 / 3 として)
 
 #### Scenario: /signup/identity ルートが存在する
 - **WHEN** `apps/reservation/src/app/router.ts` の `routes` 配列を確認する
 - **THEN** `path: '/signup/identity'` / `name: 'signup-identity'` のルートが定義されている (Step 3 / 3 として)
-
-### Requirement: 会員登録フロー段階 2（プロフィール入力）
-
-`apps/reservation` の `/signup/profile` ページは、認証済み + `isProfileComplete === false` の会員のみアクセス可能 SHALL。氏名 / 生年月日 / 電話（必須・国内携帯番号） / 経験レベル / **任意のニックネーム** / 利用規約同意の入力を受け付け、同意 ON で CTA「登録する」が活性化する。CTA 押下で `members` テーブルを UPDATE し、`profile.signup_completed = true` + `profile.terms_agreed_at` を既存 jsonb にマージする MUST。ニックネームが入力されていれば nickname 列にその値、空欄であれば NULL を SHALL 保存する。成功で `useAuthSession.refresh()` を呼び `/signup/identity` (Step 3 / 3) に遷移する SHALL。
-
-#### Scenario: 全フィールド入力 + 任意ニックネーム入力 + 同意 ON で登録
-- **WHEN** 認証済み + プロフィール未完成のユーザーが `/signup/profile` で氏名「田中 美咲」/ 生年月日 `1995-03-15` / 電話 `090-1234-5678` / 経験レベル「初めて」/ ニックネーム「ミサキ」/ 同意 ON で CTA を押す
-- **THEN** `members` UPDATE が `{ display_name: '田中 美咲', birthday: '1995-03-15', phone: '090-1234-5678', experience_level: 'beginner', nickname: 'ミサキ', profile: { ...existing, signup_completed: true, terms_agreed_at: '<ISO8601>' } }` で実行され、成功後 `/signup/identity` に遷移する
-
-#### Scenario: 全フィールド入力 + ニックネーム空欄 + 同意 ON で登録
-- **WHEN** 認証済み + プロフィール未完成のユーザーが `/signup/profile` でニックネームを空欄のまま、他必須項目 + 同意 ON で CTA を押す
-- **THEN** `members` UPDATE が nickname を含まない（または明示的に NULL）形で実行され、成功後 `/signup/identity` に遷移する。会員視点表示時は氏名 fallback で扱われる
-
-#### Scenario: 利用規約同意なしで登録を試みる
-- **WHEN** 全フィールドを入力したが同意チェックボックスが OFF の状態で CTA を押そうとする
-- **THEN** CTA は disabled のまま押下できない
-
-#### Scenario: 必須フィールド未入力（氏名）
-- **WHEN** 氏名が空で生年月日 / 電話 / 経験レベル / 同意 ON でも CTA を押す
-- **THEN** API は呼ばれず、氏名フィールドに「お名前を入力してください」のエラーが表示される
-
-#### Scenario: 生年月日が未来日
-- **WHEN** 生年月日に明日の日付を入力して CTA を押す
-- **THEN** API は呼ばれず、生年月日フィールドに「生年月日は過去の日付を入力してください」のエラーが表示される
-
-#### Scenario: 生年月日が 100 年以上前
-- **WHEN** 生年月日に 1900 年の日付を入力して CTA を押す
-- **THEN** API は呼ばれず、生年月日フィールドに「生年月日が正しくありません」のエラーが表示される
-
-#### Scenario: 経験レベル enum 外の値
-- **WHEN** Smart constructor `createExperienceLevel('unknown')` が呼ばれる
-- **THEN** 例外が投げられる（`'beginner' | 'intermediate' | 'experienced'` 以外を弾く）
-
-#### Scenario: 電話番号未入力
-- **WHEN** 電話番号を空のまま、他の必須フィールドと同意 ON で CTA を押す
-- **THEN** API は呼ばれず、電話番号フィールドに「電話番号を入力してください（当日連絡用）」のエラーが表示される
-
-#### Scenario: 電話番号が固定電話（携帯ではない）
-- **WHEN** 電話番号に `03-1234-5678` を入力して CTA を押す
-- **THEN** API は呼ばれず、電話番号フィールドに「携帯電話番号（070 / 080 / 090 で始まる番号）を入力してください」のエラーが表示される
-
-#### Scenario: 電話番号フォーマット異常（桁数不足）
-- **WHEN** 電話番号に `090-1234` のような桁数不足を入力して CTA を押す
-- **THEN** API は呼ばれず、電話番号フィールドに「電話番号の桁数が正しくありません」のエラーが表示される
-
-#### Scenario: 電話番号の入力ゆらぎを正規化
-- **WHEN** 電話番号に `090 1234 5678` (半角空白) または `09012345678` (区切りなし) を入力して CTA を押す
-- **THEN** Smart constructor `createPhone()` で正規化された値（`'090-1234-5678'`）が `phone` 列に保存される
-
-#### Scenario: ニックネーム文字数上限違反
-- **WHEN** ニックネームに 16 文字以上の値を入力して CTA を押す
-- **THEN** API は呼ばれず、ニックネームフィールドに「ニックネームは 15 文字以内で入力してください」のエラーが表示される
-
-#### Scenario: ニックネーム文字種違反（数字）
-- **WHEN** ニックネームに「たろ123」のような数字を含む値を入力して CTA を押す
-- **THEN** API は呼ばれず、ニックネームフィールドに「ニックネームは日本語と英字のみで入力してください（数字・記号・絵文字は使えません）」のエラーが表示される
-
-#### Scenario: ニックネーム文字種違反（記号）
-- **WHEN** ニックネームに「たろ★」「Taro_san」のような記号を含む値を入力して CTA を押す
-- **THEN** API は呼ばれず、ニックネームフィールドに「ニックネームは日本語と英字のみで入力してください（数字・記号・絵文字は使えません）」のエラーが表示される
-
-#### Scenario: ニックネーム文字種違反（絵文字）
-- **WHEN** ニックネームに「たろ🏐」のような絵文字を含む値を入力して CTA を押す
-- **THEN** API は呼ばれず、ニックネームフィールドに「ニックネームは日本語と英字のみで入力してください（数字・記号・絵文字は使えません）」のエラーが表示される
-
-#### Scenario: ニックネーム入力欄の任意表記
-- **WHEN** `/signup/profile` でニックネーム入力欄を確認する
-- **THEN** ラベルに必須マーク `*` は付かず、ヒント文として「未入力時は氏名で表示されます」相当の説明が併記され、初期状態で赤枠は出ない
-
-### Requirement: マジックリンク戻り先 `/auth/callback`
-
-`apps/reservation` は `/auth/callback` ルートを SHALL 提供する。Supabase クライアントが `detectSessionInUrl: true` で構成されているため、ページマウント時に URL hash 内のトークンが消化されてセッションが確立する。`AuthCallbackPage.vue` は session 確立を待ち、`isProfileComplete` 判定の結果に応じてリダイレクトする MUST。
-
-#### Scenario: session 確立 + プロフィール完成済み
-- **WHEN** マジックリンクをクリックして `/auth/callback#access_token=...` に到達し、session 確立後 `isProfileComplete === true`（既存会員 / admin）
-- **THEN** `/` にリダイレクトされる
-
-#### Scenario: session 確立 + プロフィール未完成
-- **WHEN** `/auth/callback` で session 確立、`isProfileComplete === false`（新規会員 / トリガー直後）
-- **THEN** `/signup/profile` にリダイレクトされる（情報入力誘導）
-
-#### Scenario: マジックリンクが期限切れ・無効
-- **WHEN** `/auth/callback` でセッション確立に失敗（リンク期限切れ、トークン無効等）
-- **THEN** `/login?reason=link-invalid` にリダイレクトされ、Error バナーで「リンクの有効期限が切れたか、無効です。再送信してください」が表示される
-
-### Requirement: マジックリンク送信完了画面（LinkSent）
-
-`apps/reservation` は `signInWithOtp` 成功後に **送信先メールアドレス + 再送ボタン + 別メールで送り直すリンク** を持つ画面（`/auth/link-sent`）を SHALL 表示する。
-
-#### Scenario: 送信先メールアドレス表示
-- **WHEN** `signInWithOtp` 成功で `/auth/link-sent?email=<encoded>` に遷移
-- **THEN** 「<入力メール> 宛にログインリンクを送信しました。メール内のリンクから続行してください。」が表示される
-
-#### Scenario: メール再送
-- **WHEN** ユーザーが「メールを再送する」ボタンを押す
-- **THEN** 同じメールアドレスで `signInWithOtp` (`shouldCreateUser: true`) が再実行され、Loading 状態を経て Success に戻る（または rate-limit エラーで Error 状態）
-
-#### Scenario: rate-limit エラー時の表示
-- **WHEN** 再送ボタン押下で Supabase が rate-limit エラー（`over_email_send_rate_limit`）を返す
-- **THEN** Error バナーで「送信回数の上限に達しました。約 60 秒お待ちいただいてから再試行してください」が表示される
-
-#### Scenario: 別アドレスを使う
-- **WHEN** ユーザーが「別のアドレスを使う」リンクを押す
-- **THEN** `/login` 画面に戻り、入力欄がクリアされる
 
 ### Requirement: 4 状態 UI
 
@@ -204,14 +88,6 @@ TBD - created by archiving change reservation-member-auth-magic-link. Update Pur
 - **WHEN** プロフィール未完成 / 書類未提出の member が `/signup/profile` または `/signup/identity` のログアウトリンクを押す
 - **THEN** session / member 関連 state がクリアされ、`/login` にリダイレクトされる
 
-### Requirement: マジックリンク有効期限 15 分
-
-マジックリンクの有効期限は 15 分（900 秒）SHALL。これは Supabase Dashboard 側で設定する運用要件であり、コード上の挙動としてはリンク無効時に `link-invalid` reason で `/login` に戻る。
-
-#### Scenario: 期限切れリンクの挙動
-- **WHEN** 15 分以上経過したマジックリンクをクリックして `/auth/callback` に到達
-- **THEN** session 確立に失敗し、`/login?reason=link-invalid` にリダイレクトされる
-
 ### Requirement: `/` ルートは認証必須（ランディング廃止）
 
 `/`（HomePlaceholder）は **認証必須** とする SHALL（2026-05-04 翔太郎くん指示でランディング画面を廃止）。`meta.public` を持たず、未認証ユーザーは auth guard により `/login` にリダイレクトされる。会員ダッシュボードのプレースホルダ「準備中」表示は認証済み + プロフィール完成済みのユーザーのみが見る。
@@ -234,39 +110,43 @@ TBD - created by archiving change reservation-member-auth-magic-link. Update Pur
 1. `members.profile->>'signup_completed' = 'true'`
 2. `members.role = 'admin'`（admin は member の **完全上位互換**として常に完成扱い）
 
-トリガー `on_auth_user_created` が作る placeholder 行（`profile = '{}'::jsonb` + `role = 'member'`）は両条件とも満たさず、未完成扱いとなる。`/signup/profile` の登録 CTA で `members` UPDATE 時、`profile` jsonb をマージ更新で `{ signup_completed: true, terms_agreed_at: <ISO8601> }` を設定する MUST。
+本 change 適用後、新規作成される `members` 行は INSERT 時点で常に `signup_completed: true` を持つため、新規会員は判定が常に true となる。フィールド自体は Phase 1 で作成された会員行（既に true がセット済み）および admin の上位互換扱いとの互換性のため維持する MUST。
 
-#### Scenario: 新規 placeholder 行は未完成判定
-- **WHEN** トリガー `on_auth_user_created` で作成された直後の `members` 行（`profile = '{}'`、`role = 'member'`）を `useAuthSession.fetchMyMember()` で取得
-- **THEN** 両条件とも満たさないため `isProfileComplete === false` が返る
-
-#### Scenario: 完成フラグセット後は完成判定
-- **WHEN** `members.profile->>'signup_completed' = 'true'` の行を `fetchMyMember()` で取得
+#### Scenario: 新規会員行は完成判定
+- **WHEN** `verify-signup` 成功で作成された `members` 行を `useAuthSession.fetchMyMember()` で取得
 - **THEN** `isProfileComplete === true` が返る
 
+#### Scenario: Phase 1 で作成された会員行も完成判定（互換性）
+- **WHEN** Phase 1 期間に作成され `profile.signup_completed = true` を既にセット済みの `members` 行を取得
+- **THEN** `isProfileComplete === true` が返る（フィールドの意味は変わらない）
+
 #### Scenario: admin role は完成扱い（member の完全上位互換）
-- **WHEN** `members.role = 'admin'` の行を `fetchMyMember()` で取得（`profile.signup_completed` が未セットでも）
-- **THEN** `isProfileComplete === true` が返り、admin は reservation サイトで `/signup/profile` 強制誘導されない
-
-#### Scenario: 既存 profile キーを保持したマージ
-- **WHEN** 更新前の `profile` に他のキーが既存している場合に `/signup/profile` の登録 UPDATE を実行
-- **THEN** 既存キーは保持され、`signup_completed` と `terms_agreed_at` のみ追加・上書きされる（クライアント側で現在値を SELECT してマージしてから UPDATE）
-
-#### Scenario: display_name の placeholder 値（メール由来）と無関係
-- **WHEN** `display_name = 'misaki.t'`（トリガーが入れたメール @ 前部分）かつ `profile = '{}'::jsonb` かつ `role = 'member'`
-- **THEN** `display_name` が空文字でなくても `isProfileComplete === false` が返る（判定基準は `signup_completed` フラグまたは admin role のみ）
+- **WHEN** `members.role = 'admin'` の行を `fetchMyMember()` で取得
+- **THEN** `isProfileComplete === true` が返り、admin は reservation サイトで signup フローに誘導されない
 
 ### Requirement: プロフィール未完成会員の `/signup/profile` 強制誘導
 
-認証済みだが `isProfileComplete === false` の会員が `/signup/profile` 以外のルートにアクセスした場合、auth guard により `/signup/profile` に MUST リダイレクトする。`/signup/profile` 自体および `/auth/callback` へのアクセスは通過する。
+本 change 適用後、`auth.users` に存在する会員は `verify-signup` 完了時点でプロフィール完成済み（`signup_completed = true`）となるため、Phase 1 の「認証済み + プロフィール未完成 → `/signup/profile` 強制誘導」分岐は **到達不能** となり、auth guard から削除する SHALL。`/signup/profile` ルート自体も撤廃される。
 
-#### Scenario: プロフィール未完成で `/` にアクセス
-- **WHEN** 認証済み + `isProfileComplete === false` のユーザーが `/` にアクセス
-- **THEN** `/signup/profile` にリダイレクトされる
+guard の分岐は以下に簡素化される MUST:
+- `to.meta.public === true` のルート（`/login` / `/signup` / `/signup/verify` / `/auth/callback` / `/auth/link-sent`）は未認証でも通過
+- 未認証 + 非公開ルート → `/login` にリダイレクト
+- 認証済み + `/login` / `/signup` / `/signup/verify` → `/` にリダイレクト
+- それ以外（認証済み + 任意ルート） → 通過
 
-#### Scenario: プロフィール未完成で `/signup/profile` にアクセス
-- **WHEN** 認証済み + `isProfileComplete === false` のユーザーが `/signup/profile` にアクセス
-- **THEN** `/signup/profile` のフォームが描画される（無限ループしない）
+書類未提出（`hasIdentityDocument === false`）の guard 分岐は別 capability `reservation-identity-document-upload` の責務であり、本 change では変更 SHALL NOT する。
+
+#### Scenario: プロフィール未完成分岐が削除されている
+- **WHEN** `apps/reservation/src/app/router.ts` の auth guard 実装を確認する
+- **THEN** 「プロフィール未完成 → `/signup/profile` 誘導」に相当する条件分岐は存在しない
+
+#### Scenario: 認証済みで /signup にアクセス
+- **WHEN** 認証済みユーザーが `/signup` にアクセス
+- **THEN** `/` にリダイレクトされる（重複登録防止）
+
+#### Scenario: 認証済みで /signup/verify にアクセス
+- **WHEN** 認証済みユーザーが `/signup/verify` にアクセス
+- **THEN** `/` にリダイレクトされる
 
 ### Requirement: 中途離脱ユーザーの 48h cleanup（後続 Issue で実装）
 
@@ -371,4 +251,179 @@ TBD - created by archiving change reservation-member-auth-magic-link. Update Pur
 #### Scenario: 管理画面はルール適用対象外
 - **WHEN** admin がイベント参加者一覧 / 会員一覧で member の名前を描画する
 - **THEN** ニックネームの有無にかかわらず氏名 (display_name) が表示される（本ルールは admin に適用しない）
+
+### Requirement: 認証コード発行 Edge Function `request-signup`
+
+`apps/reservation` の `/signup` フォーム送信は、Supabase Edge Function `request-signup` を呼び出す SHALL。Function は以下の責務を持つ:
+
+1. クライアントから受け取った payload（メール / 氏名 / 生年月日 / 電話 / 経験レベル / 任意ニックネーム / 利用規約同意タイムスタンプ）をサーバ側でバリデーションする
+2. 同 email の既存 `auth.users` 行が**存在しないこと**を確認する（存在する場合はクライアントに「既に登録済みです。ログインへお進みください」を返す）
+3. 6 桁の認証コードを生成し、**ハッシュ化**したものを `signup_pending` テーブルに保存する。原文は DB に保存 SHALL NOT
+4. 保存される行は payload + コードハッシュ + 試行回数（初期値 0） + 期限（発行時刻 + 30 分）を含む
+5. 同一メールアドレスの既存 `signup_pending` 行が存在する場合は、新しい行で上書きする MUST
+6. 認証コード本文を含むメールを送信先メールアドレスへ送る（送信経路は Supabase 組み込み認証メール基盤）
+7. クライアントには成功 / 既登録 / 入力エラー / レート制限超過のいずれかのステータスを返す MUST。auth.users / members は本ステップでは作成 SHALL NOT
+
+#### Scenario: 新規メールアドレスでコード発行
+- **WHEN** 未登録のメールアドレスで全項目を入力した signup フォームから `request-signup` が呼ばれる
+- **THEN** `signup_pending` に該当 email の行が作成され、認証コードメールが送信され、`auth.users` / `members` には何も書かれない
+
+#### Scenario: 既登録メールアドレスでコード発行を試みる
+- **WHEN** 既存 `auth.users` に存在するメールアドレスで `request-signup` が呼ばれる
+- **THEN** `signup_pending` に行は作成されず、メール送信もされず、クライアントに「既登録」エラーが返る
+
+#### Scenario: 同 email で再送信
+- **WHEN** 同じメールアドレスで `request-signup` が連続して呼ばれる（30 分以内）
+- **THEN** 旧 `signup_pending` 行は新しい行で上書きされ、新しいコードのみが有効になる
+
+#### Scenario: payload バリデーションエラー
+- **WHEN** 氏名空 / 生年月日未来日 / 電話番号フォーマット異常などサーバ側バリデーションを満たさない payload が送られる
+- **THEN** `signup_pending` に行は作成されず、クライアントにフィールド単位のエラー詳細が返る
+
+#### Scenario: コードはハッシュで保管
+- **WHEN** `signup_pending` テーブルを SELECT する
+- **THEN** 6 桁コードの**ハッシュ値**のみが保管されており、原文の数字列は DB のどこにも存在しない
+
+### Requirement: 認証コード検証 Edge Function `verify-signup`
+
+`apps/reservation` の `/signup/verify` フォーム送信は、Supabase Edge Function `verify-signup` を呼び出す SHALL。Function は以下の責務を持つ:
+
+1. クライアントから受け取った email + 6 桁コードに対し、`signup_pending` の該当行を SELECT する
+2. 行が存在しない / 期限超過の場合は「コードが無効または期限切れ」エラーを返し、行は削除する
+3. コードハッシュ照合に失敗した場合は試行回数をインクリメントし、上限到達時は行を削除する
+4. 検証成功時のみ Supabase Auth admin API で `auth.users` を作成（`email_confirm: true`）し、続けて同 Function 内で `members` 行を payload の正式値で UPSERT する。`members.profile.signup_completed` は `true`、`profile.terms_agreed_at` は payload のタイムスタンプを保存 MUST
+5. 検証成功後、`signup_pending` の該当行を DELETE する MUST
+6. クライアントに新規セッション（access_token / refresh_token）を返し、クライアントは Supabase クライアントの `setSession` で保持する SHALL
+7. 副作用として、自分以外の期限切れ `signup_pending` 行をベストエフォートで掃除してよい SHALL（pg_cron 依存はサービスIN時点では持ち込まない）
+
+#### Scenario: 正しいコードでの検証成功
+- **WHEN** 期限内・正しい 6 桁コード・期限切れでない `signup_pending` 行が存在する状態で `verify-signup` が呼ばれる
+- **THEN** `auth.users` に `email_confirmed_at` セット済みの行が作成され、同 id で `members` 行が `signup_completed: true` を含む完成状態で作成され、`signup_pending` の該当行は削除され、クライアントに新規セッションが返る
+
+#### Scenario: コード誤入力（上限未達）
+- **WHEN** 期限内だが誤った 6 桁コードを送る
+- **THEN** `signup_pending` 行の試行回数がインクリメントされ、`auth.users` / `members` は作成されず、クライアントに「コードが正しくありません」エラーが返る
+
+#### Scenario: コード誤入力（上限到達）
+- **WHEN** 試行回数が上限値に達した状態でさらに誤入力を送る
+- **THEN** `signup_pending` 行は削除され、クライアントに「試行回数の上限に達しました。最初からやり直してください」エラーが返り、`/signup` への戻り導線が促される
+
+#### Scenario: 期限切れコードでの検証
+- **WHEN** `signup_pending` 行の期限が現在時刻を過ぎた状態で `verify-signup` が呼ばれる
+- **THEN** 該当行は削除され、`auth.users` / `members` は作成されず、クライアントに「コードの有効期限が切れました。最初からやり直してください」エラーが返る
+
+#### Scenario: 検証成功で signup_pending が削除される
+- **WHEN** `verify-signup` が成功する
+- **THEN** 該当 email の `signup_pending` 行が DB から消えていることを SELECT で確認できる
+
+#### Scenario: members の必須項目はすべて payload から埋まる
+- **WHEN** `verify-signup` 成功後に作成された `members` 行を確認する
+- **THEN** `display_name` / `birthday` / `phone` / `experience_level` / `nickname`（任意）/ `profile.signup_completed = true` / `profile.terms_agreed_at` がすべて入った状態であり、placeholder 値や空欄は存在しない
+
+### Requirement: `/signup` ページ（1 ページ全項目入力）
+
+`apps/reservation` の `/signup` ページは、未認証ユーザー向けに以下の全項目を 1 ページで受け付ける SHALL:
+
+- メールアドレス（必須・形式チェック）
+- 氏名（必須・1〜50 文字）
+- 生年月日（必須・過去日付かつ 100 年以内）
+- 電話（必須・国内携帯番号フォーマット）
+- 経験レベル（必須・`'beginner' | 'intermediate' | 'experienced'`）
+- ニックネーム（任意・空欄可・既存 `reservation-member-auth` のニックネーム要件を踏襲）
+- 利用規約同意（必須・チェックボックス OFF で CTA 非活性）
+- PolicyFooter（プライバシーポリシー / 外部送信ポリシーへのリンク）
+
+CTA 押下で Edge Function `request-signup` を呼び、成功で `/signup/verify?email=<encoded>` に遷移する SHALL。フォームバリデーションのエラーメッセージ・電話番号正規化・ニックネーム文字種制限などは既存 `reservation-member-auth` の要件を踏襲する。
+
+#### Scenario: 全項目入力 + 同意 ON で送信
+- **WHEN** 未認証ユーザーが `/signup` で全必須項目 + 同意 ON で CTA を押す
+- **THEN** `request-signup` が呼ばれ、成功で `/signup/verify?email=<encoded>` に遷移する
+
+#### Scenario: 同意 OFF で CTA 非活性
+- **WHEN** 全項目入力済みだが利用規約同意 OFF
+- **THEN** CTA は disabled のまま押下できない
+
+#### Scenario: 必須フィールド未入力
+- **WHEN** 氏名 / メール / 生年月日 / 電話 / 経験レベルのいずれかが空のまま CTA を押す
+- **THEN** API は呼ばれず、該当フィールドにエラーメッセージが表示される
+
+#### Scenario: 既登録メールでの送信
+- **WHEN** 既登録メールアドレスで送信し `request-signup` が「既登録」エラーを返す
+- **THEN** メールアドレスフィールド付近に「既に登録済みです。[ログインへ]」のリンク付き案内が表示される
+
+#### Scenario: PolicyFooter 表示
+- **WHEN** `/signup` ページを最下部までスクロールする
+- **THEN** プライバシーポリシー / 外部送信ポリシーへのリンクが LP オリジン（`<lp-origin>/privacy` / `<lp-origin>/external-transmission`）を指して表示される
+
+### Requirement: `/signup/verify` ページ（6 桁コード入力）
+
+`apps/reservation` は `/signup/verify` ルートを SHALL 提供する。クエリパラメータ `email` を受け取り、6 桁コード入力欄 + 「認証する」CTA + 「コードを再送する」リンク + 「メールアドレスを変更する」（`/signup` に戻る）リンクを表示する MUST。
+
+CTA 押下で Edge Function `verify-signup` を呼び、検証成功で session を確立して `/`（プロフィール完成済み）または `/signup/identity`（書類未提出のとき）へリダイレクトする SHALL。
+
+「コードを再送する」押下で `request-signup` を再呼び出しし、新しいコードを発行する MUST（同 email の `signup_pending` 行を上書き）。
+
+#### Scenario: 正しいコード入力で検証成功
+- **WHEN** `/signup/verify?email=member@example.com` で正しい 6 桁コードを入力して「認証する」を押す
+- **THEN** `verify-signup` が成功し、session が確立され、本人確認書類提出が必要な状態のため `/signup/identity` に遷移する
+
+#### Scenario: 誤コード入力
+- **WHEN** 誤った 6 桁コードを入力して CTA を押す
+- **THEN** Error 状態で「コードが正しくありません」が表示され、コード入力欄がクリアされる
+
+#### Scenario: 期限切れコード
+- **WHEN** 30 分以上経過した後にコードを入力して CTA を押す
+- **THEN** Error 状態で「コードの有効期限が切れました。最初からやり直してください」が表示され、`/signup` への戻り CTA が表示される
+
+#### Scenario: 試行回数上限到達
+- **WHEN** 連続誤入力で試行回数上限に達したコードを入力して CTA を押す
+- **THEN** Error 状態で「試行回数の上限に達しました。最初からやり直してください」が表示され、`/signup` への戻り CTA が表示される
+
+#### Scenario: コード再送
+- **WHEN** ユーザーが「コードを再送する」リンクを押す
+- **THEN** `request-signup` が同 email で再実行され、新しいコードがメール送信される。Loading 状態を経て Success 状態に戻る
+
+#### Scenario: メールアドレス変更
+- **WHEN** ユーザーが「メールアドレスを変更する」リンクを押す
+- **THEN** `/signup` に戻り、フォームの内容は保持された状態で再表示される
+
+#### Scenario: クエリパラメータ email なしでアクセス
+- **WHEN** `/signup/verify` を `email` クエリなしで直接アクセス
+- **THEN** `/signup` にリダイレクトされる
+
+### Requirement: ログインフローはマジックリンク方式を維持
+
+`apps/reservation` の `/login` ページおよびログイン経路は、Phase 1 で実装された Supabase 標準のマジックリンク方式（`signInWithOtp({ shouldCreateUser: false, emailRedirectTo: <origin>/auth/callback })`）を本 change で変更 SHALL NOT する。`/auth/callback` / `/auth/link-sent` / セッション復元 / ログアウトの動作も Phase 1 の挙動を維持する MUST。
+
+#### Scenario: 既存会員のマジックリンクログイン
+- **WHEN** 既存会員が `/login` でメールアドレスを入力して CTA を押す
+- **THEN** `signInWithOtp` が `shouldCreateUser: false` で呼ばれ、マジックリンクが送信される
+
+#### Scenario: 未登録メールでのログイン試行
+- **WHEN** 未登録メールアドレスで `/login` から送信する
+- **THEN** Supabase が「未登録」エラーを返し、Error バナーで「このメールアドレスは登録されていません。[新規会員登録へ]」のリンク付き案内が表示される
+
+### Requirement: 4 状態 UI（`/signup` / `/signup/verify`）
+
+`/signup` および `/signup/verify` の各ページは Empty / Loading / Error / Success の 4 状態を持ち、各状態で表示要素が明確に切り替わる SHALL。
+
+#### Scenario: SignupPage Empty 状態
+- **WHEN** `/signup` に初回アクセスする
+- **THEN** 全フィールド入力欄 + 同意チェックボックス + 「コードを送信する」CTA + PolicyFooter が表示され、CTA は同意 OFF のため disabled
+
+#### Scenario: SignupPage Loading 状態
+- **WHEN** 全フィールド入力 + 同意 ON で CTA を押し、`request-signup` レスポンス到達前
+- **THEN** CTA は無効化され、ラベルが「送信中…」に切り替わる
+
+#### Scenario: SignupVerifyPage Empty 状態
+- **WHEN** `/signup/verify?email=<encoded>` に到達
+- **THEN** 6 桁コード入力欄 + 「認証する」CTA（disabled） + 再送リンク + メール変更リンクが表示される
+
+#### Scenario: SignupVerifyPage Loading 状態
+- **WHEN** 6 桁コード入力 + CTA を押し、`verify-signup` レスポンス到達前
+- **THEN** CTA は無効化され、ラベルが「認証中…」に切り替わる
+
+#### Scenario: SignupVerifyPage Success 状態
+- **WHEN** `verify-signup` 成功
+- **THEN** 「会員登録が完了しました」を一瞬表示してから `/signup/identity` または `/` にリダイレクトする
 

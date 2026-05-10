@@ -177,14 +177,14 @@ CTA 押下で Edge Function `verify-signup` を呼び、検証成功で session 
 
 ## MODIFIED Requirements
 
-### Requirement: 会員登録フロー = `/signup` 段階 1 + `/signup/verify` 段階 2 + `/signup/identity` 段階 3
+### Requirement: 会員登録フロー = `/login` 段階 1 + `/signup/profile` 段階 2
 
-会員登録フローは **3 段階** で構成する SHALL:
+会員登録フローは **3 段階** で構成する SHALL（#189 ゼロ滞留 signup フロー導入により段階 1 / 2 のルートが置き換わる）:
 - 段階 1（`/signup`）: 全項目入力 + 利用規約同意 → 認証コード送信
 - 段階 2（`/signup/verify`）: メールで届いた 6 桁コードを入力 → `auth.users` + `members` の一括作成
 - 段階 3（`/signup/identity`）: 本人確認書類 1 点をアップロード（詳細は `reservation-identity-document-upload` capability を参照）
 
-`/signup/profile` ルートは **撤廃** する SHALL（本 change で削除）。`/login` は既存会員ログイン専用となり、新規会員登録の入口は HomePlaceholder 等の「会員登録」CTA から `/signup` を指す MUST。
+`/signup/profile` ルートは **撤廃** する SHALL（#189 で削除）。`/login` は既存会員ログイン専用となり、新規会員登録の入口は HomePlaceholder 等の「会員登録」CTA から `/signup` を指す MUST。
 
 電話番号は事件・トラブル発生時の連絡先を確保する目的で **必須** とする。SMS による実在確認は MVP1 では実施しない。
 
@@ -206,9 +206,9 @@ CTA 押下で Edge Function `verify-signup` を呼び、検証成功で session 
 - **WHEN** `apps/reservation/src/app/router.ts` の `routes` 配列を確認する
 - **THEN** `path: '/signup/identity'` / `name: 'signup-identity'` のルートが定義されている (Step 3 / 3 として)
 
-### Requirement: プロフィール未完成会員の auth guard 分岐は撤廃
+### Requirement: プロフィール未完成会員の `/signup/profile` 強制誘導
 
-本 change 適用後、`auth.users` に存在する会員は `verify-signup` 完了時点でプロフィール完成済み（`signup_completed = true`）となるため、Phase 1 の「認証済み + プロフィール未完成 → `/signup/profile` 強制誘導」分岐は **到達不能** となり、auth guard から削除する SHALL。
+本 change 適用後、`auth.users` に存在する会員は `verify-signup` 完了時点でプロフィール完成済み（`signup_completed = true`）となるため、Phase 1 の「認証済み + プロフィール未完成 → `/signup/profile` 強制誘導」分岐は **到達不能** となり、auth guard から削除する SHALL。`/signup/profile` ルート自体も撤廃される。
 
 guard の分岐は以下に簡素化される MUST:
 - `to.meta.public === true` のルート（`/login` / `/signup` / `/signup/verify` / `/auth/callback` / `/auth/link-sent`）は未認証でも通過
