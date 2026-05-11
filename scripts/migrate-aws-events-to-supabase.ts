@@ -1,0 +1,527 @@
+/**
+ * scripts/migrate-aws-events-to-supabase.ts
+ *
+ * 一度きり: AWS DynamoDB（旧 LP API）→ Supabase events テーブルへ取り込み。
+ *
+ * 3 段階運用:
+ *   1. --survey    AWS データ取得 + Supabase venues 取得 → 対照表（proposed）を生成
+ *                  書き込みは一切しない
+ *   2. (人手)      proposed を確認し、approved として承認・git commit
+ *   3. --dry-run   approved を読んで投入予定をレポート（書き込みなし）
+ *   4. --commit    approved を読んで実際に Supabase へ INSERT
+ *
+ * 必要環境変数（.env.migration から手動 source）:
+ *   SUPABASE_URL          例 https://xxx.supabase.co
+ *   SUPABASE_SECRET_KEY   旧 service_role / 新 secret key（RLS バイパス用）
+ *   AWS_EVENTS_ENDPOINT   既定: https://ptfomh71x9.execute-api.ap-northeast-1.amazonaws.com/beta/event
+ *
+ * 関連:
+ *   openspec/changes/dynamodb-events-supabase-migration/
+ *   docs/08-移行/03-AWS-Supabase-events-移行手順.md
+ *   CLAUDE.md セキュリティルール
+ */
+
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+
+// ---------------------------------------------------------------------------
+// 型
+// ---------------------------------------------------------------------------
+
+type Mode = 'survey' | 'dry-run' | 'commit'
+
+interface CliArgs {
+  mode: Mode
+  correspondenceDir: string
+}
+
+interface AwsEvent {
+  id: string
+  title: string
+  start_time: string
+  end_time: string
+  location: string
+  // 想定外フィールドも検知できるように残す
+  [key: string]: unknown
+}
+
+interface SupabaseVenue {
+  id: string
+  name: string
+}
+
+interface CandidateMatch {
+  kind: 'exact' | 'normalized' | 'substring' | 'levenshtein' | 'none'
+  score: number
+  candidate: SupabaseVenue | null
+}
+
+type ApprovedAction =
+  | { action: 'match'; venueId: string }
+  | { action: 'new'; newVenueName: string }
+  | { action: 'fix'; venueId: string; newVenueName: string }
+
+type ApprovedMap = Map<string, ApprovedAction>
+
+// ---------------------------------------------------------------------------
+// CLI
+// ---------------------------------------------------------------------------
+
+function parseArgs(argv: string[]): CliArgs {
+  let mode: Mode = 'dry-run'
+  let correspondenceDir = 'openspec/changes/dynamodb-events-supabase-migration'
+
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]
+    if (a === '--survey') mode = 'survey'
+    else if (a === '--dry-run') mode = 'dry-run'
+    else if (a === '--commit') mode = 'commit'
+    else if (a === '--correspondence-dir') {
+      correspondenceDir = argv[++i] ?? correspondenceDir
+    } else if (a === '--help' || a === '-h') {
+      printHelp()
+      process.exit(0)
+    } else {
+      console.error(`unknown argument: ${a}`)
+      printHelp()
+      process.exit(2)
+    }
+  }
+  return { mode, correspondenceDir }
+}
+
+function printHelp(): void {
+  console.log(`Usage: tsx scripts/migrate-aws-events-to-supabase.ts [--survey|--dry-run|--commit] [--correspondence-dir <path>]
+
+Modes:
+  --survey    AWS データ取得 + Supabase venues 取得 → proposed 対照表生成（書き込みなし）
+  --dry-run   approved 対照表を読んで投入予定をレポート（書き込みなし）[既定]
+  --commit    approved 対照表を読んで Supabase へ INSERT
+
+環境変数: SUPABASE_URL, SUPABASE_SECRET_KEY, AWS_EVENTS_ENDPOINT`)
+}
+
+// ---------------------------------------------------------------------------
+// 環境変数 / クライアント
+// ---------------------------------------------------------------------------
+
+function requireEnv(key: string): string {
+  const v = process.env[key]
+  if (!v) {
+    console.error(`env ${key} is required`)
+    process.exit(1)
+  }
+  return v
+}
+
+function createSupabase(): SupabaseClient {
+  const url = requireEnv('SUPABASE_URL')
+  const secretKey = requireEnv('SUPABASE_SECRET_KEY')
+  return createClient(url, secretKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+}
+
+const AWS_DEFAULT_ENDPOINT =
+  'https://ptfomh71x9.execute-api.ap-northeast-1.amazonaws.com/beta/event'
+
+// ---------------------------------------------------------------------------
+// AWS 取得層
+// ---------------------------------------------------------------------------
+
+async function fetchAwsEvents(endpoint: string): Promise<AwsEvent[]> {
+  const res = await fetch(endpoint)
+  if (!res.ok) {
+    throw new Error(`AWS fetch failed: HTTP ${res.status}`)
+  }
+  const json = (await res.json()) as { body?: string }
+  if (typeof json.body !== 'string') {
+    throw new Error('AWS response shape mismatch: expected { body: <JSON string> }')
+  }
+  const parsed = JSON.parse(json.body)
+  if (!Array.isArray(parsed)) {
+    throw new Error('AWS body did not contain an array')
+  }
+  return parsed as AwsEvent[]
+}
+
+// ---------------------------------------------------------------------------
+// 文字列正規化 + 候補スコアリング
+// ---------------------------------------------------------------------------
+
+function normalize(s: string): string {
+  return s
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\s　・]+/g, '') // 全半角空白 + 中黒を除去
+    .trim()
+}
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length
+  const n = b.length
+  if (m === 0) return n
+  if (n === 0) return m
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0))
+  for (let i = 0; i <= m; i++) dp[i][0] = i
+  for (let j = 0; j <= n; j++) dp[0][j] = j
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost)
+    }
+  }
+  return dp[m][n]
+}
+
+function scoreCandidate(awsLocation: string, venue: SupabaseVenue): CandidateMatch {
+  if (awsLocation === venue.name) {
+    return { kind: 'exact', score: 100, candidate: venue }
+  }
+  const na = normalize(awsLocation)
+  const nv = normalize(venue.name)
+  if (na === nv) {
+    return { kind: 'normalized', score: 90, candidate: venue }
+  }
+  if (na.length >= 2 && (na.includes(nv) || nv.includes(na))) {
+    const longer = Math.max(na.length, nv.length)
+    const shorter = Math.min(na.length, nv.length)
+    return { kind: 'substring', score: 70 + Math.floor((shorter / longer) * 20), candidate: venue }
+  }
+  const d = levenshtein(na, nv)
+  const maxLen = Math.max(na.length, nv.length, 1)
+  if (d <= 2 && d / maxLen <= 0.2) {
+    return { kind: 'levenshtein', score: 60 - d * 5, candidate: venue }
+  }
+  return { kind: 'none', score: 0, candidate: null }
+}
+
+function bestCandidate(awsLocation: string, venues: SupabaseVenue[]): CandidateMatch {
+  let best: CandidateMatch = { kind: 'none', score: 0, candidate: null }
+  for (const v of venues) {
+    const c = scoreCandidate(awsLocation, v)
+    if (c.score > best.score) best = c
+  }
+  return best
+}
+
+// ---------------------------------------------------------------------------
+// 対照表ファイル I/O
+// ---------------------------------------------------------------------------
+
+function writeVenueProposed(
+  dir: string,
+  rows: Array<{ awsLocation: string; match: CandidateMatch }>,
+): string {
+  const lines: string[] = []
+  lines.push('# AWS location → Supabase venue 対照表 (proposed, machine-generated)')
+  lines.push('')
+  lines.push('> このファイルは `--survey` で機械生成されたものです。')
+  lines.push('> 翔太郎くんが各行を確定し `correspondence-venues-approved.md` として保存してください。')
+  lines.push('> 判定欄: `match`（既存 venue を再利用）/ `new`（新規 INSERT）/ `fix`（既存 venue 名を修正）')
+  lines.push('')
+  lines.push('| # | AWS location | 候補種別 | Supabase venue 候補 | venue_id | 機械判定スコア | 判定 |')
+  lines.push('|---|---|---|---|---|---|---|')
+  rows.forEach((r, i) => {
+    const c = r.match
+    const cname = c.candidate ? c.candidate.name : '—'
+    const cid = c.candidate ? c.candidate.id : '—'
+    const suggested = c.kind === 'exact' || c.kind === 'normalized' ? 'match' : c.kind === 'none' ? 'new' : '(要確認)'
+    lines.push(
+      `| ${i + 1} | \`${r.awsLocation}\` | ${c.kind} | \`${cname}\` | \`${cid}\` | ${c.score} | ${suggested} |`,
+    )
+  })
+  lines.push('')
+  const path = resolve(dir, 'correspondence-venues-proposed.md')
+  ensureDir(path)
+  writeFileSync(path, lines.join('\n'), 'utf8')
+  return path
+}
+
+function writeEventProposed(
+  dir: string,
+  awsEvents: AwsEvent[],
+): string {
+  const lines: string[] = []
+  lines.push('# AWS event → Supabase events 行プレビュー (proposed, machine-generated)')
+  lines.push('')
+  lines.push('> このファイルは `--survey` で機械生成された events 投入予定一覧です。')
+  lines.push('> AWS の field 一覧 / タイムゾーン表現 / 件数感を確認してください。')
+  lines.push('')
+  lines.push(`総件数: ${awsEvents.length}`)
+  lines.push('')
+  const fieldKeys = new Set<string>()
+  awsEvents.forEach((e) => Object.keys(e).forEach((k) => fieldKeys.add(k)))
+  lines.push(`AWS フィールドキー一覧: ${Array.from(fieldKeys).map((k) => `\`${k}\``).join(', ')}`)
+  lines.push('')
+  lines.push('| # | AWS id | name (= AWS title) | start_at (= AWS start_time) | end_at (= AWS end_time) | location | 機械判定 status |')
+  lines.push('|---|---|---|---|---|---|---|')
+  const now = new Date()
+  awsEvents.forEach((e, i) => {
+    const end = new Date(e.end_time)
+    const status = end.getTime() < now.getTime() ? 'closed' : 'scheduled'
+    lines.push(
+      `| ${i + 1} | \`${e.id}\` | ${e.title} | ${e.start_time} | ${e.end_time} | \`${e.location}\` | ${status} |`,
+    )
+  })
+  lines.push('')
+  const path = resolve(dir, 'correspondence-events-proposed.md')
+  ensureDir(path)
+  writeFileSync(path, lines.join('\n'), 'utf8')
+  return path
+}
+
+function ensureDir(filePath: string): void {
+  const d = dirname(filePath)
+  if (!existsSync(d)) mkdirSync(d, { recursive: true })
+}
+
+function readApprovedVenues(dir: string): ApprovedMap {
+  const path = resolve(dir, 'correspondence-venues-approved.md')
+  if (!existsSync(path)) {
+    throw new Error(`approved 対照表が存在しません: ${path}\n--survey を先に実行し、翔太郎くんに承認してもらってください。`)
+  }
+  const text = readFileSync(path, 'utf8')
+  const map: ApprovedMap = new Map()
+  // table 行: | # | `AWS location` | 候補種別 | `venue name` | `venue_id` | score | 判定 |
+  const rowRe = /^\|\s*\d+\s*\|\s*`([^`]*)`\s*\|[^|]*\|\s*`([^`]*)`\s*\|\s*`([^`]*)`\s*\|[^|]*\|\s*(match|new|fix)\s*\|/gm
+  let m: RegExpExecArray | null
+  while ((m = rowRe.exec(text)) !== null) {
+    const [, awsLocation, candidateName, candidateId, action] = m
+    if (action === 'match') {
+      if (!candidateId || candidateId === '—') {
+        throw new Error(`approved 行に venue_id がない: "${awsLocation}"`)
+      }
+      map.set(awsLocation, { action: 'match', venueId: candidateId })
+    } else if (action === 'new') {
+      // new の場合、candidateName が新規 venue 名（既定で AWS location をそのまま使う、人手で別名にも変更可）
+      const newName = candidateName && candidateName !== '—' ? candidateName : awsLocation
+      map.set(awsLocation, { action: 'new', newVenueName: newName })
+    } else if (action === 'fix') {
+      if (!candidateId || candidateId === '—') {
+        throw new Error(`approved fix 行に venue_id がない: "${awsLocation}"`)
+      }
+      const newName = candidateName && candidateName !== '—' ? candidateName : awsLocation
+      map.set(awsLocation, { action: 'fix', venueId: candidateId, newVenueName: newName })
+    }
+  }
+  if (map.size === 0) {
+    throw new Error(`approved ファイルからレコードを 1 件も読み取れませんでした: ${path}\nテーブル形式と判定欄を確認してください。`)
+  }
+  return map
+}
+
+// ---------------------------------------------------------------------------
+// Supabase 取得 / INSERT
+// ---------------------------------------------------------------------------
+
+async function fetchSupabaseVenues(supabase: SupabaseClient): Promise<SupabaseVenue[]> {
+  const { data, error } = await supabase.from('venues').select('id, name')
+  if (error) throw new Error(`venues 取得失敗: ${error.message}`)
+  return (data ?? []) as SupabaseVenue[]
+}
+
+async function existsByLegacyId(supabase: SupabaseClient, awsId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('events')
+    .select('id')
+    .ilike('description', `%[Legacy ID: ${awsId}]%`)
+    .limit(1)
+  if (error) throw new Error(`events 検索失敗: ${error.message}`)
+  return (data ?? []).length > 0
+}
+
+async function insertVenue(
+  supabase: SupabaseClient,
+  name: string,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from('venues')
+    .insert({ name, is_primary: false })
+    .select('id')
+    .single()
+  if (error) throw new Error(`venues INSERT 失敗 (name=${name}): ${error.message}`)
+  return data!.id as string
+}
+
+async function updateVenueName(
+  supabase: SupabaseClient,
+  venueId: string,
+  newName: string,
+): Promise<void> {
+  const { error } = await supabase.from('venues').update({ name: newName }).eq('id', venueId)
+  if (error) throw new Error(`venues UPDATE 失敗 (id=${venueId}): ${error.message}`)
+}
+
+async function insertEvent(
+  supabase: SupabaseClient,
+  row: {
+    name: string
+    start_at: string
+    end_at: string
+    venue_id: string
+    description: string
+    visibility: 'published'
+    status: 'scheduled' | 'closed'
+  },
+): Promise<void> {
+  const { error } = await supabase.from('events').insert(row)
+  if (error) throw new Error(`events INSERT 失敗 (name=${row.name}): ${error.message}`)
+}
+
+// ---------------------------------------------------------------------------
+// マッピング
+// ---------------------------------------------------------------------------
+
+function buildEventRow(
+  e: AwsEvent,
+  venueId: string,
+): {
+  name: string
+  start_at: string
+  end_at: string
+  venue_id: string
+  description: string
+  visibility: 'published'
+  status: 'scheduled' | 'closed'
+} {
+  const now = new Date()
+  const end = new Date(e.end_time)
+  const status: 'scheduled' | 'closed' = end.getTime() < now.getTime() ? 'closed' : 'scheduled'
+  return {
+    name: e.title,
+    start_at: e.start_time,
+    end_at: e.end_time,
+    venue_id: venueId,
+    description: `[Legacy ID: ${e.id}]`,
+    visibility: 'published',
+    status,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// メインフロー
+// ---------------------------------------------------------------------------
+
+async function runSurvey(args: CliArgs): Promise<void> {
+  const supabase = createSupabase()
+  const awsEndpoint = process.env.AWS_EVENTS_ENDPOINT || AWS_DEFAULT_ENDPOINT
+  console.log(`[survey] AWS から取得: ${awsEndpoint}`)
+  const awsEvents = await fetchAwsEvents(awsEndpoint)
+  console.log(`[survey] AWS イベント件数: ${awsEvents.length}`)
+
+  const venues = await fetchSupabaseVenues(supabase)
+  console.log(`[survey] Supabase 現行 venues 件数: ${venues.length}`)
+
+  const uniqLocations = Array.from(new Set(awsEvents.map((e) => e.location ?? ''))).filter((l) => l !== '')
+  console.log(`[survey] ユニーク location 件数: ${uniqLocations.length}`)
+
+  const rows = uniqLocations.map((loc) => ({ awsLocation: loc, match: bestCandidate(loc, venues) }))
+  const venuesPath = writeVenueProposed(args.correspondenceDir, rows)
+  const eventsPath = writeEventProposed(args.correspondenceDir, awsEvents)
+  console.log(`[survey] 出力: ${venuesPath}`)
+  console.log(`[survey] 出力: ${eventsPath}`)
+  console.log('[survey] 次のステップ: proposed をレビュー → approved として保存・commit してから --dry-run へ')
+}
+
+async function runMigration(args: CliArgs, commit: boolean): Promise<void> {
+  const supabase = createSupabase()
+  const awsEndpoint = process.env.AWS_EVENTS_ENDPOINT || AWS_DEFAULT_ENDPOINT
+  console.log(`[${commit ? 'commit' : 'dry-run'}] AWS から取得: ${awsEndpoint}`)
+  const awsEvents = await fetchAwsEvents(awsEndpoint)
+  console.log(`[${commit ? 'commit' : 'dry-run'}] AWS イベント件数: ${awsEvents.length}`)
+
+  const approved = readApprovedVenues(args.correspondenceDir)
+  console.log(`[${commit ? 'commit' : 'dry-run'}] approved エントリ件数: ${approved.size}`)
+
+  // approved の整合性検証
+  const awsLocations = new Set(awsEvents.map((e) => e.location ?? '').filter((l) => l !== ''))
+  for (const loc of awsLocations) {
+    if (!approved.has(loc)) {
+      throw new Error(`AWS に存在する location が approved にない: "${loc}". 再 --survey が必要です。`)
+    }
+  }
+  for (const loc of approved.keys()) {
+    if (!awsLocations.has(loc)) {
+      console.warn(`[warn] approved にあるが AWS で出現しない location: "${loc}"（無害だが survey 後に AWS が変化した可能性）`)
+    }
+  }
+
+  // venue_id 解決（commit 時は new / fix を実行、dry-run はログのみ）
+  const venueIdMap = new Map<string, string>()
+  for (const [loc, action] of approved.entries()) {
+    if (action.action === 'match') {
+      venueIdMap.set(loc, action.venueId)
+      console.log(`[venue] MATCH "${loc}" → ${action.venueId}`)
+    } else if (action.action === 'new') {
+      if (commit) {
+        const id = await insertVenue(supabase, action.newVenueName)
+        venueIdMap.set(loc, id)
+        console.log(`[venue] NEW   "${loc}" → ${id} (name="${action.newVenueName}")`)
+      } else {
+        venueIdMap.set(loc, '(dry-run pending)')
+        console.log(`[venue] (dry-run) NEW "${loc}" name="${action.newVenueName}"`)
+      }
+    } else {
+      // fix
+      if (commit) {
+        await updateVenueName(supabase, action.venueId, action.newVenueName)
+        venueIdMap.set(loc, action.venueId)
+        console.log(`[venue] FIX   "${loc}" venue ${action.venueId} renamed to "${action.newVenueName}"`)
+      } else {
+        venueIdMap.set(loc, action.venueId)
+        console.log(`[venue] (dry-run) FIX venue ${action.venueId} → "${action.newVenueName}"`)
+      }
+    }
+  }
+
+  // events 投入
+  let inserted = 0
+  let skipped = 0
+  for (const e of awsEvents) {
+    const venueId = venueIdMap.get(e.location)
+    if (!venueId) {
+      throw new Error(`venue 解決失敗: "${e.location}" (event id=${e.id})`)
+    }
+    const exists = await existsByLegacyId(supabase, e.id)
+    if (exists) {
+      console.log(`[event] SKIP   ${e.id} "${e.title}" (Legacy ID 既存)`)
+      skipped++
+      continue
+    }
+    if (commit) {
+      const row = buildEventRow(e, venueId)
+      await insertEvent(supabase, row)
+      console.log(`[event] INSERT ${e.id} "${e.title}" venue=${venueId} status=${row.status}`)
+    } else {
+      const row = buildEventRow(e, venueId === '(dry-run pending)' ? '<new venue>' : venueId)
+      console.log(`[event] (dry-run) INSERT ${e.id} "${e.title}" venue=${row.venue_id} status=${row.status}`)
+    }
+    inserted++
+  }
+
+  console.log('')
+  console.log('--- サマリー ---')
+  console.log(`AWS 取得件数: ${awsEvents.length}`)
+  console.log(`INSERT ${commit ? '実行' : '予定'}: ${inserted}`)
+  console.log(`SKIP（Legacy ID 既存）: ${skipped}`)
+  console.log(`venue NEW ${commit ? '実行' : '予定'}: ${Array.from(approved.values()).filter((a) => a.action === 'new').length}`)
+  console.log(`venue FIX ${commit ? '実行' : '予定'}: ${Array.from(approved.values()).filter((a) => a.action === 'fix').length}`)
+}
+
+async function main(): Promise<void> {
+  const args = parseArgs(process.argv.slice(2))
+  if (args.mode === 'survey') {
+    await runSurvey(args)
+  } else if (args.mode === 'dry-run') {
+    await runMigration(args, false)
+  } else {
+    await runMigration(args, true)
+  }
+}
+
+main().catch((e) => {
+  console.error(e instanceof Error ? e.message : e)
+  process.exit(1)
+})
