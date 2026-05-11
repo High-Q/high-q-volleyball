@@ -7,6 +7,9 @@ import Vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 // Utilities
 import { defineConfig } from "vite";
 import { fileURLToPath, URL } from "node:url";
+import path from "node:path";
+
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -28,13 +31,7 @@ export default defineConfig({
       "@shared":   fileURLToPath(new URL("./src/shared",    import.meta.url)),
     },
   },
-  server: {
-    proxy: {
-      "/api/event": {
-        target: "https://ptfomh71x9.execute-api.ap-northeast-1.amazonaws.com",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/event/, "/beta/event"),
-      },
-    },
-  },
+  // モノレポ root の .env.* を共通参照する（envDir）。
+  // 関連: openspec/specs/env-management/spec.md
+  envDir: path.resolve(__dirname, "../.."),
 });

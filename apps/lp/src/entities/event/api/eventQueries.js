@@ -1,28 +1,24 @@
 import { queryOptions } from '@tanstack/vue-query'
-
-// 開発時は Vite プロキシ経由で CORS を回避（vite.config.js で /api/event → AWS にリライト）
-const API_URL = import.meta.env.DEV
-  ? '/api/event'
-  : 'https://ptfomh71x9.execute-api.ap-northeast-1.amazonaws.com/beta/event'
+import { getSupabase } from '@shared/api'
 
 async function fetchEvents() {
-  let res
-  try {
-    res = await fetch(API_URL)
-  } catch {
-    // CORS ブロックやネットワーク不達の場合は空配列で代替
-    // （本番ドメイン以外の Render プレビュー等で発生する）
-    return []
+  const supabase = getSupabase()
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, name, start_at, end_at, venues:venue_id ( name )')
+    .eq('visibility', 'published')
+    .gte('start_at', new Date().toISOString())
+    .order('start_at', { ascending: true })
+
+  if (error) {
+    throw new Error(error.message || 'failed to fetch events')
   }
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const json = await res.json()
-  const data = JSON.parse(json.body)
-  return data.map((e) => ({
-    id:       e.id,
-    name:     e.title,
-    start:    new Date(e.start_time),
-    end:      new Date(e.end_time),
-    location: e.location,
+  return (data ?? []).map((row) => ({
+    id:       row.id,
+    name:     row.name,
+    start:    new Date(row.start_at),
+    end:      new Date(row.end_at),
+    location: row.venues?.name ?? '',
   }))
 }
 
