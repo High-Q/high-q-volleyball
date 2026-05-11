@@ -28,6 +28,6 @@
 
 ## 5. spec / 後処理
 
-- [ ] 5.1 PR を作成し Render Preview に dev Supabase から実データが取得されていることを確認（dev に published 未来イベントが必要。無ければ admin から 1 件投入してから検証）
+- [x] 5.1 PR を作成（#231）。Render Preview で dev Supabase から実データが取得されていることを確認 → **翔太郎くん側のブラウザ確認待ち**
 - [ ] 5.2 ユーザー OK 後、`/opsx-ship` で sync (specs/docs 更新) → archive → push → merge → ブランチ削除 + Issue クローズ
 - [ ] 5.3 master マージ後、Render の LP service Dashboard で `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` の prd 値を手動で設定し、本番 URL でイベントが表示されることを確認（admin / reservation と同じ値を貼り付け）
