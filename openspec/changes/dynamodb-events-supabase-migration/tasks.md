@@ -44,12 +44,13 @@
 
 ## 6. prd フェーズ
 
-- [ ] 6.1 翔太郎くんが `.env.migration` を **prd** の値に差し替える
-- [ ] 6.2 prd に対し `--survey` 実行 → prd 用 proposed が生成される
-- [ ] 6.3 翔太郎くんと一緒に prd 用 proposed をレビュー → prd 用 approved を確定（dev 用と内容が異なる可能性があるため別途）
-- [ ] 6.4 prd に対し `--dry-run` 実行、件数最終確認
-- [ ] 6.5 prd に対し `--commit` 実行
-- [ ] 6.6 admin で prd に投入された events / venues を目視確認
+- [x] 6.1 翔太郎くんが `.env.migration` を **prd** の値に差し替える
+- [x] 6.2 prd に対し `--survey` 実行 → prd 用 proposed が生成される (prd venues 件数: 5)
+- [x] 6.3 翔太郎くんと一緒に prd 用 proposed をレビュー → prd 用 approved を確定（dev の決定を流用、venue_id だけ prd 値に差し替え）
+- [x] 6.4 prd に対し `--dry-run` 実行、件数最終確認 (INSERT 予定 42 件)
+- [x] 6.5 prd に対し `--commit` 実行 (INSERT 実行 42 件 / venue REUSE 1=有明会場 / venue NEW 4)
+- [x] 6.5b prd に対し `--set-default-fees` 実行 (有明会場=500 × 21 件, その他=1000 × 21 件)
+- [x] 6.6 admin で prd に投入された events / venues を目視確認 OK
 - [ ] 6.7 結果を #228 PR #231 にコメントで報告し、Ready for Review へ戻す合図とする
 
 ## 7. spec / 後処理
