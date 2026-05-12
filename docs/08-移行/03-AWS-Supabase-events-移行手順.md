@@ -85,7 +85,7 @@ pnpm migrate:aws-events --commit
 
 ### 5. 利用料金 (fee) の一括設定（post-commit）
 
-AWS API は `fee` を返さないため、本 migration では events.fee が NULL のまま投入される。High Q の運用ルール「有明会場以外は 1000 円固定」を反映するため、commit 後に以下のコマンドで一括設定する:
+AWS API は `fee` を返さないため、本 migration では events.fee が NULL のまま投入される。High Q の運用ルール「有明会場 = 500 円、それ以外 = 1000 円」を反映するため、commit 後に以下のコマンドで一括設定する:
 
 ```bash
 pnpm migrate:aws-events --set-default-fees
@@ -93,11 +93,13 @@ pnpm migrate:aws-events --set-default-fees
 
 このコマンドは以下を実行する:
 - venues.name = '有明会場' の venue_id を取得
-- 本 migration で投入された events（description に Legacy ID マーカーを持つ行）のうち、venue_id != 有明会場 のものに fee=1000 を UPDATE
+- 本 migration で投入された events（description に Legacy ID マーカーを持つ行）について:
+  - 有明会場 → fee=500
+  - その他 venue → fee=1000
 - 終了時に fee 分布のサマリーを表示
 
 期待結果:
-- 有明会場 → fee NULL
+- 有明会場 → fee 500
 - その他 venue → fee 1000
 
 Idempotent（複数回実行しても結果同じ）。prd でもそのまま使える。

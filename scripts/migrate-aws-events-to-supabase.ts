@@ -101,7 +101,7 @@ Modes:
   --survey            AWS データ取得 + Supabase venues 取得 → proposed 対照表生成（書き込みなし）
   --dry-run           approved 対照表を読んで投入予定をレポート（書き込みなし）[既定]
   --commit            approved 対照表を読んで Supabase へ INSERT
-  --set-default-fees  本 migration 投入済 events に「有明会場以外は fee=1000」を一括設定 (commit 後の post step)
+  --set-default-fees  本 migration 投入済 events に料金を一括設定 (有明会場=500 / それ以外=1000) [commit 後の post step]
 
 環境変数: SUPABASE_URL, SUPABASE_SECRET_KEY, AWS_EVENTS_ENDPOINT`)
 }
@@ -597,8 +597,13 @@ async function runMigration(args: CliArgs, commit: boolean): Promise<void> {
 }
 
 /**
- * 本 migration 投入済 events のうち、`venues.name = '有明会場'` 以外に fee=1000 を一括設定。
+ * 本 migration 投入済 events の fee を会場別に一括設定。
  * AWS API は fee を公開しないため、--commit 後の post step として実行する。
+ *
+ * 料金ポリシー:
+ *   - 有明会場 → 500 円
+ *   - それ以外 → 1000 円
+ *
  * Idempotent: 何度実行しても結果は変わらない。
  */
 async function runSetDefaultFees(): Promise<void> {
@@ -616,16 +621,29 @@ async function runSetDefaultFees(): Promise<void> {
   }
   console.log(`[set-default-fees] 有明会場 venue_id = ${ariake.id}`)
 
-  const { data: updated, error: uErr } = await supabase
+  // 1. 有明会場以外を fee=1000 に
+  const { data: updatedOthers, error: oErr } = await supabase
     .from('events')
     .update({ fee: 1000 })
     .ilike('description', '%[Legacy ID:%')
     .neq('venue_id', ariake.id)
     .select('id')
-  if (uErr) {
-    throw new Error(`events UPDATE 失敗: ${uErr.message}`)
+  if (oErr) {
+    throw new Error(`events UPDATE (others=1000) 失敗: ${oErr.message}`)
   }
-  console.log(`[set-default-fees] fee=1000 を ${updated?.length ?? 0} 件の events に設定完了`)
+  console.log(`[set-default-fees] fee=1000 を ${updatedOthers?.length ?? 0} 件 (有明会場以外) に設定`)
+
+  // 2. 有明会場を fee=500 に
+  const { data: updatedAriake, error: arErr } = await supabase
+    .from('events')
+    .update({ fee: 500 })
+    .ilike('description', '%[Legacy ID:%')
+    .eq('venue_id', ariake.id)
+    .select('id')
+  if (arErr) {
+    throw new Error(`events UPDATE (ariake=500) 失敗: ${arErr.message}`)
+  }
+  console.log(`[set-default-fees] fee=500 を ${updatedAriake?.length ?? 0} 件 (有明会場) に設定`)
 
   // 確認用サマリー
   const { data: summary, error: sErr } = await supabase
