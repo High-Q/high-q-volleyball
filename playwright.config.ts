@@ -68,6 +68,12 @@ export default defineConfig({
       url: LP_URL,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
+      env: {
+        // LP も Supabase に接続するため、admin / reservation と同じ DUMMY 値を build 時に流す。
+        // 実通信は mockEventApi が route で横取りするため、本値はバンドルに埋め込まれるだけ。
+        VITE_SUPABASE_URL: E2E_DUMMY_SUPABASE_URL,
+        VITE_SUPABASE_PUBLISHABLE_KEY: E2E_DUMMY_SUPABASE_KEY,
+      },
     },
     {
       command:
