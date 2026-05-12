@@ -5,7 +5,7 @@ async function fetchEvents() {
   const supabase = getSupabase()
   const { data, error } = await supabase
     .from('events')
-    .select('id, name, start_at, end_at, venues:venue_id ( name )')
+    .select('id, name, start_at, end_at, venues(name)')
     .eq('visibility', 'published')
     .gte('start_at', new Date().toISOString())
     .order('start_at', { ascending: true })
