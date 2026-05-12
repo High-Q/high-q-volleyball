@@ -11,6 +11,8 @@ test-results/
 # local env files
 .env.local
 .env.*.local
+# 一度きり AWS → Supabase 移行スクリプトが使う Service Role Key を含む env（#230）
+.env.migration
 
 # Log files
 npm-debug.log*
