@@ -6,23 +6,26 @@
 ## Requirements
 ### Requirement: 共通環境変数のリポジトリ root 管理
 
-システムは、複数アプリで共有する環境変数（`VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` など）を **リポジトリ root** の `.env.local`（git 管理外）と `.env.example`（git 管理）で一元管理しなければならない (MUST)。各アプリは独自の `.env.local` を持たず、root の値を Vite の `envDir` 経由で読む。
+システムは、複数アプリで共有する環境変数（`VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` など）を **リポジトリ root** の `.env.local`（git 管理外）と `.env.example`（git 管理）で一元管理しなければならない (MUST)。各アプリは独自の `.env.local` を持たず、root の値を Vite の `envDir` 経由で読む。本契約は `apps/lp` / `apps/admin` / `apps/reservation` の 3 アプリすべてに適用される。
 
 #### Scenario: root に env を配置
+
 - **WHEN** リポジトリ root に `.env.local` が存在し `VITE_SUPABASE_URL=https://xxx.supabase.co` が定義されている
-- **THEN** `apps/admin` と `apps/reservation` の Vite ビルド/開発で `import.meta.env.VITE_SUPABASE_URL` が同じ値として読み取れる
+- **THEN** `apps/lp` / `apps/admin` / `apps/reservation` の Vite ビルド/開発で `import.meta.env.VITE_SUPABASE_URL` が同じ値として読み取れる
 
 #### Scenario: テンプレートで変数名を共有
+
 - **WHEN** リポジトリ root に `.env.example` が存在
 - **THEN** 新規開発者は `cp .env.example .env.local` で初期セットアップが完了し、各アプリ個別の env.example を見る必要がない
 
 ### Requirement: Vite envDir による root env の参照
 
-システムは、`apps/admin` と `apps/reservation` の `vite.config.js` で `envDir` を **リポジトリ root に向ける**ことで、Vite が root の `.env.*` ファイルを読み込むようにしなければならない (MUST)。
+システムは、`apps/lp` / `apps/admin` / `apps/reservation` の `vite.config.js` で `envDir` を **リポジトリ root に向ける**ことで、Vite が root の `.env.*` ファイルを読み込むようにしなければならない (MUST)。
 
 #### Scenario: vite.config.js での envDir 指定
-- **WHEN** `apps/admin/vite.config.js` に `envDir: path.resolve(__dirname, '../..')` が設定されている
-- **THEN** `pnpm dev:admin` 時に root の `.env.local` から VITE_ プレフィックス変数が読み込まれる
+
+- **WHEN** `apps/lp/vite.config.js` / `apps/admin/vite.config.js` / `apps/reservation/vite.config.js` に `envDir: path.resolve(__dirname, '../..')` が設定されている
+- **THEN** `pnpm dev:lp` / `pnpm dev:admin` / `pnpm dev:reservation` 時に root の `.env.local` から VITE_ プレフィックス変数が読み込まれる
 
 ### Requirement: アプリ固有 env の併用余地
 
@@ -31,14 +34,6 @@
 #### Scenario: アプリ固有 env のオーバーライド
 - **WHEN** root の `.env.local` に `VITE_SUPABASE_URL=https://shared.supabase.co` があり、`apps/admin/.env.local` に `VITE_SUPABASE_URL=https://admin-only.supabase.co` がある
 - **THEN** `apps/admin` の Vite では admin の値が優先される
-
-### Requirement: LP は env 共有スコープ外
-
-システムは、`apps/lp` の env 構成を本 envDir 共有スキームに含めてはならない (MUST NOT)。LP は Phase 1 では Supabase 接続なしで AWS API Gateway + DynamoDB を使い、Phase 2 で Supabase 移行時に同様の envDir 構造へ移行する別 change で対応する。
-
-#### Scenario: LP の env 構成
-- **WHEN** 本 change のマージ後
-- **THEN** `apps/lp/vite.config.js` に envDir 設定はなく、`apps/lp/` 配下に `.env*` ファイルも存在しない（LP は env 不要）
 
 ### Requirement: .gitignore による .env.local 除外の継続
 
@@ -50,13 +45,16 @@
 
 ### Requirement: アプリ配下に env テンプレートを置かない
 
-システムは、`apps/admin` および `apps/reservation` 配下に `.env.local` / `.env.example` を置いてはならない (MUST NOT)。env はリポジトリ root で一元管理する:
+システムは、`apps/lp` / `apps/admin` / `apps/reservation` 配下に `.env.local` / `.env.example` を置いてはならない (MUST NOT)。env はリポジトリ root で一元管理する:
+- `apps/lp/.env.local` (置かない)
+- `apps/lp/.env.example` (置かない)
 - `apps/admin/.env.local` (置かない)
 - `apps/admin/.env.example` (置かない)
 - `apps/reservation/.env.local` (置かない)
 - `apps/reservation/.env.example` (置かない)
 
 #### Scenario: アプリ配下の env テンプレートが残らない
+
 - **WHEN** 本 change マージ後に `find apps -maxdepth 2 -name ".env*"` を実行
 - **THEN** マッチが 0 件である
 
@@ -78,10 +76,11 @@
 
 ### Requirement: Render `envVars` による dev/prd 切替
 
-システムは `render.yaml` の admin / reservation サービス定義（雛形コメント含む）で、Supabase 系 env var を `sync: false` + `previewValue` の 2 段構造で定義しなければならない (MUST)。本番デプロイは `sync: false` で Dashboard に設定された値（prd）を、PR Preview は `previewValue` の値（dev）を使う。
+システムは `render.yaml` の lp / admin / reservation 各サービス定義（雛形コメント含む）で、Supabase 系 env var を `sync: false` + `previewValue` の 2 段構造で定義しなければならない (MUST)。本番デプロイは `sync: false` で Dashboard に設定された値（prd）を、PR Preview は `previewValue` の値（dev）を使う。
 
 #### Scenario: envVars が dev/prd 切替構造で定義される
-- **WHEN** admin / reservation サービスを `services` 配列に追加する PR を作成
+
+- **WHEN** lp / admin / reservation サービスを `services` 配列に追加する PR を作成
 - **THEN** `VITE_SUPABASE_URL` および `VITE_SUPABASE_PUBLISHABLE_KEY` の各エントリが `sync: false` と `previewValue: <dev-value>` の両方を持つ
 
 #### Scenario: secret キーが previewValue に書かれない
@@ -106,10 +105,11 @@
 
 ### Requirement: ローカル開発の `.env.local` は dev プロジェクトの値を使用する
 
-システムはローカル開発時、リポジトリ root の `.env.local` に dev プロジェクトの `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` を記載する運用を維持しなければならない (MUST)。ローカルから prd プロジェクトに接続する運用は許可しない (MUST NOT)。
+システムはローカル開発時、リポジトリ root の `.env.local` に dev プロジェクトの `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` を記載する運用を維持しなければならない (MUST)。ローカルから prd プロジェクトに接続する運用は許可しない (MUST NOT)。本契約は lp / admin / reservation の 3 アプリに等しく適用される。
 
 #### Scenario: ローカル開発が dev に接続する
-- **WHEN** 開発者が `pnpm dev:admin` または `pnpm dev:reservation` を実行
+
+- **WHEN** 開発者が `pnpm dev:lp` / `pnpm dev:admin` / `pnpm dev:reservation` を実行
 - **THEN** root `.env.local` に記載された dev プロジェクトの URL/Key で Supabase に接続する
 
 #### Scenario: ローカルから prd に接続しない

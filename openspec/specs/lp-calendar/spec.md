@@ -20,20 +20,40 @@ API からイベントが1件も返されなかった場合、「予定されて
 
 ### Requirement: API エラー時にエラー状態が表示される
 
-API の取得が失敗した場合、ユーザーにエラーメッセージが表示されなければならない（SHALL）。カレンダーは表示されない（SHALL）。
+Supabase からのデータ取得が失敗した場合、ユーザーにエラーメッセージが表示されなければならない（SHALL）。カレンダーは表示されない（SHALL）。エラーを空配列で握り潰してはならない（MUST NOT）— Loading / Empty / Error の 3 状態は厳密に区別する。
 
-#### Scenario: API 通信エラー
+#### Scenario: Supabase 通信エラー
 
-- **WHEN** API への通信が失敗した場合
+- **WHEN** Supabase クライアントが `error` を返す、または HTTP 5xx を受け取った場合
 - **THEN** `v-alert type="error"` でエラーメッセージが表示され、カレンダーは表示されない
+
+#### Scenario: Empty と Error が区別される
+
+- **WHEN** Supabase が 0 件の `data` を返した場合
+- **THEN** Empty 状態（"予定されているイベントはありません"）が表示され、Error 状態（`v-alert`）は表示されない
 
 ## MODIFIED Requirements
 
 ### Requirement: APIからイベントを取得してカレンダーに表示する
 
-AWS API Gateway からイベント一覧を取得し、カレンダー上に表示しなければならない（SHALL）。データ取得には TanStack Query を使用しなければならない（SHALL）。
+Supabase `events` テーブルからイベント一覧を取得し、カレンダー上に表示しなければならない（SHALL）。データ取得には TanStack Query を使用しなければならない（SHALL）。LP が画面に出すのは `visibility = 'published'` かつ `start_at >= now()` の未来イベントのみとし、絞り込みは Supabase 側のクエリで明示しなければならない（MUST）。並び順は `start_at` の昇順（直近順）でなければならない（SHALL）。`venues` テーブルとの結合により、各イベントには会場名を `location` 文字列として付与しなければならない（SHALL）。
 
 #### Scenario: イベントがカレンダー上に表示される
 
-- **WHEN** APIレスポンスに1件以上のイベントが含まれる
+- **WHEN** Supabase から1件以上の `visibility = 'published'` の未来イベントが返る
 - **THEN** 各イベントが対応する日付のカレンダーセル上に表示される
+
+#### Scenario: 公開フィルタが Supabase クエリで明示される
+
+- **WHEN** LP のイベント取得クエリが発行される
+- **THEN** `visibility = 'published'` の等価フィルタと `start_at >= now()` の範囲フィルタが Supabase 側で評価され、draft / private や過去イベントはクライアントに送られない
+
+#### Scenario: 会場名が `location` として供給される
+
+- **WHEN** Supabase からイベントが返る
+- **THEN** 各イベントの `location` は `events.venue_id` が参照する `venues.name` の値である（venue が NULL の理論上のケースでは空文字列）
+
+#### Scenario: AWS API Gateway 経路が残らない
+
+- **WHEN** `apps/lp/` 配下に対し `ptfomh71x9.execute-api` または `/api/event` を grep する
+- **THEN** マッチが 0 件である（Vite proxy 設定と URL ハードコードがいずれも撤去されている）
