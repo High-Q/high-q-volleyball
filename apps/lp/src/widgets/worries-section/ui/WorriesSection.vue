@@ -50,7 +50,7 @@ const items = [
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 500;
-  color: var(--hq-color-accent);
+  color: rgba(247, 243, 234, 0.6);
 }
 
 .worries__heading {
