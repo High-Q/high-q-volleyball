@@ -72,9 +72,50 @@ describe("LoginPage (#189 ログイン専用化)", () => {
     await wrapper.find('input[type="email"]').setValue("a@example.com");
     await wrapper.find("form").trigger("submit");
     await flushPromises();
-    expect(sendMock).toHaveBeenCalledWith("a@example.com", { shouldCreateUser: false });
+    expect(sendMock).toHaveBeenCalledWith("a@example.com", {
+      shouldCreateUser: false,
+      next: null,
+    });
     expect(router.currentRoute.value.name).toBe("auth-link-sent");
     expect(router.currentRoute.value.query.email).toBe("a@example.com");
+  });
+
+  it("#229: /login?next=... で next が send に転送され、link-sent にも next が引き継がれる", async () => {
+    const { wrapper, router } = await mountAt(
+      "/login?next=%2Fevents%2Fabc-123",
+    );
+    await wrapper.find('input[type="email"]').setValue("a@example.com");
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect(sendMock).toHaveBeenCalledWith("a@example.com", {
+      shouldCreateUser: false,
+      next: "/events/abc-123",
+    });
+    expect(router.currentRoute.value.name).toBe("auth-link-sent");
+    expect(router.currentRoute.value.query.next).toBe("/events/abc-123");
+  });
+
+  it("#229: 不正な next 値 (絶対 URL) は破棄されて send に null で渡る", async () => {
+    const { wrapper, router } = await mountAt(
+      "/login?next=https%3A%2F%2Fevil.example.com",
+    );
+    await wrapper.find('input[type="email"]').setValue("a@example.com");
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect(sendMock).toHaveBeenCalledWith("a@example.com", {
+      shouldCreateUser: false,
+      next: null,
+    });
+    expect(router.currentRoute.value.query.next).toBeUndefined();
+  });
+
+  it("#229: /login?next=... で新規会員登録リンクに next が引き継がれる", async () => {
+    const { wrapper } = await mountAt("/login?next=%2Fevents%2Fabc-123");
+    const signupLink = wrapper.find('[data-testid="login-go-signup"]');
+    expect(signupLink.exists()).toBe(true);
+    // vue-router の href ビルダは `/` を percent-encode しないため、
+    // 期待値はデコード後のフォーム `next=/events/abc-123` で書く
+    expect(signupLink.attributes("href")).toContain("next=/events/abc-123");
   });
 
   it("Error 状態 (unregistered) で /signup への導線を email 付きで表示", async () => {

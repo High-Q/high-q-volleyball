@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { Button, Kicker } from "@high-q/ui";
 import FormField from "@/shared/ui/FormField.vue";
 import Input from "@/shared/ui/Input.vue";
+import { safeNextPath } from "@/shared/lib/safeNextPath";
 import {
   useAuthSession,
   useRequestSignupCode,
@@ -31,6 +32,9 @@ const resend = useRequestSignupCode();
 const code = ref<string>("");
 const email = ref<string>("");
 const resendBanner = ref<string | null>(null);
+
+// #229: LP からのイベント指定遷移を受けるための next クエリ持ち回し。
+const nextPath = computed<string | null>(() => safeNextPath(route.query.next));
 
 const isLoading = computed(() => verify.status.value === "loading");
 const isResending = computed(() => resend.status.value === "loading");
@@ -86,9 +90,17 @@ watch(
     // session が正常確立後、書類提出状態に応じて遷移先を選ぶ
     await session.refresh();
     if (session.hasIdentityDocument.value) {
-      void router.replace({ name: "home" });
+      // #229: next 先があればそこへ。なければホーム。
+      if (nextPath.value) {
+        void router.replace(nextPath.value);
+      } else {
+        void router.replace({ name: "home" });
+      }
     } else {
-      void router.replace({ name: "signup-identity" });
+      // 書類未提出時は signup-identity に next を引き継ぐ
+      const query: Record<string, string> = {};
+      if (nextPath.value) query.next = nextPath.value;
+      void router.replace({ name: "signup-identity", query });
     }
   },
 );
@@ -97,14 +109,20 @@ async function onSubmit() {
   await verify.submit(email.value, code.value);
 }
 
+function buildSignupBackQuery(): Record<string, string> {
+  const query: Record<string, string> = { email: email.value };
+  if (nextPath.value) query.next = nextPath.value;
+  return query;
+}
+
 async function onResend() {
   // 再送はメールのみで他フィールドが既知でないため、/signup へ戻して
   // ユーザーにフォーム再送信してもらう導線にする
-  void router.push({ name: "signup", query: { email: email.value } });
+  void router.push({ name: "signup", query: buildSignupBackQuery() });
 }
 
 function onChangeEmail() {
-  void router.push({ name: "signup", query: { email: email.value } });
+  void router.push({ name: "signup", query: buildSignupBackQuery() });
 }
 </script>
 
@@ -181,12 +199,28 @@ function onChangeEmail() {
       </div>
 
       <div v-if="showRestartCta" class="pt-hq-4">
-        <Button type="button" @click="router.push({ name: 'signup' })">
+        <Button
+          type="button"
+          @click="
+            router.push({
+              name: 'signup',
+              query: nextPath ? { next: nextPath } : {},
+            })
+          "
+        >
           最初からやり直す
         </Button>
       </div>
       <div v-if="showLoginCta" class="pt-hq-4">
-        <Button type="button" @click="router.push({ name: 'login' })">
+        <Button
+          type="button"
+          @click="
+            router.push({
+              name: 'login',
+              query: nextPath ? { next: nextPath } : {},
+            })
+          "
+        >
           ログイン画面へ
         </Button>
       </div>

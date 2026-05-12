@@ -69,6 +69,7 @@ const Stub = defineComponent({ template: "<div/>" });
 const routes = [
   { path: "/", name: "home", component: Stub },
   { path: "/signup/identity", name: "signup-identity", component: Stub },
+  { path: "/events/:id", name: "event-detail", component: Stub },
 ];
 
 beforeEach(() => {
@@ -373,6 +374,41 @@ describe("SignupIdentityPage — CTA 状態駆動", () => {
       await vi.advanceTimersByTimeAsync(1500);
       await flushPromises();
       expect(sessionRef.refresh).toHaveBeenCalled();
+      expect(router.currentRoute.value.name).toBe("home");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("#229: ?next=... 付きで success → 1.5 秒後に next 先に navigate", async () => {
+    vi.useFakeTimers();
+    try {
+      selectedDocumentType.value = "drivers_license";
+      const { router } = await mountPage(
+        "/signup/identity?next=%2Fevents%2Fabc-123",
+      );
+      succeeded.value = true;
+      await flushPromises();
+      await vi.advanceTimersByTimeAsync(1500);
+      await flushPromises();
+      expect(router.currentRoute.value.name).toBe("event-detail");
+      expect(router.currentRoute.value.params.id).toBe("abc-123");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("#229: 不正な next (絶対 URL) は破棄され home に navigate", async () => {
+    vi.useFakeTimers();
+    try {
+      selectedDocumentType.value = "drivers_license";
+      const { router } = await mountPage(
+        "/signup/identity?next=https%3A%2F%2Fevil.example.com",
+      );
+      succeeded.value = true;
+      await flushPromises();
+      await vi.advanceTimersByTimeAsync(1500);
+      await flushPromises();
       expect(router.currentRoute.value.name).toBe("home");
     } finally {
       vi.useRealTimers();

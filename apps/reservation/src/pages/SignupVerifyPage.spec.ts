@@ -41,6 +41,7 @@ const routes = [
   { path: "/signup", name: "signup", component: Stub },
   { path: "/signup/verify", name: "signup-verify", component: Stub },
   { path: "/signup/identity", name: "signup-identity", component: Stub },
+  { path: "/events/:id", name: "event-detail", component: Stub },
 ];
 
 beforeEach(() => {
@@ -172,6 +173,42 @@ describe("SignupVerifyPage (#189)", () => {
     await flushPromises();
     expect(router.currentRoute.value.name).toBe("signup");
     expect(router.currentRoute.value.query.email).toBe("rem@example.com");
+  });
+
+  it("#229: ?next=... で書類未提出時は /signup/identity に next を引き継ぐ", async () => {
+    verifySubmitMock.mockImplementation(async () => {
+      verifyStatus.value = "success";
+      return true;
+    });
+    hasIdentityDocument.value = false;
+    const { wrapper, router } = await mountPage(
+      "?email=rem%40example.com&next=%2Fevents%2Fabc-123",
+    );
+    const codeInput = wrapper.find('[data-testid="verify-code-input"]');
+    await codeInput.setValue("123456");
+    const cta = wrapper.findAll("button").find((b) => b.text().includes("認証する"));
+    await cta!.trigger("submit");
+    await flushPromises();
+    expect(router.currentRoute.value.name).toBe("signup-identity");
+    expect(router.currentRoute.value.query.next).toBe("/events/abc-123");
+  });
+
+  it("#229: ?next=... で書類提出済みなら next 先 (/events/<id>) に直接 navigate", async () => {
+    verifySubmitMock.mockImplementation(async () => {
+      verifyStatus.value = "success";
+      return true;
+    });
+    hasIdentityDocument.value = true;
+    const { wrapper, router } = await mountPage(
+      "?email=rem%40example.com&next=%2Fevents%2Fabc-123",
+    );
+    const codeInput = wrapper.find('[data-testid="verify-code-input"]');
+    await codeInput.setValue("123456");
+    const cta = wrapper.findAll("button").find((b) => b.text().includes("認証する"));
+    await cta!.trigger("submit");
+    await flushPromises();
+    expect(router.currentRoute.value.name).toBe("event-detail");
+    expect(router.currentRoute.value.params.id).toBe("abc-123");
   });
 
   it("「コードを再送する」リンクで /signup に email を保持して戻る", async () => {

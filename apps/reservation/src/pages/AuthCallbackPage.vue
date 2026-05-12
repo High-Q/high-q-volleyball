@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useAuthSession } from "@/features/auth";
+import { safeNextPath } from "@/shared/lib/safeNextPath";
 
+const route = useRoute();
 const router = useRouter();
 const session = useAuthSession();
 
@@ -21,7 +23,15 @@ onMounted(async () => {
 
   // #189 ゼロ滞留 signup フロー導入後、認証済み = プロフィール完成済みが
   // 不変条件のため「未完成 → /signup/profile 誘導」分岐は撤廃。
-  void router.replace({ name: "home" });
+  // #229: LP からのイベント指定遷移を引き継ぐため、next クエリが安全であれば
+  // home の代わりにそのパスへ navigate する。書類未提出時は router guard 側で
+  // /signup/identity に強制誘導される (next も guard で引き継がれる)。
+  const nextPath = safeNextPath(route.query.next);
+  if (nextPath) {
+    void router.replace(nextPath);
+  } else {
+    void router.replace({ name: "home" });
+  }
 });
 </script>
 

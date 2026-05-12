@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onUnmounted, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { Kicker } from "@high-q/ui";
+import { safeNextPath } from "@/shared/lib/safeNextPath";
 import {
   DOCUMENT_TYPE_BACK_HINTS,
   DOCUMENT_TYPE_BACK_REQUIRED,
@@ -28,9 +29,14 @@ const identityLead =
 const identityStorageNote =
   "画像は Supabase (米国法人運営の SaaS、データは日本リージョン保管) を経由して安全に保管されます。";
 
+const route = useRoute();
 const router = useRouter();
 const session = useAuthSession();
 const upload = useUploadIdentityDocument();
+
+// #229: LP からのイベント指定遷移を受けるため、書類提出完了後の navigate 先を
+// next クエリで上書きする (デフォルトは home)。
+const nextPath = computed<string | null>(() => safeNextPath(route.query.next));
 
 // チップ表示は 1 行に収めるため短縮形を使う。SSOT (DOCUMENT_TYPE_LABELS) は
 // admin レビュー画面 / メール文面用に正式名称「マイナンバーカード (個人番号マスク済み)」
@@ -177,7 +183,12 @@ watch(
       setTimeout(resolve, SUCCESS_AUTO_REDIRECT_MS),
     );
     await session.refresh();
-    void router.push({ name: "home" });
+    // #229: next 先があればそこへ。なければホーム。
+    if (nextPath.value) {
+      void router.push(nextPath.value);
+    } else {
+      void router.push({ name: "home" });
+    }
   },
 );
 

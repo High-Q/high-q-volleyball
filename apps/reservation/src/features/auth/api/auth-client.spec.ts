@@ -64,6 +64,39 @@ describe("sendMagicLink", () => {
       sendMagicLink("x@example.com", { shouldCreateUser: false }),
     ).rejects.toMatchObject({ status: 429 });
   });
+
+  it("next を指定すると emailRedirectTo に ?next=<encoded> が含まれる (#229)", async () => {
+    signInWithOtpMock.mockResolvedValue({ error: null });
+    const { sendMagicLink } = await import("./auth-client");
+    await sendMagicLink("a@example.com", {
+      shouldCreateUser: false,
+      next: "/events/abc-123",
+    });
+    expect(signInWithOtpMock).toHaveBeenCalledWith({
+      email: "a@example.com",
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo:
+          "http://localhost:5173/auth/callback?next=%2Fevents%2Fabc-123",
+      },
+    });
+  });
+
+  it("next が null / 未指定なら emailRedirectTo は素のままになる (#229)", async () => {
+    signInWithOtpMock.mockResolvedValue({ error: null });
+    const { sendMagicLink } = await import("./auth-client");
+    await sendMagicLink("a@example.com", {
+      shouldCreateUser: false,
+      next: null,
+    });
+    expect(signInWithOtpMock).toHaveBeenCalledWith({
+      email: "a@example.com",
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: "http://localhost:5173/auth/callback",
+      },
+    });
+  });
 });
 
 describe("signOut", () => {
