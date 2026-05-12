@@ -79,7 +79,7 @@ import { LINE_OPEN_CHAT_URL, X_URL, X_HANDLE } from '@shared/config/sns'
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 500;
-  color: rgba(247, 243, 234, 0.85);
+  color: var(--hq-color-accent);
 }
 
 .final-cta__heading {

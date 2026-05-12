@@ -1,6 +1,6 @@
 <template>
   <section class="about" aria-labelledby="about-heading">
-    <Kicker color="ink">— About</Kicker>
+    <Kicker color="accent">— About</Kicker>
     <h2 id="about-heading" class="about__heading">
       はじめての人にこそ、<br />来てほしい場所。
     </h2>

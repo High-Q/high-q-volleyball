@@ -89,7 +89,7 @@ function onTrialClick() {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 500;
-  color: rgba(247, 243, 234, 0.85);
+  color: var(--hq-color-accent);
   margin-bottom: 16px;
 }
 

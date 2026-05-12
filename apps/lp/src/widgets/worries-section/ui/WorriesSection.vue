@@ -50,7 +50,7 @@ const items = [
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 500;
-  color: rgba(247, 243, 234, 0.6);
+  color: var(--hq-color-accent);
 }
 
 .worries__heading {
@@ -101,7 +101,7 @@ const items = [
   font-family: var(--hq-font-jp-display);
   font-size: 18px;
   font-weight: 600;
-  color: var(--hq-color-paper);
+  color: var(--hq-color-accent);
   line-height: 1;
   flex-shrink: 0;
   letter-spacing: 0.05em;
@@ -109,7 +109,7 @@ const items = [
 
 .worries__marker--a {
   color: var(--hq-color-paper);
-  opacity: 0.55;
+  opacity: 0.75;
 }
 
 .worries__q-text {

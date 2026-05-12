@@ -1,7 +1,7 @@
 <template>
   <section class="flow" aria-labelledby="flow-heading">
     <header class="flow__head">
-      <Kicker color="ink">— First time?</Kicker>
+      <Kicker color="accent">— First time?</Kicker>
       <h2 id="flow-heading" class="flow__heading">
         当日、こんな流れで<br />進みます。
       </h2>
@@ -106,7 +106,7 @@ const steps = [
   justify-content: center;
   font-family: var(--hq-font-mono);
   font-size: 9px;
-  color: var(--hq-color-ink-soft);
+  color: var(--hq-color-accent);
   flex-shrink: 0;
   margin-top: 2px;
   position: relative;
@@ -150,7 +150,7 @@ const steps = [
   margin-top: 16px;
   padding: 16px;
   background: var(--hq-color-paper);
-  border-left: 2px solid var(--hq-color-ink);
+  border-left: 2px solid var(--hq-color-accent);
   font-family: var(--hq-font-jp);
   font-size: 14px;
   line-height: 1.85;

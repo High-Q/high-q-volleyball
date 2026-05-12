@@ -1,7 +1,7 @@
 <template>
   <section class="nfy" aria-labelledby="nfy-heading">
     <header class="nfy__head">
-      <Kicker color="ink">— Honest note</Kicker>
+      <Kicker color="accent">— Honest note</Kicker>
       <h2 id="nfy-heading" class="nfy__heading">
         こんな方には、<br />合わないかもしれません。
       </h2>
