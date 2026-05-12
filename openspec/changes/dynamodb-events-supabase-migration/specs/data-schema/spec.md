@@ -48,3 +48,21 @@ AWS DynamoDB に存在する `location` が空文字（`""`）または欠落の
 
 - **WHEN** AWS イベントの `location` フィールドが空文字または未定義
 - **THEN** スクリプトはそのイベントを INSERT せず、`[event] SKIP (empty location)` ログを出力し、サマリーの「SKIP（空 location）」件数に計上する
+
+### Requirement: approved 対照表における `skip` アクションのサポート
+
+`correspondence-venues-approved.md` の判定欄に `skip` を指定された AWS location について、移行スクリプトは当該 location を持つ全 AWS イベントを移行対象から除外 MUST する。これは「LP に表示すべきでないイベント（テスト用・運営内部用など）を移行時点で機械的に除外する」運用に用いる。
+
+#### Scenario: skip 指定 location のイベントが除外される
+
+- **WHEN** approved の行に `判定 = skip` の location が記載され、AWS にその location を持つイベントが存在する
+- **THEN** 当該イベントは INSERT されず、`[event] SKIP (approved skip)` ログが出力され、サマリーの「SKIP（approved skip）」件数に計上される
+
+### Requirement: 複数 AWS location の同一 venue への統合
+
+`correspondence-venues-approved.md` で複数の AWS location が同じ `new` venue 名を指定された場合、移行スクリプトはそれら location を **同一の venue 行**として 1 度だけ INSERT し、すべての AWS location が同じ `venue_id` を共有 MUST する。これは「同じ会場の表記揺れを 1 つの venue に寄せる」用途や「駅集合のように場所を秘匿しつつ複数表記を統合する」用途で用いる。
+
+#### Scenario: 異なる AWS location が同じ新規 venue に統合される
+
+- **WHEN** approved に複数の `new` 行があり、いずれも同じ「Supabase venue 候補」名（例: `有明会場`）を指す
+- **THEN** スクリプトは `venues` テーブルに 1 行だけ INSERT し、それら全ての AWS location のイベントは同一の `venue_id` を持つ events 行として書き込まれる

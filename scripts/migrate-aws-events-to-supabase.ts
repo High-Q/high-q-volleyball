@@ -61,6 +61,7 @@ type ApprovedAction =
   | { action: 'match'; venueId: string }
   | { action: 'new'; newVenueName: string }
   | { action: 'fix'; venueId: string; newVenueName: string }
+  | { action: 'skip' }
 
 type ApprovedMap = Map<string, ApprovedAction>
 
@@ -293,7 +294,7 @@ function readApprovedVenues(dir: string): ApprovedMap {
   const text = readFileSync(path, 'utf8')
   const map: ApprovedMap = new Map()
   // table 行: | # | `AWS location` | 候補種別 | `venue name` | `venue_id` | score | 判定 |
-  const rowRe = /^\|\s*\d+\s*\|\s*`([^`]*)`\s*\|[^|]*\|\s*`([^`]*)`\s*\|\s*`([^`]*)`\s*\|[^|]*\|\s*(match|new|fix)\s*\|/gm
+  const rowRe = /^\|\s*\d+\s*\|\s*`([^`]*)`\s*\|[^|]*\|\s*`([^`]*)`\s*\|\s*`([^`]*)`\s*\|[^|]*\|\s*(match|new|fix|skip)\s*\|/gm
   let m: RegExpExecArray | null
   while ((m = rowRe.exec(text)) !== null) {
     const [, awsLocation, candidateName, candidateId, action] = m
@@ -303,7 +304,9 @@ function readApprovedVenues(dir: string): ApprovedMap {
       }
       map.set(awsLocation, { action: 'match', venueId: candidateId })
     } else if (action === 'new') {
-      // new の場合、candidateName が新規 venue 名（既定で AWS location をそのまま使う、人手で別名にも変更可）
+      // new の場合、candidateName が新規 venue 名（既定で AWS location をそのまま使う、人手で別名にも変更可）。
+      // 複数の AWS location が同じ newVenueName を指していた場合、runMigration が name でグルーピング
+      // して 1 つの venue に統合 INSERT する。
       const newName = candidateName && candidateName !== '—' ? candidateName : awsLocation
       map.set(awsLocation, { action: 'new', newVenueName: newName })
     } else if (action === 'fix') {
@@ -312,6 +315,9 @@ function readApprovedVenues(dir: string): ApprovedMap {
       }
       const newName = candidateName && candidateName !== '—' ? candidateName : awsLocation
       map.set(awsLocation, { action: 'fix', venueId: candidateId, newVenueName: newName })
+    } else if (action === 'skip') {
+      // skip: 当該 location を持つ AWS イベントを移行対象から除外する
+      map.set(awsLocation, { action: 'skip' })
     }
   }
   if (map.size === 0) {
@@ -474,31 +480,48 @@ async function runMigration(args: CliArgs, commit: boolean): Promise<void> {
     }
   }
 
-  // venue_id 解決（commit 時は new / fix を実行、dry-run はログのみ）
+  // Step A: new venue を name でグルーピングして 1 回ずつ INSERT
+  //   複数の AWS location が同じ newVenueName を指すケース（例: 「有明テニスの森」と
+  //   「有明テニスの森駅周辺」を共に「有明会場」に統合）を 1 つの venue として扱う。
+  const newVenueNames = new Set<string>()
+  for (const action of approved.values()) {
+    if (action.action === 'new') newVenueNames.add(action.newVenueName)
+  }
+  const newVenueIdByName = new Map<string, string>()
+  for (const name of newVenueNames) {
+    if (commit) {
+      const id = await insertVenue(supabase, name)
+      newVenueIdByName.set(name, id)
+      console.log(`[venue] NEW    name="${name}" → ${id}`)
+    } else {
+      newVenueIdByName.set(name, '(dry-run pending)')
+      console.log(`[venue] (dry-run) NEW name="${name}"`)
+    }
+  }
+
+  // Step B: AWS location ごとに venue_id を解決し、skip / match / new / fix を確定
   const venueIdMap = new Map<string, string>()
+  const skippedLocations = new Set<string>()
   for (const [loc, action] of approved.entries()) {
     if (action.action === 'match') {
       venueIdMap.set(loc, action.venueId)
-      console.log(`[venue] MATCH "${loc}" → ${action.venueId}`)
+      console.log(`[venue] MATCH  "${loc}" → ${action.venueId}`)
     } else if (action.action === 'new') {
-      if (commit) {
-        const id = await insertVenue(supabase, action.newVenueName)
-        venueIdMap.set(loc, id)
-        console.log(`[venue] NEW   "${loc}" → ${id} (name="${action.newVenueName}")`)
-      } else {
-        venueIdMap.set(loc, '(dry-run pending)')
-        console.log(`[venue] (dry-run) NEW "${loc}" name="${action.newVenueName}"`)
-      }
-    } else {
-      // fix
+      const id = newVenueIdByName.get(action.newVenueName)!
+      venueIdMap.set(loc, id)
+      console.log(`[venue] NEW→   "${loc}" → ${id} (name="${action.newVenueName}")`)
+    } else if (action.action === 'fix') {
       if (commit) {
         await updateVenueName(supabase, action.venueId, action.newVenueName)
-        venueIdMap.set(loc, action.venueId)
-        console.log(`[venue] FIX   "${loc}" venue ${action.venueId} renamed to "${action.newVenueName}"`)
+        console.log(`[venue] FIX    "${loc}" venue ${action.venueId} renamed to "${action.newVenueName}"`)
       } else {
-        venueIdMap.set(loc, action.venueId)
         console.log(`[venue] (dry-run) FIX venue ${action.venueId} → "${action.newVenueName}"`)
       }
+      venueIdMap.set(loc, action.venueId)
+    } else {
+      // skip
+      skippedLocations.add(loc)
+      console.log(`[venue] SKIP   "${loc}" (approved 指定により移行対象外)`)
     }
   }
 
@@ -506,10 +529,16 @@ async function runMigration(args: CliArgs, commit: boolean): Promise<void> {
   let inserted = 0
   let skippedExisting = 0
   let skippedEmptyLocation = 0
+  let skippedByApproved = 0
   for (const e of awsEvents) {
     if (!e.location || e.location === '') {
       console.log(`[event] SKIP (empty location) ${e.id} "${e.title}" ${e.start_time}`)
       skippedEmptyLocation++
+      continue
+    }
+    if (skippedLocations.has(e.location)) {
+      console.log(`[event] SKIP (approved skip) ${e.id}@${e.start_time} "${e.title}" location="${e.location}"`)
+      skippedByApproved++
       continue
     }
     const venueId = venueIdMap.get(e.location)
@@ -539,7 +568,8 @@ async function runMigration(args: CliArgs, commit: boolean): Promise<void> {
   console.log(`INSERT ${commit ? '実行' : '予定'}: ${inserted}`)
   console.log(`SKIP（Legacy ID 既存）: ${skippedExisting}`)
   console.log(`SKIP（空 location）: ${skippedEmptyLocation}`)
-  console.log(`venue NEW ${commit ? '実行' : '予定'}: ${Array.from(approved.values()).filter((a) => a.action === 'new').length}`)
+  console.log(`SKIP（approved skip）: ${skippedByApproved}`)
+  console.log(`venue NEW (ユニーク件数) ${commit ? '実行' : '予定'}: ${newVenueNames.size}`)
   console.log(`venue FIX ${commit ? '実行' : '予定'}: ${Array.from(approved.values()).filter((a) => a.action === 'fix').length}`)
 }
 
