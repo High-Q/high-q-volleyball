@@ -1,7 +1,7 @@
 <template>
   <section class="reassurance" aria-labelledby="reassurance-heading">
     <header class="reassurance__head">
-      <Kicker color="muted">— Easy to start</Kicker>
+      <Kicker color="ink">— Easy to start</Kicker>
       <h2 id="reassurance-heading" class="reassurance__title">来る前に、これだけ。</h2>
     </header>
 

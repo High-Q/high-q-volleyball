@@ -1,7 +1,7 @@
 <template>
   <section class="worries" aria-labelledby="worries-heading">
     <header class="worries__head">
-      <Kicker color="muted">— Before you join</Kicker>
+      <div class="worries__kicker">— Before you join</div>
       <h2 id="worries-heading" class="worries__heading">
         来る前の不安を、<br />ぜんぶ。
       </h2>
@@ -24,8 +24,6 @@
 </template>
 
 <script setup>
-import { Kicker } from '@high-q/ui'
-
 const items = [
   { q: 'ガチ勢ばっかりじゃない？', a: '初心者と経験者が、半々くらいです。' },
   { q: 'ひとりで来ても浮かない？', a: 'ほとんどの人がひとりで来ます。幹事が紹介する時間もあります。' },
@@ -44,6 +42,15 @@ const items = [
 
 .worries__head {
   margin-bottom: 32px;
+}
+
+.worries__kicker {
+  font-family: var(--hq-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: rgba(247, 243, 234, 0.6);
 }
 
 .worries__heading {
@@ -94,7 +101,7 @@ const items = [
   font-family: var(--hq-font-jp-display);
   font-size: 18px;
   font-weight: 600;
-  color: var(--hq-color-muted);
+  color: var(--hq-color-paper);
   line-height: 1;
   flex-shrink: 0;
   letter-spacing: 0.05em;

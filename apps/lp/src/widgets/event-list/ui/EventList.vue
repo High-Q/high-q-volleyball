@@ -5,7 +5,7 @@
     aria-labelledby="event-list-heading"
   >
     <header class="event-list__head">
-      <Kicker color="muted">— Schedule</Kicker>
+      <Kicker color="ink">— Schedule</Kicker>
       <h2 id="event-list-heading" class="event-list__heading">
         次に、来れる日。
       </h2>

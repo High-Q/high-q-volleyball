@@ -1,7 +1,7 @@
 <template>
   <section class="gallery" aria-labelledby="gallery-heading">
     <header class="gallery__head">
-      <Kicker color="muted">— Gallery &amp; Social</Kicker>
+      <Kicker color="ink">— Gallery &amp; Social</Kicker>
       <h2 id="gallery-heading" class="gallery__heading">ある日の、High Q。</h2>
       <p class="gallery__lead">Follow along.</p>
     </header>
