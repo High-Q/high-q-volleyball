@@ -62,7 +62,7 @@ const subtitle = computed(
       <p class="font-jp text-xs text-muted mt-hq-1">{{ subtitle }}</p>
     </div>
     <div class="flex items-center gap-hq-2">
-      <Button variant="ink" size="sm" @click="emit('clickEdit')">
+      <Button variant="primary" size="sm" @click="emit('clickEdit')">
         編集
       </Button>
     </div>

@@ -165,15 +165,12 @@ function formatTimeLocation(event) {
   font-family: var(--hq-font-mono);
   font-size: 11px;
   letter-spacing: 0.15em;
-  color: var(--hq-color-accent);
+  color: var(--hq-color-ink);
   font-weight: 500;
-  padding: 4px 10px;
-  border: 1px solid var(--hq-color-accent);
-  border-radius: 2px;
-  transition: background 150ms ease;
+  opacity: 0.85;
 }
 
 .next-strip__row--link:hover .next-strip__arrow {
-  background: var(--hq-color-accent-soft);
+  opacity: 1;
 }
 </style>

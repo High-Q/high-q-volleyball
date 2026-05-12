@@ -115,14 +115,14 @@ function onClose(): void {
             @click="onClose"
           >キャンセル</Button>
           <Button
-            variant="ink"
+            variant="primary"
             type="button"
             :disabled="submitting"
             @click="onSubmit"
           >{{ submitting ? "送信中..." : "保存" }}</Button>
         </template>
         <template v-else>
-          <Button variant="ink" type="button" @click="onClose">閉じる</Button>
+          <Button variant="primary" type="button" @click="onClose">閉じる</Button>
         </template>
       </AlertDialogFooter>
     </AlertDialogContent>

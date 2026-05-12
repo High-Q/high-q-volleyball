@@ -152,7 +152,7 @@ function onReset() {
           </FormField>
           <Button
             type="submit"
-            variant="ink"
+            variant="primary"
             :loading="isLoading"
             :disabled="isLoading"
           >

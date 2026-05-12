@@ -140,7 +140,7 @@ function onVisibilityChange(value: string): void {
     </Select>
 
     <div class="ml-auto">
-      <Button variant="ink" size="sm" @click="emit('clickNew')">
+      <Button variant="primary" size="sm" @click="emit('clickNew')">
         新規作成
       </Button>
     </div>

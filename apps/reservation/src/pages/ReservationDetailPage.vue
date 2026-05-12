@@ -269,7 +269,7 @@ function goHistory(): void {
           <Button variant="outline" size="sm" type="button" @click="load">
             再試行
           </Button>
-          <Button variant="ink" size="sm" type="button" @click="goHistory">
+          <Button variant="primary" size="sm" type="button" @click="goHistory">
             履歴に戻る
           </Button>
         </div>
@@ -323,7 +323,7 @@ function goHistory(): void {
         <!-- 編集 CTA: 前向きアクションをプライマリに昇格 (#215) -->
         <Button
           v-if="editButtonVisible"
-          variant="ink"
+          variant="primary"
           size="md"
           type="button"
           class="w-full"

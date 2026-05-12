@@ -12,14 +12,9 @@ import { Button, Kicker, Badge, Photo, RemainBar } from "@high-q/ui";
 
     <h2>Button — variant</h2>
     <div class="row">
-      <span class="label">primary (accent)</span>
+      <span class="label">primary (ink)</span>
       <Button variant="primary">予約する</Button>
       <Button variant="primary" size="sm">予約する</Button>
-    </div>
-    <div class="row">
-      <span class="label">ink</span>
-      <Button variant="ink">送信</Button>
-      <Button variant="ink" size="sm">送信</Button>
     </div>
     <div class="row">
       <span class="label">outline</span>

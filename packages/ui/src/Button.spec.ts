@@ -18,14 +18,6 @@ describe("Button", () => {
     expect(wrapper.classes()).toContain("hq-btn--outline");
   });
 
-  it("variant=ink が class に反映される (secondary-strong 用途)", () => {
-    const wrapper = mount(Button, {
-      props: { variant: "ink" },
-      slots: { default: "送信" },
-    });
-    expect(wrapper.classes()).toContain("hq-btn--ink");
-  });
-
   it("size=sm が class に反映される", () => {
     const wrapper = mount(Button, {
       props: { size: "sm" },

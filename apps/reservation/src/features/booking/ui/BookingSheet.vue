@@ -305,7 +305,7 @@ async function onSubmit(): Promise<void> {
           戻る
         </Button>
         <Button
-          variant="ink"
+          variant="primary"
           size="md"
           class="flex-1"
           :disabled="submitDisabled"

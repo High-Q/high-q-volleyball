@@ -188,7 +188,7 @@ function goEvents(): void {
           <p class="font-jp text-sm text-muted m-0">
             まだ予約がありません。最初の予約を取りましょう。
           </p>
-          <Button variant="ink" size="sm" type="button" @click="goEvents">イベントを探す</Button>
+          <Button variant="primary" size="sm" type="button" @click="goEvents">イベントを探す</Button>
         </div>
 
         <!-- Upcoming group -->

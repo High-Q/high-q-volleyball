@@ -85,7 +85,7 @@ async function handleCancel() {
           キャンセル
         </Button>
         <Button
-          variant="ink"
+          variant="primary"
           size="sm"
           :loading="f.isSubmitting.value"
           :disabled="f.isSubmitting.value"
