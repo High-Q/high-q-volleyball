@@ -28,6 +28,7 @@ const routes = [
   { path: "/login", name: "login", component: Stub },
   { path: "/signup", name: "signup", component: Stub },
   { path: "/signup/verify", name: "signup-verify", component: Stub },
+  { path: "/events/:id", name: "event-detail", component: Stub },
 ];
 
 beforeEach(() => {
@@ -44,10 +45,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-async function mountPage() {
+async function mountPage(initial = "/signup") {
   const SignupPage = (await import("./SignupPage.vue")).default;
   const router = createRouter({ history: createMemoryHistory(), routes });
-  await router.push("/signup");
+  await router.push(initial);
   await router.isReady();
   const wrapper = mount(SignupPage, { global: { plugins: [router] } });
   await flushPromises();
@@ -155,6 +156,35 @@ describe("SignupPage (#189)", () => {
     await cta!.trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.name).toBe("signup");
+  });
+
+  it("#229: /signup?next=... で送信成功時 /signup/verify に next が引き継がれる", async () => {
+    submitMock.mockResolvedValue(true);
+    const { wrapper, router } = await mountPage(
+      "/signup?next=%2Fevents%2Fabc-123",
+    );
+    await fillValidForm(wrapper);
+    const cta = wrapper
+      .findAll("button")
+      .find((b) => b.text().includes("認証コードを送信する"));
+    await cta!.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.name).toBe("signup-verify");
+    expect(router.currentRoute.value.query.next).toBe("/events/abc-123");
+  });
+
+  it("#229: 不正な next 値 (絶対 URL) は引き継がれない", async () => {
+    submitMock.mockResolvedValue(true);
+    const { wrapper, router } = await mountPage(
+      "/signup?next=https%3A%2F%2Fevil.example.com",
+    );
+    await fillValidForm(wrapper);
+    const cta = wrapper
+      .findAll("button")
+      .find((b) => b.text().includes("認証コードを送信する"));
+    await cta!.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.next).toBeUndefined();
   });
 
   it("PolicyFooter の Privacy リンクが LP オリジンを指す", async () => {

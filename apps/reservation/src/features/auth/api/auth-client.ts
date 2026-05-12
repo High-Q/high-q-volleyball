@@ -9,6 +9,13 @@ const CALLBACK_PATH = "/auth/callback";
 
 export type SendOptions = {
   shouldCreateUser: boolean;
+  /**
+   * 認証完了後に navigate させたいパス (LP からのイベント指定遷移等)。
+   * `emailRedirectTo` の URL に `?next=<encoded>` として埋め込まれ、
+   * `/auth/callback` 側で復元される。値の安全性は呼び出し側が `safeNextPath`
+   * で事前に検証することを前提とする (Issue #229)。
+   */
+  next?: string | null;
 };
 
 export async function sendMagicLink(
@@ -16,7 +23,11 @@ export async function sendMagicLink(
   options: SendOptions,
 ): Promise<void> {
   const supabase = getSupabase();
-  const redirectTo = `${window.location.origin}${CALLBACK_PATH}`;
+  const url = new URL(CALLBACK_PATH, window.location.origin);
+  if (options.next) {
+    url.searchParams.set("next", options.next);
+  }
+  const redirectTo = url.toString();
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {

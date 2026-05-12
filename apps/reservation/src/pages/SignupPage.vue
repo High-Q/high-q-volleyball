@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, reactive } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { Button, Kicker } from "@high-q/ui";
 import FormField from "@/shared/ui/FormField.vue";
 import Input from "@/shared/ui/Input.vue";
 import PolicyFooter from "@/shared/ui/PolicyFooter.vue";
 import { PRIVACY_POLICY_URL } from "@/shared/lib/externalLinks";
+import { safeNextPath } from "@/shared/lib/safeNextPath";
 import { useRequestSignupCode } from "@/features/auth";
 
 /**
@@ -20,9 +21,13 @@ import { useRequestSignupCode } from "@/features/auth";
  *   - Requirement: /signup ページ（1 ページ全項目入力）
  */
 
+const route = useRoute();
 const router = useRouter();
 const { status, errorCode, fieldErrors, retryAfterSec, submit } =
   useRequestSignupCode();
+
+// #229: LP からのイベント指定遷移を受けるための next クエリ持ち回し。
+const nextPath = computed<string | null>(() => safeNextPath(route.query.next));
 
 const profileLead =
   "ご入力いただいた情報は、本人確認・連絡・参加管理のためにのみ利用します。第三者への提供は法令に基づく場合を除き行いません。";
@@ -86,9 +91,15 @@ async function onSubmit() {
     terms_agreed: form.terms_agreed,
   });
   if (ok) {
+    const query: Record<string, string> = {
+      email: form.email.trim().toLowerCase(),
+    };
+    if (nextPath.value) {
+      query.next = nextPath.value;
+    }
     void router.push({
       name: "signup-verify",
-      query: { email: form.email.trim().toLowerCase() },
+      query,
     });
   }
 }
@@ -134,7 +145,13 @@ async function onSubmit() {
           class="-mt-hq-3 text-xs text-muted leading-relaxed"
         >
           既に登録済みの場合は
-          <router-link :to="{ name: 'login' }" class="text-accent underline">
+          <router-link
+            :to="{
+              name: 'login',
+              query: nextPath ? { next: nextPath } : {},
+            }"
+            class="text-accent underline"
+          >
             ログイン画面
           </router-link>
           へお進みください。

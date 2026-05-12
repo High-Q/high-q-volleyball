@@ -16,6 +16,7 @@ import AuthCallbackPage from "@/pages/AuthCallbackPage.vue";
 import ProfilePage from "@/pages/ProfilePage.vue";
 import HistoryPage from "@/pages/HistoryPage.vue";
 import { useAuthSession } from "@/features/auth";
+import { safeNextPath } from "@/shared/lib/safeNextPath";
 
 const routes: RouteRecordRaw[] = [
   // / は認証必須。プロフィール完成済みユーザーは /events にリダイレクトされる
@@ -108,6 +109,12 @@ export function registerAuthGuard(router: Router): void {
       // 未認証
       if (!authed) {
         if (isPublic) return true;
+        // #229: LP からのイベント指定遷移等で元の遷移先を `next` クエリに保持
+        // して /login にリダイレクトする。値は safeNextPath で正規化済み。
+        const candidateNext = safeNextPath(to.fullPath);
+        if (candidateNext) {
+          return { name: "login", query: { next: candidateNext } };
+        }
         return { name: "login" };
       }
 
@@ -116,27 +123,51 @@ export function registerAuthGuard(router: Router): void {
       // 撤廃済み。Phase 1 で作成された既存会員行は signup_completed=true 持ち。
 
       // 認証済み + 書類未提出 → /signup/identity 強制誘導 (#92)
+      // ただし #229 で `next` を持つ場合は、書類提出後に next 先へ navigate
+      // するために本リダイレクトでも `next` を引き継ぐ。
       if (!hasIdDoc) {
         if (to.name === "signup-identity" || to.name === "auth-callback") {
           return true;
+        }
+        const carriedNext = safeNextPath(toQueryString(to.query.next));
+        if (carriedNext) {
+          return {
+            name: "signup-identity",
+            query: { next: carriedNext },
+          };
         }
         return { name: "signup-identity" };
       }
 
       // 認証済み + 書類提出済み:
-      // ログイン / 新規登録 / 段階 3 系は / へ（重複登録防止）
+      // ログイン / 新規登録 / 段階 3 系は本来 / にリダイレクトするが、
+      // #229: `next` クエリが安全であればそこに直接 navigate する。
       if (
         to.name === "login" ||
         to.name === "signup" ||
         to.name === "signup-verify" ||
         to.name === "signup-identity"
       ) {
+        const carriedNext = safeNextPath(toQueryString(to.query.next));
+        if (carriedNext) {
+          return carriedNext;
+        }
         return { name: "events-list" };
       }
 
       return true;
     },
   );
+}
+
+/**
+ * vue-router の `LocationQueryValue | LocationQueryValue[]` を文字列に正規化する。
+ * 配列・null は `null` を返し、`safeNextPath` 側の `typeof string` 判定で却下される。
+ */
+function toQueryString(
+  v: unknown,
+): string | null {
+  return typeof v === "string" ? v : null;
 }
 
 const router = createRouter({

@@ -5,6 +5,7 @@ import { Button, Kicker } from "@high-q/ui";
 import FormField from "@/shared/ui/FormField.vue";
 import Input from "@/shared/ui/Input.vue";
 import { useSendMagicLink } from "@/features/auth";
+import { safeNextPath } from "@/shared/lib/safeNextPath";
 
 /**
  * 予約サイトのログイン専用ページ。
@@ -75,12 +76,25 @@ const aboutItems = [
   { label: "会費無料", description: "各イベント参加費のみ" },
 ] as const;
 
+// #229: LP からのイベント指定遷移を受けるため、`next` クエリを safeNextPath で
+// 正規化したうえでマジックリンクの emailRedirectTo に持ち回す。
+const nextPath = computed<string | null>(() =>
+  safeNextPath(route.query.next),
+);
+
 async function onSubmit() {
-  await send(email.value, { shouldCreateUser: false });
+  await send(email.value, {
+    shouldCreateUser: false,
+    next: nextPath.value,
+  });
   if (status.value === "success") {
+    const query: Record<string, string> = { email: email.value };
+    if (nextPath.value) {
+      query.next = nextPath.value;
+    }
     void router.push({
       name: "auth-link-sent",
-      query: { email: email.value },
+      query,
     });
   }
 }
@@ -160,7 +174,10 @@ async function onSubmit() {
             class="text-xs text-muted leading-relaxed text-center"
           >
             <router-link
-              :to="{ name: 'signup', query: { email } }"
+              :to="{
+                name: 'signup',
+                query: nextPath ? { email, next: nextPath } : { email },
+              }"
               class="text-accent underline"
               data-testid="login-go-signup"
             >新規会員登録へ</router-link>
@@ -169,7 +186,10 @@ async function onSubmit() {
           <p v-else class="text-xs text-muted leading-relaxed text-center">
             初めての方は
             <router-link
-              :to="{ name: 'signup' }"
+              :to="{
+                name: 'signup',
+                query: nextPath ? { next: nextPath } : {},
+              }"
               class="text-accent underline"
               data-testid="login-go-signup"
             >新規会員登録</router-link>
