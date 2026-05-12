@@ -29,7 +29,7 @@ import { dirname, resolve } from 'node:path'
 // 型
 // ---------------------------------------------------------------------------
 
-type Mode = 'survey' | 'dry-run' | 'commit'
+type Mode = 'survey' | 'dry-run' | 'commit' | 'set-default-fees'
 
 interface CliArgs {
   mode: Mode
@@ -79,6 +79,7 @@ function parseArgs(argv: string[]): CliArgs {
     if (a === '--survey') mode = 'survey'
     else if (a === '--dry-run') mode = 'dry-run'
     else if (a === '--commit') mode = 'commit'
+    else if (a === '--set-default-fees') mode = 'set-default-fees'
     else if (a === '--correspondence-dir') {
       correspondenceDir = argv[++i] ?? correspondenceDir
     } else if (a === '--help' || a === '-h') {
@@ -94,12 +95,13 @@ function parseArgs(argv: string[]): CliArgs {
 }
 
 function printHelp(): void {
-  console.log(`Usage: tsx scripts/migrate-aws-events-to-supabase.ts [--survey|--dry-run|--commit] [--correspondence-dir <path>]
+  console.log(`Usage: tsx scripts/migrate-aws-events-to-supabase.ts [--survey|--dry-run|--commit|--set-default-fees] [--correspondence-dir <path>]
 
 Modes:
-  --survey    AWS データ取得 + Supabase venues 取得 → proposed 対照表生成（書き込みなし）
-  --dry-run   approved 対照表を読んで投入予定をレポート（書き込みなし）[既定]
-  --commit    approved 対照表を読んで Supabase へ INSERT
+  --survey            AWS データ取得 + Supabase venues 取得 → proposed 対照表生成（書き込みなし）
+  --dry-run           approved 対照表を読んで投入予定をレポート（書き込みなし）[既定]
+  --commit            approved 対照表を読んで Supabase へ INSERT
+  --set-default-fees  本 migration 投入済 events に「有明会場以外は fee=1000」を一括設定 (commit 後の post step)
 
 環境変数: SUPABASE_URL, SUPABASE_SECRET_KEY, AWS_EVENTS_ENDPOINT`)
 }
@@ -594,14 +596,67 @@ async function runMigration(args: CliArgs, commit: boolean): Promise<void> {
   console.log(`venue FIX ${commit ? '実行' : '予定'}: ${Array.from(approved.values()).filter((a) => a.action === 'fix').length}`)
 }
 
+/**
+ * 本 migration 投入済 events のうち、`venues.name = '有明会場'` 以外に fee=1000 を一括設定。
+ * AWS API は fee を公開しないため、--commit 後の post step として実行する。
+ * Idempotent: 何度実行しても結果は変わらない。
+ */
+async function runSetDefaultFees(): Promise<void> {
+  const supabase = createSupabase()
+  const { data: ariake, error: aErr } = await supabase
+    .from('venues')
+    .select('id')
+    .eq('name', '有明会場')
+    .maybeSingle()
+  if (aErr) {
+    throw new Error(`venues 検索失敗 (name=有明会場): ${aErr.message}`)
+  }
+  if (!ariake) {
+    throw new Error('venue "有明会場" が存在しません。--commit を先に実行してください。')
+  }
+  console.log(`[set-default-fees] 有明会場 venue_id = ${ariake.id}`)
+
+  const { data: updated, error: uErr } = await supabase
+    .from('events')
+    .update({ fee: 1000 })
+    .ilike('description', '%[Legacy ID:%')
+    .neq('venue_id', ariake.id)
+    .select('id')
+  if (uErr) {
+    throw new Error(`events UPDATE 失敗: ${uErr.message}`)
+  }
+  console.log(`[set-default-fees] fee=1000 を ${updated?.length ?? 0} 件の events に設定完了`)
+
+  // 確認用サマリー
+  const { data: summary, error: sErr } = await supabase
+    .from('events')
+    .select('venue_id, fee')
+    .ilike('description', '%[Legacy ID:%')
+  if (sErr) {
+    throw new Error(`events 検索失敗: ${sErr.message}`)
+  }
+  const byFee = new Map<string, number>()
+  for (const row of summary ?? []) {
+    const key = row.fee === null ? 'NULL' : String(row.fee)
+    byFee.set(key, (byFee.get(key) ?? 0) + 1)
+  }
+  console.log('')
+  console.log('--- 投入済 events の fee 分布 ---')
+  for (const [fee, count] of byFee.entries()) {
+    console.log(`  fee=${fee}: ${count} 件`)
+  }
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2))
   if (args.mode === 'survey') {
     await runSurvey(args)
   } else if (args.mode === 'dry-run') {
     await runMigration(args, false)
-  } else {
+  } else if (args.mode === 'commit') {
     await runMigration(args, true)
+  } else {
+    await runSetDefaultFees()
   }
 }
 

@@ -83,9 +83,39 @@ pnpm migrate:aws-events --commit
 - `[venue] MATCH/NEW/FIX ...` — venue 解決の判定
 - `[event] INSERT/SKIP ...` — events 投入の判定
 
-### 5. 目視確認
+### 5. 利用料金 (fee) の一括設定（post-commit）
 
-admin から dev / prd の events / venues を開き、件数とサンプル数件のフィールド値（タイムゾーン / venue 名 / 開催日時）を確認。
+AWS API は `fee` を返さないため、本 migration では events.fee が NULL のまま投入される。High Q の運用ルール「有明会場以外は 1000 円固定」を反映するため、commit 後に以下のコマンドで一括設定する:
+
+```bash
+pnpm migrate:aws-events --set-default-fees
+```
+
+このコマンドは以下を実行する:
+- venues.name = '有明会場' の venue_id を取得
+- 本 migration で投入された events（description に Legacy ID マーカーを持つ行）のうち、venue_id != 有明会場 のものに fee=1000 を UPDATE
+- 終了時に fee 分布のサマリーを表示
+
+期待結果:
+- 有明会場 → fee NULL
+- その他 venue → fee 1000
+
+Idempotent（複数回実行しても結果同じ）。prd でもそのまま使える。
+
+確認用 SQL（任意、Supabase SQL Editor で実行）:
+
+```sql
+SELECT v.name AS venue, count(*) AS event_count, COALESCE(MAX(e.fee)::text, 'NULL') AS fee
+FROM events e
+JOIN venues v ON v.id = e.venue_id
+WHERE e.description ILIKE '%[Legacy ID:%'
+GROUP BY v.name
+ORDER BY v.name;
+```
+
+### 6. 目視確認
+
+admin から dev / prd の events / venues を開き、件数とサンプル数件のフィールド値（タイムゾーン / venue 名 / 開催日時 / fee）を確認。
 
 ## prd フェーズの追加注意
 
