@@ -59,7 +59,7 @@ function toggle(i) {
 
 <style scoped>
 .faq {
-  background: var(--hq-color-paper);
+  background: var(--hq-color-paper-warm);
   padding: 72px 28px 56px;
   padding-inline: max(28px, calc((100% - 720px) / 2));
 }

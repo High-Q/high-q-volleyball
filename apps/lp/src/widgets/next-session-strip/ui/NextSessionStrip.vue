@@ -80,10 +80,8 @@ function formatTimeLocation(event) {
 
 <style scoped>
 .next-strip {
-  background: var(--hq-color-paper-warm);
-  color: var(--hq-color-ink);
-  border-top: 1px solid var(--hq-color-hairline);
-  border-bottom: 1px solid var(--hq-color-hairline);
+  background: var(--hq-color-ink);
+  color: var(--hq-color-paper);
 }
 
 .next-strip__row {
@@ -102,7 +100,7 @@ function formatTimeLocation(event) {
 }
 
 .next-strip__row--link:hover {
-  background: rgba(31, 29, 26, 0.04);
+  background: rgba(247, 243, 234, 0.04);
 }
 
 .next-strip__row--link:focus-visible {
@@ -122,8 +120,8 @@ function formatTimeLocation(event) {
 }
 
 .next-strip__tag--muted {
-  color: var(--hq-color-muted);
-  border-color: var(--hq-color-muted);
+  color: rgba(247, 243, 234, 0.5);
+  border-color: rgba(247, 243, 234, 0.3);
 }
 
 .next-strip__body {
@@ -136,7 +134,7 @@ function formatTimeLocation(event) {
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: var(--hq-color-ink);
+  color: var(--hq-color-paper);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -146,14 +144,14 @@ function formatTimeLocation(event) {
   font-family: var(--hq-font-jp);
   font-weight: 400;
   font-size: 12.5px;
-  color: var(--hq-color-muted);
+  color: rgba(247, 243, 234, 0.7);
 }
 
 .next-strip__meta {
   font-family: var(--hq-font-mono);
   font-size: 9.5px;
   letter-spacing: 0.12em;
-  color: var(--hq-color-muted);
+  color: rgba(247, 243, 234, 0.6);
   margin-top: 3px;
   white-space: nowrap;
   overflow: hidden;
@@ -163,10 +161,9 @@ function formatTimeLocation(event) {
 .next-strip__arrow {
   flex-shrink: 0;
   font-family: var(--hq-font-mono);
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.15em;
-  color: var(--hq-color-ink);
-  font-weight: 500;
+  color: var(--hq-color-paper);
   opacity: 0.85;
 }
 

@@ -43,7 +43,7 @@ const items = [
 
 <style scoped>
 .nfy {
-  background: var(--hq-color-paper-warm);
+  background: var(--hq-color-paper);
   padding: 72px 28px 64px;
   padding-inline: max(28px, calc((100% - 640px) / 2));
   border-top: 1px solid var(--hq-color-hairline);

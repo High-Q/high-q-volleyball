@@ -52,7 +52,7 @@ const items = [
 
 <style scoped>
 .features {
-  background: var(--hq-color-paper);
+  background: var(--hq-color-paper-warm);
   padding-bottom: 24px;
 }
 

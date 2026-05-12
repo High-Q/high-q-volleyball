@@ -1,7 +1,7 @@
 <template>
   <section class="worries" aria-labelledby="worries-heading">
     <header class="worries__head">
-      <Kicker color="muted">— Before you join</Kicker>
+      <Kicker color="accent">— Before you join</Kicker>
       <h2 id="worries-heading" class="worries__heading">
         来る前の不安を、<br />ぜんぶ。
       </h2>
@@ -36,8 +36,8 @@ const items = [
 
 <style scoped>
 .worries {
-  background: var(--hq-color-paper);
-  color: var(--hq-color-ink);
+  background: var(--hq-color-ink);
+  color: var(--hq-color-paper);
   padding: 80px 28px;
   padding-inline: max(28px, calc((100% - 720px) / 2));
 }
@@ -52,7 +52,7 @@ const items = [
   line-height: 1.55;
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: var(--hq-color-ink);
+  color: var(--hq-color-paper);
   margin: 12px 0 6px;
 }
 
@@ -60,7 +60,7 @@ const items = [
   font-family: var(--hq-font-mono);
   font-size: 11px;
   letter-spacing: 0.15em;
-  color: var(--hq-color-muted);
+  color: rgba(247, 243, 234, 0.6);
   text-transform: uppercase;
   margin: 0;
 }
@@ -72,11 +72,11 @@ const items = [
 
 .worries__row {
   padding: 22px 0;
-  border-bottom: 1px solid var(--hq-color-hairline);
+  border-bottom: 1px solid rgba(247, 243, 234, 0.18);
 }
 
 .worries__row:first-child {
-  border-top: 1px solid var(--hq-color-hairline);
+  border-top: 1px solid rgba(247, 243, 234, 0.18);
 }
 
 .worries__q,
@@ -94,14 +94,15 @@ const items = [
   font-family: var(--hq-font-jp-display);
   font-size: 18px;
   font-weight: 600;
-  color: var(--hq-color-muted);
+  color: var(--hq-color-accent);
   line-height: 1;
   flex-shrink: 0;
   letter-spacing: 0.05em;
 }
 
 .worries__marker--a {
-  color: var(--hq-color-ink-soft);
+  color: var(--hq-color-paper);
+  opacity: 0.75;
 }
 
 .worries__q-text {
@@ -109,13 +110,14 @@ const items = [
   font-size: 15px;
   font-weight: 500;
   line-height: 1.6;
-  color: var(--hq-color-ink);
+  color: var(--hq-color-paper);
 }
 
 .worries__a-text {
   font-family: var(--hq-font-jp);
   font-size: 14.5px;
   line-height: 1.85;
-  color: var(--hq-color-ink-soft);
+  color: var(--hq-color-paper);
+  opacity: 0.85;
 }
 </style>

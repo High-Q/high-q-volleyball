@@ -25,7 +25,7 @@ import { Kicker, Photo } from '@high-q/ui'
 
 <style scoped>
 .about {
-  background: var(--hq-color-surface);
+  background: var(--hq-color-paper);
   padding: 72px 28px 56px;
   padding-inline: max(28px, calc((100% - 640px) / 2));
 }

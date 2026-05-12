@@ -29,7 +29,7 @@ import { X_URL, X_HANDLE } from '@shared/config/sns'
 
 <style scoped>
 .gallery {
-  background: var(--hq-color-paper);
+  background: var(--hq-color-paper-warm);
   padding: 72px 0 48px;
 }
 

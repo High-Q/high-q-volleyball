@@ -97,7 +97,7 @@ function urlFor(id) {
 
 <style scoped>
 .event-list {
-  background: var(--hq-color-surface);
+  background: var(--hq-color-paper);
   padding: 72px 28px 56px;
   padding-inline: max(28px, calc((100% - 880px) / 2));
 }
