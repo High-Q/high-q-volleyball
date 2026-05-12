@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "accent";
 type Size = "sm" | "md";
 
 const props = withDefaults(
@@ -110,6 +110,15 @@ function handleClick(event: MouseEvent) {
 }
 
 .hq-btn--danger {
+  /* Note: 現状 accent 色を流用中。本来は --hq-color-danger に揃えるべきで、
+     admin の削除ボタン UX と合わせて別 Issue で正規化する。LP 主要 CTA は
+     --accent variant を使うこと。 */
+  background: var(--hq-color-accent);
+  color: var(--hq-color-paper);
+  border-color: var(--hq-color-accent);
+}
+
+.hq-btn--accent {
   background: var(--hq-color-accent);
   color: var(--hq-color-paper);
   border-color: var(--hq-color-accent);
