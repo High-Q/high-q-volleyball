@@ -1,7 +1,7 @@
 <template>
   <section class="features" aria-labelledby="features-heading">
     <header class="features__head">
-      <Kicker color="muted">— Why High Q</Kicker>
+      <Kicker color="accent">— Why High Q</Kicker>
       <h2 id="features-heading" class="features__heading">
         3つの<br />ちょうどよさ。
       </h2>
@@ -13,7 +13,7 @@
       <div class="features__body">
         <div class="features__row">
           <span class="features__number">{{ item.n }}</span>
-          <Kicker color="muted">{{ item.kicker }}</Kicker>
+          <Kicker color="accent">{{ item.kicker }}</Kicker>
         </div>
         <h3 class="features__title">{{ item.jp }}</h3>
         <p class="features__text">{{ item.body }}</p>
@@ -52,7 +52,7 @@ const items = [
 
 <style scoped>
 .features {
-  background: var(--hq-color-paper);
+  background: var(--hq-color-paper-warm);
   padding-bottom: 24px;
 }
 
@@ -101,7 +101,7 @@ const items = [
   font-family: var(--hq-font-jp-display);
   font-size: 24px;
   font-weight: 600;
-  color: var(--hq-color-ink-soft);
+  color: var(--hq-color-accent);
   line-height: 1;
 }
 

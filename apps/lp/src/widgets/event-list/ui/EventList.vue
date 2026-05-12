@@ -5,7 +5,7 @@
     aria-labelledby="event-list-heading"
   >
     <header class="event-list__head">
-      <Kicker color="muted">— Schedule</Kicker>
+      <Kicker color="accent">— Schedule</Kicker>
       <h2 id="event-list-heading" class="event-list__heading">
         次に、来れる日。
       </h2>
@@ -97,7 +97,7 @@ function urlFor(id) {
 
 <style scoped>
 .event-list {
-  background: var(--hq-color-surface);
+  background: var(--hq-color-paper);
   padding: 72px 28px 56px;
   padding-inline: max(28px, calc((100% - 880px) / 2));
 }

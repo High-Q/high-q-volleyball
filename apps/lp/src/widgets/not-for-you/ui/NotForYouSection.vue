@@ -1,7 +1,7 @@
 <template>
   <section class="nfy" aria-labelledby="nfy-heading">
     <header class="nfy__head">
-      <Kicker color="muted">— Honest note</Kicker>
+      <Kicker color="accent">— Honest note</Kicker>
       <h2 id="nfy-heading" class="nfy__heading">
         こんな方には、<br />合わないかもしれません。
       </h2>
@@ -43,7 +43,7 @@ const items = [
 
 <style scoped>
 .nfy {
-  background: var(--hq-color-paper-warm);
+  background: var(--hq-color-paper);
   padding: 72px 28px 64px;
   padding-inline: max(28px, calc((100% - 640px) / 2));
   border-top: 1px solid var(--hq-color-hairline);

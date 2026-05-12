@@ -1,6 +1,6 @@
 <template>
   <section class="about" aria-labelledby="about-heading">
-    <Kicker color="muted">— About</Kicker>
+    <Kicker color="accent">— About</Kicker>
     <h2 id="about-heading" class="about__heading">
       はじめての人にこそ、<br />来てほしい場所。
     </h2>
@@ -25,7 +25,7 @@ import { Kicker, Photo } from '@high-q/ui'
 
 <style scoped>
 .about {
-  background: var(--hq-color-surface);
+  background: var(--hq-color-paper);
   padding: 72px 28px 56px;
   padding-inline: max(28px, calc((100% - 640px) / 2));
 }

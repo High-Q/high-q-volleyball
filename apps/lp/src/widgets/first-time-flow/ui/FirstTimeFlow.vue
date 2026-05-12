@@ -1,7 +1,7 @@
 <template>
   <section class="flow" aria-labelledby="flow-heading">
     <header class="flow__head">
-      <Kicker color="muted">— First time?</Kicker>
+      <Kicker color="accent">— First time?</Kicker>
       <h2 id="flow-heading" class="flow__heading">
         当日、こんな流れで<br />進みます。
       </h2>

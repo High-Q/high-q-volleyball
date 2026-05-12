@@ -112,8 +112,8 @@ import { LINE_OPEN_CHAT_URL, X_URL, X_HANDLE } from '@shared/config/sns'
   width: 100%;
   padding: 14px 22px;
   border-radius: var(--hq-radius-pill);
-  background: var(--hq-color-accent);
-  color: var(--hq-color-paper);
+  background: var(--hq-color-paper);
+  color: var(--hq-color-ink);
   font-family: var(--hq-font-jp);
   font-size: 14px;
   font-weight: 500;
@@ -121,7 +121,7 @@ import { LINE_OPEN_CHAT_URL, X_URL, X_HANDLE } from '@shared/config/sns'
   text-decoration: none;
   min-height: 48px;
   box-sizing: border-box;
-  border: 1px solid var(--hq-color-accent);
+  border: 1px solid var(--hq-color-paper);
   transition: opacity 120ms ease;
 }
 

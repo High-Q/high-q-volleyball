@@ -1,7 +1,7 @@
 <template>
   <section class="faq" aria-labelledby="faq-heading">
     <header class="faq__head">
-      <Kicker color="muted">— FAQ</Kicker>
+      <Kicker color="accent">— FAQ</Kicker>
       <h2 id="faq-heading" class="faq__heading">よくある質問。</h2>
       <p class="faq__lead">Just in case.</p>
     </header>
@@ -59,7 +59,7 @@ function toggle(i) {
 
 <style scoped>
 .faq {
-  background: var(--hq-color-paper);
+  background: var(--hq-color-paper-warm);
   padding: 72px 28px 56px;
   padding-inline: max(28px, calc((100% - 720px) / 2));
 }
@@ -130,7 +130,7 @@ function toggle(i) {
   font-family: var(--hq-font-jp-display);
   font-size: 15px;
   font-weight: 600;
-  color: var(--hq-color-muted);
+  color: var(--hq-color-accent);
 }
 
 .faq__q-text {

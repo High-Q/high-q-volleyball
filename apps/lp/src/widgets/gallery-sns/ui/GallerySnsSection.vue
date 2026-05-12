@@ -1,7 +1,7 @@
 <template>
   <section class="gallery" aria-labelledby="gallery-heading">
     <header class="gallery__head">
-      <Kicker color="muted">— Gallery &amp; Social</Kicker>
+      <Kicker color="accent">— Gallery &amp; Social</Kicker>
       <h2 id="gallery-heading" class="gallery__heading">ある日の、High Q。</h2>
       <p class="gallery__lead">Follow along.</p>
     </header>
@@ -29,7 +29,7 @@ import { X_URL, X_HANDLE } from '@shared/config/sns'
 
 <style scoped>
 .gallery {
-  background: var(--hq-color-paper);
+  background: var(--hq-color-paper-warm);
   padding: 72px 0 48px;
 }
 
