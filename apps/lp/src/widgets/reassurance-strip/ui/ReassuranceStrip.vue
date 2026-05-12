@@ -6,7 +6,7 @@
     </header>
 
     <article class="reassurance__primary">
-      <div class="reassurance__ico" aria-hidden="true">👜</div>
+      <BagIcon class="reassurance__ico" :size="28" />
       <div>
         <div class="reassurance__label">持ち物</div>
         <div class="reassurance__items">
@@ -20,14 +20,14 @@
 
     <div class="reassurance__grid">
       <article class="reassurance__cell">
-        <div class="reassurance__cell-ico" aria-hidden="true">👟</div>
+        <ApparelIcon class="reassurance__cell-ico" :size="22" />
         <div>
           <div class="reassurance__label">服装</div>
           <div class="reassurance__value">動きやすい服</div>
         </div>
       </article>
       <article class="reassurance__cell">
-        <div class="reassurance__cell-ico" aria-hidden="true">💴</div>
+        <CoinIcon class="reassurance__cell-ico" :size="22" />
         <div>
           <div class="reassurance__label">参加費</div>
           <div class="reassurance__value">500円 or 1,000円</div>
@@ -44,6 +44,7 @@
 
 <script setup>
 import { Kicker } from '@high-q/ui'
+import { BagIcon, ApparelIcon, CoinIcon } from '@shared/ui/icons'
 
 const items = ['飲み物', '運動着', '体育館シューズ']
 </script>
@@ -79,16 +80,12 @@ const items = ['飲み物', '運動着', '体育館シューズ']
   gap: 18px;
   align-items: center;
   margin-bottom: 10px;
+  color: var(--hq-color-ink-soft);
 }
 
-.reassurance__ico {
-  font-size: 28px;
-  line-height: 1;
-}
-
+.reassurance__ico,
 .reassurance__cell-ico {
-  font-size: 22px;
-  line-height: 1;
+  display: block;
 }
 
 .reassurance__label {
@@ -137,6 +134,7 @@ const items = ['飲み物', '運動着', '体育館シューズ']
   grid-template-columns: auto 1fr;
   gap: 12px;
   align-items: center;
+  color: var(--hq-color-ink-soft);
 }
 
 .reassurance__cell .reassurance__label {
