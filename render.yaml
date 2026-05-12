@@ -64,6 +64,16 @@ services:
       # 公式 docs: https://render.com/docs/static-sites
       - key: SKIP_INSTALL_DEPS
         value: "true"
+      # dev/prd 切替 (#228 で LP を Supabase 化、admin/reservation と対称):
+      # - 本番デプロイ (master push) → sync: false で Dashboard 設定された prd 値
+      # - PR Preview                  → previewValue の dev 値
+      # Publishable Key は公開キー (RLS で保護) のためコミット可。Secret Key は絶対に書かない。
+      - key: VITE_SUPABASE_URL
+        sync: false
+        previewValue: https://ydkejnlivlzypizrmhwh.supabase.co
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+        previewValue: sb_publishable_JXCTRAx7ECO7-dZEsquKrg_VTdyXdfG
 
   # ============================================================
   # admin (apps/admin) — Vue Router + Supabase Auth ゲート付き管理画面
