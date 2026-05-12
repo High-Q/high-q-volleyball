@@ -352,17 +352,38 @@ async function existsByLegacyId(
   return (data ?? []).length > 0
 }
 
-async function insertVenue(
+/**
+ * venues に対する冪等な「name で同定 or INSERT」操作。
+ * - 既に同名 venue が存在する → 既存 id を返す (created=false)
+ * - 存在しない → INSERT して新 id を返す (created=true)
+ *
+ * これにより --commit が venue INSERT 途中で失敗・再実行されるケースや、
+ * approved を作った後で admin から手動 venue 追加されたケースに耐える。
+ */
+async function ensureVenueByName(
   supabase: SupabaseClient,
   name: string,
-): Promise<string> {
+): Promise<{ id: string; created: boolean }> {
+  const { data: existing, error: selectError } = await supabase
+    .from('venues')
+    .select('id')
+    .eq('name', name)
+    .maybeSingle()
+  if (selectError) {
+    throw new Error(`venues 検索失敗 (name=${name}): ${selectError.message}`)
+  }
+  if (existing) {
+    return { id: existing.id as string, created: false }
+  }
   const { data, error } = await supabase
     .from('venues')
     .insert({ name, is_primary: false })
     .select('id')
     .single()
-  if (error) throw new Error(`venues INSERT 失敗 (name=${name}): ${error.message}`)
-  return data!.id as string
+  if (error) {
+    throw new Error(`venues INSERT 失敗 (name=${name}): ${error.message}`)
+  }
+  return { id: data!.id as string, created: true }
 }
 
 async function updateVenueName(
@@ -490,9 +511,9 @@ async function runMigration(args: CliArgs, commit: boolean): Promise<void> {
   const newVenueIdByName = new Map<string, string>()
   for (const name of newVenueNames) {
     if (commit) {
-      const id = await insertVenue(supabase, name)
+      const { id, created } = await ensureVenueByName(supabase, name)
       newVenueIdByName.set(name, id)
-      console.log(`[venue] NEW    name="${name}" → ${id}`)
+      console.log(`[venue] ${created ? 'NEW   ' : 'REUSE '} name="${name}" → ${id}`)
     } else {
       newVenueIdByName.set(name, '(dry-run pending)')
       console.log(`[venue] (dry-run) NEW name="${name}"`)
