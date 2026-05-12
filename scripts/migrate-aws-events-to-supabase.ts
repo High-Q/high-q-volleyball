@@ -74,6 +74,7 @@ function parseArgs(argv: string[]): CliArgs {
 
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
+    if (a === '--') continue // pnpm 10 が渡すセパレータを無視
     if (a === '--survey') mode = 'survey'
     else if (a === '--dry-run') mode = 'dry-run'
     else if (a === '--commit') mode = 'commit'

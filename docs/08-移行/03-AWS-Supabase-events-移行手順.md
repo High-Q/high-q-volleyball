@@ -43,7 +43,7 @@ set -a; . .env.migration; set +a
 
 ```bash
 set -a; . .env.migration; set +a
-pnpm migrate:aws-events -- --survey
+pnpm migrate:aws-events --survey
 ```
 
 出力:
@@ -65,7 +65,7 @@ pnpm migrate:aws-events -- --survey
 ### 3. Dry-run（書き込みなし）
 
 ```bash
-pnpm migrate:aws-events -- --dry-run
+pnpm migrate:aws-events --dry-run
 ```
 
 サマリーで以下を確認:
@@ -76,7 +76,7 @@ pnpm migrate:aws-events -- --dry-run
 ### 4. Commit（書き込み実行）
 
 ```bash
-pnpm migrate:aws-events -- --commit
+pnpm migrate:aws-events --commit
 ```
 
 行単位ログ:
