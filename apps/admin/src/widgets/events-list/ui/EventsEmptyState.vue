@@ -31,7 +31,7 @@ const emit = defineEmits<{
         最初のイベントを作って、参加者を募集しましょう。
       </p>
       <div class="mt-hq-6">
-        <Button variant="primary" size="sm" @click="emit('clickNew')">
+        <Button variant="ink" size="sm" @click="emit('clickNew')">
           新規作成
         </Button>
       </div>
@@ -45,7 +45,7 @@ const emit = defineEmits<{
         条件を変えるか、フィルタをリセットしてください。
       </p>
       <div class="mt-hq-6">
-        <Button variant="secondary" size="sm" @click="emit('clickReset')">
+        <Button variant="outline" size="sm" @click="emit('clickReset')">
           フィルタをリセット
         </Button>
       </div>

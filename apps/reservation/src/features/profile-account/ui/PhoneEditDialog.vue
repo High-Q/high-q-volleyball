@@ -95,7 +95,7 @@ function onCancel(): void {
           @click="onCancel"
         >キャンセル</Button>
         <Button
-          variant="primary"
+          variant="ink"
           type="button"
           :disabled="submitting"
           @click="onSubmit"

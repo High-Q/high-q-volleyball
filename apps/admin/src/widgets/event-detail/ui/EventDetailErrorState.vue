@@ -57,10 +57,10 @@ const showGoBack = computed(
   >
     <p class="font-jp text-base text-ink">{{ message }}</p>
     <div class="flex items-center gap-hq-3">
-      <Button v-if="showGoBack" variant="primary" size="sm" @click="emit('goBack')">
+      <Button v-if="showGoBack" variant="ink" size="sm" @click="emit('goBack')">
         イベント一覧へ戻る
       </Button>
-      <Button v-if="showRetry" variant="primary" size="sm" @click="emit('retry')">
+      <Button v-if="showRetry" variant="ink" size="sm" @click="emit('retry')">
         再試行
       </Button>
     </div>

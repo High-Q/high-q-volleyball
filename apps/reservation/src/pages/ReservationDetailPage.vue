@@ -266,10 +266,10 @@ function goHistory(): void {
           すでにキャンセル済か、他のアカウントの予約の可能性があります。
         </p>
         <div class="flex gap-hq-3">
-          <Button variant="secondary" size="sm" type="button" @click="load">
+          <Button variant="outline" size="sm" type="button" @click="load">
             再試行
           </Button>
-          <Button variant="primary" size="sm" type="button" @click="goHistory">
+          <Button variant="ink" size="sm" type="button" @click="goHistory">
             履歴に戻る
           </Button>
         </div>
@@ -283,7 +283,7 @@ function goHistory(): void {
         data-testid="detail-error"
       >
         <p class="font-jp text-sm text-ink m-0">予約を取得できませんでした。</p>
-        <Button variant="secondary" size="sm" type="button" @click="load">
+        <Button variant="outline" size="sm" type="button" @click="load">
           再試行
         </Button>
       </div>
@@ -323,7 +323,7 @@ function goHistory(): void {
         <!-- 編集 CTA: 前向きアクションをプライマリに昇格 (#215) -->
         <Button
           v-if="editButtonVisible"
-          variant="primary"
+          variant="ink"
           size="md"
           type="button"
           class="w-full"

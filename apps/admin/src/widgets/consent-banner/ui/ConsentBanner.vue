@@ -76,7 +76,7 @@ function reject(): void {
 
       <div class="flex flex-row gap-hq-2">
         <Button
-          variant="primary"
+          variant="ink"
           size="sm"
           class="flex-1"
           data-testid="consent-accept-all"
@@ -85,7 +85,7 @@ function reject(): void {
           全て許可
         </Button>
         <Button
-          variant="secondary"
+          variant="outline"
           size="sm"
           class="flex-1"
           data-testid="consent-reject"

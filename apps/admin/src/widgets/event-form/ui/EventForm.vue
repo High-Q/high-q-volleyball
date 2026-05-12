@@ -77,7 +77,7 @@ async function handleCancel() {
         <slot name="headerActions" :is-submitting="f.isSubmitting.value" />
         <Button
           v-if="mode === 'create'"
-          variant="secondary"
+          variant="outline"
           size="sm"
           :disabled="f.isSubmitting.value"
           @click="handleCancel"
@@ -85,7 +85,7 @@ async function handleCancel() {
           キャンセル
         </Button>
         <Button
-          variant="primary"
+          variant="ink"
           size="sm"
           :loading="f.isSubmitting.value"
           :disabled="f.isSubmitting.value"

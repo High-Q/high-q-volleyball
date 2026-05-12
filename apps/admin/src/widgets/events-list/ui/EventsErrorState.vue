@@ -51,7 +51,7 @@ const errCode = computed(() => `ERR · supabase / events.list · ${props.errorCo
       {{ errCode }}
     </p>
     <div class="mt-hq-6">
-      <Button variant="primary" size="sm" @click="emit('retry')">
+      <Button variant="ink" size="sm" @click="emit('retry')">
         再試行
       </Button>
     </div>

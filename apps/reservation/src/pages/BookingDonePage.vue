@@ -107,7 +107,7 @@ function goToList(): void {
           イベント情報を取得できませんでした。
         </p>
         <div class="flex gap-hq-3">
-          <Button variant="secondary" size="sm" @click="reload">再試行</Button>
+          <Button variant="outline" size="sm" @click="reload">再試行</Button>
           <Button variant="ghost" size="sm" @click="goToList">
             イベント一覧へ戻る
           </Button>
@@ -121,7 +121,7 @@ function goToList(): void {
         <p class="font-jp text-sm text-ink m-0">
           イベントが見つかりません。
         </p>
-        <Button variant="secondary" size="sm" @click="goToList">
+        <Button variant="outline" size="sm" @click="goToList">
           イベント一覧へ戻る
         </Button>
       </div>
@@ -137,7 +137,7 @@ function goToList(): void {
     <div
       class="sticky bottom-0 left-0 right-0 bg-paper border-t border-hairline px-hq-5 py-hq-4"
     >
-      <Button variant="secondary" size="md" class="w-full" @click="goToList">
+      <Button variant="outline" size="md" class="w-full" @click="goToList">
         イベント一覧へ
       </Button>
     </div>

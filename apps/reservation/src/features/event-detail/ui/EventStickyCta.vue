@@ -32,7 +32,7 @@ const emit = defineEmits<{
       <span class="font-mono text-sm text-ink-soft">
         {{ formatFee(props.fee) }}
       </span>
-      <Button variant="primary" size="md" @click="emit('proceed')">
+      <Button variant="ink" size="md" @click="emit('proceed')">
         予約に進む
       </Button>
     </div>

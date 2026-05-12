@@ -173,7 +173,7 @@ function goEvents(): void {
           <p class="font-jp text-sm text-ink m-0">
             履歴を取得できませんでした。
           </p>
-          <Button variant="secondary" size="sm" type="button" @click="load">再試行</Button>
+          <Button variant="outline" size="sm" type="button" @click="load">再試行</Button>
         </div>
 
         <!-- Stats Strip -->
@@ -188,7 +188,7 @@ function goEvents(): void {
           <p class="font-jp text-sm text-muted m-0">
             まだ予約がありません。最初の予約を取りましょう。
           </p>
-          <Button variant="primary" size="sm" type="button" @click="goEvents">イベントを探す</Button>
+          <Button variant="ink" size="sm" type="button" @click="goEvents">イベントを探す</Button>
         </div>
 
         <!-- Upcoming group -->

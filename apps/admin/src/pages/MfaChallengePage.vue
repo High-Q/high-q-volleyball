@@ -114,7 +114,7 @@ async function onSubmit() {
         </FormField>
         <Button
           type="submit"
-          variant="primary"
+          variant="ink"
           :loading="isVerifying"
           :disabled="isVerifying"
         >

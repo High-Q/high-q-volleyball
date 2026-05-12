@@ -1,7 +1,19 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "accent";
+/**
+ * HQ デザイントークン Button variant.
+ *
+ * - `primary` : 主要 CTA (accent カラー背景・paper 文字)。最重要アクション 1 つに限定
+ * - `ink`     : 強めの二次アクション (ink 背景・paper 文字)。フォーム送信など
+ * - `outline` : 通常の二次アクション (透明背景・hairline ボーダー)
+ * - `ghost`   : 控えめなテキスト型 (透明背景・ボーダーなし)
+ * - `danger`  : 破壊的操作 (退会・削除) 専用 (#hq-color-danger 背景・paper 文字)
+ *
+ * 注: 旧 variant 名 (`primary` = ink, `secondary` = outline, `accent` = primary, `danger` = accent 流用)
+ * は Issue #238 で正規化済み。
+ */
+type Variant = "primary" | "ink" | "outline" | "ghost" | "danger";
 type Size = "sm" | "md";
 
 const props = withDefaults(
@@ -92,12 +104,18 @@ function handleClick(event: MouseEvent) {
 }
 
 .hq-btn--primary {
+  background: var(--hq-color-accent);
+  color: var(--hq-color-paper);
+  border-color: var(--hq-color-accent);
+}
+
+.hq-btn--ink {
   background: var(--hq-color-ink);
   color: var(--hq-color-paper);
   border-color: var(--hq-color-ink);
 }
 
-.hq-btn--secondary {
+.hq-btn--outline {
   background: transparent;
   color: var(--hq-color-ink);
   border-color: var(--hq-color-hairline);
@@ -110,18 +128,9 @@ function handleClick(event: MouseEvent) {
 }
 
 .hq-btn--danger {
-  /* Note: 現状 accent 色を流用中。本来は --hq-color-danger に揃えるべきで、
-     admin の削除ボタン UX と合わせて別 Issue で正規化する。LP 主要 CTA は
-     --accent variant を使うこと。 */
-  background: var(--hq-color-accent);
+  background: var(--hq-color-danger);
   color: var(--hq-color-paper);
-  border-color: var(--hq-color-accent);
-}
-
-.hq-btn--accent {
-  background: var(--hq-color-accent);
-  color: var(--hq-color-paper);
-  border-color: var(--hq-color-accent);
+  border-color: var(--hq-color-danger);
 }
 
 .hq-btn:not(.hq-btn--inactive):hover {

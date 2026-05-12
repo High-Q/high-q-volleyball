@@ -16,7 +16,7 @@
         </p>
         <div class="hero-first__cta">
           <Button
-            variant="accent"
+            variant="primary"
             size="md"
             class="hero-first__cta-btn"
             @click="onTrialClick"
