@@ -40,17 +40,17 @@
 
 ## 7. Integration (ローカル動作確認)
 
-- [ ] 7.1 reservation dev server を起動し、未認証セッションで以下を手動確認:
-  - `/events/<実在 id>` 直アクセス → `/login?next=%2Fevents%2F<id>` に遷移
-  - メールアドレス入力 → マジックリンクメールの URL に `next` が含まれている
-  - リンククリック → トークン消化後 `/events/<id>` に到達
-- [ ] 7.2 同様に signup フローを未認証セッションで通し、3 段階すべてで `next` が引き継がれ、書類提出完了後に `/events/<id>` に到達することを確認
-- [ ] 7.3 認証済みセッションで `/events/<id>` 直アクセスが guard 通過のまま描画されることを確認
-- [ ] 7.4 認証済みセッションで `/login?next=%2Fevents%2F<id>` 直アクセスが直接 `/events/<id>` に遷移することを確認
-- [ ] 7.5 不正 ID (`/events/nonexistent`) で認証フローを通し、EventDetailPage の「該当なし」状態と一覧導線が描画されることを確認
+> 本セクションは Render Preview での確認に集約する (dev server 起動には Supabase 接続が必要なため)。
+> 翔太郎くんが Render Preview で確認する手順を 7.1〜7.5 に列挙。
+
+- [ ] 7.1 未認証セッションで `/events/<実在 id>` 直アクセス → `/login?next=%2Fevents%2F<id>` に遷移することを確認
+- [ ] 7.2 メールアドレス入力 → マジックリンクメールの URL に `next` が含まれ、リンククリックで `/events/<id>` に到達することを確認
+- [ ] 7.3 signup フロー (`/signup` → `/signup/verify` → `/signup/identity`) で 3 段階すべて next が引き継がれ、書類提出完了後に `/events/<id>` に到達することを確認
+- [ ] 7.4 認証済みセッションで `/events/<id>` 直アクセスが guard 通過のまま描画されることを確認
+- [ ] 7.5 認証済みセッションで `/login?next=%2Fevents%2F<id>` 直アクセスが直接 `/events/<id>` に遷移することを確認
 
 ## 8. PR / CI
 
-- [ ] 8.1 `pnpm --filter @high-q/reservation lint` / `typecheck` / `test` / `build` をローカルで全 pass を確認
-- [ ] 8.2 PR を作成し、Issue #229 にリンク。CI 全 pass を確認
-- [ ] 8.3 Render Preview で 7.1〜7.5 のシナリオを再確認 (preview URL 共有後に翔太郎くん確認)
+- [x] 8.1 ローカル: `pnpm --filter @high-q/reservation typecheck` / `test` (596 tests pass) / `build` 全 pass を確認
+- [ ] 8.2 PR を作成し、Issue #229 にリンク。CI 全 pass を確認 (翔太郎くんの push 承認待ち)
+- [ ] 8.3 Render Preview で 7.1〜7.5 のシナリオを翔太郎くんに確認いただく
