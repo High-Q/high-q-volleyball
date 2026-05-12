@@ -1,7 +1,7 @@
 <template>
   <section class="worries" aria-labelledby="worries-heading">
     <header class="worries__head">
-      <Kicker color="accent">— Before you join</Kicker>
+      <Kicker color="muted">— Before you join</Kicker>
       <h2 id="worries-heading" class="worries__heading">
         来る前の不安を、<br />ぜんぶ。
       </h2>
@@ -94,7 +94,7 @@ const items = [
   font-family: var(--hq-font-jp-display);
   font-size: 18px;
   font-weight: 600;
-  color: var(--hq-color-accent);
+  color: var(--hq-color-muted);
   line-height: 1;
   flex-shrink: 0;
   letter-spacing: 0.05em;
@@ -102,7 +102,7 @@ const items = [
 
 .worries__marker--a {
   color: var(--hq-color-paper);
-  opacity: 0.75;
+  opacity: 0.55;
 }
 
 .worries__q-text {
