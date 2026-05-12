@@ -256,14 +256,21 @@ function writeEventProposed(
   awsEvents.forEach((e) => Object.keys(e).forEach((k) => fieldKeys.add(k)))
   lines.push(`AWS フィールドキー一覧: ${Array.from(fieldKeys).map((k) => `\`${k}\``).join(', ')}`)
   lines.push('')
-  lines.push('| # | AWS id | name (= AWS title) | start_at (= AWS start_time) | end_at (= AWS end_time) | location | 機械判定 status |')
+  lines.push('| # | AWS id | name (= AWS title) | start_at (JST 補正後) | end_at (JST 補正後) | location | 機械判定 status |')
   lines.push('|---|---|---|---|---|---|---|')
   const now = new Date()
   awsEvents.forEach((e, i) => {
-    const end = new Date(e.end_time)
-    const status = end.getTime() < now.getTime() ? 'closed' : 'scheduled'
+    const isEmpty = !e.location || e.location === ''
+    const startAt = toJstTimestamp(e.start_time)
+    const endAt = toJstTimestamp(e.end_time)
+    const end = new Date(endAt)
+    const status = isEmpty
+      ? '(skip - empty location)'
+      : end.getTime() < now.getTime()
+        ? 'closed'
+        : 'scheduled'
     lines.push(
-      `| ${i + 1} | \`${e.id}\` | ${e.title} | ${e.start_time} | ${e.end_time} | \`${e.location}\` | ${status} |`,
+      `| ${i + 1} | \`${e.id}\` | ${e.title} | ${startAt} | ${endAt} | \`${e.location}\` | ${status} |`,
     )
   })
   lines.push('')
@@ -323,11 +330,17 @@ async function fetchSupabaseVenues(supabase: SupabaseClient): Promise<SupabaseVe
   return (data ?? []) as SupabaseVenue[]
 }
 
-async function existsByLegacyId(supabase: SupabaseClient, awsId: string): Promise<boolean> {
+async function existsByLegacyId(
+  supabase: SupabaseClient,
+  awsId: string,
+  awsStartTime: string,
+): Promise<boolean> {
+  // 同一 AWS id を共有する複数イベントを区別するため、id + start_time の複合キーで判定。
+  const marker = `[Legacy ID: ${awsId}@${awsStartTime}]`
   const { data, error } = await supabase
     .from('events')
     .select('id')
-    .ilike('description', `%[Legacy ID: ${awsId}]%`)
+    .ilike('description', `%${marker}%`)
     .limit(1)
   if (error) throw new Error(`events 検索失敗: ${error.message}`)
   return (data ?? []).length > 0
@@ -375,6 +388,14 @@ async function insertEvent(
 // マッピング
 // ---------------------------------------------------------------------------
 
+function toJstTimestamp(raw: string): string {
+  // AWS DynamoDB の start_time / end_time は TZ designator を持たない（例: 2025-10-11T18:00:00）。
+  // High Q の運用上 JST 表記なので、+09:00 を補って Supabase timestamptz に正しく保存する。
+  // 既に Z や ±HH:MM が付いていればそのまま使う。
+  if (/(?:Z|[+-]\d{2}:?\d{2})$/.test(raw)) return raw
+  return `${raw}+09:00`
+}
+
 function buildEventRow(
   e: AwsEvent,
   venueId: string,
@@ -387,15 +408,19 @@ function buildEventRow(
   visibility: 'published'
   status: 'scheduled' | 'closed'
 } {
+  const startAt = toJstTimestamp(e.start_time)
+  const endAt = toJstTimestamp(e.end_time)
   const now = new Date()
-  const end = new Date(e.end_time)
+  const end = new Date(endAt)
   const status: 'scheduled' | 'closed' = end.getTime() < now.getTime() ? 'closed' : 'scheduled'
   return {
     name: e.title,
-    start_at: e.start_time,
-    end_at: e.end_time,
+    start_at: startAt,
+    end_at: endAt,
     venue_id: venueId,
-    description: `[Legacy ID: ${e.id}]`,
+    // 冪等性判定用: id 単独だと AWS 側で id 衝突がある（36 件が同一 id を共有）ため
+    // id + start_time の複合キーをマーカーに埋め込む。
+    description: `[Legacy ID: ${e.id}@${e.start_time}]`,
     visibility: 'published',
     status,
   }
@@ -479,25 +504,31 @@ async function runMigration(args: CliArgs, commit: boolean): Promise<void> {
 
   // events 投入
   let inserted = 0
-  let skipped = 0
+  let skippedExisting = 0
+  let skippedEmptyLocation = 0
   for (const e of awsEvents) {
+    if (!e.location || e.location === '') {
+      console.log(`[event] SKIP (empty location) ${e.id} "${e.title}" ${e.start_time}`)
+      skippedEmptyLocation++
+      continue
+    }
     const venueId = venueIdMap.get(e.location)
     if (!venueId) {
       throw new Error(`venue 解決失敗: "${e.location}" (event id=${e.id})`)
     }
-    const exists = await existsByLegacyId(supabase, e.id)
+    const exists = await existsByLegacyId(supabase, e.id, e.start_time)
     if (exists) {
-      console.log(`[event] SKIP   ${e.id} "${e.title}" (Legacy ID 既存)`)
-      skipped++
+      console.log(`[event] SKIP (Legacy ID 既存) ${e.id}@${e.start_time} "${e.title}"`)
+      skippedExisting++
       continue
     }
     if (commit) {
       const row = buildEventRow(e, venueId)
       await insertEvent(supabase, row)
-      console.log(`[event] INSERT ${e.id} "${e.title}" venue=${venueId} status=${row.status}`)
+      console.log(`[event] INSERT ${e.id}@${e.start_time} "${e.title}" venue=${venueId} status=${row.status}`)
     } else {
       const row = buildEventRow(e, venueId === '(dry-run pending)' ? '<new venue>' : venueId)
-      console.log(`[event] (dry-run) INSERT ${e.id} "${e.title}" venue=${row.venue_id} status=${row.status}`)
+      console.log(`[event] (dry-run) INSERT ${e.id}@${e.start_time} "${e.title}" venue=${row.venue_id} status=${row.status}`)
     }
     inserted++
   }
@@ -506,7 +537,8 @@ async function runMigration(args: CliArgs, commit: boolean): Promise<void> {
   console.log('--- サマリー ---')
   console.log(`AWS 取得件数: ${awsEvents.length}`)
   console.log(`INSERT ${commit ? '実行' : '予定'}: ${inserted}`)
-  console.log(`SKIP（Legacy ID 既存）: ${skipped}`)
+  console.log(`SKIP（Legacy ID 既存）: ${skippedExisting}`)
+  console.log(`SKIP（空 location）: ${skippedEmptyLocation}`)
   console.log(`venue NEW ${commit ? '実行' : '予定'}: ${Array.from(approved.values()).filter((a) => a.action === 'new').length}`)
   console.log(`venue FIX ${commit ? '実行' : '予定'}: ${Array.from(approved.values()).filter((a) => a.action === 'fix').length}`)
 }
