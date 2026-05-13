@@ -1,6 +1,13 @@
 <template>
   <section class="hero-first" aria-labelledby="hero-heading">
-    <Photo class="hero-first__photo" label="hero · 体育館" h="100%" w="100%" />
+    <Photo
+      class="hero-first__photo"
+      src="/images/hero.jpg"
+      alt="体育館の床に座って休憩するメンバーとバレーボール"
+      tone="hero"
+      h="100%"
+      w="100%"
+    />
     <div class="hero-first__overlay">
       <div class="hero-first__body">
         <div class="hero-first__kicker">— Tokyo · Koto-ku</div>
@@ -69,18 +76,18 @@ function onTrialClick() {
   color: var(--hq-color-paper);
   background: linear-gradient(
     180deg,
-    rgba(31, 29, 26, 0.7) 0%,
-    rgba(31, 29, 26, 0.2) 30%,
-    rgba(31, 29, 26, 0.2) 55%,
-    rgba(31, 29, 26, 0.85) 100%
+    rgba(31, 29, 26, 0.35) 0%,
+    rgba(31, 29, 26, 0.80) 100%
   );
 }
 
+/* テキストは画面下 1/3 に収め、画像の人物 (中央〜上半分) と被らないようにする */
 .hero-first__body {
-  padding: 0 28px 28px;
+  padding: 0 28px 32px;
   padding-inline: max(28px, calc((100% - 720px) / 2));
   width: 100%;
   box-sizing: border-box;
+  max-height: 60%;
 }
 
 .hero-first__kicker {

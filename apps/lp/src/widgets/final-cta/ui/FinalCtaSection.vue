@@ -1,6 +1,13 @@
 <template>
   <section class="final-cta" aria-labelledby="final-cta-heading">
-    <Photo class="final-cta__photo" label="closing photo" h="100%" w="100%" />
+    <Photo
+      class="final-cta__photo"
+      src="/images/final-cta.jpg"
+      alt="体育館の床に並べられた 3 足の体育館シューズ"
+      tone="cta"
+      h="100%"
+      w="100%"
+    />
     <div class="final-cta__overlay">
       <div class="final-cta__kicker">— Join us</div>
       <h2 id="final-cta-heading" class="final-cta__heading">

@@ -15,7 +15,13 @@
         ちょうどいい温度感の場所です。
       </p>
     </div>
-    <Photo class="about__photo" label="活動の様子" :h="260" />
+    <Photo
+      class="about__photo"
+      src="/images/about.jpg"
+      alt="体育館で休憩中のメンバーたち（ネット越しに広がる練習風景）"
+      tone="about"
+      :h="260"
+    />
   </section>
 </template>
 
