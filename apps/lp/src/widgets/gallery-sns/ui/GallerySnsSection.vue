@@ -2,16 +2,11 @@
   <section class="gallery" aria-labelledby="gallery-heading">
     <header class="gallery__head">
       <Kicker color="accent">— Gallery &amp; Social</Kicker>
-      <h2 id="gallery-heading" class="gallery__heading">ある日の、High Q。</h2>
+      <h2 id="gallery-heading" class="gallery__heading">フォローして、繋がる。</h2>
       <p class="gallery__lead">Follow along.</p>
     </header>
 
-    <div class="gallery__grid">
-      <Photo label="snap 01" :h="180" />
-      <Photo label="snap 02" :h="140" />
-      <Photo label="snap 03" :h="140" />
-      <Photo label="snap 04" :h="180" />
-    </div>
+    <!-- Instagram 連携実装時 (#241 後続) に .gallery__grid を復活させる -->
 
     <div class="gallery__sns">
       <a :href="X_URL" target="_blank" rel="noopener noreferrer" class="gallery__sns-btn">
@@ -23,7 +18,7 @@
 </template>
 
 <script setup>
-import { Kicker, Photo } from '@high-q/ui'
+import { Kicker } from '@high-q/ui'
 import { X_URL, X_HANDLE } from '@shared/config/sns'
 </script>
 
@@ -57,6 +52,7 @@ import { X_URL, X_HANDLE } from '@shared/config/sns'
   margin: 0;
 }
 
+/* Instagram 連携実装時に template の .gallery__grid を復活させる前提で残置 */
 .gallery__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -66,7 +62,7 @@ import { X_URL, X_HANDLE } from '@shared/config/sns'
 }
 
 .gallery__sns {
-  padding: 24px 28px 0;
+  padding: 8px 28px 0;
   padding-inline: max(28px, calc((100% - 720px) / 2));
   display: grid;
   gap: 10px;

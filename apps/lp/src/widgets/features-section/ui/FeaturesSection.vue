@@ -9,7 +9,6 @@
     </header>
 
     <article v-for="item in items" :key="item.n" class="features__item">
-      <Photo :label="item.photo" :h="280" />
       <div class="features__body">
         <div class="features__row">
           <span class="features__number">{{ item.n }}</span>
@@ -23,7 +22,7 @@
 </template>
 
 <script setup>
-import { Kicker, Photo } from '@high-q/ui'
+import { Kicker } from '@high-q/ui'
 
 const items = [
   {
@@ -31,21 +30,18 @@ const items = [
     kicker: 'BEGINNER FRIENDLY',
     jp: '初心者でも、本当に大丈夫。',
     body: '参加者の 2〜3割 は初心者です。基礎練習（パス・スパイク）では、経験者がしっかりレクチャーします。',
-    photo: '練習・パス',
   },
   {
     n: '02',
     kicker: 'CALM VIBE',
     jp: '落ち着いた、大人の集まり。',
     body: '20〜30代の社会人が中心。ノリで圧倒することはありません。お酒が苦手な人も歓迎です。',
-    photo: 'after game · izakaya',
   },
   {
     n: '03',
     kicker: 'NO PRESSURE',
     jp: '無理しない、月1〜2回。',
     body: '土日祝の日中または夜間に、月1〜2回。来れる時だけ参加でOK。年に1回だけ来る人もいます。',
-    photo: 'gym · evening',
   },
 ]
 </script>
@@ -62,9 +58,19 @@ const items = [
 }
 
 .features__item {
-  margin-bottom: 48px;
   max-width: 880px;
   margin-inline: auto;
+  padding: 36px 0;
+  border-top: 1px solid var(--hq-color-hairline);
+}
+
+.features__item:first-of-type {
+  border-top: none;
+  padding-top: 8px;
+}
+
+.features__item:last-of-type {
+  padding-bottom: 28px;
 }
 
 .features__heading {
@@ -87,7 +93,8 @@ const items = [
 }
 
 .features__body {
-  padding: 20px 28px 0;
+  padding: 0 28px;
+  padding-inline: max(28px, calc((100% - 720px) / 2));
 }
 
 .features__row {
