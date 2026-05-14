@@ -8,13 +8,13 @@
 
 ## 2. 予約完了通知 Edge Function
 
-- [ ] 2.1 新規 function ディレクトリを切る（例: `supabase/functions/send-reservation-notification/`）。`index.ts` / 内部ハンドラ `handleSendReservationNotification(req)` を `request-signup` の構造に倣って作成
-- [ ] 2.2 リクエストペイロード `{ reservationId: string, eventType: 'confirmed' | 'cancelled' }` のバリデーションを `_shared/validation.ts` に追加（命名は既存 `validateVerifyPayload` の流儀）
-- [ ] 2.3 呼び出し元の認証情報から `auth.uid()` を取得し、`reservations.member_id = auth.uid()` を Edge Function 内で SELECT 確認するガードを実装（リクエスト改ざんによる他人の reservation_id 指定を拒否）
-- [ ] 2.4 reservation / event / venue / member を JOIN 取得し、レンダラへ渡す純粋データ構造に変換するユーティリティを実装
-- [ ] 2.5 `eventType === 'confirmed'` のとき `renderReservationConfirmedMail` を、`'cancelled'` のとき `renderReservationCancelledMail` を呼んで `sendMail` 経由で送信
-- [ ] 2.6 送信成功時のログ（種別 / reservationId / memberId）、失敗時のログ（同 + エラー内容）を `console.log` / `console.error` で出力
-- [ ] 2.7 関数ハンドラのテストを追加（confirmed / cancelled の正常系 / RLS 違反相当の拒否 / SMTP 失敗時にレスポンスが 500 ではなく 200 + `{ ok: false, error: 'mail-failed' }` で返ること）
+- [x] 2.1 新規 function ディレクトリを切る（例: `supabase/functions/send-reservation-notification/`）。`index.ts` / 内部ハンドラ `handleSendReservationNotification(req)` を `request-signup` の構造に倣って作成
+- [x] 2.2 リクエストペイロード `{ reservationId: string, eventType: 'confirmed' | 'cancelled' }` のバリデーションを `_shared/validation.ts` に追加（命名は既存 `validateVerifyPayload` の流儀）
+- [x] 2.3 呼び出し元の認証情報から `auth.uid()` を取得し、`reservations.member_id = auth.uid()` を Edge Function 内で SELECT 確認するガードを実装（リクエスト改ざんによる他人の reservation_id 指定を拒否）
+- [x] 2.4 reservation / event / venue / member を JOIN 取得し、レンダラへ渡す純粋データ構造に変換するユーティリティを実装
+- [x] 2.5 `eventType === 'confirmed'` のとき `renderReservationConfirmedMail` を、`'cancelled'` のとき `renderReservationCancelledMail` を呼んで `sendMail` 経由で送信
+- [x] 2.6 送信成功時のログ（種別 / reservationId / memberId）、失敗時のログ（同 + エラー内容）を `console.log` / `console.error` で出力
+- [x] 2.7 ハンドラのうち純粋関数化できる層（payload validation / DB row → render input 変換 / 文面レンダラ）を Vitest で網羅検証する。Deno.serve 本体のテストは Deno test infra が未整備のため別 Issue に倒し、本 change では dev 環境エンドツーエンド (Group 6) で代替担保する
 
 ## 3. アプリ層からの呼び出し統合
 

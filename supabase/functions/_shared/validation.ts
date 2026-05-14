@@ -162,3 +162,55 @@ export function validateVerifyPayload(
 
   return { ok: true, email, code };
 }
+
+export type ReservationNotificationPayload = {
+  reservationId: string;
+  eventType: "confirmed" | "cancelled";
+};
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function validateReservationNotificationPayload(
+  raw: unknown,
+):
+  | { ok: true; payload: ReservationNotificationPayload }
+  | { ok: false; errors: ValidationError[] } {
+  const errors: ValidationError[] = [];
+  if (typeof raw !== "object" || raw === null) {
+    return {
+      ok: false,
+      errors: [{ field: "_root", message: "payload が不正です" }],
+    };
+  }
+  const data = raw as Record<string, unknown>;
+
+  const reservationId =
+    typeof data.reservationId === "string" ? data.reservationId.trim() : "";
+  if (!UUID_RE.test(reservationId)) {
+    errors.push({
+      field: "reservationId",
+      message: "reservationId は UUID 形式で指定してください",
+    });
+  }
+
+  const eventType = typeof data.eventType === "string" ? data.eventType : "";
+  if (eventType !== "confirmed" && eventType !== "cancelled") {
+    errors.push({
+      field: "eventType",
+      message: "eventType は 'confirmed' または 'cancelled' を指定してください",
+    });
+  }
+
+  if (errors.length > 0) {
+    return { ok: false, errors };
+  }
+
+  return {
+    ok: true,
+    payload: {
+      reservationId,
+      eventType: eventType as "confirmed" | "cancelled",
+    },
+  };
+}
