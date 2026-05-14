@@ -82,6 +82,12 @@ describe("HQ design tokens — shadow", () => {
   });
 });
 
+describe("HQ design tokens — motion", () => {
+  it("ease は drawer / overlay 用の cubic-bezier イージング文字列である", () => {
+    expect(HQ.motion.ease).toBe("cubic-bezier(.22,.61,.36,1)");
+  });
+});
+
 describe("HQ design tokens — frozen / immutable", () => {
   it("ルートオブジェクトは凍結されている（誤改変防止）", () => {
     expect(Object.isFrozen(HQ)).toBe(true);

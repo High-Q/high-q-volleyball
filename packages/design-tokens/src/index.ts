@@ -60,12 +60,18 @@ const shadow = Object.freeze({
   md: "0 4px 12px rgba(31,29,26,0.06), 0 2px 4px rgba(31,29,26,0.04)",
 });
 
+const motion = Object.freeze({
+  /** 設計サンプル準拠の汎用イージング (drawer / overlay 等のトランジション)。 */
+  ease: "cubic-bezier(.22,.61,.36,1)",
+});
+
 export const HQ = Object.freeze({
   color,
   font,
   space,
   radius,
   shadow,
+  motion,
 });
 
 export type HQColorKey = keyof typeof color;
@@ -73,3 +79,4 @@ export type HQFontKey = keyof typeof font;
 export type HQSpaceKey = keyof typeof space;
 export type HQRadiusKey = keyof typeof radius;
 export type HQShadowKey = keyof typeof shadow;
+export type HQMotionKey = keyof typeof motion;

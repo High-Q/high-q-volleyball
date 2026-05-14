@@ -65,6 +65,10 @@ html {
   scroll-behavior: smooth;
 }
 
+body.is-locked {
+  overflow: hidden;
+}
+
 /* sticky header 分のオフセットで、アンカー遷移時に見出しが隠れないようにする */
 [id="about-heading"],
 [id="features-heading"],
