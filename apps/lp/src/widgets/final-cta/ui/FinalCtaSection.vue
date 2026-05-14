@@ -14,9 +14,9 @@
         まずは1回、<br />見学だけでも。
       </h2>
       <p class="final-cta__lead">
-        予約サイトは現在準備中です。<br />
-        まずは LINE オープンチャットから<br />
-        お気軽にご連絡ください。
+        月1〜2回、土日祝に開催しています。<br />
+        LINE オープンチャットで次回告知が届きます。<br />
+        不安があれば、まずは質問だけでも。
       </p>
 
       <div class="final-cta__actions">
@@ -27,28 +27,24 @@
           class="final-cta__btn-primary"
           data-testid="final-cta-line"
         >
-          LINE オープンチャットで連絡
+          LINE で相談・告知を受け取る
         </a>
+        <p class="final-cta__connector">または、まずは</p>
         <a
-          :href="X_URL"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="#event-list-heading"
           class="final-cta__btn-secondary"
-          data-testid="final-cta-x"
+          data-testid="final-cta-event-list"
         >
-          X {{ X_HANDLE }} でDM
-          <span aria-hidden="true">↗</span>
+          次回イベントを見る
         </a>
       </div>
-
-      <p class="final-cta__note">所要 1分 ・ キャンセル無料</p>
     </div>
   </section>
 </template>
 
 <script setup>
 import { Photo } from '@high-q/ui'
-import { LINE_OPEN_CHAT_URL, X_URL, X_HANDLE } from '@shared/config/sns'
+import { LINE_OPEN_CHAT_URL } from '@shared/config/sns'
 </script>
 
 <style scoped>
@@ -112,6 +108,14 @@ import { LINE_OPEN_CHAT_URL, X_URL, X_HANDLE } from '@shared/config/sns'
   gap: 10px;
 }
 
+.final-cta__connector {
+  margin: 4px 0;
+  text-align: center;
+  font-family: var(--hq-font-jp);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
 .final-cta__btn-primary {
   display: inline-flex;
   align-items: center;
@@ -171,11 +175,4 @@ import { LINE_OPEN_CHAT_URL, X_URL, X_HANDLE } from '@shared/config/sns'
   outline-offset: 2px;
 }
 
-.final-cta__note {
-  text-align: center;
-  font-family: var(--hq-font-jp);
-  font-size: 12px;
-  opacity: 0.7;
-  margin: 12px 0 0;
-}
 </style>

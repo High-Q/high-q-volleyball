@@ -36,17 +36,17 @@ test.describe('LP EventList & NextSessionStrip', () => {
     const list = page.getByTestId('event-list')
     await expect(list).toBeVisible()
 
-    // 1 枚目のカードの予約 URL は reservation 側 /events/evt-001 で終わる
-    const firstCard = list.locator('.event-card').first()
-    await expect(firstCard).toBeVisible()
-    const href = await firstCard.getAttribute('href')
+    // 1 枚目のカードの予約ボタンが reservation 側 /events/evt-001 を指す
+    const firstCta = page.getByTestId('event-card-cta-evt-001')
+    await expect(firstCta).toBeVisible()
+    const href = await firstCta.getAttribute('href')
     expect(href).toBeTruthy()
     expect(href!).toMatch(/\/events\/evt-001$/)
 
-    // 次回開催帯のリンクも /events/evt-001 を指す
-    const nextLink = page.getByTestId('next-session-strip-link')
-    await expect(nextLink).toBeVisible()
-    const nextHref = await nextLink.getAttribute('href')
+    // 次回開催帯の予約ボタンも /events/evt-001 を指す
+    const nextCta = page.getByTestId('next-session-cta')
+    await expect(nextCta).toBeVisible()
+    const nextHref = await nextCta.getAttribute('href')
     expect(nextHref!).toMatch(/\/events\/evt-001$/)
   })
 

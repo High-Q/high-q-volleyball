@@ -22,14 +22,20 @@
           ちょうどいい温度のバレーボールです。
         </p>
         <div class="hero-first__cta">
-          <Button
-            variant="primary"
-            size="md"
-            class="hero-first__cta-btn"
-            @click="onTrialClick"
+          <a
+            href="#event-list-heading"
+            class="hero-first__cta-link"
+            data-testid="hero-event-list-cta"
           >
-            体験参加してみる
-          </Button>
+            <Button
+              variant="primary"
+              size="md"
+              class="hero-first__cta-btn"
+              tabindex="-1"
+            >
+              イベントを見る
+            </Button>
+          </a>
         </div>
         <p class="hero-first__meta">所要 1分 ・ 月1〜2回開催 ・ 参加費 500円〜</p>
       </div>
@@ -39,12 +45,6 @@
 
 <script setup>
 import { Photo, Button } from '@high-q/ui'
-import { reservationTopUrl } from '@shared/config/reservation'
-
-function onTrialClick() {
-  const url = reservationTopUrl()
-  if (url) window.location.href = url
-}
 </script>
 
 <style scoped>
@@ -121,6 +121,11 @@ function onTrialClick() {
 
 .hero-first__cta {
   margin-top: 22px;
+}
+
+.hero-first__cta-link {
+  display: block;
+  text-decoration: none;
 }
 
 .hero-first__cta-btn {
