@@ -36,16 +36,19 @@
 - [x] 5.2 `docs/05-インターフェース/01-UI設計方針.md` の予約完了画面に関する記述があれば追記する想定だったが、本ドキュメントには予約完了画面の専用セクションが存在しない（パンくず / フォーム / 4 状態 など横断的な規約ドキュメントのため）。挙動は `reservation-booking-flow/spec.md` の MODIFIED で表現済みのため追記しない
 - [x] 5.3 Phase 2 で Resend / 独自ドメイン移行時に差し替える箇所をコメントで明示。`mailer-templates.ts` / `reservation-notification.ts` / `send-reservation-notification/index.ts` / `reservation-mail-inputs.ts` に「contact-channels と同期する MUST」「将来 monorepo 共有 package に切り出す」等を明記済み
 
-## 6. dev 環境動作確認
+## 6. dev 環境動作確認 (翔太郎くん作業)
+
+**前提**: send-reservation-notification function を Supabase に deploy する必要がある。
+`pnpm supabase functions deploy send-reservation-notification` を翔太郎くんの環境から実行する。
 
 - [ ] 6.1 Supabase Edge Functions secret に既存の `GMAIL_USER` / `GMAIL_APP_PASSWORD` が dev / preview / 本番のいずれにも登録済みであることを確認（追加は不要のはず、漏れていれば翔太郎くんへ依頼）
-- [ ] 6.2 dev / preview 環境用に送信抑制モード ON または許可リストを `supabase functions secrets set` で設定（翔太郎くん作業）
+- [ ] 6.2 dev / preview 環境用に `MAIL_SUPPRESS_SEND=true` または `MAIL_ALLOWED_RECIPIENTS=high.q.volleyball@gmail.com` 等を `supabase functions secrets set` で設定（翔太郎くん作業）
 - [ ] 6.3 dev 環境で予約確定 → メール送信ログ確認、キャンセル → メール送信ログ確認の 2 経路をエンドツーエンドで確認
 - [ ] 6.4 抑制モード OFF にした上で送信先を翔太郎くん自身の許可リストアドレスに限定し、実メール 1 通で件名 / 本文 / 文字化けの有無を視認確認
 
 ## 7. 最終検証
 
-- [ ] 7.1 `pnpm exec vitest run` でユニット / component / Edge Function のテストが全て pass
-- [ ] 7.2 `pnpm build:reservation` がエラーなく完了（型エラー / FSD 違反 / lint なし）
-- [ ] 7.3 `openspec validate reservation-completion-email --strict` が pass
+- [x] 7.1 `pnpm exec vitest run` でユニット / component / Edge Function のテストが全て pass
+- [x] 7.2 `pnpm build:reservation` がエラーなく完了（型エラー / FSD 違反 / lint なし）
+- [x] 7.3 `openspec validate reservation-completion-email --strict` が pass
 - [ ] 7.4 PR 作成前に翔太郎くんへローカル確認結果を提示し、承認後に PR push
