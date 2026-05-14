@@ -11,6 +11,8 @@ const baseConfirmed: ReservationConfirmedInput = {
   eventName: "金曜の夜練 (中級〜)",
   startAtJst: "2026年5月22日 (金) 19:30〜21:30",
   venueName: "新宿スポーツセンター 第 2 体育館",
+  venueAddress: "東京都新宿区大久保 3-1-2",
+  venueMeetingPoint: "正面玄関ロビーの High Q プラカード前",
   venueMapUrl: "https://maps.example.com/shinjuku-sports",
   feePerPerson: 1500,
   guestCount: 0,
@@ -106,6 +108,38 @@ describe("renderReservationConfirmedMail", () => {
       venueMapUrl: null,
     });
     expect(body).not.toContain("会場マップ:");
+  });
+
+  it("会場住所は常に本文に含まれる (秘匿会場の実住所開示)", () => {
+    const { body } = renderReservationConfirmedMail({
+      ...baseConfirmed,
+      venueAddress: "東京都江東区有明 1-3-15 都立有明西学園",
+    });
+    expect(body).toContain("住所: 東京都江東区有明 1-3-15 都立有明西学園");
+  });
+
+  it("集合地点が登録されているとき本文に含まれる", () => {
+    const { body } = renderReservationConfirmedMail({
+      ...baseConfirmed,
+      venueMeetingPoint: "南門前 19:00 集合",
+    });
+    expect(body).toContain("集合地点: 南門前 19:00 集合");
+  });
+
+  it("集合地点が null のとき本文に集合地点行を出さない", () => {
+    const { body } = renderReservationConfirmedMail({
+      ...baseConfirmed,
+      venueMeetingPoint: null,
+    });
+    expect(body).not.toContain("集合地点:");
+  });
+
+  it("集合地点が空文字のとき本文に集合地点行を出さない", () => {
+    const { body } = renderReservationConfirmedMail({
+      ...baseConfirmed,
+      venueMeetingPoint: "   ",
+    });
+    expect(body).not.toContain("集合地点:");
   });
 });
 

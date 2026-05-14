@@ -9,6 +9,11 @@ export type ReservationConfirmedInput = {
   eventName: string;
   startAtJst: string; // JST に整形済みの日本語日時表記
   venueName: string;
+  // venues.address — 公開ページで秘匿される会場でも、メール本文では実住所をそのまま開示する
+  // ('data-schema' spec の「有明会場の実住所はメールで初めて伝達される」運用)
+  venueAddress: string;
+  // venues.meeting_point — 集合地点が登録されている会場では必ず本文に含める
+  venueMeetingPoint: string | null;
   venueMapUrl: string | null;
   feePerPerson: number; // 1 人あたり参加費 (円)
   guestCount: number; // 同伴者数 (0 以上)
@@ -52,7 +57,12 @@ export function renderReservationConfirmedMail(
     `イベント: ${input.eventName}`,
     `開催日時: ${input.startAtJst}`,
     `会場: ${input.venueName}`,
+    `住所: ${input.venueAddress}`,
   ];
+
+  if (input.venueMeetingPoint && input.venueMeetingPoint.trim().length > 0) {
+    lines.push(`集合地点: ${input.venueMeetingPoint}`);
+  }
 
   if (input.venueMapUrl) {
     lines.push(`会場マップ: ${input.venueMapUrl}`);
