@@ -15,6 +15,7 @@
 // npm パッケージをそのまま使える。
 
 import nodemailer from "npm:nodemailer@6.9.16";
+import { loadMailPolicy, shouldSuppressSend } from "./mailer-policy.ts";
 
 export type MailEnv = {
   user: string;
@@ -41,6 +42,14 @@ export async function sendMail(
   subject: string,
   body: string,
 ): Promise<void> {
+  const policy = loadMailPolicy(Deno.env);
+  if (shouldSuppressSend(policy, to)) {
+    console.log(
+      `[mailer] suppressed: to=${to} subject=${subject} (policy=${JSON.stringify(policy)})`,
+    );
+    return;
+  }
+
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,

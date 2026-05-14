@@ -21,15 +21,19 @@ import {
  *
  * - 予約番号は `#HQ-XXXX-XXXX` 形式 (生 UUID は出さない)
  * - 「会場マップを開く」は venues.map_url が存在するときのみ
- * - メール文言 / .ics / カレンダー追加リンクは出さない (MVP1 スコープアウト)
+ * - メール送信完了案内は薄く 1 行で表示する (送信先 + 迷惑メール確認の促し)。
+ *   送信失敗は UI に出さず、別 capability `reservation-notification-email` の
+ *   Edge Function ログに集約する。
+ * - .ics / カレンダー追加リンクは出さない (MVP1 スコープアウト)
  *
  * 関連:
- *   openspec/changes/reservation-booking-flow/specs/reservation-booking-flow/spec.md
+ *   openspec/changes/reservation-completion-email/specs/reservation-booking-flow/spec.md
  */
 
 const props = defineProps<{
   reservation: Reservation;
   event: EventDetail;
+  memberEmail: string | null;
 }>();
 
 const reservationNumber = computed(() =>
@@ -109,6 +113,15 @@ const emit = defineEmits<{
         <dd class="font-jp text-sm text-ink m-0">{{ feeLabel }}</dd>
       </dl>
     </section>
+
+    <p
+      v-if="memberEmail !== null && memberEmail.length > 0"
+      class="font-jp text-xs text-muted leading-relaxed m-0"
+      data-testid="email-sent-note"
+    >
+      予約完了メールを {{ memberEmail }} 宛にお送りしました。<br />
+      届かない場合は迷惑メールフォルダもご確認ください。
+    </p>
 
     <section
       class="flex flex-col gap-hq-3"
