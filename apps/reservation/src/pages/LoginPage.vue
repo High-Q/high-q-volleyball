@@ -5,6 +5,7 @@ import { Button, Kicker } from "@high-q/ui";
 import FormField from "@/shared/ui/FormField.vue";
 import Input from "@/shared/ui/Input.vue";
 import { useSendMagicLink } from "@/features/auth";
+import { LP_TOP_URL } from "@/shared/lib/externalLinks";
 import { safeNextPath } from "@/shared/lib/safeNextPath";
 
 /**
@@ -215,10 +216,13 @@ async function onSubmit() {
         </dl>
       </section>
 
-      <!-- フッターリンク (LP へのリンク・後続 #90 周辺で正式配線) -->
+      <!-- フッターリンク: LP トップ（サークル紹介）への外部導線 -->
       <div class="text-center pb-hq-2">
         <a
-          href="#"
+          :href="LP_TOP_URL"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="サークルについて詳しく（新しいタブで開きます）"
           class="text-xs text-muted leading-relaxed inline-flex items-center gap-1"
         >
           サークルについて詳しく
