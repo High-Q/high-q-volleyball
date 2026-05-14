@@ -4,6 +4,7 @@ import type {
   CreateBookingInput,
   Reservation,
 } from "@/entities/reservation";
+import { triggerReservationNotification } from "@/shared/api/reservation-notification";
 import { BookingApiError, insertReservation } from "../api/booking-client";
 
 export type UseCreateBookingReturn = {
@@ -37,6 +38,16 @@ export function useCreateBooking(): UseCreateBookingReturn {
     try {
       const result = await insertReservation(input);
       reservation.value = result;
+      // 予約完了メール送信は fire-and-forget。helper 側で例外を握りつぶしているが、
+      // 同期 throw / Promise rejection のどちらも予約成立を妨げないよう二重防衛する。
+      try {
+        void triggerReservationNotification(result.id as string, "confirmed");
+      } catch (notifyErr) {
+        console.warn(
+          "[useCreateBooking] notification trigger threw (ignored)",
+          notifyErr,
+        );
+      }
       return result;
     } catch (cause) {
       error.value = mapErrorToBookingError(cause);

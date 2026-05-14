@@ -18,10 +18,10 @@
 
 ## 3. アプリ層からの呼び出し統合
 
-- [ ] 3.1 予約確定経路（`apps/reservation/src/features/booking` 配下の reserve composable）で `reservations` INSERT / 再活性化 UPDATE 成功後に Edge Function を fire-and-forget で呼ぶ。await はしない / または await + catch でログのみ
-- [ ] 3.2 キャンセル経路（`useCancelBooking`）で UPDATE 影響行数 > 0 のときに Edge Function を fire-and-forget で呼ぶ
-- [ ] 3.3 Edge Function 呼び出しヘルパーを `apps/reservation/src/shared/api/` に切り出す（呼び出し元 composable が直接 fetch を書かない構成）
-- [ ] 3.4 Edge Function 呼び出し失敗時の挙動が「予約成立 / キャンセル成立に影響しない」ことを composable レベルのテストで検証
+- [x] 3.1 予約確定経路（`apps/reservation/src/features/booking` 配下の reserve composable）で `reservations` INSERT / 再活性化 UPDATE 成功後に Edge Function を fire-and-forget で呼ぶ。await はしない / または await + catch でログのみ
+- [x] 3.2 キャンセル経路（`useCancelBooking`）で UPDATE 影響行数 > 0 のときに Edge Function を fire-and-forget で呼ぶ
+- [x] 3.3 Edge Function 呼び出しヘルパーを `apps/reservation/src/shared/api/` に切り出す（呼び出し元 composable が直接 fetch を書かない構成）
+- [x] 3.4 Edge Function 呼び出し失敗時の挙動が「予約成立 / キャンセル成立に影響しない」ことを composable レベルのテストで検証
 
 ## 4. 予約完了画面 UI 調整
 
