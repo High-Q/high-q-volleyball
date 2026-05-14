@@ -40,6 +40,18 @@ vi.mock("@/features/booking", async () => {
   };
 });
 
+const memberRef: Ref<{ email: string | null } | null> = ref({
+  email: "member@example.com",
+});
+const sessionRef: Ref<{ user: { email: string | null } } | null> = ref(null);
+
+vi.mock("@/features/auth", () => ({
+  useAuthSession: () => ({
+    member: memberRef,
+    session: sessionRef,
+  }),
+}));
+
 // ---------- fixtures ----------
 const futureEvent: EventDetail = {
   id: unsafeEventId("ev-1"),
@@ -75,6 +87,8 @@ beforeEach(() => {
   eventNotFound.value = false;
   cancelSubmitting.value = false;
   cancelError.value = null;
+  memberRef.value = { email: "member@example.com" };
+  sessionRef.value = null;
 });
 
 afterEach(() => {
@@ -111,11 +125,37 @@ describe("BookingDonePage - 基本表示", () => {
     );
   });
 
-  it("メール送信文言と .ics リンクは描画されない (MVP1 スコープアウト)", async () => {
+  it(".ics / カレンダー追加リンクは描画されない (MVP1 スコープアウト維持)", async () => {
     const { wrapper } = await mountPage();
-    expect(wrapper.text()).not.toContain("確認メール");
     expect(wrapper.text()).not.toContain(".ics");
     expect(wrapper.text()).not.toContain("カレンダーに追加");
+  });
+
+  it("メール送信案内行に会員のメールアドレスと迷惑メール促しが描画される", async () => {
+    memberRef.value = { email: "owner@example.com" };
+    const { wrapper } = await mountPage();
+    const note = wrapper.find('[data-testid="email-sent-note"]');
+    expect(note.exists()).toBe(true);
+    expect(note.text()).toContain("owner@example.com");
+    expect(note.text()).toContain("迷惑メール");
+  });
+
+  it("session.user.email にフォールバックする (member 未取得時)", async () => {
+    memberRef.value = null;
+    sessionRef.value = { user: { email: "fallback@example.com" } };
+    const { wrapper } = await mountPage();
+    const note = wrapper.find('[data-testid="email-sent-note"]');
+    expect(note.exists()).toBe(true);
+    expect(note.text()).toContain("fallback@example.com");
+  });
+
+  it("メールアドレスがどちらも取得できないとき案内行を出さない", async () => {
+    memberRef.value = null;
+    sessionRef.value = null;
+    const { wrapper } = await mountPage();
+    expect(wrapper.find('[data-testid="email-sent-note"]').exists()).toBe(
+      false,
+    );
   });
 
   it("venues.map_url があれば 会場マップリンクが描画される", async () => {
