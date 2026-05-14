@@ -1,12 +1,6 @@
 <template>
   <aside class="next-strip" aria-label="次回開催">
-    <component
-      :is="targetUrl ? 'a' : 'div'"
-      :href="targetUrl || undefined"
-      class="next-strip__row"
-      :class="{ 'next-strip__row--link': !!targetUrl }"
-      :data-testid="targetUrl ? 'next-session-strip-link' : 'next-session-strip-static'"
-    >
+    <div class="next-strip__row">
       <span class="next-strip__tag" :class="{ 'next-strip__tag--muted': !nextEvent }">NEXT</span>
 
       <div class="next-strip__body">
@@ -29,8 +23,16 @@
         </template>
       </div>
 
-      <span v-if="targetUrl" class="next-strip__arrow" aria-hidden="true">予約 ›</span>
-    </component>
+      <a
+        v-if="nextEvent"
+        :href="targetUrl"
+        class="next-strip__cta"
+        data-testid="next-session-cta"
+      >
+        予約する
+        <span aria-hidden="true">›</span>
+      </a>
+    </div>
   </aside>
 </template>
 
@@ -38,14 +40,12 @@
 import { computed } from 'vue'
 import { useNextSession } from '../model/useNextSession'
 import { reservationEventUrl } from '@shared/config/reservation'
-import { LINE_OPEN_CHAT_URL } from '@shared/config/sns'
 
 const { nextEvent, isPending, isError } = useNextSession()
 
 const targetUrl = computed(() => {
   if (!nextEvent.value) return ''
-  const url = reservationEventUrl(nextEvent.value.id)
-  return url || LINE_OPEN_CHAT_URL
+  return reservationEventUrl(nextEvent.value.id)
 })
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
@@ -90,22 +90,6 @@ function formatTimeLocation(event) {
   gap: 14px;
   padding: 14px 24px;
   padding-inline: max(24px, calc((100% - 880px) / 2));
-  text-decoration: none;
-  color: inherit;
-}
-
-.next-strip__row--link {
-  cursor: pointer;
-  transition: background 150ms ease;
-}
-
-.next-strip__row--link:hover {
-  background: rgba(247, 243, 234, 0.04);
-}
-
-.next-strip__row--link:focus-visible {
-  outline: 2px solid var(--hq-color-accent);
-  outline-offset: -2px;
 }
 
 .next-strip__tag {
@@ -158,16 +142,30 @@ function formatTimeLocation(event) {
   text-overflow: ellipsis;
 }
 
-.next-strip__arrow {
+.next-strip__cta {
   flex-shrink: 0;
-  font-family: var(--hq-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.15em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border-radius: var(--hq-radius-pill);
+  background: var(--hq-color-accent);
   color: var(--hq-color-paper);
-  opacity: 0.85;
+  font-family: var(--hq-font-jp);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  min-height: 32px;
+  transition: opacity 120ms ease;
 }
 
-.next-strip__row--link:hover .next-strip__arrow {
-  opacity: 1;
+.next-strip__cta:hover {
+  opacity: 0.88;
+}
+
+.next-strip__cta:focus-visible {
+  outline: 2px solid var(--hq-color-paper);
+  outline-offset: 2px;
 }
 </style>

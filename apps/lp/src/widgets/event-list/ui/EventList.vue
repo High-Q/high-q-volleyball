@@ -23,12 +23,7 @@
     </div>
     <ul v-else class="event-list__items">
       <li v-for="event in events" :key="event.id" class="event-list__item">
-        <a
-          v-if="urlFor(event.id)"
-          :href="urlFor(event.id)"
-          class="event-card"
-          :data-event-id="event.id"
-        >
+        <article class="event-card" :data-event-id="event.id">
           <div class="event-card__date">
             <div class="event-card__month">{{ event.monthLabel }}</div>
             <div class="event-card__day">{{ event.dayLabel }}</div>
@@ -39,21 +34,16 @@
             <div class="event-card__meta">{{ event.time }}</div>
             <div class="event-card__meta">{{ event.location }}</div>
           </div>
-          <span class="event-card__arrow" aria-hidden="true">›</span>
-        </a>
-        <div v-else class="event-card event-card--disabled">
-          <div class="event-card__date">
-            <div class="event-card__month">{{ event.monthLabel }}</div>
-            <div class="event-card__day">{{ event.dayLabel }}</div>
-            <div class="event-card__dow">{{ event.dowLabel }}</div>
-          </div>
-          <div class="event-card__body">
-            <div class="event-card__title">{{ event.title }}</div>
-            <div class="event-card__meta">{{ event.time }}</div>
-            <div class="event-card__meta">{{ event.location }}</div>
-            <div class="event-card__hint">予約受付準備中</div>
-          </div>
-        </div>
+          <a
+            :href="urlFor(event.id)"
+            class="event-card__cta"
+            :data-event-id="event.id"
+            :data-testid="`event-card-cta-${event.id}`"
+          >
+            予約する
+            <span aria-hidden="true">›</span>
+          </a>
+        </article>
       </li>
     </ul>
   </section>
@@ -152,22 +142,12 @@ function urlFor(id) {
 .event-card {
   display: flex;
   gap: 16px;
-  align-items: stretch;
+  align-items: center;
   background: var(--hq-color-paper-warm);
   border: 1px solid var(--hq-color-hairline);
   border-radius: 4px;
   padding: 18px;
-  text-decoration: none;
   color: inherit;
-  transition: border-color 150ms ease, transform 150ms ease;
-}
-
-.event-card:hover:not(.event-card--disabled) {
-  border-color: rgba(31, 29, 26, 0.24);
-}
-
-.event-card--disabled {
-  opacity: 0.85;
 }
 
 .event-card__date {
@@ -222,18 +202,31 @@ function urlFor(id) {
   line-height: 1.7;
 }
 
-.event-card__hint {
-  font-family: var(--hq-font-mono);
-  font-size: 9px;
-  letter-spacing: 0.15em;
-  color: var(--hq-color-muted);
-  margin-top: 8px;
+.event-card__cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  border-radius: var(--hq-radius-pill);
+  background: var(--hq-color-ink);
+  color: var(--hq-color-paper);
+  font-family: var(--hq-font-jp);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  min-height: 36px;
+  white-space: nowrap;
+  transition: opacity 120ms ease;
 }
 
-.event-card__arrow {
-  font-family: var(--hq-font-jp);
-  font-size: 20px;
-  color: var(--hq-color-muted);
-  align-self: center;
+.event-card__cta:hover {
+  opacity: 0.88;
+}
+
+.event-card__cta:focus-visible {
+  outline: 2px solid var(--hq-color-ink);
+  outline-offset: 2px;
 }
 </style>

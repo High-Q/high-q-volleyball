@@ -61,6 +61,19 @@ onUnmounted(() => {
 </script>
 
 <style>
+html {
+  scroll-behavior: smooth;
+}
+
+/* sticky header 分のオフセットで、アンカー遷移時に見出しが隠れないようにする */
+[id="about-heading"],
+[id="features-heading"],
+[id="flow-heading"],
+[id="event-list-heading"],
+[id="faq-heading"] {
+  scroll-margin-top: 80px;
+}
+
 .lp-app {
   background: var(--hq-color-paper);
   color: var(--hq-color-ink);
