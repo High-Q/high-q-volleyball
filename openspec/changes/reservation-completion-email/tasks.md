@@ -1,10 +1,10 @@
 ## 1. 共有メーラー拡張（Edge Function 側）
 
-- [ ] 1.1 `supabase/functions/_shared/mailer.ts` に予約完了メール用レンダラ `renderReservationConfirmedMail(input)` を追加する。入力は `{ reservationDisplayId, eventName, startAtJst, venueName, venueMapUrl, feePerPerson, guestCount, note, lineOpenChatUrl, reservationDetailUrl, supportNote }` 相当の純粋データ。出力は `{ subject, body }`。`renderSignupCodeMail` と同じ命名・export 規則
-- [ ] 1.2 `supabase/functions/_shared/mailer.ts` に予約キャンセル完了メール用レンダラ `renderReservationCancelledMail(input)` を追加（入力は `{ reservationDisplayId, eventName, startAtJst, venueName, cancelledAtJst, eventDetailUrl, lineOpenChatUrl }` 相当）
-- [ ] 1.3 上記 2 レンダラを `_shared` 配下のテストファイル（例: `supabase/functions/_tests/mailer-reservation.spec.ts`）でユニットテスト。同一入力で同一出力 / 連絡事項空のときの非表示 / 生 UUID 形式が本文に含まれないこと / 件名に予約番号が含まれること を MUST 検証
-- [ ] 1.4 環境変数による送信抑制モードのスイッチを `_shared/mailer.ts` または共通ハンドラ層に実装する。変数名は既存命名規則に合わせ、抑制モード ON のとき `sendMail` を呼ばずに `console.log('[mailer] suppressed: ...')` を出力する
-- [ ] 1.5 送信抑制モードのテストを追加（モード ON で sendMail が呼ばれないこと / モード OFF で通常送信されること）
+- [x] 1.1 `supabase/functions/_shared/mailer-templates.ts` を新規作成し、予約完了メール用レンダラ `renderReservationConfirmedMail(input)` を追加する（既存 `mailer.ts` は `npm:nodemailer` を import しているため Vitest node ランナーで読めない。レンダラは純粋関数として独立ファイルに分離）。入力は `{ reservationDisplayId, eventName, startAtJst, venueName, venueMapUrl, feePerPerson, guestCount, note, lineOpenChatUrl, reservationDetailUrl, supportNote }` 相当の純粋データ。出力は `{ subject, body }`。`renderSignupCodeMail` と同等のスタイル
+- [x] 1.2 同 `mailer-templates.ts` に予約キャンセル完了メール用レンダラ `renderReservationCancelledMail(input)` を追加（入力は `{ reservationDisplayId, eventName, startAtJst, venueName, cancelledAtJst, eventDetailUrl, lineOpenChatUrl }` 相当）
+- [x] 1.3 上記 2 レンダラを `supabase/functions/_tests/mailer-templates.spec.ts` でユニットテスト。同一入力で同一出力 / 連絡事項空のときの非表示 / 生 UUID 形式が本文に含まれないこと / 件名に予約番号が含まれること を MUST 検証
+- [x] 1.4 環境変数による送信抑制モードのスイッチを `_shared/mailer.ts` または共通ハンドラ層に実装する。変数名は既存命名規則に合わせ、抑制モード ON のとき `sendMail` を呼ばずに `console.log('[mailer] suppressed: ...')` を出力する
+- [x] 1.5 送信抑制モードのテストを追加（モード ON で sendMail が呼ばれないこと / モード OFF で通常送信されること）
 
 ## 2. 予約完了通知 Edge Function
 
