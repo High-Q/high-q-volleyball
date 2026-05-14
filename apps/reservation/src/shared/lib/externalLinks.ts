@@ -4,5 +4,6 @@ const lpOrigin =
 
 const normalizedLpOrigin = lpOrigin.replace(/\/$/, "");
 
+export const LP_TOP_URL = normalizedLpOrigin;
 export const EXTERNAL_TRANSMISSION_URL = `${normalizedLpOrigin}/external-transmission`;
 export const PRIVACY_POLICY_URL = `${normalizedLpOrigin}/privacy`;
