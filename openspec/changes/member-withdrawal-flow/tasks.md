@@ -8,15 +8,15 @@
 
 ## 2. Edge Function `withdraw-member`
 
-- [ ] 2.1 `supabase/functions/withdraw-member/` を新規作成（index.ts / deno.json / README）
-- [ ] 2.2 JWT 検証 + 認可ロジック（本人 or admin 判定）の実装と単体テスト
-- [ ] 2.3 未来予約キャンセル（`status IN ('reserved', 'waitlist')` → `'cancelled'`）の実装と単体テスト
-- [ ] 2.4 reservations 個人情報列 NULL 化（`phone_at_booking = NULL` / `note = NULL`）の実装と単体テスト（退会後の SELECT で両列が NULL であることを検証）
-- [ ] 2.5 Storage オブジェクト削除（`identity-documents/<member_id>/` 配下を list → remove）の実装と単体テスト
-- [ ] 2.6 `members` DELETE + `auth.users` DELETE の実装と単体テスト
-- [ ] 2.7 冪等性（target 不在で 204）と失敗時 500 のハンドリング実装（順序: 認可→未来予約キャンセル→個人情報列 NULL 化→Storage 削除→members DELETE→auth.users DELETE）
-- [ ] 2.8 Function ログ（実行者 / 対象 / 結果）の出力
-- [ ] 2.9 dev 環境への deploy と curl での疎通確認
+- [x] 2.1 `supabase/functions/withdraw-member/` を新規作成（index.ts / deno.json / README）
+- [x] 2.2 JWT 検証 + 認可ロジック（本人 or admin 判定）の実装と単体テスト
+- [x] 2.3 未来予約キャンセル（`status IN ('reserved', 'waitlist')` → `'cancelled'`）の実装と単体テスト
+- [x] 2.4 reservations 個人情報列 NULL 化（`phone_at_booking = NULL` / `note = NULL`）の実装と単体テスト（退会後の SELECT で両列が NULL であることを検証）
+- [x] 2.5 Storage オブジェクト削除（`identity-documents/<member_id>/` 配下を list → remove）の実装と単体テスト
+- [x] 2.6 `members` DELETE + `auth.users` DELETE の実装と単体テスト
+- [x] 2.7 冪等性（target 不在で 204）と失敗時 500 のハンドリング実装（順序: 認可→未来予約キャンセル→個人情報列 NULL 化→Storage 削除→members DELETE→auth.users DELETE）
+- [x] 2.8 Function ログ（実行者 / 対象 / 結果）の出力
+- [x] 2.9 dev 環境への deploy と curl での疎通確認
 
 ## 3. admin アプリ — 詳細 sheet 削除セクション
 
