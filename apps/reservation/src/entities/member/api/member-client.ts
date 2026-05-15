@@ -8,6 +8,11 @@ import type {
   MemberRow,
 } from "../model/member.types";
 
+// reservation アプリは admin 専用列 `admin_note` を取得しない (#150)。
+// 列指定 SELECT に統一する運用を維持すること (rls-policies capability 参照)。
+const MEMBER_COLUMNS =
+  "id, email, display_name, nickname, birthday, phone, experience_level, role, profile, created_at, updated_at";
+
 function rowToMember(row: MemberRow): Member {
   return {
     id: createMemberId(row.id),
@@ -28,7 +33,7 @@ export async function fetchMyMember(uid: string): Promise<Member | null> {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("members")
-    .select("*")
+    .select(MEMBER_COLUMNS)
     .eq("id", uid)
     .maybeSingle();
   if (error) {
@@ -84,7 +89,7 @@ export async function updateMyMember(
       profile: mergedProfile,
     })
     .eq("id", uid)
-    .select("*")
+    .select(MEMBER_COLUMNS)
     .single();
   if (error) {
     throw error;

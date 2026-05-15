@@ -1,31 +1,51 @@
 <script setup lang="ts">
+import { onMounted, ref, useTemplateRef } from "vue";
 import { RouterLink, useRouter } from "vue-router";
-import { EventsListWidget } from "@/widgets/events-list";
+import { MembersListWidget } from "@/widgets/members-list";
+import { MemberDetailSheet } from "@/widgets/member-detail-sheet";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 import { useAuthSession } from "@/features/auth";
 import {
   PendingCountBadge,
   usePendingCount,
 } from "@/features/identity-document-pending-badge";
+import { fetchMembersSummary, type MemberSummary } from "@/entities/member";
 
 /**
- * /events のルートエントリページ。
- *
- * #171 で本人確認書類リンク + pending 件数 Badge を header に追加 (admin の
- * 既定トップ画面のためダッシュボード相当のサマリ機能を兼ねる)。
+ * /members のルートエントリページ。
  *
  * 関連:
- *   openspec/changes/admin-events-list-screen/specs/admin-events-list/spec.md
- *   openspec/changes/admin-identity-document-review/specs/admin-identity-document-review/spec.md
+ *   openspec/changes/admin-members-list-screen/specs/admin-members-list/spec.md
+ *   openspec/changes/admin-members-list-screen/design.md
  */
 
 const router = useRouter();
 const session = useAuthSession();
 const { count: pendingCount } = usePendingCount();
 
+const summary = ref<MemberSummary | null>(null);
+const listRef = useTemplateRef<{
+  patchAdminNote: (memberId: string, next: string | null) => void;
+  refetch: () => Promise<void>;
+}>("listRef");
+
+async function loadSummary(): Promise<void> {
+  const result = await fetchMembersSummary();
+  if (result.ok) summary.value = result.value;
+}
+
+onMounted(() => {
+  void loadSummary();
+});
+
 async function onSignOut(): Promise<void> {
   await session.signOut();
   await router.replace({ name: "login" });
+}
+
+function onMemoSaved(memberId: string, note: string | null): void {
+  // 楽観的更新を一覧の admin_note プレビューにも伝搬する。
+  listRef.value?.patchAdminNote(memberId, note);
 }
 </script>
 
@@ -38,18 +58,24 @@ async function onSignOut(): Promise<void> {
         <PageBreadcrumb
           :items="[
             { label: 'Workspace', to: { name: 'events' } },
-            { label: 'Events' },
+            { label: '会員' },
           ]"
         />
-        <h1 class="font-jp-display text-lg text-ink">イベント</h1>
+        <h1 class="font-jp-display text-lg text-ink">会員</h1>
+        <p
+          v-if="summary"
+          class="mt-hq-1 font-mono text-xs uppercase tracking-widest text-muted"
+        >
+          累計 {{ summary.total }} 名 · 今月初参加 {{ summary.first_this_month }} 名
+        </p>
       </div>
       <div class="flex items-center gap-hq-4">
         <RouterLink
-          :to="{ name: 'members' }"
+          :to="{ name: 'events' }"
           class="inline-flex items-center gap-hq-2 rounded-hq-sm border border-hairline bg-paper px-hq-3 py-hq-1 font-jp text-sm text-ink transition-colors hover:bg-paper-warm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
-          aria-label="会員の一覧"
+          aria-label="イベントの一覧"
         >
-          <span>会員</span>
+          <span>イベント</span>
         </RouterLink>
         <RouterLink
           :to="{ name: 'identity-documents' }"
@@ -70,7 +96,9 @@ async function onSignOut(): Promise<void> {
     </header>
 
     <div class="flex-1 overflow-hidden">
-      <EventsListWidget />
+      <MembersListWidget ref="listRef" />
     </div>
+
+    <MemberDetailSheet @saved="onMemoSaved" />
   </main>
 </template>
