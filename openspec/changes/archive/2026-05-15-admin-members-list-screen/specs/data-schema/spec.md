@@ -32,6 +32,18 @@
 - **WHEN** admin が `UPDATE members SET admin_note = NULL WHERE id = :id` を発行
 - **THEN** 1 行更新され、`admin_note IS NULL` 状態に戻る
 
+### Requirement: 新規 view の更新可否
+
+システムは MUST `event_detail_view`、`event_participants_view`、`member_list_view`、および `member_history_view` を **読み取り専用** として運用する。これら view への INSERT / UPDATE / DELETE は SHALL 発行しない（PostgreSQL の view 仕様により集計列を含む view は更新不可。アプリ側コードはベーステーブル `events` / `reservations` / `members` / `venues` 経由で書き込む）。
+
+#### Scenario: 集計 view の更新不可
+- **WHEN** admin が `INSERT INTO event_detail_view ...` を実行
+- **THEN** PostgreSQL から「cannot insert into view」相当のエラーが返る（集計列を含む view の標準動作）
+
+#### Scenario: member_list_view の更新不可
+- **WHEN** admin が `INSERT INTO member_list_view ...` を実行
+- **THEN** PostgreSQL から「cannot insert into view」相当のエラーが返る
+
 ## ADDED Requirements
 
 ### Requirement: member_list_view ビュー
@@ -114,14 +126,6 @@ view は `SECURITY INVOKER` で作成 MUST し、参照テーブルの RLS を�
 #### Scenario: 参加履歴ゼロ
 - **WHEN** ある member に `status IN ('reserved', 'attended', 'no_show', 'waitlist')` の予約が 0 件
 - **THEN** 当該 member_id でフィルタした view は 0 行返る
-
-### Requirement: 新規 view の更新可否
-
-システムは MUST `member_list_view` および `member_history_view` を **読み取り専用** として運用する。両 view への INSERT / UPDATE / DELETE は SHALL 発行しない（PostgreSQL の view 仕様により集計列を含む view は更新不可。アプリ側コードはベーステーブル `members` / `reservations` / `events` / `venues` 経由で書き込む）。
-
-#### Scenario: 集計 view の更新不可
-- **WHEN** admin が `INSERT INTO member_list_view ...` を実行
-- **THEN** PostgreSQL から「cannot insert into view」相当のエラーが返る（集計列を含む view の標準動作）
 
 ### Requirement: Branded Types との対応（member_list_view / member_history_view）
 
