@@ -39,7 +39,14 @@ describe("fetchMyMember", () => {
     const result = await fetchMyMember(UID);
 
     expect(supabaseMock.from).toHaveBeenCalledWith("members");
-    expect(select).toHaveBeenCalledWith("*");
+    // #150: admin 専用列 admin_note を取得しないため明示列指定 SELECT を使う
+    expect(select).toHaveBeenCalledWith(
+      expect.stringContaining("display_name"),
+    );
+    expect(select).not.toHaveBeenCalledWith("*");
+    expect(select).not.toHaveBeenCalledWith(
+      expect.stringContaining("admin_note"),
+    );
     expect(eq).toHaveBeenCalledWith("id", UID);
     expect(result?.id).toBe(UID);
     expect(result?.displayName).toBe("test");
