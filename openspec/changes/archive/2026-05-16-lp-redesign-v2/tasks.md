@@ -36,12 +36,12 @@
 - [x] 4.1 `pnpm --filter @high-q/lp test` を実行し、全 widget の unit/component テストが緑で通ることを確認
 - [x] 4.2 `pnpm build:lp` を実行し、ビルドが成功することを確認
 - [x] 4.3 Playwright E2E（happy path：トップ表示 → 次回開催帯確認 → イベントカード CTA / 最終 CTA で reservation サイトへの遷移 URL とクエリパラメータが正しいことを確認、を 1〜2 件）を追加・実行
-- [ ] 4.4 `pnpm dev:lp` または Render PR Preview でモバイル幅（420px）・タブレット幅・デスクトップ幅の各表示と主要動線（ヒーロー CTA / 次回開催帯 CTA / イベントカード CTA / 最終 CTA / フッター法務リンク）を翔太郎くんと一緒に視認確認
+- [x] 4.4 `pnpm dev:lp` または Render PR Preview でモバイル幅（420px）・タブレット幅・デスクトップ幅の各表示と主要動線（ヒーロー CTA / 次回開催帯 CTA / イベントカード CTA / 最終 CTA / フッター法務リンク）を翔太郎くんと一緒に視認確認
 
 ## 5. PR 作成と sync / archive 前準備
 
-- [ ] 5.1 ブランチ名 `feature/160-lp-redesign-v2` で PR を作成し、Issue #160 をリンク
-- [ ] 5.2 Render PR Preview の URL を翔太郎くんに案内し、確認結果を待つ（OK 後に `/opsx-ship` フローへ）
+- [x] 5.1 ブランチ名 `feature/160-lp-redesign-v2` で PR を作成し、Issue #160 をリンク（実際は `release/lp-redesign-v2` ブランチで PR #258 として作成）
+- [x] 5.2 Render PR Preview の URL を翔太郎くんに案内し、確認結果を待つ（OK 後に `/opsx-ship` フローへ）
 
 ---
 
