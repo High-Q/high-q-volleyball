@@ -2,14 +2,18 @@ import "vuetify/styles";
 import { createVuetify } from "vuetify";
 import { aliases, mdi } from "vuetify/iconsets/mdi";
 
-const myCustomTheme = {
+const hqTheme = {
   dark: false,
   colors: {
-    primary:       "#182F43", // ブランド主色（ヘッダー・見出し・強調テキスト）
-    secondary:     "#85BBCC", // ブランドアクセント（CTA・カレンダー・ハイライト）
-    third:         "#6A96A4", // 中間色（補助ボタン等）
-    "surface-alt": "#F5F8FA", // セクション交互背景（Activities 等）
-    "text-muted":  "#6A96A4", // 補助テキスト（フッター著作権等）
+    background: "#f7f3ea",
+    surface: "#fbf8f1",
+    primary: "#1f1d1a",
+    secondary: "#3a3833",
+    accent: "#b85c3c",
+    error: "#9c4030",
+    info: "#3a3833",
+    success: "#6b7e4f",
+    warning: "#c08442",
   },
 };
 
@@ -20,9 +24,7 @@ export default createVuetify({
     sets: { mdi },
   },
   theme: {
-    defaultTheme: "myCustomTheme",
-    themes: {
-      myCustomTheme,
-    },
+    defaultTheme: "hqTheme",
+    themes: { hqTheme },
   },
 });
