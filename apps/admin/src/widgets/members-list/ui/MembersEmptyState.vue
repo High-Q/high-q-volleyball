@@ -23,7 +23,7 @@ const emit = defineEmits<{ clickReset: [] }>();
         フィルタや検索ワードを見直してみてください。
       </p>
       <div class="mt-hq-6">
-        <Button variant="secondary" size="sm" @click="emit('clickReset')">
+        <Button variant="outline" size="sm" @click="emit('clickReset')">
           フィルタをリセット
         </Button>
       </div>
