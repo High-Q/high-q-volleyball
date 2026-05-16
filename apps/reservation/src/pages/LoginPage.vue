@@ -33,8 +33,15 @@ const isError = computed(() => status.value === "error");
 
 onMounted(() => {
   const reason = route.query.reason;
+  const errorParam = route.query.error;
   if (typeof reason === "string" && reason.length > 0) {
     reasonBanner.value = reason;
+  } else if (typeof errorParam === "string" && errorParam.length > 0) {
+    // 退会 (#254 / #255) 後の自動 signOut + リダイレクトや、その他 auth エラー
+    // を統一的に reasonBanner に流す。
+    reasonBanner.value = errorParam;
+  }
+  if (reasonBanner.value !== null) {
     const url = new URL(window.location.href);
     url.search = "";
     window.history.replaceState({}, "", url.toString());
@@ -64,6 +71,8 @@ const errorMessage = computed<string | null>(() => {
     switch (reasonBanner.value) {
       case "link-invalid":
         return "リンクの有効期限が切れたか、無効です。再度メールを送信してください。";
+      case "member_not_found":
+        return "アカウントが見つかりません。退会済みの可能性があります。";
       default:
         return null;
     }

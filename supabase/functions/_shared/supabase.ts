@@ -20,3 +20,24 @@ export function createServiceClient(): SupabaseClient {
     },
   });
 }
+
+// 呼び出し元の JWT を保持したクライアント。auth.getUser() で uid を取得して
+// 認可判定に使う用途。DB 操作は service_role 側で行う (RLS bypass)。
+export function createUserClient(authHeader: string | null): SupabaseClient {
+  const url = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!url || !anonKey) {
+    throw new Error(
+      "SUPABASE_URL / SUPABASE_ANON_KEY が Edge Function 環境に設定されていません",
+    );
+  }
+  return createClient(url, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+    global: {
+      headers: authHeader ? { Authorization: authHeader } : {},
+    },
+  });
+}

@@ -11,6 +11,7 @@ import {
 } from "radix-vue";
 import { Skeleton } from "@/shared/ui";
 import { AdminNoteEditForm } from "@/features/member-admin-note-edit";
+import { MemberWithdrawalDialog } from "@/features/member-withdrawal";
 import { useMemberDetailSheet } from "../composables/useMemberDetailSheet";
 import MemberDetailHeader from "./MemberDetailHeader.vue";
 import MemberHistoryTable from "./MemberHistoryTable.vue";
@@ -33,6 +34,8 @@ import MemberHistoryTable from "./MemberHistoryTable.vue";
 const emit = defineEmits<{
   /** メモ保存成功時に発火。Page から一覧 widget へ patch を伝搬するため。 */
   saved: [memberId: string, note: string | null];
+  /** 会員削除成功時に発火。Page から一覧 widget へ行除去を伝搬するため。 */
+  withdrawn: [memberId: string];
 }>();
 
 const sheet = useMemberDetailSheet();
@@ -49,6 +52,30 @@ function onSaved(note: string | null): void {
   if (sheet.member.value) {
     sheet.patchAdminNote(note);
     emit("saved", sheet.member.value.id as unknown as string, note);
+  }
+}
+
+/** 退会対象集計: history は cancelled 除外済なので start_at で未来 / 過去を切る。 */
+const upcomingReservationCount = computed<number>(() => {
+  const now = Date.now();
+  return sheet.history.value.filter((row) => {
+    const startMs = new Date(row.start_at as unknown as string).getTime();
+    return (
+      startMs > now &&
+      (row.status === "reserved" || row.status === "waitlist")
+    );
+  }).length;
+});
+
+const pastReservationCount = computed<number>(
+  () => sheet.history.value.length - upcomingReservationCount.value,
+);
+
+function onWithdrawn(): void {
+  if (sheet.member.value) {
+    const id = sheet.member.value.id as unknown as string;
+    emit("withdrawn", id);
+    void sheet.close();
   }
 }
 </script>
@@ -135,6 +162,38 @@ function onSaved(note: string | null): void {
               :initial-value="sheet.member.value.admin_note"
               @saved="onSaved"
             />
+
+            <section
+              class="space-y-hq-2 border-t border-danger/30 pt-hq-4"
+              aria-labelledby="member-danger-zone-heading"
+            >
+              <h3
+                id="member-danger-zone-heading"
+                class="font-mono text-[10px] uppercase tracking-widest text-danger"
+              >
+                危険な操作
+              </h3>
+              <p class="font-jp text-xs text-muted">
+                会員データを完全に削除します。元に戻せません。
+              </p>
+              <MemberWithdrawalDialog
+                :member-id="sheet.member.value.id"
+                :target-email="sheet.member.value.email"
+                :upcoming-reservation-count="upcomingReservationCount"
+                :past-reservation-count="pastReservationCount"
+                @withdrawn="onWithdrawn"
+              >
+                <template #trigger="{ open }">
+                  <button
+                    type="button"
+                    class="inline-flex h-9 items-center justify-center rounded-hq-sm bg-danger px-hq-4 py-hq-2 text-sm font-jp font-medium text-paper shadow-hq-sm transition-colors hover:bg-danger/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-danger"
+                    @click="open"
+                  >
+                    この会員を削除
+                  </button>
+                </template>
+              </MemberWithdrawalDialog>
+            </section>
           </template>
         </div>
       </RadixDialogContent>

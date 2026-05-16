@@ -156,6 +156,76 @@ describe("useAuthSession", () => {
     await setupSession();
     expect(onAuthStateChangeMock).toHaveBeenCalled();
   });
+
+  // #254 / #255 退会フロー: 退会済み会員 (session 有 + members 不在) を検知して
+  // 自動 signOut + /login?error=member_not_found 遷移する挙動を担保する。
+  describe("退会済み会員の自動 signOut (member fetch が null)", () => {
+    let assignMock: ReturnType<typeof vi.fn>;
+    let originalLocation: Location;
+
+    beforeEach(() => {
+      assignMock = vi.fn();
+      originalLocation = window.location;
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: {
+          pathname: "/profile",
+          search: "",
+          assign: assignMock,
+        },
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: originalLocation,
+      });
+    });
+
+    it("session あり + fetchMyMember が null → signOut + /login?error=member_not_found 遷移", async () => {
+      getSessionMock.mockResolvedValue(sessionFixture);
+      fetchMyMemberMock.mockResolvedValue(null);
+      signOutMock.mockResolvedValue(undefined);
+      const session = await setupSession();
+      await session.ready();
+
+      expect(signOutMock).toHaveBeenCalledTimes(1);
+      expect(session.status.value).toBe("unauthenticated");
+      expect(session.member.value).toBeNull();
+      expect(assignMock).toHaveBeenCalledWith("/login?error=member_not_found");
+    });
+
+    it("既に /login?error=member_not_found に居る場合は再遷移しない", async () => {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: {
+          pathname: "/login",
+          search: "?error=member_not_found",
+          assign: assignMock,
+        },
+      });
+      getSessionMock.mockResolvedValue(sessionFixture);
+      fetchMyMemberMock.mockResolvedValue(null);
+      signOutMock.mockResolvedValue(undefined);
+      const session = await setupSession();
+      await session.ready();
+
+      expect(signOutMock).toHaveBeenCalled();
+      expect(assignMock).not.toHaveBeenCalled();
+    });
+
+    it("fetchMyMember rejected (取得失敗) のときは自動 signOut しない (既存挙動を維持)", async () => {
+      getSessionMock.mockResolvedValue(sessionFixture);
+      fetchMyMemberMock.mockRejectedValue(new Error("network"));
+      const session = await setupSession();
+      await session.ready();
+
+      expect(signOutMock).not.toHaveBeenCalled();
+      expect(session.status.value).toBe("authenticated");
+      expect(assignMock).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe("useAuthSession.hasIdentityDocument", () => {
