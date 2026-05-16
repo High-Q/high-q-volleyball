@@ -1,19 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-/**
- * HQ デザイントークン Button variant.
- *
- * - `primary` : 主要アクション (ink 背景・paper 文字)。プロトタイプ準拠の CTA
- * - `outline` : 通常の二次アクション (透明背景・hairline ボーダー)
- * - `ghost`   : 控えめなテキスト型 (透明背景・ボーダーなし)
- * - `danger`  : 破壊的操作 (退会・削除) 専用 (`--hq-color-danger` 背景・paper 文字)
- *
- * 注: accent カラーは Button では使わない (NEXT タグ等の限定強調専用)。
- * Issue #238 で旧 `secondary` → `outline` にリネーム / `danger` を本物の
- * destructive 色 #9c4030 に正規化済み。
- */
-type Variant = "primary" | "outline" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md";
 
 const props = withDefaults(
@@ -87,7 +75,7 @@ function handleClick(event: MouseEvent) {
 }
 
 .hq-btn:focus-visible {
-  outline: 2px solid var(--hq-color-ink);
+  outline: 2px solid var(--hq-color-accent);
   outline-offset: 2px;
 }
 
@@ -109,7 +97,7 @@ function handleClick(event: MouseEvent) {
   border-color: var(--hq-color-ink);
 }
 
-.hq-btn--outline {
+.hq-btn--secondary {
   background: transparent;
   color: var(--hq-color-ink);
   border-color: var(--hq-color-hairline);
@@ -122,9 +110,9 @@ function handleClick(event: MouseEvent) {
 }
 
 .hq-btn--danger {
-  background: var(--hq-color-danger);
+  background: var(--hq-color-accent);
   color: var(--hq-color-paper);
-  border-color: var(--hq-color-danger);
+  border-color: var(--hq-color-accent);
 }
 
 .hq-btn:not(.hq-btn--inactive):hover {

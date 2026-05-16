@@ -13,16 +13,16 @@ const color = Object.freeze({
   ink: "#1f1d1a",
   inkSoft: "#3a3833",
   muted: "#8a857a",
-  accent: "#a44e30",
-  accentSoft: "rgba(164,78,48,0.08)",
+  accent: "#b85c3c",
+  accentSoft: "rgba(184,92,60,0.08)",
   hairline: "rgba(31,29,26,0.12)",
   /** カード内側の subtle な区切り線用 (hairline の半分の濃さ)。 */
   hairlineSoft: "rgba(31,29,26,0.06)",
   // semantic colors (HQ アース調に揃えた渋めの配色)
   success: "#6b7e4f",
   successSoft: "rgba(107,126,79,0.10)",
-  warn: "#d4a04a",
-  warnSoft: "rgba(212,160,74,0.10)",
+  warn: "#c08442",
+  warnSoft: "rgba(192,132,66,0.10)",
   danger: "#9c4030",
   dangerSoft: "rgba(156,64,48,0.10)",
 });
@@ -60,18 +60,12 @@ const shadow = Object.freeze({
   md: "0 4px 12px rgba(31,29,26,0.06), 0 2px 4px rgba(31,29,26,0.04)",
 });
 
-const motion = Object.freeze({
-  /** 設計サンプル準拠の汎用イージング (drawer / overlay 等のトランジション)。 */
-  ease: "cubic-bezier(.22,.61,.36,1)",
-});
-
 export const HQ = Object.freeze({
   color,
   font,
   space,
   radius,
   shadow,
-  motion,
 });
 
 export type HQColorKey = keyof typeof color;
@@ -79,4 +73,3 @@ export type HQFontKey = keyof typeof font;
 export type HQSpaceKey = keyof typeof space;
 export type HQRadiusKey = keyof typeof radius;
 export type HQShadowKey = keyof typeof shadow;
-export type HQMotionKey = keyof typeof motion;

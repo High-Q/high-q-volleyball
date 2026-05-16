@@ -98,7 +98,7 @@ async function reloadAll(): Promise<void> {
         <p class="font-jp text-sm text-ink m-0">
           情報を取得できませんでした。
         </p>
-        <Button variant="outline" size="sm" @click="reloadAll">
+        <Button variant="secondary" size="sm" @click="reloadAll">
           再試行
         </Button>
       </div>

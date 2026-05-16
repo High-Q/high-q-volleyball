@@ -73,8 +73,6 @@ export default defineConfig({
         // 実通信は mockEventApi が route で横取りするため、本値はバンドルに埋め込まれるだけ。
         VITE_SUPABASE_URL: E2E_DUMMY_SUPABASE_URL,
         VITE_SUPABASE_PUBLISHABLE_KEY: E2E_DUMMY_SUPABASE_KEY,
-        // 予約サイト URL は e2e でも build 時に埋め込む必要がある (event card / final CTA / next-strip)
-        VITE_RESERVATION_URL: 'http://localhost:4175',
       },
     },
     {

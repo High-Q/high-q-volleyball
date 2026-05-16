@@ -10,12 +10,12 @@ describe("Button", () => {
     expect(wrapper.text()).toContain("確認");
   });
 
-  it("variant prop が class に反映される (outline)", () => {
+  it("variant prop が class に反映される", () => {
     const wrapper = mount(Button, {
-      props: { variant: "outline" },
+      props: { variant: "secondary" },
       slots: { default: "OK" },
     });
-    expect(wrapper.classes()).toContain("hq-btn--outline");
+    expect(wrapper.classes()).toContain("hq-btn--secondary");
   });
 
   it("size=sm が class に反映される", () => {

@@ -111,9 +111,6 @@ importers:
       '@high-q/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      '@high-q/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@tanstack/vue-query':
         specifier: ^5.100.1
         version: 5.100.1(vue@3.5.33(typescript@5.9.3))

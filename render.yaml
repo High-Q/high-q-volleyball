@@ -74,15 +74,6 @@ services:
       - key: VITE_SUPABASE_PUBLISHABLE_KEY
         sync: false
         previewValue: sb_publishable_JXCTRAx7ECO7-dZEsquKrg_VTdyXdfG
-      # LP の CTA（イベント予約ボタン / SiteHeader Drawer）から予約サイトへ
-      # 遷移する際の base URL。未設定だとコード側で本番予約サイトに fallback
-      # するが、PR Preview / 独自ドメイン化を見越して dev/prd 切替パターンに揃える。
-      # - 本番 (master push) → sync: false で Dashboard 設定値
-      # - PR Preview          → previewValue の prd reservation URL
-      #   (PR Preview Supabase が prd を向く方針との対称性)
-      - key: VITE_RESERVATION_URL
-        sync: false
-        previewValue: https://high-q-reservation.onrender.com
 
   # ============================================================
   # admin (apps/admin) — Vue Router + Supabase Auth ゲート付き管理画面
