@@ -47,6 +47,12 @@ function onMemoSaved(memberId: string, note: string | null): void {
   // 楽観的更新を一覧の admin_note プレビューにも伝搬する。
   listRef.value?.patchAdminNote(memberId, note);
 }
+
+function onMemberWithdrawn(): void {
+  // 削除後に一覧 + summary を refetch。当該行は消える。
+  void listRef.value?.refetch();
+  void loadSummary();
+}
 </script>
 
 <template>
@@ -99,6 +105,6 @@ function onMemoSaved(memberId: string, note: string | null): void {
       <MembersListWidget ref="listRef" />
     </div>
 
-    <MemberDetailSheet @saved="onMemoSaved" />
+    <MemberDetailSheet @saved="onMemoSaved" @withdrawn="onMemberWithdrawn" />
   </main>
 </template>

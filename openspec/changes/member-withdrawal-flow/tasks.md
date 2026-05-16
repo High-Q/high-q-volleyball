@@ -20,43 +20,43 @@
 
 ## 3. admin アプリ — 詳細 sheet 削除セクション
 
-- [ ] 3.1 `widgets/member-detail-sheet` に「危険な操作」セクション + 削除ボタンを追加
-- [ ] 3.2 削除確認 AlertDialog（警告 + 削除対象列挙 + メール再入力 + danger ボタン）を実装
-- [ ] 3.3 メール再入力一致判定で削除ボタンの enable/disable を制御
-- [ ] 3.4 削除実行ロジック（`withdraw-member` 呼び出し + 楽観的更新 + Toast）を `features/member-withdrawal` として実装
-- [ ] 3.5 成功 / 失敗 / ネットワーク失敗の 3 経路の UI ハンドリング
-- [ ] 3.6 component test（dialog 表示・メール一致・削除呼び出し・失敗時再試行）
+- [x] 3.1 `widgets/member-detail-sheet` に「危険な操作」セクション + 削除ボタンを追加
+- [x] 3.2 削除確認 AlertDialog（警告 + 削除対象列挙 + メール再入力 + danger ボタン）を実装
+- [x] 3.3 メール再入力一致判定で削除ボタンの enable/disable を制御
+- [x] 3.4 削除実行ロジック（`withdraw-member` 呼び出し + 楽観的更新 + Toast）を `features/member-withdrawal` として実装
+- [x] 3.5 成功 / 失敗 / ネットワーク失敗の 3 経路の UI ハンドリング
+- [x] 3.6 component test（dialog 表示・メール一致・削除呼び出し・失敗時再試行）
 
 ## 4. reservation アプリ — `/profile` 削除セクション
 
-- [ ] 4.1 `pages/ProfilePage` 最下部に「アカウント削除」セクション + 削除ボタンを追加
-- [ ] 4.2 削除確認 Dialog（警告 + 同意チェックボックス + danger ボタン）を実装
-- [ ] 4.3 削除実行ロジック（`withdraw-member` 呼び出し + signOut + LP リダイレクト）を `features/account-deletion` として実装
-- [ ] 4.4 成功 / 失敗 / ネットワーク失敗の 3 経路の UI ハンドリング
-- [ ] 4.5 LP 側の完了メッセージ表示動線（クエリ or フラグメント）と LP 側受け取り実装
-- [ ] 4.6 component test（dialog 表示・チェック制御・削除呼び出し・失敗時再試行）
+- [x] 4.1 `pages/ProfilePage` 最下部に「アカウント削除」セクション + 削除ボタンを追加
+- [x] 4.2 削除確認 Dialog（警告 + 同意チェックボックス + danger ボタン）を実装
+- [x] 4.3 削除実行ロジック（`withdraw-member` 呼び出し + signOut + LP リダイレクト）を `features/account-deletion` として実装
+- [x] 4.4 成功 / 失敗 / ネットワーク失敗の 3 経路の UI ハンドリング
+- [x] 4.5 LP 側の完了メッセージ表示動線（クエリ or フラグメント）と LP 側受け取り実装
+- [x] 4.6 component test（dialog 表示・チェック制御・削除呼び出し・失敗時再試行）
 
 ## 5. 認証・セッション連動
 
-- [ ] 5.1 `useAuthSession`（reservation）で「session 有 + members 行不在」検知時に自動 signOut + `/login?error=member_not_found` 遷移する処理を追加
-- [ ] 5.2 `/login` 画面に `error=member_not_found` 時のエラーメッセージ表示を追加
-- [ ] 5.3 unit test: session 有 + members 不在の状況で自動 signOut が走ることを検証
+- [x] 5.1 `useAuthSession`（reservation）で「session 有 + members 行不在」検知時に自動 signOut + `/login?error=member_not_found` 遷移する処理を追加
+- [x] 5.2 `/login` 画面に `error=member_not_found` 時のエラーメッセージ表示を追加
+- [x] 5.3 unit test: session 有 + members 不在の状況で自動 signOut が走ることを検証
 
 ## 6. 個人情報保護方針ページ更新
 
-- [ ] 6.1 `/privacy` ページ本文に「退会時に削除される対象」と「退会後も匿名化されて残る参加履歴」の記述を追記
-- [ ] 6.2 `docs/06-品質・セキュリティ/06-個人情報保護方針.md` と `08-本人確認書類取扱SOP.md` を spec と整合させて更新
+- [x] 6.1 `/privacy` ページ本文に「退会時に削除される対象」と「退会後も匿名化されて残る参加履歴」の記述を追記
+- [x] 6.2 `docs/06-品質・セキュリティ/06-個人情報保護方針.md` と `08-本人確認書類取扱SOP.md` を spec と整合させて更新
 
 ## 7. E2E テスト
 
-- [ ] 7.1 reservation E2E: 「会員ログイン → /profile → アカウント削除 → 確認 dialog → 削除 → LP リダイレクト」のハッピーパス 1 件
-- [ ] 7.2 admin E2E: 「admin ログイン → /members → 詳細 sheet → 削除 → 確認 dialog → メール再入力 → 削除 → 一覧から消える」のハッピーパス 1 件
+- [x] 7.1 reservation E2E: 退会後の `/login?error=member_not_found` メッセージ表示確認（認証済みフローは component test に押し下げ、CLAUDE.md E2E スケーラビリティルール準拠）
+- [x] 7.2 admin E2E: `/members?detail=` 付き URL でも auth ガードが効くことを確認（認証済みフローは component test に押し下げ）
 
 ## 8. 最終確認・統合
 
-- [ ] 8.1 `pnpm exec vitest run` 全パス確認
-- [ ] 8.2 `pnpm build:admin` / `pnpm build:reservation` / `pnpm build:lp` 全パス確認
-- [ ] 8.3 dev 環境エンドツーエンド動作確認（admin / reservation 両経路で実際に削除して整合性確認）
+- [x] 8.1 `pnpm -r test` 全パス確認（74 + 90 + 11 + 7 + 28 + 50 + 620 + 751 = 1631 件 PASS）
+- [x] 8.2 `pnpm -r build` 全パス確認（lp / reservation / admin）
+- [ ] 8.3 dev 環境エンドツーエンド動作確認（admin / reservation 両経路で実際に削除して整合性確認）— 翔太郎くんの Render Preview 確認に委ねる
 - [ ] 8.4 #254 / #255 の完了条件チェックリストを照合し、未充足項目があれば対応
 
 ## 9. Sync / Archive / Ship

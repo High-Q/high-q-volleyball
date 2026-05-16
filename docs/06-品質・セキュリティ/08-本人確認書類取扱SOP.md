@@ -132,11 +132,22 @@ MVP1 では admin が個別画像を SQL Editor 経由でダウンロード（�
 - 暗号化: Supabase Storage デフォルト（at-rest 暗号化）
 - アクセス: signed URL を admin / 本人のみ発行可。直接 URL アクセスは 403
 
-### 退会時
+### 退会時 (#254 / #255 で実装)
 
-- `members.id` の DELETE で identity_documents 行は ON DELETE CASCADE で自動削除
-- Storage オブジェクトはアプリ層から明示的に DELETE 呼び出し（DB トリガーでは Storage 操作不可）
-- アプリ実装: members 削除前に `storage.from('identity-documents').remove([<paths>])` を呼ぶ
+退会は Edge Function `withdraw-member` に集約され、reservation 自己退会 / admin 強制削除のいずれの経路でも以下の順序で実行される:
+
+1. 認可検証 (本人 or admin) — それ以外は 403
+2. 未来予約のキャンセル (`status IN ('reserved','waitlist')` → `'cancelled'`)
+3. `reservations` 個人情報列 NULL 化 (`phone_at_booking = NULL` / `note = NULL`)
+4. Supabase Storage `identity-documents/<member_id>/` 配下のオブジェクトを `list()` → `remove()` で一括削除
+5. `members` 行 DELETE
+   - `identity_documents` は ON DELETE CASCADE で連鎖削除
+   - `reservations.member_id` は ON DELETE SET NULL で匿名化
+6. `auth.users` 行を Auth admin API で削除
+
+**Storage 残骸チェック**: 上記 Step 4 が失敗した場合、`withdraw-member` Function は Step 5 以降を実行せず 500 を返す。後日の DB 状態が「`members` 行は存在するが Storage オブジェクトは消えている」場合は手動で `members` を一旦復旧する経路は無く、Edge Function を再実行して整合性を取り戻す (冪等)。
+
+**孤児オブジェクト点検 (年次運用)**: `members` テーブルから join できない Storage `identity-documents/*/*` オブジェクトを Supabase Dashboard で list し、見つかった場合は手動 `remove()`。SOP 末尾の改訂履歴に追記する。
 
 ---
 

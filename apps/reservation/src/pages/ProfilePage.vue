@@ -14,6 +14,7 @@ import {
   EmailEditDialog,
 } from "@/features/profile-account";
 import { SignOutButton } from "@/features/profile-sign-out";
+import { AccountDeletionSection } from "@/features/account-deletion";
 import { AppFooter } from "@/widgets/app-footer";
 import {
   fetchMyReservations,
@@ -72,6 +73,16 @@ function showSuccess(message: string): void {
     successNotice.value = null;
   }, 4000);
 }
+
+const upcomingReservationCount = computed<number>(() => {
+  const now = Date.now();
+  return reservations.value.filter((r) => {
+    const startMs = new Date(r.event.startAt).getTime();
+    return (
+      startMs > now && (r.status === "reserved" || r.status === "waitlist")
+    );
+  }).length;
+});
 </script>
 
 <template>
@@ -132,6 +143,10 @@ function showSuccess(message: string): void {
         <StatsSection v-else :reservations="reservations" />
 
         <SignOutButton />
+
+        <AccountDeletionSection
+          :upcoming-reservation-count="upcomingReservationCount"
+        />
       </template>
     </section>
 

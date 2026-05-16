@@ -65,6 +65,31 @@ function createAuthSession(): AuthSession {
     hasIdentityDoc.value =
       idDocResult.status === "fulfilled" ? idDocResult.value : false;
     status.value = "authenticated";
+
+    // 退会 (#254 / #255) や手動 DB 削除等で auth.users は残っているが members 行が
+    // 不在になった状態を検知する。退会済み会員のセッションを放置するとプロフィール
+    // 等で例外を引くため、自動 signOut + /login?error=member_not_found 遷移する。
+    if (memberResult.status === "fulfilled" && memberResult.value === null) {
+      await handleMemberNotFound();
+    }
+  }
+
+  async function handleMemberNotFound(): Promise<void> {
+    try {
+      await signOutApi();
+    } catch {
+      // signOut 失敗時もページ遷移で強制的にセッションを切る
+    }
+    session.value = null;
+    member.value = null;
+    hasIdentityDoc.value = false;
+    status.value = "unauthenticated";
+    if (typeof window !== "undefined") {
+      const url = "/login?error=member_not_found";
+      if (window.location.pathname + window.location.search !== url) {
+        window.location.assign(url);
+      }
+    }
   }
 
   function ready(): Promise<void> {
