@@ -9,6 +9,7 @@ import {
   useCancelBooking,
 } from "@/features/booking";
 import { useEventDetail } from "@/features/event-detail";
+import { useAuthSession } from "@/features/auth";
 import type { Reservation } from "@/entities/reservation";
 
 const route = useRoute();
@@ -21,6 +22,11 @@ const reservationIdRaw = computed(() => {
 });
 
 const { event, loading, error, notFound, reload } = useEventDetail(idRef);
+
+const auth = useAuthSession();
+const memberEmail = computed<string | null>(
+  () => auth.member.value?.email ?? auth.session.value?.user.email ?? null,
+);
 
 const reservation = ref<Reservation | null>(null);
 
@@ -130,6 +136,7 @@ function goToList(): void {
         v-else-if="event !== null && reservation !== null"
         :reservation="reservation"
         :event="event"
+        :member-email="memberEmail"
         @request-cancel="openDialog"
       />
     </section>

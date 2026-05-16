@@ -45,6 +45,13 @@ async function onSignOut(): Promise<void> {
       </div>
       <div class="flex items-center gap-hq-4">
         <RouterLink
+          :to="{ name: 'members' }"
+          class="inline-flex items-center gap-hq-2 rounded-hq-sm border border-hairline bg-paper px-hq-3 py-hq-1 font-jp text-sm text-ink transition-colors hover:bg-paper-warm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+          aria-label="会員の一覧"
+        >
+          <span>会員</span>
+        </RouterLink>
+        <RouterLink
           :to="{ name: 'identity-documents' }"
           class="inline-flex items-center gap-hq-2 rounded-hq-sm border border-hairline bg-paper px-hq-3 py-hq-1 font-jp text-sm text-ink transition-colors hover:bg-paper-warm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
           aria-label="本人確認書類の一覧"

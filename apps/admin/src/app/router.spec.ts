@@ -174,7 +174,7 @@ describe("router auth guard", () => {
 });
 
 describe("router routes", () => {
-  it("11 つのルートが定義されている (events 5 + identity-documents 2 + auth 4)", async () => {
+  it("12 つのルートが定義されている (events 5 + members 1 + identity-documents 2 + auth 4)", async () => {
     const { routes } = await import("./router");
     const paths = routes.map((r) => r.path).sort();
     expect(paths).toEqual([
@@ -187,6 +187,7 @@ describe("router routes", () => {
       "/identity-documents",
       "/identity-documents/:id",
       "/login",
+      "/members",
       "/mfa",
       "/mfa/setup",
     ]);
@@ -277,6 +278,64 @@ describe("router auth guard — /identity-documents (#171)", () => {
 
     const router = await createTestRouter();
     await router.push("/identity-documents");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/login");
+    expect(router.currentRoute.value.query.reason).toBe("not-admin");
+  });
+});
+
+describe("router auth guard — /members (#150)", () => {
+  it("未認証で /members にアクセスすると /login にリダイレクト", async () => {
+    const router = await createTestRouter();
+    await router.push("/members");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/login");
+  });
+
+  it("AAL1 で /members にアクセスすると /mfa", async () => {
+    session.status.value = "authenticated";
+    session.aal.value = "aal1";
+    session.hasMfaFactor.value = true;
+
+    const router = await createTestRouter();
+    await router.push("/members");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/mfa");
+  });
+
+  it("AAL2 admin で /members が描画される", async () => {
+    session.status.value = "authenticated";
+    session.aal.value = "aal2";
+    session.isAdmin.value = true;
+
+    const router = await createTestRouter();
+    await router.push("/members");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/members");
+    expect(router.currentRoute.value.name).toBe("members");
+  });
+
+  it("AAL2 admin で /members?detail=<uuid> も同様に描画される", async () => {
+    session.status.value = "authenticated";
+    session.aal.value = "aal2";
+    session.isAdmin.value = true;
+
+    const router = await createTestRouter();
+    await router.push("/members?detail=00000000-0000-0000-0000-000000000001");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/members");
+    expect(router.currentRoute.value.query.detail).toBe(
+      "00000000-0000-0000-0000-000000000001",
+    );
+  });
+
+  it("AAL2 + 非 admin で /members → /login?reason=not-admin", async () => {
+    session.status.value = "authenticated";
+    session.aal.value = "aal2";
+    session.isAdmin.value = false;
+
+    const router = await createTestRouter();
+    await router.push("/members");
     await router.isReady();
     expect(router.currentRoute.value.path).toBe("/login");
     expect(router.currentRoute.value.query.reason).toBe("not-admin");

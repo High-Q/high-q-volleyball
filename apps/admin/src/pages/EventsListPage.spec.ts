@@ -87,6 +87,7 @@ async function renderPage() {
         name: "identity-documents",
         component: { template: "<div />" },
       },
+      { path: "/members", name: "members", component: { template: "<div />" } },
       { path: "/login", name: "login", component: { template: "<div />" } },
     ],
   });
@@ -106,6 +107,13 @@ describe("EventsListPage", () => {
   it("ログアウトボタンが見える", async () => {
     const { wrapper } = await renderPage();
     expect(wrapper.text()).toContain("ログアウト");
+  });
+
+  it("「会員」リンクが /members へ遷移する", async () => {
+    const { wrapper } = await renderPage();
+    const link = wrapper.find('[aria-label="会員の一覧"]');
+    expect(link.exists()).toBe(true);
+    expect(link.attributes("href")).toBe("/members");
   });
 
   it("ログアウトボタン押下で signOut → /login に遷移", async () => {

@@ -17,8 +17,18 @@ vi.mock("../api/booking-client", async () => {
   };
 });
 
+const notificationMock = {
+  triggerReservationNotification: vi.fn(),
+};
+
+vi.mock("@/shared/api/reservation-notification", () => ({
+  triggerReservationNotification: (...args: unknown[]) =>
+    notificationMock.triggerReservationNotification(...args),
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
+  notificationMock.triggerReservationNotification.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -117,6 +127,47 @@ describe("useCancelBooking - エラーマッピング", () => {
     await c.cancel(unsafeReservationId("rs-1"));
 
     expect(c.error.value).toBe("network");
+  });
+});
+
+describe("useCancelBooking - キャンセル完了メール送信トリガ", () => {
+  it("UPDATE 成功時に triggerReservationNotification('cancelled') が発火される", async () => {
+    apiMock.cancelReservation.mockResolvedValueOnce(undefined);
+    const { useCancelBooking } = await import("./useCancelBooking");
+    const c = useCancelBooking();
+
+    await c.cancel(unsafeReservationId("rs-1"));
+
+    expect(notificationMock.triggerReservationNotification).toHaveBeenCalledTimes(1);
+    expect(notificationMock.triggerReservationNotification).toHaveBeenCalledWith(
+      "rs-1",
+      "cancelled",
+    );
+  });
+
+  it("メール送信トリガ自体が例外を投げても cancel() は成功扱い", async () => {
+    apiMock.cancelReservation.mockResolvedValueOnce(undefined);
+    notificationMock.triggerReservationNotification.mockImplementationOnce(() => {
+      throw new Error("notification boom");
+    });
+    const { useCancelBooking } = await import("./useCancelBooking");
+    const c = useCancelBooking();
+
+    const ok = await c.cancel(unsafeReservationId("rs-1"));
+
+    expect(ok).toBe(true);
+    expect(c.error.value).toBeNull();
+  });
+
+  it("UPDATE 失敗時はメール送信トリガが発火されない", async () => {
+    const { BookingApiError } = await import("../api/booking-client");
+    apiMock.cancelReservation.mockRejectedValueOnce(new BookingApiError("rls"));
+    const { useCancelBooking } = await import("./useCancelBooking");
+    const c = useCancelBooking();
+
+    await c.cancel(unsafeReservationId("rs-1"));
+
+    expect(notificationMock.triggerReservationNotification).not.toHaveBeenCalled();
   });
 });
 

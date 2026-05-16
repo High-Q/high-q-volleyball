@@ -6,6 +6,10 @@ const apiMock = {
   cancelReservation: vi.fn(),
 };
 
+const notificationMock = {
+  triggerReservationNotification: vi.fn(),
+};
+
 vi.mock("../api/booking-client", async () => {
   const actual = await vi.importActual<typeof import("../api/booking-client")>(
     "../api/booking-client",
@@ -16,6 +20,11 @@ vi.mock("../api/booking-client", async () => {
     cancelReservation: (...args: unknown[]) => apiMock.cancelReservation(...args),
   };
 });
+
+vi.mock("@/shared/api/reservation-notification", () => ({
+  triggerReservationNotification: (...args: unknown[]) =>
+    notificationMock.triggerReservationNotification(...args),
+}));
 
 const sampleInput = {
   eventId: unsafeEventId("ev-1"),
@@ -37,6 +46,7 @@ const sampleReservation = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  notificationMock.triggerReservationNotification.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -105,6 +115,48 @@ describe("useCreateBooking - エラーマッピング", () => {
     await c.create(sampleInput);
 
     expect(c.error.value).toBe("unknown");
+  });
+});
+
+describe("useCreateBooking - 予約完了メール送信トリガ", () => {
+  it("INSERT 成功時に triggerReservationNotification('confirmed') が発火される", async () => {
+    apiMock.insertReservation.mockResolvedValueOnce(sampleReservation);
+    const { useCreateBooking } = await import("./useCreateBooking");
+    const c = useCreateBooking();
+
+    await c.create(sampleInput);
+
+    expect(notificationMock.triggerReservationNotification).toHaveBeenCalledTimes(1);
+    expect(notificationMock.triggerReservationNotification).toHaveBeenCalledWith(
+      sampleReservation.id,
+      "confirmed",
+    );
+  });
+
+  it("メール送信トリガ自体が例外を投げても create() は成功扱い", async () => {
+    apiMock.insertReservation.mockResolvedValueOnce(sampleReservation);
+    notificationMock.triggerReservationNotification.mockImplementationOnce(() => {
+      throw new Error("notification boom");
+    });
+    const { useCreateBooking } = await import("./useCreateBooking");
+    const c = useCreateBooking();
+
+    const r = await c.create(sampleInput);
+
+    // ヘルパー自身が握りつぶしているが、composable 側も同期 throw に耐える設計を維持
+    expect(r).toEqual(sampleReservation);
+    expect(c.error.value).toBeNull();
+  });
+
+  it("INSERT 失敗時はメール送信トリガが発火されない", async () => {
+    const { BookingApiError } = await import("../api/booking-client");
+    apiMock.insertReservation.mockRejectedValueOnce(new BookingApiError("network"));
+    const { useCreateBooking } = await import("./useCreateBooking");
+    const c = useCreateBooking();
+
+    await c.create(sampleInput);
+
+    expect(notificationMock.triggerReservationNotification).not.toHaveBeenCalled();
   });
 });
 

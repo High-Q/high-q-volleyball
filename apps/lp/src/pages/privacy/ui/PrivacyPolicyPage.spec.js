@@ -120,6 +120,20 @@ describe("PrivacyPolicyPage", () => {
     expect(text).toContain("分離");
   });
 
+  // #254 / #255 退会フロー: 削除される対象と匿名化されて残る対象を区別して明示する
+  it("退会時に削除される対象と匿名化されて残る参加履歴が明示される", () => {
+    const wrapper = mountWithVuetify(PrivacyPolicyPage);
+    const text = wrapper.find('[data-testid="section-retention"]').text();
+    // 削除対象
+    expect(text).toContain("氏名");
+    expect(text).toContain("メールアドレス");
+    expect(text).toContain("認証アカウント");
+    // 残る匿名化データ
+    expect(text).toContain("匿名");
+    expect(text).toContain("参加履歴");
+    expect(text).toContain("一切残りません");
+  });
+
   it("安全管理措置はフラットな箇条書きで概要のみ記載される", () => {
     const wrapper = mountWithVuetify(PrivacyPolicyPage);
     const section = wrapper.find('[data-testid="section-security"]');

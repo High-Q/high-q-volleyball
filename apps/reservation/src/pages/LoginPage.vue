@@ -5,6 +5,7 @@ import { Button, Kicker } from "@high-q/ui";
 import FormField from "@/shared/ui/FormField.vue";
 import Input from "@/shared/ui/Input.vue";
 import { useSendMagicLink } from "@/features/auth";
+import { LP_TOP_URL } from "@/shared/lib/externalLinks";
 import { safeNextPath } from "@/shared/lib/safeNextPath";
 
 /**
@@ -32,8 +33,15 @@ const isError = computed(() => status.value === "error");
 
 onMounted(() => {
   const reason = route.query.reason;
+  const errorParam = route.query.error;
   if (typeof reason === "string" && reason.length > 0) {
     reasonBanner.value = reason;
+  } else if (typeof errorParam === "string" && errorParam.length > 0) {
+    // 退会 (#254 / #255) 後の自動 signOut + リダイレクトや、その他 auth エラー
+    // を統一的に reasonBanner に流す。
+    reasonBanner.value = errorParam;
+  }
+  if (reasonBanner.value !== null) {
     const url = new URL(window.location.href);
     url.search = "";
     window.history.replaceState({}, "", url.toString());
@@ -63,6 +71,8 @@ const errorMessage = computed<string | null>(() => {
     switch (reasonBanner.value) {
       case "link-invalid":
         return "リンクの有効期限が切れたか、無効です。再度メールを送信してください。";
+      case "member_not_found":
+        return "アカウントが見つかりません。退会済みの可能性があります。";
       default:
         return null;
     }
@@ -215,10 +225,13 @@ async function onSubmit() {
         </dl>
       </section>
 
-      <!-- フッターリンク (LP へのリンク・後続 #90 周辺で正式配線) -->
+      <!-- フッターリンク: LP トップ（サークル紹介）への外部導線 -->
       <div class="text-center pb-hq-2">
         <a
-          href="#"
+          :href="LP_TOP_URL"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="サークルについて詳しく（新しいタブで開きます）"
           class="text-xs text-muted leading-relaxed inline-flex items-center gap-1"
         >
           サークルについて詳しく

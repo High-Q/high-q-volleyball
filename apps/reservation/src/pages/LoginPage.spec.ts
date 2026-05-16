@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { defineComponent, ref } from "vue";
+import { LP_TOP_URL } from "@/shared/lib/externalLinks";
 
 const sendMock = vi.fn();
 const status = ref<"idle" | "loading" | "success" | "error">("idle");
@@ -165,6 +166,20 @@ describe("LoginPage (#189 ログイン専用化)", () => {
     await wrapper.find("form").trigger("submit");
     await flushPromises();
     expect(wrapper.text()).toContain("送信回数の上限");
+  });
+
+  it("「サークルについて詳しく ›」リンクが LP トップへ新規タブで外部遷移する", async () => {
+    const { wrapper } = await mountAt();
+    const aboutLink = wrapper
+      .findAll("a")
+      .find((a) => a.text().includes("サークルについて詳しく"));
+    expect(aboutLink?.exists()).toBe(true);
+    expect(aboutLink?.attributes("href")).toBe(LP_TOP_URL);
+    expect(aboutLink?.attributes("target")).toBe("_blank");
+    const rel = aboutLink?.attributes("rel") ?? "";
+    expect(rel).toContain("noopener");
+    expect(rel).toContain("noreferrer");
+    expect(aboutLink?.attributes("aria-label")).toContain("新しいタブ");
   });
 
   it("Error 状態 (invalid-email) 表示", async () => {

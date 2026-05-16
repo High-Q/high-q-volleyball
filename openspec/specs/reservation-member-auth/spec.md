@@ -485,3 +485,52 @@ CTA 押下で Edge Function `verify-signup` を呼び、検証成功で session 
 - **WHEN** プロフィール完成済みの認証済みユーザーが `/login?next=%2Fevents%2Fnonexistent` にアクセス
 - **THEN** auth guard により `/events/nonexistent` に navigate され、EventDetailPage の「該当なし」状態が描画される（一覧へ戻る導線は既存）
 
+### Requirement: ログイン画面のサークル紹介リンクは LP に遷移する
+
+ログインページ（`/login`）は、ログイン前の見込み会員がサークルについて確認できるよう、LP（公開ランディング）への外部導線を画面下部に常設 SHALL 提供する。リンク先 URL は LP オリジン解決ヘルパー（`shared/lib/externalLinks.ts`）が公開する LP トップ URL を参照し、`VITE_LP_ORIGIN` のフォールバックを共通利用する。LP 側のサブパス変更時はヘルパーの 1 箇所更新だけで追従できる構造を MUST 維持する。
+
+リンクは新しいタブで開き、ログインフォーム入力途中の状態を失わせない遷移挙動とする。外部リンクであるためセキュリティ慣例に従い、`rel` には `noopener` と `noreferrer` を MUST 付与する。スクリーンリーダー利用者にも外部遷移と分かる補助情報を SHALL 提供する。
+
+ハードコードされた `https://` で始まる絶対 URL をログインページ側に直書きすることは MUST 禁止する。LP オリジン解決は必ず共有ヘルパー経由とする。
+
+#### Scenario: 未認証ユーザーがログイン画面でサークル紹介リンクを開く
+
+- **WHEN** 未認証ユーザーが `/login` を開き、フッターの「サークルについて詳しく ›」リンクをクリックする
+- **THEN** ブラウザは新しいタブで LP オリジンのトップページを開き、ログインページのフォーム入力状態は元のタブで保持されている
+
+#### Scenario: リンクの遷移先が LP オリジン解決ヘルパーに従う
+
+- **WHEN** ログインページがレンダリングされ「サークルについて詳しく ›」リンクが DOM に存在する
+- **THEN** その anchor の `href` 値は `shared/lib/externalLinks.ts` が解決する LP トップ URL と一致しており、ハードコードされた絶対 URL や `#` プレースホルダではない
+
+#### Scenario: 外部リンクとして必要な属性が付与されている
+
+- **WHEN** ログインページの「サークルについて詳しく ›」リンクの属性を検査する
+- **THEN** `target="_blank"` が付与され、`rel` 属性には `noopener` と `noreferrer` の両方が含まれており、スクリーンリーダー向けに外部遷移であることを示す補助情報（`aria-label` などの代替テキスト）が提供されている
+
+### Requirement: 退会済み会員のログイン拒否
+
+`apps/reservation` の `/login` 画面および magic link コールバック（`/auth/callback`）は、退会済み会員のログイン試行を MUST 拒否する。退会した会員は `auth.users` 行が削除されているため、Supabase 標準の `signInWithOtp` は magic link を発行 SHALL NOT する（既存挙動）。万が一退会前の古いマジックリンクが残っており、callback で session が一時的に確立されても、`useAuthSession` の members 行取得時に「members 行不在」となるため、reservation アプリは MUST ログインを完了させない。
+
+具体的な挙動として:
+
+- magic link 発行時点（`signInWithOtp`）で `shouldCreateUser: false` のため、`auth.users` 不在のメールアドレスにはメールが届かない（既存）
+- callback で session が確立した直後の `members` 行取得で 0 行の場合、reservation アプリは MUST 即座にサインアウトし、`/login?error=member_not_found` 等のエラー表示付きで `/login` に戻す
+- エラー表示は「アカウントが見つかりません。退会済みの可能性があります」相当のメッセージを MUST 提示する
+
+#### Scenario: 退会済みメールへの magic link 発行試行
+- **WHEN** 退会済み会員のメールアドレスで `/login` から magic link 送信を試みる
+- **THEN** Supabase は magic link メールを発行せず（`shouldCreateUser: false`）、UI は「ログインリンクを送信しました」相当の中立的な完了画面を表示する（既存挙動、攻撃者にアカウント有無を漏らさない）
+
+#### Scenario: 退会前マジックリンクの遅延クリック
+- **WHEN** 退会前に発行されたマジックリンクを退会後にクリックする（auth.users は削除済みだが Supabase 側のリンク有効期限内）
+- **THEN** Supabase 側で auth.users 不在のためコールバックがエラーになるか、または session 確立後に members 行不在で reservation アプリが弾く。最終的に `/login?error=member_not_found` 相当の画面に遷移する
+
+#### Scenario: 退会直後の自分のセッション無効化
+- **WHEN** 自己退会フローを完了したクライアント
+- **THEN** `withdraw-member` Function 成功後にクライアントが `supabase.auth.signOut()` を呼び、ローカルセッションがクリアされる
+
+#### Scenario: 他ブラウザの退会済み会員セッション
+- **WHEN** 会員 X が別ブラウザでログイン中に、admin が会員 X を強制削除する
+- **THEN** 当該別ブラウザのセッションは次回 JWT refresh 時に Supabase 側で無効化され、`useAuthSession` の members 行取得で「members 行不在」となり、reservation アプリは自動サインアウトして `/login` に戻す
+

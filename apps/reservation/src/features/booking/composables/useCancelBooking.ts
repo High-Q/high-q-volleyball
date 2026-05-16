@@ -1,6 +1,7 @@
 import { ref, type Ref } from "vue";
 import type { BookingError, ReservationId } from "@/entities/reservation";
 import { jstStartOfDay } from "@/shared/lib/jst-calendar";
+import { triggerReservationNotification } from "@/shared/api/reservation-notification";
 import { BookingApiError, cancelReservation } from "../api/booking-client";
 
 export type UseCancelBookingReturn = {
@@ -30,6 +31,16 @@ export function useCancelBooking(): UseCancelBookingReturn {
     error.value = null;
     try {
       await cancelReservation(id);
+      // キャンセル完了メール送信は fire-and-forget。helper 側で例外を握りつぶしているが、
+      // 同期 throw / Promise rejection のどちらもキャンセル成立を妨げないよう二重防衛する。
+      try {
+        void triggerReservationNotification(id as string, "cancelled");
+      } catch (notifyErr) {
+        console.warn(
+          "[useCancelBooking] notification trigger threw (ignored)",
+          notifyErr,
+        );
+      }
       return true;
     } catch (cause) {
       error.value = mapErrorToBookingError(cause);
