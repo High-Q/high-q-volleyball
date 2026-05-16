@@ -92,7 +92,7 @@ const eventId = computed(() =>
         </p>
         <div class="mt-hq-4">
           <RouterLink to="/events">
-            <Button variant="outline" size="sm">一覧へ戻る</Button>
+            <Button variant="secondary" size="sm">一覧へ戻る</Button>
           </RouterLink>
         </div>
       </div>

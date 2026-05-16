@@ -77,7 +77,7 @@ function reject(): void {
           全て許可
         </Button>
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           class="flex-1"
           data-testid="consent-reject"

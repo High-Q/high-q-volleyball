@@ -173,7 +173,7 @@ function goEvents(): void {
           <p class="font-jp text-sm text-ink m-0">
             履歴を取得できませんでした。
           </p>
-          <Button variant="outline" size="sm" type="button" @click="load">再試行</Button>
+          <Button variant="secondary" size="sm" type="button" @click="load">再試行</Button>
         </div>
 
         <!-- Stats Strip -->
