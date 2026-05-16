@@ -1,4 +1,6 @@
-const RAW = import.meta.env.VITE_RESERVATION_URL ?? ''
+const FALLBACK_RESERVATION_URL = 'https://high-q-reservation.onrender.com'
+
+const RAW = import.meta.env.VITE_RESERVATION_URL || FALLBACK_RESERVATION_URL
 
 function normalize(base) {
   return typeof base === 'string' ? base.replace(/\/+$/, '') : ''
