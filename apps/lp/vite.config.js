@@ -31,6 +31,12 @@ export default defineConfig({
       "@shared":   fileURLToPath(new URL("./src/shared",    import.meta.url)),
     },
   },
+  // ローカル開発時のポートを 5173 で固定し、reservation (5174) との
+  // 衝突を防ぐ。strictPort により空きポートへの自動フォールバックは禁止。
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
   // モノレポ root の .env.* を共通参照する（envDir）。
   // 関連: openspec/specs/env-management/spec.md
   envDir: path.resolve(__dirname, "../.."),

@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>High Q — Hamburger D (Drawer + LINE FAB)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* High Q design tokens (subset, mirroring tokens.css) */
+  :root {
+    --hq-color-paper:        #f7f3ea;
+    --hq-color-paper-warm:   #f1ece0;
+    --hq-color-surface:      #fbf8f1;
+    --hq-color-ink:          #1f1d1a;
+    --hq-color-ink-soft:     #3a3833;
+    --hq-color-muted:        #8a857a;
+    --hq-color-accent:       #b85c3c;
+    --hq-color-accent-soft:  rgba(184,92,60,0.08);
+    --hq-color-hairline:     rgba(31,29,26,0.12);
+    --hq-color-hairline-soft:rgba(31,29,26,0.06);
+    --hq-color-line-on-ink:  rgba(247,243,234,0.12);
+    --hq-color-paper-soft:   rgba(247,243,234,0.72);
+    --hq-color-paper-faint:  rgba(247,243,234,0.45);
+
+    --hq-font-jp:         "Zen Kaku Gothic New","Noto Sans JP",system-ui,sans-serif;
+    --hq-font-jp-display: "Klee One","Shippori Mincho","Noto Serif JP",serif;
+    --hq-font-mono:       "JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+    --hq-radius-pill: 999px;
+    --hq-radius-sm:   4px;
+
+    --hq-shadow-fab:  0 8px 24px rgba(31,29,26,0.16), 0 2px 6px rgba(31,29,26,0.08);
+    --hq-shadow-sm:   0 1px 2px rgba(31,29,26,0.06);
+
+    --hq-header-h:    56px;
+    --hq-ease:        cubic-bezier(.22,.61,.36,1);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--hq-font-jp);
+    color: var(--hq-color-ink);
+    background: var(--hq-color-paper);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body.is-locked { overflow: hidden; }
+
+  /* ───────────────── Site header (overlay over hero) ───────────────── */
+  .site-header {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: var(--hq-header-h);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+    z-index: 50;
+    color: var(--hq-color-paper);
+    background: transparent;
+    transition: background 200ms var(--hq-ease), color 200ms var(--hq-ease), border-color 200ms var(--hq-ease);
+    border-bottom: 1px solid transparent;
+  }
+  .site-header.is-scrolled,
+  .site-header.is-menu-open {
+    background: var(--hq-color-paper);
+    color: var(--hq-color-ink);
+    border-bottom-color: var(--hq-color-hairline);
+  }
+  .site-header__brand {
+    display: inline-flex; align-items: baseline; gap: 8px;
+    text-decoration: none; color: inherit;
+    font-family: var(--hq-font-jp-display);
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: 0.02em;
+  }
+  .site-header__brand-locale {
+    font-family: var(--hq-font-mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    opacity: 0.6;
+    text-transform: uppercase;
+  }
+
+  /* Hamburger trigger — 2 lines, no 3rd */
+  .menu-btn {
+    appearance: none; -webkit-appearance: none;
+    background: transparent; border: 0; padding: 0;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    color: inherit; cursor: pointer;
+  }
+  .menu-btn:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -8px;
+    border-radius: 4px;
+  }
+  .menu-btn__icon {
+    position: relative;
+    width: 22px; height: 14px;
+  }
+  .menu-btn__bar {
+    position: absolute; left: 0; right: 0;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 220ms var(--hq-ease), top 180ms var(--hq-ease) 80ms, opacity 120ms var(--hq-ease);
+  }
+  .menu-btn__bar--top    { top: 2px; }
+  .menu-btn__bar--bottom { top: 10px; }
+  .menu-btn.is-open .menu-btn__bar--top {
+    top: 6px;
+    transform: rotate(45deg);
+    transition: top 180ms var(--hq-ease), transform 220ms var(--hq-ease) 100ms;
+  }
+  .menu-btn.is-open .menu-btn__bar--bottom {
+    top: 6px;
+    transform: rotate(-45deg);
+    transition: top 180ms var(--hq-ease), transform 220ms var(--hq-ease) 100ms;
+  }
+
+  /* ───────────────── Drawer (full-screen) ───────────────── */
+  .drawer {
+    position: fixed; inset: 0;
+    z-index: 40;
+    background: var(--hq-color-paper);
+    color: var(--hq-color-ink);
+    display: flex; flex-direction: column;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 200ms var(--hq-ease), transform 280ms var(--hq-ease);
+  }
+  .drawer.is-open {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .drawer__inner {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: calc(var(--hq-header-h) + 24px) 28px 16px;
+    padding-inline: max(28px, calc((100% - 560px) / 2));
+  }
+  .drawer__kicker {
+    font-family: var(--hq-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--hq-color-muted);
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+  .drawer__nav { display: grid; }
+  .drawer__link {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    align-items: baseline;
+    gap: 14px;
+    padding: 22px 0;
+    border-top: 1px solid var(--hq-color-hairline);
+    text-decoration: none; color: inherit;
+    transition: padding-left 200ms var(--hq-ease);
+  }
+  .drawer__link:last-child { border-bottom: 1px solid var(--hq-color-hairline); }
+  .drawer__link:hover { padding-left: 4px; }
+  .drawer__link-num {
+    font-family: var(--hq-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--hq-color-muted);
+  }
+  .drawer__link-label {
+    font-family: var(--hq-font-jp-display);
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.35;
+  }
+  .drawer__link-arrow {
+    font-family: var(--hq-font-mono);
+    font-size: 14px;
+    color: var(--hq-color-muted);
+    transition: transform 200ms var(--hq-ease), color 200ms var(--hq-ease);
+  }
+  .drawer__link:hover .drawer__link-arrow {
+    transform: translateX(4px);
+    color: var(--hq-color-ink);
+  }
+
+  /* Drawer footer — sticky CTA stack */
+  .drawer__footer {
+    flex: 0 0 auto;
+    padding: 16px 20px calc(20px + env(safe-area-inset-bottom));
+    background: var(--hq-color-paper);
+    border-top: 1px solid var(--hq-color-hairline);
+    display: grid; gap: 10px;
+  }
+  .drawer__cta-primary,
+  .drawer__cta-secondary {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 48px;
+    border-radius: var(--hq-radius-pill);
+    font-family: var(--hq-font-jp);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: opacity 150ms var(--hq-ease), background 150ms var(--hq-ease);
+  }
+  .drawer__cta-primary {
+    background: var(--hq-color-accent);
+    color: var(--hq-color-paper);
+    border: 1px solid var(--hq-color-accent);
+  }
+  .drawer__cta-primary:hover { opacity: 0.92; }
+  .drawer__cta-secondary {
+    background: transparent;
+    color: var(--hq-color-ink);
+    border: 1px solid var(--hq-color-hairline);
+  }
+  .drawer__cta-secondary:hover { background: var(--hq-color-paper-warm); }
+
+  .drawer__meta {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--hq-color-hairline-soft);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--hq-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--hq-color-muted);
+    text-transform: uppercase;
+  }
+
+  /* ───────────────── Floating LINE FAB ───────────────── */
+  .line-fab {
+    position: fixed;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 30;
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 48px;
+    padding: 0 18px 0 14px;
+    border-radius: var(--hq-radius-pill);
+    background: var(--hq-color-accent);
+    color: var(--hq-color-paper);
+    text-decoration: none;
+    font-family: var(--hq-font-jp);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    box-shadow: var(--hq-shadow-fab);
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+    pointer-events: none;
+    transition: opacity 240ms var(--hq-ease), transform 280ms var(--hq-ease);
+  }
+  .line-fab.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+  .line-fab:hover { opacity: 0.94; }
+  .line-fab__icon {
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    color: currentColor;
+  }
+  .line-fab__icon svg { width: 100%; height: 100%; }
+  .line-fab__label { white-space: nowrap; }
+
+  /* ───────────────── Demo page chrome (faked LP) ───────────────── */
+  main { display: block; }
+
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    color: var(--hq-color-paper);
+    background:
+      linear-gradient(180deg, rgba(31,29,26,0.55) 0%, rgba(31,29,26,0.78) 100%),
+      linear-gradient(135deg, #2a2521 0%, #1f1d1a 60%, #15130f 100%);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 80px 24px 56px;
+  }
+  .hero__kicker {
+    font-family: var(--hq-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    color: rgba(247,243,234,0.7);
+    margin-bottom: 18px;
+    text-transform: uppercase;
+  }
+  .hero__title {
+    font-family: var(--hq-font-jp-display);
+    font-weight: 400;
+    font-size: clamp(32px, 8vw, 44px);
+    line-height: 1.5;
+    margin: 0 0 20px;
+    letter-spacing: 0.01em;
+  }
+  .hero__lead {
+    font-size: 14.5px;
+    line-height: 1.9;
+    color: rgba(247,243,234,0.85);
+    margin: 0 0 28px;
+    max-width: 28em;
+  }
+  .hero__cta {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 52px;
+    padding: 0 28px;
+    border-radius: var(--hq-radius-pill);
+    background: var(--hq-color-paper);
+    color: var(--hq-color-ink);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14.5px;
+    align-self: flex-start;
+  }
+  .hero__meta {
+    margin-top: 24px;
+    font-family: var(--hq-font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    color: rgba(247,243,234,0.65);
+    text-transform: uppercase;
+  }
+
+  /* Faked body sections so scrolling has somewhere to go */
+  .demo-section {
+    padding: 64px 28px;
+    border-top: 1px solid var(--hq-color-hairline);
+  }
+  .demo-section__kicker {
+    font-family: var(--hq-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--hq-color-muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .demo-section__title {
+    font-family: var(--hq-font-jp-display);
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1.5;
+    margin: 0 0 16px;
+  }
+  .demo-section__body {
+    color: var(--hq-color-ink-soft);
+    line-height: 1.85;
+    max-width: 38em;
+  }
+  .demo-section--warm { background: var(--hq-color-paper-warm); }
+
+  /* ───────────────── Notes overlay (designer hand-off) ───────────────── */
+  .notes {
+    position: fixed; left: 12px; bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 25;
+    max-width: 260px;
+    padding: 12px 14px;
+    background: rgba(31,29,26,0.92);
+    color: rgba(247,243,234,0.92);
+    border-radius: 6px;
+    font-family: var(--hq-font-mono);
+    font-size: 10.5px;
+    line-height: 1.55;
+    letter-spacing: 0.02em;
+  }
+  .notes b { color: #fff; font-weight: 500; }
+  @media (max-width: 380px) { .notes { display: none; } }
+</style>
+</head>
+<body>
+
+<header class="site-header" id="siteHeader">
+  <a href="#" class="site-header__brand" aria-label="High Q ホーム">
+    High Q <span class="site-header__brand-locale">Koto-ku</span>
+  </a>
+
+  <button class="menu-btn" id="menuBtn" type="button"
+          aria-label="メニューを開く"
+          aria-expanded="false"
+          aria-controls="drawer">
+    <span class="menu-btn__icon" aria-hidden="true">
+      <span class="menu-btn__bar menu-btn__bar--top"></span>
+      <span class="menu-btn__bar menu-btn__bar--bottom"></span>
+    </span>
+  </button>
+</header>
+
+<!-- ───────────────── Drawer ───────────────── -->
+<nav class="drawer" id="drawer" aria-label="サイトメニュー" aria-hidden="true" tabindex="-1">
+  <div class="drawer__inner">
+    <div class="drawer__kicker">Menu</div>
+    <div class="drawer__nav">
+      <a href="#about"    class="drawer__link" data-drawer-link>
+        <span class="drawer__link-num">01</span>
+        <span class="drawer__link-label">はじめての方へ</span>
+        <span class="drawer__link-arrow" aria-hidden="true">›</span>
+      </a>
+      <a href="#why"      class="drawer__link" data-drawer-link>
+        <span class="drawer__link-num">02</span>
+        <span class="drawer__link-label">High Q について</span>
+        <span class="drawer__link-arrow" aria-hidden="true">›</span>
+      </a>
+      <a href="#events"   class="drawer__link" data-drawer-link>
+        <span class="drawer__link-num">03</span>
+        <span class="drawer__link-label">開催スケジュール</span>
+        <span class="drawer__link-arrow" aria-hidden="true">›</span>
+      </a>
+      <a href="#faq"      class="drawer__link" data-drawer-link>
+        <span class="drawer__link-num">04</span>
+        <span class="drawer__link-label">よくある質問</span>
+        <span class="drawer__link-arrow" aria-hidden="true">›</span>
+      </a>
+      <a href="#gallery"  class="drawer__link" data-drawer-link>
+        <span class="drawer__link-num">05</span>
+        <span class="drawer__link-label">活動の様子</span>
+        <span class="drawer__link-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="drawer__footer">
+    <a class="drawer__cta-primary"
+       href="https://line.me/ti/g2/highq-volley"
+       target="_blank" rel="noopener">
+      LINE オープンチャットで連絡
+    </a>
+    <a class="drawer__cta-secondary"
+       href="https://x.com/highq_volley"
+       target="_blank" rel="noopener">
+      X @highq_volley でDM
+    </a>
+    <div class="drawer__meta">
+      <span>Tokyo · Koto-ku</span>
+      <span>© 2026 High Q</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ───────────────── LINE FAB ───────────────── -->
+<a class="line-fab" id="lineFab"
+   href="https://line.me/ti/g2/highq-volley"
+   target="_blank" rel="noopener"
+   aria-label="LINE オープンチャットで連絡">
+  <span class="line-fab__icon" aria-hidden="true">
+    <!-- Lucide: message-circle (line ~ chat) — placeholder. Replace with brand LINE mark in prod. -->
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+    </svg>
+  </span>
+  <span class="line-fab__label">LINEで連絡</span>
+</a>
+
+<!-- ───────────────── Demo content ───────────────── -->
+<main>
+  <section class="hero">
+    <div class="hero__kicker">Tokyo · Koto-ku</div>
+    <h1 class="hero__title">
+      ガチでもなく、<br/>ノリすぎず。
+    </h1>
+    <p class="hero__lead">
+      土日祝の日中・夜に、月1〜2回。<br/>
+      ちょうどいい温度感で集まる、東京・江東区のバレーボールサークル。
+    </p>
+    <a href="#" class="hero__cta">体験参加してみる</a>
+    <div class="hero__meta">所要 1分 · 月1〜2回 · 参加費 500円〜</div>
+  </section>
+
+  <section class="demo-section" id="about">
+    <div class="demo-section__kicker">— About</div>
+    <h2 class="demo-section__title">スクロールして、FABの登場を確認してください。</h2>
+    <p class="demo-section__body">
+      ハンバーガーは画面右上で常時。Hero を100px超スクロールすると、画面右下に
+      "LINEで連絡" の FAB がフェードインで現れます。
+      FinalCTA セクションに到達するとフェードアウトする想定です(下までスクロール)。
+    </p>
+  </section>
+
+  <section class="demo-section demo-section--warm" id="why">
+    <div class="demo-section__kicker">— Why High Q</div>
+    <h2 class="demo-section__title">セクション間に色のリズムを入れる例。</h2>
+    <p class="demo-section__body">
+      paper / paper-warm / surface の3トーンを交互に使うと、編集系LPらしいリズムが出ます。
+    </p>
+  </section>
+
+  <section class="demo-section" id="events">
+    <div class="demo-section__kicker">— Schedule</div>
+    <h2 class="demo-section__title">May–June 2026</h2>
+    <p class="demo-section__body">(イベントカードの実装は別途)</p>
+  </section>
+
+  <section class="demo-section demo-section--warm" id="faq">
+    <div class="demo-section__kicker">— FAQ</div>
+    <h2 class="demo-section__title">よくある質問</h2>
+    <p class="demo-section__body">(Worries吸収版・6項目想定)</p>
+  </section>
+
+  <section class="demo-section" id="gallery">
+    <div class="demo-section__kicker">— Gallery</div>
+    <h2 class="demo-section__title">活動の様子</h2>
+    <p class="demo-section__body">(Unsplash画像差し込み予定)</p>
+  </section>
+
+  <!-- FinalCTA: FAB はここで消える -->
+  <section class="demo-section demo-section--warm" id="finalCta" data-final-cta>
+    <div class="demo-section__kicker">— Join us</div>
+    <h2 class="demo-section__title">予約サイトは現在準備中です。</h2>
+    <p class="demo-section__body">
+      まずは LINE オープンチャットから、お気軽にご連絡ください。
+    </p>
+    <p style="height:200px;"></p>
+  </section>
+</main>
+
+<div class="notes" aria-hidden="true">
+  <b>Hamburger D demo</b><br/>
+  · 右上のメニューを開閉<br/>
+  · Esc / オーバーレイ外で閉じる<br/>
+  · 100pxスクロールでFAB登場<br/>
+  · FinalCTAに到達でFAB消失
+</div>
+
+<script>
+(function () {
+  const body       = document.body;
+  const header     = document.getElementById('siteHeader');
+  const menuBtn    = document.getElementById('menuBtn');
+  const drawer     = document.getElementById('drawer');
+  const fab        = document.getElementById('lineFab');
+  const finalCta   = document.querySelector('[data-final-cta]');
+  const drawerLinks = drawer.querySelectorAll('[data-drawer-link]');
+
+  let lastFocus = null;
+
+  function openDrawer() {
+    lastFocus = document.activeElement;
+    drawer.classList.add('is-open');
+    drawer.setAttribute('aria-hidden', 'false');
+    menuBtn.classList.add('is-open');
+    menuBtn.setAttribute('aria-expanded', 'true');
+    menuBtn.setAttribute('aria-label', 'メニューを閉じる');
+    header.classList.add('is-menu-open');
+    body.classList.add('is-locked');
+    // Focus first link after transition
+    setTimeout(() => {
+      const first = drawer.querySelector('[data-drawer-link]');
+      first && first.focus();
+    }, 220);
+  }
+  function closeDrawer() {
+    drawer.classList.remove('is-open');
+    drawer.setAttribute('aria-hidden', 'true');
+    menuBtn.classList.remove('is-open');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    menuBtn.setAttribute('aria-label', 'メニューを開く');
+    header.classList.remove('is-menu-open');
+    body.classList.remove('is-locked');
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  function toggleDrawer() {
+    if (drawer.classList.contains('is-open')) closeDrawer();
+    else openDrawer();
+  }
+
+  menuBtn.addEventListener('click', toggleDrawer);
+  drawerLinks.forEach(a => a.addEventListener('click', () => {
+    // Close after anchor click; let the hash navigation proceed.
+    setTimeout(closeDrawer, 80);
+  }));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drawer.classList.contains('is-open')) closeDrawer();
+  });
+
+  // ── Header overlay / scrolled state
+  function updateHeader() {
+    if (window.scrollY > 24) header.classList.add('is-scrolled');
+    else header.classList.remove('is-scrolled');
+  }
+  updateHeader();
+  window.addEventListener('scroll', updateHeader, { passive: true });
+
+  // ── LINE FAB visibility: show after 100px, hide near FinalCTA
+  let fabVisible = false;
+  function updateFab() {
+    const showAfter = 100;
+    let inFinalCta = false;
+    if (finalCta) {
+      const r = finalCta.getBoundingClientRect();
+      // Hide when FinalCTA top crosses 65% of viewport (FAB redundant there)
+      inFinalCta = r.top < window.innerHeight * 0.65;
+    }
+    const shouldShow = window.scrollY > showAfter && !inFinalCta && !drawer.classList.contains('is-open');
+    if (shouldShow !== fabVisible) {
+      fabVisible = shouldShow;
+      fab.classList.toggle('is-visible', shouldShow);
+    }
+  }
+  updateFab();
+  window.addEventListener('scroll', updateFab, { passive: true });
+  window.addEventListener('resize', updateFab);
+
+  // ── Hide FAB while drawer is open (it would overlap)
+  const obs = new MutationObserver(updateFab);
+  obs.observe(drawer, { attributes: true, attributeFilter: ['class'] });
+})();
+</script>
+</body>
+</html>

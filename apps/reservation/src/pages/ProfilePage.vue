@@ -129,7 +129,7 @@ const upcomingReservationCount = computed<number>(() => {
           <p class="font-jp text-sm text-ink m-0">
             データの取得に失敗しました。
           </p>
-          <Button variant="secondary" size="sm" type="button" @click="load">再試行</Button>
+          <Button variant="outline" size="sm" type="button" @click="load">再試行</Button>
         </div>
 
         <LevelEditSection
