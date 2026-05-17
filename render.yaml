@@ -83,6 +83,15 @@ services:
       - key: VITE_RESERVATION_URL
         sync: false
         previewValue: https://high-q-reservation.onrender.com
+      # Sentry environment タグ (#267):
+      # - 本番デプロイ (master push) → value の "prd"
+      # - PR Preview                  → previewValue の "dev"
+      # PR Preview は Vite 上では production build (`import.meta.env.PROD === true`)
+      # となるため、コード側の自動判定では prd と誤認される。本 env で明示分離する。
+      # 1 Sentry プロジェクト・1 DSN 運用 (design D1) のため DSN は Dashboard 単独管理。
+      - key: VITE_SENTRY_ENVIRONMENT
+        value: prd
+        previewValue: dev
 
   # ============================================================
   # admin (apps/admin) — Vue Router + Supabase Auth ゲート付き管理画面
@@ -135,6 +144,10 @@ services:
       - key: VITE_SUPABASE_PUBLISHABLE_KEY
         sync: false
         previewValue: sb_publishable_JXCTRAx7ECO7-dZEsquKrg_VTdyXdfG
+      # Sentry environment タグ (#267): 詳細は LP セクション参照
+      - key: VITE_SENTRY_ENVIRONMENT
+        value: prd
+        previewValue: dev
 
   # ============================================================
   # reservation (apps/reservation) — Vue Router + Supabase Auth (Magic Link) 付き予約サイト
@@ -178,3 +191,7 @@ services:
       - key: VITE_SUPABASE_PUBLISHABLE_KEY
         sync: false
         previewValue: sb_publishable_JXCTRAx7ECO7-dZEsquKrg_VTdyXdfG
+      # Sentry environment タグ (#267): 詳細は LP セクション参照
+      - key: VITE_SENTRY_ENVIRONMENT
+        value: prd
+        previewValue: dev
