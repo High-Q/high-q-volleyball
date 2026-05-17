@@ -70,7 +70,7 @@ High Q の MVP1 で必要な 5 テーブル (events / members / reservations / v
 
 ### Requirement: reservations テーブル
 
-システムは `reservations` テーブルを以下の列で定義 MUST する: `id` (UUID PK)、`event_id` (uuid NOT NULL references events(id) ON DELETE RESTRICT)、`member_id` (uuid NULL references members(id) ON DELETE SET NULL — NULL は退会済み会員の過去予約を匿名化する場合のみ)、`status` (text CHECK in `'reserved'`,`'cancelled'`,`'attended'`,`'no_show'`,`'waitlist'`、default `'reserved'`)、`guest_count` (smallint NOT NULL default 0 CHECK >= 0 AND <= 5)、`phone_at_booking` (text NULL — 予約時点のスナップショット)、`note` (text)、`checked_in_at` (timestamptz NULL — null = 未チェックイン)、`cancelled_at` (timestamptz NULL)、`created_at` / `updated_at` (timestamptz default now)。
+システムは `reservations` テーブルを以下の列で定義 MUST する: `id` (UUID PK)、`event_id` (uuid NOT NULL references events(id) ON DELETE CASCADE)、`member_id` (uuid NULL references members(id) ON DELETE SET NULL — NULL は退会済み会員の過去予約を匿名化する場合のみ)、`status` (text CHECK in `'reserved'`,`'cancelled'`,`'attended'`,`'no_show'`,`'waitlist'`、default `'reserved'`)、`guest_count` (smallint NOT NULL default 0 CHECK >= 0 AND <= 5)、`phone_at_booking` (text NULL — 予約時点のスナップショット)、`note` (text)、`checked_in_at` (timestamptz NULL — null = 未チェックイン)、`cancelled_at` (timestamptz NULL)、`created_at` / `updated_at` (timestamptz default now)。
 
 `status` enum に `'waitlist'` を追加 MUST (キャンセル待ち管理 #154 用)。
 
@@ -78,13 +78,15 @@ High Q の MVP1 で必要な 5 テーブル (events / members / reservations / v
 
 `member_id IS NULL` の行は member-withdrawal capability の規定により、退会済み会員の過去予約として残された痕跡である。当該行は `phone_at_booking IS NULL` AND `note IS NULL` を MUST 満たす（退会実行時に member-withdrawal capability が両列を明示的に NULL 化する）。当該行に対する UPDATE / DELETE は admin のみ可能（rls-policies capability に従う）。
 
+`event_id` の FK を `ON DELETE CASCADE` とする理由: イベント本体が削除された時点で当該予約は実体を失う。admin の削除操作は AlertDialog 二段階確認 + 予約内訳の事前表示で誤操作を防いでおり、DB レベルの RESTRICT による追加防御は不要と判断する。本変更により orphan な reservations 行（cancelled / no_show を含む）が残る経路が排除される。
+
 #### Scenario: 1 イベント・1 会員に対して 1 予約
 - **WHEN** 同じ (event_id, member_id) で 2 件目の reservations を INSERT
 - **THEN** UNIQUE 制約違反でエラーとなる (キャンセル後の再予約は status の更新で対応)
 
-#### Scenario: events 参照整合性
+#### Scenario: events 削除時の連鎖削除
 - **WHEN** reservations が指す events を DELETE
-- **THEN** ON DELETE RESTRICT により削除がエラーになる (履歴保護)
+- **THEN** ON DELETE CASCADE により当該 event に紐づく全 reservations 行（reserved / cancelled / attended / no_show / waitlist いずれも）が同時に削除される
 
 #### Scenario: members 削除時の匿名化
 - **WHEN** reservations が指す members を DELETE
