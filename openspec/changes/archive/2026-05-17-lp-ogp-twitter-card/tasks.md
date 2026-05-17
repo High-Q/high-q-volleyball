@@ -29,8 +29,8 @@
 
 ## 5. PR / Preview 確認
 
-- [ ] 5.1 PR を作成し、Render Preview で `view-source:` を開いてメタタグが期待どおりに含まれていることを確認
-- [ ] 5.2 Preview URL は本番 URL ではないため、SNS Card Validator はマージ後に実施する旨を PR 本文に明記
+- [x] 5.1 PR #263 を作成（https://github.com/High-Q/high-q-volleyball/pull/263）
+- [x] 5.2 PR 本文に「Validator はマージ後の本番 URL に対して実施」と明記
 
 ## 6. リリース後の検証（マージ後）
 
@@ -41,6 +41,6 @@
 
 ## 7. Sync / Archive
 
-- [ ] 7.1 `/opsx:sync` で `openspec/specs/lp-social-share/spec.md` を新規追加（または `/opsx-ship` 内で一括処理）
-- [ ] 7.2 `/opsx:archive` で本 change を archive へ移動
-- [ ] 7.3 ブランチ削除 + Issue クローズまで `/opsx-ship` で完遂
+- [x] 7.1 Sync: `openspec/specs/lp-social-share/spec.md` を新規追加（opsx-ship 内で実施）
+- [x] 7.2 Archive: 本 change を `openspec/changes/archive/2026-05-17-lp-ogp-twitter-card/` へ移動
+- [ ] 7.3 マージ後、ブランチ削除 + Issue（無し）→ Validator 検証（タスク 6.x）に進む
