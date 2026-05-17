@@ -14,7 +14,13 @@ declare global {
 
 const DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;
 const MODE = import.meta.env.MODE;
-const ENVIRONMENT: "dev" | "prd" = import.meta.env.PROD ? "prd" : "dev";
+const ENV_OVERRIDE = import.meta.env.VITE_SENTRY_ENVIRONMENT as string | undefined;
+const ENVIRONMENT: "dev" | "prd" =
+  ENV_OVERRIDE === "dev" || ENV_OVERRIDE === "prd"
+    ? ENV_OVERRIDE
+    : import.meta.env.PROD
+      ? "prd"
+      : "dev";
 const PROJECT_NAME = "reservation";
 
 const beforeSend = buildBeforeSend({
@@ -24,15 +30,6 @@ const beforeSend = buildBeforeSend({
 });
 
 export function initSentry(app: App): void {
-  // TODO(#267): デバッグ確認後に削除
-  console.log("[sentry-debug]", {
-    project: PROJECT_NAME,
-    mode: MODE,
-    environment: ENVIRONMENT,
-    dsnPresent: !!DSN,
-    dsnPrefix: DSN ? DSN.slice(0, 30) + "..." : null,
-  });
-
   if (!DSN || MODE === "test") return;
 
   Sentry.init({
