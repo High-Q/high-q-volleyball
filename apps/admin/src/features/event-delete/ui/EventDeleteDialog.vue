@@ -9,26 +9,24 @@ import AlertDialogTitle from "@/shared/ui/AlertDialogTitle.vue";
 import AlertDialogDescription from "@/shared/ui/AlertDialogDescription.vue";
 // AlertDialogAction は radix-vue が onClick で自動クローズするため、削除失敗時に
 // Dialog 内エラー表示ができない。代わりに plain button + cn() でスタイルだけ
-// 揃え、open 状態は useEventDelete に一元管理させる。AlertDialogCancel は
-// 「キャンセル＝必ず閉じる」前提なので radix の auto-close で問題ない。
+// 揃え、open 状態は useEventDelete に一元管理させる。
 import {
   useEventDelete,
   getDeleteErrorMessage,
+  activeCount,
+  historyCount,
 } from "../composables/useEventDelete";
 
 /**
- * イベント削除確認 Dialog（AlertDialog）。「キャンセル」「削除する」の 2 段ボタン。
+ * イベント削除確認 Dialog（AlertDialog）。
  *
- * 使用例:
- *   <EventDeleteDialog ref="dialogRef" :event-id="eventId" :event-name="event.name">
- *     <template #trigger="{ open }">
- *       <Button variant="danger" @click="open">削除</Button>
- *     </template>
- *   </EventDeleteDialog>
+ * #253 の方針:
+ *   - 有効予約があっても主催者の判断で削除可（FK CASCADE）
+ *   - 予約内訳を事前表示し、誤操作を防ぐ
+ *   - 有効予約がある場合は「予約者には別途ご連絡ください」を明示
  *
  * 関連:
- *   openspec/changes/admin-events-crud-screen/specs/admin-events-crud/spec.md
- *   openspec/changes/admin-events-crud-screen/design.md (D5)
+ *   openspec/changes/fix-admin-event-delete-cancelled-reservations/specs/admin-events-crud/spec.md
  */
 
 const props = defineProps<{
@@ -40,12 +38,28 @@ const emit = defineEmits<{
   deleted: [];
 }>();
 
-const { isOpen, isDeleting, deleteError, open, cancel, confirm } =
-  useEventDelete(props.eventId);
+const {
+  isOpen,
+  isDeleting,
+  breakdown,
+  isLoadingBreakdown,
+  breakdownError,
+  deleteError,
+  canConfirm,
+  open,
+  cancel,
+  confirm,
+} = useEventDelete(props.eventId);
 
-const errorMessage = computed(() =>
+const deleteErrorMessage = computed(() =>
   deleteError.value ? getDeleteErrorMessage(deleteError.value) : null,
 );
+const breakdownErrorMessage = computed(() =>
+  breakdownError.value ? getDeleteErrorMessage(breakdownError.value) : null,
+);
+
+const active = computed(() => (breakdown.value ? activeCount(breakdown.value) : 0));
+const history = computed(() => (breakdown.value ? historyCount(breakdown.value) : 0));
 
 async function onConfirm() {
   await confirm();
@@ -89,12 +103,65 @@ defineExpose({ open });
         </AlertDialogDescription>
       </AlertDialogHeader>
 
+      <!-- 予約内訳セクション -->
+      <div class="font-jp text-sm" aria-live="polite">
+        <!-- Loading -->
+        <p
+          v-if="isLoadingBreakdown"
+          data-testid="breakdown-loading"
+          class="text-ink-muted"
+        >
+          予約内訳を確認中…
+        </p>
+
+        <!-- Error -->
+        <p
+          v-else-if="breakdownErrorMessage"
+          role="alert"
+          class="text-danger bg-danger-soft border border-danger/40 rounded-hq-sm px-hq-3 py-hq-2"
+          data-testid="breakdown-error"
+        >
+          予約内訳を取得できませんでした: {{ breakdownErrorMessage }}
+        </p>
+
+        <!-- 予約 0 件 -->
+        <p
+          v-else-if="breakdown && active === 0 && history === 0"
+          class="text-ink-muted"
+          data-testid="breakdown-empty"
+        >
+          このイベントに予約はありません。
+        </p>
+
+        <!-- 予約あり -->
+        <div
+          v-else-if="breakdown"
+          class="rounded-hq-sm border border-hairline bg-paper-warm px-hq-3 py-hq-2 space-y-hq-1"
+          data-testid="breakdown-summary"
+        >
+          <p v-if="active > 0">
+            <strong>{{ active }} 件</strong> の有効予約（受付中・参加済）が削除されます。
+          </p>
+          <p v-if="history > 0" class="text-ink-muted">
+            キャンセル済 / no-show / キャンセル待ち {{ history }} 件の履歴も整理されます。
+          </p>
+          <p
+            v-if="active > 0"
+            role="alert"
+            class="pt-hq-1 text-danger"
+            data-testid="breakdown-warn-active"
+          >
+            予約者には別途ご連絡ください。
+          </p>
+        </div>
+      </div>
+
       <p
-        v-if="errorMessage"
+        v-if="deleteErrorMessage"
         role="alert"
         class="font-jp text-sm text-danger bg-danger-soft border border-danger/40 rounded-hq-sm px-hq-3 py-hq-2"
       >
-        {{ errorMessage }}
+        {{ deleteErrorMessage }}
       </p>
 
       <AlertDialogFooter>
@@ -108,7 +175,8 @@ defineExpose({ open });
         </button>
         <button
           type="button"
-          :disabled="isDeleting"
+          :disabled="!canConfirm"
+          :aria-disabled="!canConfirm"
           class="inline-flex h-9 items-center justify-center rounded-hq-sm bg-danger px-hq-4 py-hq-2 text-sm font-jp font-medium text-paper shadow-hq-sm transition-colors hover:bg-danger/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-50"
           @click="onConfirm"
         >
