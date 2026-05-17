@@ -24,6 +24,15 @@ const beforeSend = buildBeforeSend({
 });
 
 export function initSentry(app: App): void {
+  // TODO(#267): デバッグ確認後に削除
+  console.log("[sentry-debug]", {
+    project: PROJECT_NAME,
+    mode: MODE,
+    environment: ENVIRONMENT,
+    dsnPresent: !!DSN,
+    dsnPrefix: DSN ? DSN.slice(0, 30) + "..." : null,
+  });
+
   if (!DSN || MODE === "test") return;
 
   Sentry.init({
