@@ -26,8 +26,15 @@ import type {
 export type FetchErrorCode =
   | "NETWORK_ERROR"
   | "SERVER_ERROR"
-  | "PERMISSION_DENIED"
-  | "RESERVATIONS_EXIST";
+  | "PERMISSION_DENIED";
+
+export interface EventReservationBreakdown {
+  reserved: number;
+  attended: number;
+  cancelled: number;
+  no_show: number;
+  waitlist: number;
+}
 
 export interface FetchError {
   code: FetchErrorCode;
@@ -91,13 +98,6 @@ function classifyError(error: { code?: string; message: string }): FetchErrorCod
     /permission/i.test(error.message)
   ) {
     return "PERMISSION_DENIED";
-  }
-  // PostgreSQL FK violation: events を削除しようとして reservations が刺さっている
-  if (
-    error.code === "23503" ||
-    /foreign key constraint .*reservations/i.test(error.message)
-  ) {
-    return "RESERVATIONS_EXIST";
   }
   return "SERVER_ERROR";
 }
@@ -303,13 +303,13 @@ export async function updateEvent(
 /**
  * event を DELETE する。
  *
- * reservations が刺さっている場合は ON DELETE RESTRICT により FK 違反となり、
- * `RESERVATIONS_EXIST` を返す。UI 側で「予約があるため削除できません」と表示
- * する契約。
+ * #253 の方針変更により、reservations.event_id FK は ON DELETE CASCADE。
+ * event を DELETE すると紐づく reservations 全行が連鎖削除される。AlertDialog
+ * 二段階確認 + 予約内訳の事前表示 (classifyEventReservations) で誤操作を防ぐ。
  *
  * 関連:
- *   openspec/changes/admin-events-crud-screen/design.md (§3.4)
- *   openspec/specs/data-schema/spec.md (events テーブル ON DELETE RESTRICT)
+ *   openspec/changes/fix-admin-event-delete-cancelled-reservations/specs/admin-events-crud/spec.md
+ *   openspec/changes/fix-admin-event-delete-cancelled-reservations/specs/data-schema/spec.md
  */
 export async function deleteEvent(
   id: EventId,
@@ -327,6 +327,54 @@ export async function deleteEvent(
       });
     }
     return ok(undefined);
+  } catch (cause) {
+    if (cause instanceof TypeError) {
+      return err({ code: "NETWORK_ERROR", message: cause.message });
+    }
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return err({ code: "SERVER_ERROR", message });
+  }
+}
+
+/**
+ * 単一 event に紐づく reservations を status 別に集計する。
+ *
+ * 用途:
+ *   削除 AlertDialog で「N 件の予約も同時に削除されます」を表示するために、
+ *   active (reserved + attended) と cancelled (cancelled + no_show) の件数を
+ *   事前に提示する。
+ *
+ * 関連:
+ *   openspec/changes/fix-admin-event-delete-cancelled-reservations/specs/admin-events-crud/spec.md
+ */
+export async function classifyEventReservations(
+  id: EventId,
+): Promise<Result<EventReservationBreakdown, FetchError>> {
+  const supabase = getSupabase();
+  try {
+    const { data, error } = await supabase
+      .from("reservations")
+      .select("status")
+      .eq("event_id", id as unknown as string);
+    if (error) {
+      return err({
+        code: classifyError(error),
+        message: error.message,
+      });
+    }
+    const breakdown: EventReservationBreakdown = {
+      reserved: 0,
+      attended: 0,
+      cancelled: 0,
+      no_show: 0,
+      waitlist: 0,
+    };
+    for (const row of (data ?? []) as Array<{ status: keyof EventReservationBreakdown }>) {
+      if (row.status in breakdown) {
+        breakdown[row.status] += 1;
+      }
+    }
+    return ok(breakdown);
   } catch (cause) {
     if (cause instanceof TypeError) {
       return err({ code: "NETWORK_ERROR", message: cause.message });

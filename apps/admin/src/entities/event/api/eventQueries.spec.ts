@@ -478,26 +478,78 @@ describe("deleteEvent", () => {
     expect(result.ok).toBe(true);
   });
 
-  it("FK 違反 (23503) は RESERVATIONS_EXIST を返す", async () => {
-    currentBuilder.eq = vi.fn().mockResolvedValue({
-      error: {
-        code: "23503",
-        message:
-          'update or delete on table "events" violates foreign key constraint "reservations_event_id_fkey"',
-      },
-    });
-    const { deleteEvent } = await import("./eventQueries");
-    const result = await deleteEvent(SAMPLE_EVENT_ID as never);
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error.code).toBe("RESERVATIONS_EXIST");
-  });
-
   it("RLS エラーは PERMISSION_DENIED を返す", async () => {
     currentBuilder.eq = vi.fn().mockResolvedValue({
       error: { code: "42501", message: "permission denied" },
     });
     const { deleteEvent } = await import("./eventQueries");
     const result = await deleteEvent(SAMPLE_EVENT_ID as never);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("PERMISSION_DENIED");
+  });
+
+  it("FK CASCADE 後は予約あり event でも 200 で削除できる (#253)", async () => {
+    currentBuilder.eq = vi.fn().mockResolvedValue({ error: null });
+    const { deleteEvent } = await import("./eventQueries");
+    const result = await deleteEvent(SAMPLE_EVENT_ID as never);
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe("classifyEventReservations", () => {
+  it("status ごとの件数を集計して返す", async () => {
+    builderResult.error = null;
+    currentBuilder.eq = vi.fn().mockResolvedValue({
+      data: [
+        { status: "reserved" },
+        { status: "reserved" },
+        { status: "attended" },
+        { status: "cancelled" },
+        { status: "no_show" },
+        { status: "waitlist" },
+      ],
+      error: null,
+    });
+    const { classifyEventReservations } = await import("./eventQueries");
+    const result = await classifyEventReservations(SAMPLE_EVENT_ID as never);
+    expect(fromMock).toHaveBeenCalledWith("reservations");
+    expect(currentBuilder.select).toHaveBeenCalledWith("status");
+    expect(currentBuilder.eq).toHaveBeenCalledWith("event_id", SAMPLE_EVENT_ID);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toEqual({
+        reserved: 2,
+        attended: 1,
+        cancelled: 1,
+        no_show: 1,
+        waitlist: 1,
+      });
+    }
+  });
+
+  it("予約 0 件のイベントは全て 0 を返す", async () => {
+    currentBuilder.eq = vi.fn().mockResolvedValue({ data: [], error: null });
+    const { classifyEventReservations } = await import("./eventQueries");
+    const result = await classifyEventReservations(SAMPLE_EVENT_ID as never);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toEqual({
+        reserved: 0,
+        attended: 0,
+        cancelled: 0,
+        no_show: 0,
+        waitlist: 0,
+      });
+    }
+  });
+
+  it("RLS エラーは PERMISSION_DENIED を返す", async () => {
+    currentBuilder.eq = vi.fn().mockResolvedValue({
+      data: null,
+      error: { code: "42501", message: "permission denied" },
+    });
+    const { classifyEventReservations } = await import("./eventQueries");
+    const result = await classifyEventReservations(SAMPLE_EVENT_ID as never);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe("PERMISSION_DENIED");
   });

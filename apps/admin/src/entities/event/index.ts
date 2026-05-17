@@ -26,8 +26,10 @@ export {
   createEvent,
   updateEvent,
   deleteEvent,
+  classifyEventReservations,
   type EventsListFilter,
   type EventsListResult,
+  type EventReservationBreakdown,
   type FetchError,
   type FetchErrorCode,
 } from "./api/eventQueries";
