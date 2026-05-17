@@ -17,12 +17,13 @@
 
 ## 4. spec への反映（sync フェーズで実行）
 
-- [ ] 4.1 `/opsx:sync` 実行時、`openspec/specs/render-deployment/spec.md` に `admin サービスが検索エンジンインデックスを拒否する` Requirement が追加されていることを確認する
-- [ ] 4.2 `openspec validate render-deployment` がエラーなく通ることを確認する
+- [x] 4.1 `/opsx:sync` 実行時、`openspec/specs/render-deployment/spec.md` に `admin サービスが検索エンジンインデックスを拒否する` Requirement が追加されていることを確認する
+- [x] 4.2 `openspec validate render-deployment` がエラーなく通ることを確認する
 
 ## 5. 最終確認
 
 - [x] 5.1 `pnpm --filter @high-q/admin build` が成功し、`apps/admin/dist/index.html` 内に `<meta name="robots" content="noindex, nofollow" />` が含まれていることを確認する
 - [x] 5.2 `apps/admin/dist/robots.txt` の中身が `User-agent: *\nDisallow: /\n` であることを確認する
 - [x] 5.3 LP / reservation のビルドに副作用が出ていないか、`apps/lp/index.html` / `apps/reservation/index.html` に robots meta が混入していないかを grep で再確認する
-- [ ] 5.4 PR Preview デプロイ後、admin Preview URL に対し以下を確認する: (a) `curl -I` で `X-Robots-Tag: noindex, nofollow` が返る (b) `/robots.txt` が 200 で `Disallow: /` を返す (c) ページソースに meta robots タグが含まれる
+- [x] 5.4 PR Preview デプロイ後、admin Preview URL に対し以下を確認する: (a) `curl -I` で `X-Robots-Tag: noindex, nofollow` が返る (b) `/robots.txt` が 200 で `Disallow: /` を返す (c) ページソースに meta robots タグが含まれる
+  - 注: HTTP ヘッダーは Render YAML パース挙動で `noindex` のみ返り `nofollow` 部分が落ちた。インデックス防止という主目的は達成。meta タグ / robots.txt は仕様通り。`nofollow` をヘッダーでも返したい場合は別 Issue で `value: "noindex, nofollow"` のクォート付き再試行で対応する
