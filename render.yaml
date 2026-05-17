@@ -105,6 +105,16 @@ services:
         source: /*
         destination: /index.html
 
+    # 検索エンジンインデックス拒否 (#264 / openspec/changes/admin-noindex)。
+    # admin は会員情報・本人確認書類など機微情報を扱う非公開アプリのため、
+    # Google/Bing 等にインデックスさせない。多層防御 (HTTP ヘッダー / HTML meta /
+    # robots.txt) のうち本ヘッダーが主防御。同設定は admin に限定し、
+    # LP / reservation には付与しない (両者は公開サイトとして検索流入が必要)。
+    headers:
+      - path: /*
+        name: X-Robots-Tag
+        value: noindex, nofollow
+
     autoDeployTrigger: checksPass
     previews:
       generation: automatic
