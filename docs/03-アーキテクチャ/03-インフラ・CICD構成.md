@@ -41,6 +41,7 @@ Render Static Site はデフォルトで完全公開され、URL (`<service-name
 | `autoDeployTrigger` | `checksPass` | GitHub Actions CI 緑のときだけ deploy 起動 |
 | `previews.generation` | `automatic` | 全 PR に Preview 環境を自動生成 |
 | `envVars[].NODE_VERSION` | `"22"` | ビルド時 Node バージョン統一 |
+| `envVars[].VITE_SENTRY_DSN` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd DSN、カットオーバー時に有効化)、PR Preview は dev DSN。空文字なら Sentry 初期化スキップ（#267） |
 
 ### admin サービス定義（デプロイ済み・#139）
 
@@ -59,6 +60,7 @@ Render Static Site はデフォルトで完全公開され、URL (`<service-name
 | `envVars[].SKIP_INSTALL_DEPS` | `"true"` | pnpm workspace のため自動 npm install を skip（#84 で確立） |
 | `envVars[].VITE_SUPABASE_URL` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd)、PR Preview は dev URL |
 | `envVars[].VITE_SUPABASE_PUBLISHABLE_KEY` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd)、PR Preview は dev 公開キー |
+| `envVars[].VITE_SENTRY_DSN` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd DSN、カットオーバー時に有効化)、PR Preview は dev DSN。空文字なら Sentry 初期化スキップ（#267） |
 
 ### reservation サービス定義（デプロイ済み・#140）
 
@@ -77,6 +79,7 @@ Render Static Site はデフォルトで完全公開され、URL (`<service-name
 | `envVars[].SKIP_INSTALL_DEPS` | `"true"` | pnpm workspace のため自動 npm install を skip（#84 で確立） |
 | `envVars[].VITE_SUPABASE_URL` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd)、PR Preview は dev URL（admin と同一の dev プロジェクトを共有） |
 | `envVars[].VITE_SUPABASE_PUBLISHABLE_KEY` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd)、PR Preview は dev 公開キー（admin と同値） |
+| `envVars[].VITE_SENTRY_DSN` | `sync:false` + `previewValue` | 本番値は Dashboard 設定 (prd DSN、カットオーバー時に有効化)、PR Preview は dev DSN。空文字なら Sentry 初期化スキップ（#267） |
 
 ### Render 運用上の注意
 
