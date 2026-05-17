@@ -15,6 +15,7 @@
     "@high-q/design-tokens": "workspace:*",
     "@high-q/shared": "workspace:*",
     "@high-q/ui": "workspace:*",
+    "@sentry/vue": "^10.53.1",
     "@tanstack/vue-query": "^5.100.1",
     "@vitejs/plugin-vue": "^5.0.2",
     "vite": "^5.0.10",

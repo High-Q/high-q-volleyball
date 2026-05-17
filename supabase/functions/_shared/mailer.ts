@@ -16,6 +16,7 @@
 
 import nodemailer from "npm:nodemailer@6.9.16";
 import { loadMailPolicy, shouldSuppressSend } from "./mailer-policy.ts";
+import { captureException } from "./sentry.ts";
 
 export type MailEnv = {
   user: string;
@@ -60,12 +61,20 @@ export async function sendMail(
     },
   });
 
-  await transporter.sendMail({
-    from: { name: env.fromName, address: env.user },
-    to,
-    subject,
-    text: body,
-  });
+  try {
+    await transporter.sendMail({
+      from: { name: env.fromName, address: env.user },
+      to,
+      subject,
+      text: body,
+    });
+  } catch (e) {
+    captureException(e, {
+      functionName: "mailer.sendMail",
+      extra: { subject },
+    });
+    throw e;
+  }
 }
 
 export function renderSignupCodeMail(code: string): {
