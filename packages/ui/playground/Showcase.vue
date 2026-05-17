@@ -12,14 +12,14 @@ import { Button, Kicker, Badge, Photo, RemainBar } from "@high-q/ui";
 
     <h2>Button — variant</h2>
     <div class="row">
-      <span class="label">primary</span>
+      <span class="label">primary (ink)</span>
       <Button variant="primary">予約する</Button>
       <Button variant="primary" size="sm">予約する</Button>
     </div>
     <div class="row">
-      <span class="label">secondary</span>
-      <Button variant="secondary">詳細を見る</Button>
-      <Button variant="secondary" size="sm">詳細を見る</Button>
+      <span class="label">outline</span>
+      <Button variant="outline">詳細を見る</Button>
+      <Button variant="outline" size="sm">詳細を見る</Button>
     </div>
     <div class="row">
       <span class="label">ghost</span>
@@ -28,7 +28,7 @@ import { Button, Kicker, Badge, Photo, RemainBar } from "@high-q/ui";
     </div>
     <div class="row">
       <span class="label">danger</span>
-      <Button variant="danger">削除</Button>
+      <Button variant="danger">退会する</Button>
       <Button variant="danger" size="sm">削除</Button>
     </div>
 
@@ -36,7 +36,7 @@ import { Button, Kicker, Badge, Photo, RemainBar } from "@high-q/ui";
     <div class="row">
       <span class="label">disabled</span>
       <Button disabled>送信</Button>
-      <Button variant="secondary" disabled>送信</Button>
+      <Button variant="outline" disabled>送信</Button>
     </div>
     <div class="row">
       <span class="label">loading</span>

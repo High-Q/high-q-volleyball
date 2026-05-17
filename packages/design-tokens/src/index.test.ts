@@ -20,16 +20,18 @@ describe("HQ design tokens — color", () => {
   });
 
   it("accent / accentSoft / hairline の値が設計サンプルと一致する", () => {
-    expect(HQ.color.accent).toBe("#b85c3c");
-    expect(HQ.color.accentSoft).toBe("rgba(184,92,60,0.08)");
+    // accent は WCAG AA 確保のため #b85c3c → #a44e30 にトーン調整済み (Issue #238)
+    expect(HQ.color.accent).toBe("#a44e30");
+    expect(HQ.color.accentSoft).toBe("rgba(164,78,48,0.08)");
     expect(HQ.color.hairline).toBe("rgba(31,29,26,0.12)");
   });
 
   it("セマンティックカラー (success / warn / danger) と soft 版が定義されている", () => {
     expect(HQ.color.success).toBe("#6b7e4f");
     expect(HQ.color.successSoft).toBe("rgba(107,126,79,0.10)");
-    expect(HQ.color.warn).toBe("#c08442");
-    expect(HQ.color.warnSoft).toBe("rgba(192,132,66,0.10)");
+    // warn は accent と色相が近すぎたため #c08442 → #d4a04a (マスタード) に振り直し (Issue #238)
+    expect(HQ.color.warn).toBe("#d4a04a");
+    expect(HQ.color.warnSoft).toBe("rgba(212,160,74,0.10)");
     expect(HQ.color.danger).toBe("#9c4030");
     expect(HQ.color.dangerSoft).toBe("rgba(156,64,48,0.10)");
   });
@@ -77,6 +79,12 @@ describe("HQ design tokens — shadow", () => {
     expect(typeof HQ.shadow.md).toBe("string");
     expect(HQ.shadow.sm.length).toBeGreaterThan(0);
     expect(HQ.shadow.md.length).toBeGreaterThan(0);
+  });
+});
+
+describe("HQ design tokens — motion", () => {
+  it("ease は drawer / overlay 用の cubic-bezier イージング文字列である", () => {
+    expect(HQ.motion.ease).toBe("cubic-bezier(.22,.61,.36,1)");
   });
 });
 

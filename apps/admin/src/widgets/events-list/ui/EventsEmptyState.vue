@@ -45,7 +45,7 @@ const emit = defineEmits<{
         条件を変えるか、フィルタをリセットしてください。
       </p>
       <div class="mt-hq-6">
-        <Button variant="secondary" size="sm" @click="emit('clickReset')">
+        <Button variant="outline" size="sm" @click="emit('clickReset')">
           フィルタをリセット
         </Button>
       </div>
