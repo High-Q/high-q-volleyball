@@ -3,6 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      検索エンジンインデックス拒否 (#264 / openspec/changes/admin-noindex)。
+      admin は会員情報・本人確認書類など機微情報を扱う非公開アプリのため
+      Google/Bing 等にインデックスさせない。多層防御として
+      - HTTP `X-Robots-Tag` (render.yaml の headers)
+      - HTML meta robots (本タグ)
+      - /robots.txt (apps/admin/public/robots.txt)
+      の 3 層で宣言する。LP / reservation は公開サイトのため本指定はしない。
+    -->
+    <meta name="robots" content="noindex, nofollow" />
     <title>High Q 管理画面</title>
     <!--
       HQ デザイントークン (packages/design-tokens/src/tokens.css) で指定する Web フォント。
