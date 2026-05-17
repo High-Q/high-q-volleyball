@@ -51,14 +51,14 @@ import { Photo, Button } from '@high-q/ui'
 .hero-first {
   position: relative;
   width: 100%;
-  height: 600px;
+  min-height: 600px;
   overflow: hidden;
   background: var(--hq-color-ink);
 }
 
 @media (min-width: 720px) {
   .hero-first {
-    height: 640px;
+    min-height: 640px;
   }
 }
 
@@ -81,13 +81,13 @@ import { Photo, Button } from '@high-q/ui'
   );
 }
 
-/* テキストは画面下 1/3 に収め、画像の人物 (中央〜上半分) と被らないようにする */
+/* テキストは画面下に flex-end で寄せる。max-height で切り捨てると見切れるため設定しない。
+   画像の人物 (中央〜上半分) との分離は overlay グラデーションと padding に責務を集約。 */
 .hero-first__body {
   padding: 0 28px 32px;
   padding-inline: max(28px, calc((100% - 720px) / 2));
   width: 100%;
   box-sizing: border-box;
-  max-height: 60%;
 }
 
 .hero-first__kicker {
