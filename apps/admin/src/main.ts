@@ -3,8 +3,10 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router, { registerAuthGuard } from "./app/router";
 import { installAuthSession, useIdleTimeout } from "./features/auth";
+import { initSentry } from "./shared/lib/sentry";
 
 const app = createApp(App);
+initSentry(app);
 
 // installAuthSession は router guard が inject に依存するため、
 // app.use(router) の前に呼ぶ (D4 / D9)。
