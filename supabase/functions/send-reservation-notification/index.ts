@@ -2,13 +2,16 @@
 // Edge Function: send-reservation-notification
 // =============================================================================
 // Issue #248: 予約完了 / 予約キャンセル時の通知メールを会員へ送信する。
+// Issue #251: 予約内容変更 (edit) 時の通知メールを `eventType='updated'` で追加。
 //
 // フロー:
 //   1. クライアント (apps/reservation) から `{ reservationId, eventType }` を受け取る
+//      eventType: 'confirmed' | 'cancelled' | 'updated'
 //   2. Authorization ヘッダーの JWT で auth.uid() を確定
 //   3. reservations を service_role で SELECT、`member_id === auth.uid()` を自前で検証
 //   4. JOIN で event / venue を取得し、members.email を別 SELECT で取得
 //   5. eventType ごとに ReservationConfirmedInput / ReservationCancelledInput を組み立て
+//      ('updated' は ReservationConfirmedInput を流用し、文言だけ renderReservationUpdatedMail で差し替える)
 //   6. renderXxxMail でテキスト本文を生成、sendMail で Gmail SMTP 経由送信
 //   7. 成功・失敗をログに残し、UI 側はエラーを描画しない方針のため失敗時も 200 で
 //      `{ ok: false, error }` を返す (例外は HTTP 500 ではなく構造化 body で表現)
@@ -29,6 +32,7 @@ import {
 import {
   renderReservationCancelledMail,
   renderReservationConfirmedMail,
+  renderReservationUpdatedMail,
 } from "../_shared/mailer-templates.ts";
 import { loadMailEnv, sendMail } from "../_shared/mailer.ts";
 
@@ -184,7 +188,7 @@ export async function handleSendReservationNotification(
   let subject: string;
   let body: string;
   try {
-    if (eventType === "confirmed") {
+    if (eventType === "confirmed" || eventType === "updated") {
       const input = buildConfirmedInput(
         {
           id: reservation.id,
@@ -202,7 +206,10 @@ export async function handleSendReservationNotification(
         venue,
         urls,
       );
-      const rendered = renderReservationConfirmedMail(input);
+      const rendered =
+        eventType === "updated"
+          ? renderReservationUpdatedMail(input)
+          : renderReservationConfirmedMail(input);
       subject = rendered.subject;
       body = rendered.body;
     } else {

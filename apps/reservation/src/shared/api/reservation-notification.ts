@@ -14,7 +14,7 @@ import { getSupabase } from "./supabase";
  */
 export async function triggerReservationNotification(
   reservationId: string,
-  eventType: "confirmed" | "cancelled",
+  eventType: "confirmed" | "cancelled" | "updated",
 ): Promise<void> {
   try {
     const supabase = getSupabase();

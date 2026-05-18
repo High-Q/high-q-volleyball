@@ -4,6 +4,7 @@ import type {
   Reservation,
   UpdateBookingInput,
 } from "@/entities/reservation";
+import { triggerReservationNotification } from "@/shared/api/reservation-notification";
 import { BookingApiError, updateReservation } from "../api/booking-client";
 import { isCancellable } from "./useCancelBooking";
 
@@ -52,6 +53,16 @@ export function useUpdateBooking(): UseUpdateBookingReturn {
     try {
       const result = await updateReservation(input);
       reservation.value = result;
+      // 予約内容変更メール送信は fire-and-forget。helper 側で例外を握りつぶしているが、
+      // 同期 throw / Promise rejection のどちらも編集成立を妨げないよう二重防衛する。
+      try {
+        void triggerReservationNotification(result.id as string, "updated");
+      } catch (notifyErr) {
+        console.warn(
+          "[useUpdateBooking] notification trigger threw (ignored)",
+          notifyErr,
+        );
+      }
       return result;
     } catch (cause) {
       error.value = mapErrorToBookingError(cause);

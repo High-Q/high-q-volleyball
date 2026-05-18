@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   renderReservationCancelledMail,
   renderReservationConfirmedMail,
+  renderReservationUpdatedMail,
   type ReservationCancelledInput,
   type ReservationConfirmedInput,
 } from "../_shared/mailer-templates.ts";
@@ -138,6 +139,102 @@ describe("renderReservationConfirmedMail", () => {
     const { body } = renderReservationConfirmedMail({
       ...baseConfirmed,
       venueMeetingPoint: "   ",
+    });
+    expect(body).not.toContain("集合地点:");
+  });
+});
+
+describe("renderReservationUpdatedMail", () => {
+  it("同一入力で同一出力 (純粋関数)", () => {
+    const a = renderReservationUpdatedMail(baseConfirmed);
+    const b = renderReservationUpdatedMail(baseConfirmed);
+    expect(a.subject).toBe(b.subject);
+    expect(a.body).toBe(b.body);
+  });
+
+  it("件名に予約番号が含まれ、'予約完了' 表現は含まれない", () => {
+    const { subject } = renderReservationUpdatedMail(baseConfirmed);
+    expect(subject).toContain("#HQ-AB12-CD34");
+    expect(subject).toContain("High Q");
+    expect(subject).toContain("変更");
+    expect(subject).not.toContain("予約完了");
+    expect(subject).not.toContain("ご予約完了");
+  });
+
+  it("本文冒頭は '予約内容を更新しました' を含み '予約完了' 表現を含まない", () => {
+    const { body } = renderReservationUpdatedMail(baseConfirmed);
+    expect(body).toContain("予約内容を更新しました");
+    expect(body).not.toContain("予約完了");
+    expect(body).not.toContain("ご予約ありがとうございます");
+  });
+
+  it("本文に予約番号 / 会場 / 住所 / LINE / マイページ URL / supportNote が含まれる", () => {
+    const { body } = renderReservationUpdatedMail(baseConfirmed);
+    expect(body).toContain(baseConfirmed.reservationDisplayId);
+    expect(body).toContain(baseConfirmed.eventName);
+    expect(body).toContain(baseConfirmed.startAtJst);
+    expect(body).toContain(baseConfirmed.venueName);
+    expect(body).toContain(`住所: ${baseConfirmed.venueAddress}`);
+    expect(body).toContain(baseConfirmed.lineOpenChatUrl);
+    expect(body).toContain(baseConfirmed.reservationDetailUrl);
+    expect(body).toContain(baseConfirmed.supportNote);
+  });
+
+  it("生 UUID 形式は subject / body のどこにも出ない", () => {
+    const { subject, body } = renderReservationUpdatedMail(baseConfirmed);
+    expect(subject).not.toMatch(UUID_RE);
+    expect(body).not.toMatch(UUID_RE);
+  });
+
+  it("note が null のとき本文に連絡事項セクションを出さない", () => {
+    const { body } = renderReservationUpdatedMail({
+      ...baseConfirmed,
+      note: null,
+    });
+    expect(body).not.toContain("連絡事項:");
+  });
+
+  it("note が空文字のとき本文に連絡事項セクションを出さない", () => {
+    const { body } = renderReservationUpdatedMail({
+      ...baseConfirmed,
+      note: "   ",
+    });
+    expect(body).not.toContain("連絡事項:");
+  });
+
+  it("note が値ありのとき連絡事項セクションが本文に含まれる", () => {
+    const { body } = renderReservationUpdatedMail({
+      ...baseConfirmed,
+      note: "初参加です。よろしくお願いします。",
+    });
+    expect(body).toContain("連絡事項:");
+    expect(body).toContain("初参加です。よろしくお願いします。");
+  });
+
+  it("変更後の同伴者数と合計金額が本文に正しく出る", () => {
+    const { body } = renderReservationUpdatedMail({
+      ...baseConfirmed,
+      guestCount: 3,
+      feePerPerson: 1500,
+    });
+    // ご本人 1 名 + 同伴 3 名 = 4 名 × 1500 = 6000
+    expect(body).toContain("4 名");
+    expect(body).toContain("同伴 3 名");
+    expect(body).toContain("¥6,000");
+  });
+
+  it("集合地点が登録されているとき本文に含まれる", () => {
+    const { body } = renderReservationUpdatedMail({
+      ...baseConfirmed,
+      venueMeetingPoint: "南門前 19:00 集合",
+    });
+    expect(body).toContain("集合地点: 南門前 19:00 集合");
+  });
+
+  it("集合地点が null のとき本文に集合地点行を出さない", () => {
+    const { body } = renderReservationUpdatedMail({
+      ...baseConfirmed,
+      venueMeetingPoint: null,
     });
     expect(body).not.toContain("集合地点:");
   });
