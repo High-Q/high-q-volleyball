@@ -24,6 +24,17 @@ describe("validateReservationNotificationPayload", () => {
     expect(r.ok).toBe(true);
   });
 
+  it("正常系: UUID + 'updated' を受け付ける", () => {
+    const r = validateReservationNotificationPayload({
+      reservationId: "11111111-2222-3333-4444-555555555555",
+      eventType: "updated",
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.payload.eventType).toBe("updated");
+    }
+  });
+
   it("reservationId が UUID 形式でないと拒否", () => {
     const r = validateReservationNotificationPayload({
       reservationId: "not-a-uuid",

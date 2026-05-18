@@ -51,7 +51,7 @@ export function renderReservationConfirmedMail(
 
   const lines: string[] = [
     "High Q バレーボールサークルのご予約ありがとうございます。",
-    "下記の内容でお席を確保しました。",
+    "下記の内容でご予約を承りました。",
     "",
     `予約番号: ${input.reservationDisplayId}`,
     `イベント: ${input.eventName}`,
@@ -93,6 +93,60 @@ export function renderReservationConfirmedMail(
 
   return {
     subject: `【High Q】ご予約完了のお知らせ (${input.reservationDisplayId})`,
+    body: lines.join("\n"),
+  };
+}
+
+export function renderReservationUpdatedMail(
+  input: ReservationConfirmedInput,
+): { subject: string; body: string } {
+  const totalPeople = 1 + input.guestCount;
+  const totalFee = input.feePerPerson * totalPeople;
+
+  const lines: string[] = [
+    "High Q バレーボールサークルの予約内容を更新しました。",
+    "下記の内容でご予約を承っています。",
+    "",
+    `予約番号: ${input.reservationDisplayId}`,
+    `イベント: ${input.eventName}`,
+    `開催日時: ${input.startAtJst}`,
+    `会場: ${input.venueName}`,
+    `住所: ${input.venueAddress}`,
+  ];
+
+  if (input.venueMeetingPoint && input.venueMeetingPoint.trim().length > 0) {
+    lines.push(`集合地点: ${input.venueMeetingPoint}`);
+  }
+
+  if (input.venueMapUrl) {
+    lines.push(`会場マップ: ${input.venueMapUrl}`);
+  }
+
+  lines.push(
+    "",
+    `参加人数: ${totalPeople} 名 (ご本人 + 同伴 ${input.guestCount} 名)`,
+    `参加費: ${formatYen(input.feePerPerson)} × ${totalPeople} = ${formatYen(totalFee)} (当日現金でお支払いください)`,
+  );
+
+  if (input.note && input.note.trim().length > 0) {
+    lines.push("", "連絡事項:", input.note);
+  }
+
+  lines.push(
+    "",
+    "------",
+    "当日の連絡 / やむを得ない当日キャンセルは LINE オープンチャットへお願いします。",
+    `LINE オープンチャット: ${input.lineOpenChatUrl}`,
+    "",
+    `予約詳細・キャンセルはマイページから操作できます: ${input.reservationDetailUrl}`,
+    "",
+    input.supportNote,
+    "",
+    ...SIGNATURE,
+  );
+
+  return {
+    subject: `【High Q】ご予約内容変更のお知らせ (${input.reservationDisplayId})`,
     body: lines.join("\n"),
   };
 }

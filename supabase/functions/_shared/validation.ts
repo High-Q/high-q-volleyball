@@ -165,7 +165,7 @@ export function validateVerifyPayload(
 
 export type ReservationNotificationPayload = {
   reservationId: string;
-  eventType: "confirmed" | "cancelled";
+  eventType: "confirmed" | "cancelled" | "updated";
 };
 
 const UUID_RE =
@@ -195,10 +195,15 @@ export function validateReservationNotificationPayload(
   }
 
   const eventType = typeof data.eventType === "string" ? data.eventType : "";
-  if (eventType !== "confirmed" && eventType !== "cancelled") {
+  if (
+    eventType !== "confirmed" &&
+    eventType !== "cancelled" &&
+    eventType !== "updated"
+  ) {
     errors.push({
       field: "eventType",
-      message: "eventType は 'confirmed' または 'cancelled' を指定してください",
+      message:
+        "eventType は 'confirmed' / 'cancelled' / 'updated' のいずれかを指定してください",
     });
   }
 
@@ -210,7 +215,7 @@ export function validateReservationNotificationPayload(
     ok: true,
     payload: {
       reservationId,
-      eventType: eventType as "confirmed" | "cancelled",
+      eventType: eventType as "confirmed" | "cancelled" | "updated",
     },
   };
 }
