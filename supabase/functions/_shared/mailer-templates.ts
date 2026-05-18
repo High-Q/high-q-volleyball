@@ -51,7 +51,7 @@ export function renderReservationConfirmedMail(
 
   const lines: string[] = [
     "High Q バレーボールサークルのご予約ありがとうございます。",
-    "下記の内容でお席を確保しました。",
+    "下記の内容でご予約を承りました。",
     "",
     `予約番号: ${input.reservationDisplayId}`,
     `イベント: ${input.eventName}`,
@@ -105,7 +105,7 @@ export function renderReservationUpdatedMail(
 
   const lines: string[] = [
     "High Q バレーボールサークルの予約内容を更新しました。",
-    "下記の内容でお席を確保しています。",
+    "下記の内容でご予約を承っています。",
     "",
     `予約番号: ${input.reservationDisplayId}`,
     `イベント: ${input.eventName}`,

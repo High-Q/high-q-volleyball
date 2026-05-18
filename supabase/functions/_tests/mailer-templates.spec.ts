@@ -60,6 +60,11 @@ describe("renderReservationConfirmedMail", () => {
     expect(body).toContain(baseConfirmed.supportNote);
   });
 
+  it("本文に「席」表現を含まない (バレーボールサークルにふさわしくない用語の禁止)", () => {
+    const { body } = renderReservationConfirmedMail(baseConfirmed);
+    expect(body).not.toContain("席");
+  });
+
   it("生 UUID 形式は subject / body のどこにも出ない", () => {
     const { subject, body } = renderReservationConfirmedMail(baseConfirmed);
     expect(subject).not.toMatch(UUID_RE);
@@ -178,6 +183,11 @@ describe("renderReservationUpdatedMail", () => {
     expect(body).toContain(baseConfirmed.lineOpenChatUrl);
     expect(body).toContain(baseConfirmed.reservationDetailUrl);
     expect(body).toContain(baseConfirmed.supportNote);
+  });
+
+  it("本文に「席」表現を含まない (バレーボールサークルにふさわしくない用語の禁止)", () => {
+    const { body } = renderReservationUpdatedMail(baseConfirmed);
+    expect(body).not.toContain("席");
   });
 
   it("生 UUID 形式は subject / body のどこにも出ない", () => {
