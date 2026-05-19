@@ -383,3 +383,119 @@ export async function classifyEventReservations(
     return err({ code: "SERVER_ERROR", message });
   }
 }
+
+export interface ActiveReservationRecipient {
+  memberId: string;
+  email: string;
+}
+
+export interface EventCancellationMeta {
+  eventName: string;
+  startAtIso: string;
+  venueName: string;
+}
+
+/**
+ * イベント削除時のキャンセル通知メール本文に必要な event meta + venue name を
+ * 1 件 SELECT で取得する。`fetchActiveReservationRecipients` と並列実行する想定。
+ *
+ * 関連:
+ *   openspec/changes/notify-event-cancellation-on-delete/specs/event-cancellation-notification-email/spec.md
+ */
+export async function fetchEventCancellationMeta(
+  id: EventId,
+): Promise<Result<EventCancellationMeta | null, FetchError>> {
+  const supabase = getSupabase();
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .select("name, start_at, venues:venue_id(name)")
+      .eq("id", id as unknown as string)
+      .maybeSingle();
+    if (error) {
+      return err({
+        code: classifyError(error),
+        message: error.message,
+      });
+    }
+    if (!data) {
+      return ok(null);
+    }
+    // Supabase の埋め込み JOIN は単一/複数を問わず array を返すため、
+    // venues は配列または単一オブジェクトの両方を許容する型で受ける。
+    type EmbeddedVenue = { name: string };
+    type Row = {
+      name: string;
+      start_at: string;
+      venues: EmbeddedVenue | EmbeddedVenue[] | null;
+    };
+    const row = data as unknown as Row;
+    const venue = Array.isArray(row.venues) ? row.venues[0] : row.venues;
+    const venueName = venue?.name ?? "";
+    return ok({
+      eventName: row.name,
+      startAtIso: row.start_at,
+      venueName,
+    });
+  } catch (cause) {
+    if (cause instanceof TypeError) {
+      return err({ code: "NETWORK_ERROR", message: cause.message });
+    }
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return err({ code: "SERVER_ERROR", message });
+  }
+}
+
+/**
+ * 単一 event の有効予約者 (`status in ('reserved', 'attended')`) に紐づく
+ * `members.email` をスナップショット取得する。
+ *
+ * 用途: #272 イベント削除時のキャンセル通知メール送信先決定。CASCADE 削除前に
+ * 必ず呼ぶ MUST。削除後は reservations 行が消えるため取得不能になる。
+ *
+ * 同一 memberId が複数の active reservation を保持することは構造上発生しないが、
+ * 防御的に memberId をキーとして重複排除する。
+ *
+ * 関連:
+ *   openspec/changes/notify-event-cancellation-on-delete/specs/event-cancellation-notification-email/spec.md
+ */
+export async function fetchActiveReservationRecipients(
+  id: EventId,
+): Promise<Result<ActiveReservationRecipient[], FetchError>> {
+  const supabase = getSupabase();
+  try {
+    const { data, error } = await supabase
+      .from("reservations")
+      .select("member_id, members:member_id(id, email)")
+      .eq("event_id", id as unknown as string)
+      .in("status", ["reserved", "attended"]);
+    if (error) {
+      return err({
+        code: classifyError(error),
+        message: error.message,
+      });
+    }
+    const dedup = new Map<string, string>();
+    type EmbeddedMember = { id: string; email: string };
+    type Row = {
+      member_id: string | null;
+      members: EmbeddedMember | EmbeddedMember[] | null;
+    };
+    for (const row of ((data ?? []) as unknown as Row[])) {
+      const member = Array.isArray(row.members) ? row.members[0] : row.members;
+      if (!member || !member.id || !member.email) continue;
+      if (!dedup.has(member.id)) {
+        dedup.set(member.id, member.email);
+      }
+    }
+    return ok(
+      Array.from(dedup, ([memberId, email]) => ({ memberId, email })),
+    );
+  } catch (cause) {
+    if (cause instanceof TypeError) {
+      return err({ code: "NETWORK_ERROR", message: cause.message });
+    }
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return err({ code: "SERVER_ERROR", message });
+  }
+}

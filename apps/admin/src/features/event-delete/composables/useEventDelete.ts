@@ -4,10 +4,34 @@ import type { EventId } from "@high-q/shared";
 import {
   classifyEventReservations,
   deleteEvent,
+  fetchActiveReservationRecipients,
+  fetchEventCancellationMeta,
+  type ActiveReservationRecipient,
+  type EventCancellationMeta,
   type EventReservationBreakdown,
   type FetchError,
 } from "@/entities/event";
+import { triggerEventCancellationNotification } from "@/shared/api/event-cancellation-notification";
 import { useToast } from "@/shared/ui/useToast";
+
+function formatStartAtJst(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const fmt = new Intl.DateTimeFormat("ja-JP", {
+      timeZone: "Asia/Tokyo",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return fmt.format(d);
+  } catch {
+    return iso;
+  }
+}
 
 /**
  * 削除ボタン押下 → AlertDialog で予約内訳を提示 → 確認 → DELETE → Toast →
@@ -28,9 +52,14 @@ export interface UseEventDelete {
   breakdownError: Ref<FetchError | null>;
   deleteError: Ref<FetchError | null>;
   canConfirm: ComputedRef<boolean>;
+  // 削除確認 Dialog でプレビュー本文描画に使う event meta スナップショット。
+  // open() 時に取得済。取得失敗時は null のまま (プレビューは非表示)。
+  meta: Ref<EventCancellationMeta | null>;
+  // open() 時にスナップショット取得した有効予約者リスト。confirm() で再利用する。
+  recipients: Ref<ActiveReservationRecipient[]>;
   open: () => Promise<void>;
   cancel: () => void;
-  confirm: () => Promise<void>;
+  confirm: (organizerMessage?: string) => Promise<void>;
 }
 
 const ERROR_MESSAGES: Record<FetchError["code"], string> = {
@@ -64,6 +93,8 @@ export function useEventDelete(eventId: string): UseEventDelete {
   const isLoadingBreakdown = ref<boolean>(false);
   const breakdownError = ref<FetchError | null>(null);
   const deleteError = ref<FetchError | null>(null);
+  const meta = ref<EventCancellationMeta | null>(null);
+  const recipients = ref<ActiveReservationRecipient[]>([]);
 
   const canConfirm = computed<boolean>(
     () =>
@@ -73,18 +104,41 @@ export function useEventDelete(eventId: string): UseEventDelete {
       breakdown.value !== null,
   );
 
-  async function loadBreakdown(): Promise<void> {
+  async function loadSnapshot(): Promise<void> {
     isLoadingBreakdown.value = true;
     breakdownError.value = null;
     breakdown.value = null;
+    meta.value = null;
+    recipients.value = [];
     try {
-      const result = await classifyEventReservations(
-        eventId as unknown as EventId,
+      const [breakdownResult, recipientsResult, metaResult] = await Promise.all(
+        [
+          classifyEventReservations(eventId as unknown as EventId),
+          fetchActiveReservationRecipients(eventId as unknown as EventId),
+          fetchEventCancellationMeta(eventId as unknown as EventId),
+        ],
       );
-      if (result.ok) {
-        breakdown.value = result.value;
+      if (breakdownResult.ok) {
+        breakdown.value = breakdownResult.value;
       } else {
-        breakdownError.value = result.error;
+        breakdownError.value = breakdownResult.error;
+      }
+      if (recipientsResult.ok) {
+        recipients.value = recipientsResult.value;
+      } else {
+        // 取得失敗は warn のみ。確認自体は breakdown 取得結果でガード済。
+        console.warn(
+          `[useEventDelete] recipients snapshot failed (notification will be skipped) eventId=${eventId}`,
+          recipientsResult.error,
+        );
+      }
+      if (metaResult.ok) {
+        meta.value = metaResult.value;
+      } else {
+        console.warn(
+          `[useEventDelete] event meta snapshot failed (preview unavailable) eventId=${eventId}`,
+          metaResult.error,
+        );
       }
     } finally {
       isLoadingBreakdown.value = false;
@@ -94,22 +148,48 @@ export function useEventDelete(eventId: string): UseEventDelete {
   async function open(): Promise<void> {
     deleteError.value = null;
     isOpen.value = true;
-    await loadBreakdown();
+    await loadSnapshot();
   }
 
   function cancel(): void {
     isOpen.value = false;
   }
 
-  async function confirm(): Promise<void> {
+  async function confirm(organizerMessage?: string): Promise<void> {
     deleteError.value = null;
     isDeleting.value = true;
     try {
+      // (1) events を DELETE。reservations は FK CASCADE で連鎖削除。
+      //     スナップショット (recipients / meta) は open() 時に取得済を再利用する。
       const result = await deleteEvent(eventId as unknown as EventId);
       if (!result.ok) {
         deleteError.value = result.error;
         return;
       }
+
+      // (2) スナップショットが揃っていれば Edge Function を fire-and-forget で発火。
+      //     失敗しても下位の Toast / redirect は妨げない MUST。
+      if (recipients.value.length > 0 && meta.value) {
+        try {
+          void triggerEventCancellationNotification({
+            eventId,
+            eventName: meta.value.eventName,
+            startAtJst: formatStartAtJst(meta.value.startAtIso),
+            venueName: meta.value.venueName,
+            snapshotRecipients: recipients.value,
+            ...(organizerMessage !== undefined &&
+            organizerMessage.trim().length > 0
+              ? { organizerMessage: organizerMessage.trim() }
+              : {}),
+          });
+        } catch (notifyErr) {
+          console.warn(
+            `[useEventDelete] notification trigger threw (ignored) eventId=${eventId}`,
+            notifyErr,
+          );
+        }
+      }
+
       isOpen.value = false;
       const total = breakdown.value ? totalCount(breakdown.value) : 0;
       toast({
@@ -132,8 +212,14 @@ export function useEventDelete(eventId: string): UseEventDelete {
     breakdownError,
     deleteError,
     canConfirm,
+    meta,
+    recipients,
     open,
     cancel,
     confirm,
   };
 }
+
+// プレビュー描画用に外部から `formatStartAtJst` を再利用したいケース向けに export。
+// Dialog 内では meta.startAtIso を JST 文字列に整形してレンダラに渡す。
+export { formatStartAtJst };

@@ -2,16 +2,32 @@ import { mount, flushPromises, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMemoryHistory, createRouter } from "vue-router";
 
-const { deleteEventMock, classifyEventReservationsMock, toastMock } =
-  vi.hoisted(() => ({
-    deleteEventMock: vi.fn(),
-    classifyEventReservationsMock: vi.fn(),
-    toastMock: vi.fn(),
-  }));
+const {
+  deleteEventMock,
+  classifyEventReservationsMock,
+  fetchActiveReservationRecipientsMock,
+  fetchEventCancellationMetaMock,
+  triggerEventCancellationNotificationMock,
+  toastMock,
+} = vi.hoisted(() => ({
+  deleteEventMock: vi.fn(),
+  classifyEventReservationsMock: vi.fn(),
+  fetchActiveReservationRecipientsMock: vi.fn(),
+  fetchEventCancellationMetaMock: vi.fn(),
+  triggerEventCancellationNotificationMock: vi.fn(),
+  toastMock: vi.fn(),
+}));
 
 vi.mock("@/entities/event", () => ({
   deleteEvent: deleteEventMock,
   classifyEventReservations: classifyEventReservationsMock,
+  fetchActiveReservationRecipients: fetchActiveReservationRecipientsMock,
+  fetchEventCancellationMeta: fetchEventCancellationMetaMock,
+}));
+
+vi.mock("@/shared/api/event-cancellation-notification", () => ({
+  triggerEventCancellationNotification:
+    triggerEventCancellationNotificationMock,
 }));
 
 vi.mock("@/shared/ui/useToast", () => ({
@@ -75,6 +91,19 @@ beforeEach(() => {
     ok: true,
     value: EMPTY_BREAKDOWN,
   });
+  fetchActiveReservationRecipientsMock.mockResolvedValue({
+    ok: true,
+    value: [],
+  });
+  fetchEventCancellationMetaMock.mockResolvedValue({
+    ok: true,
+    value: {
+      eventName: "ゆる練 vol.42",
+      startAtIso: "2026-05-22T19:30:00+09:00",
+      venueName: "新宿スポーツセンター",
+    },
+  });
+  triggerEventCancellationNotificationMock.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -151,7 +180,7 @@ describe("EventDeleteDialog", () => {
     expect(findConfirmButton()?.disabled).toBe(false);
   });
 
-  it("有効予約あり: 件数 + 「予約者には別途ご連絡ください」を表示・削除ボタン活性", async () => {
+  it("有効予約あり: 件数 + 「キャンセル通知メールを自動で送信します」を表示・削除ボタン活性 + 主催者メッセージ textarea 表示", async () => {
     classifyEventReservationsMock.mockResolvedValue({
       ok: true,
       value: { ...EMPTY_BREAKDOWN, reserved: 3, attended: 1, cancelled: 2 },
@@ -162,8 +191,80 @@ describe("EventDeleteDialog", () => {
     expect(
       document.querySelector('[data-testid="breakdown-warn-active"]'),
     ).not.toBeNull();
-    expect(document.body.textContent).toContain("予約者には別途ご連絡ください");
+    expect(document.body.textContent).toContain(
+      "対象の予約者にはキャンセル通知メールを自動で送信します",
+    );
+    expect(document.body.textContent).not.toContain(
+      "予約者には別途ご連絡ください",
+    );
+    const textarea = document.querySelector('[data-testid="organizer-message"]');
+    expect(textarea).not.toBeNull();
+    expect(textarea!.getAttribute("maxlength")).toBe("500");
     expect(findConfirmButton()?.disabled).toBe(false);
+  });
+
+  it("有効予約 0 件のときは主催者メッセージ textarea を表示しない", async () => {
+    classifyEventReservationsMock.mockResolvedValue({
+      ok: true,
+      value: { ...EMPTY_BREAKDOWN, cancelled: 2 },
+    });
+    wrapper = await openDialog();
+    expect(
+      document.querySelector('[data-testid="organizer-message"]'),
+    ).toBeNull();
+  });
+
+  it("有効予約あり: メール本文プレビューが表示され、件名にイベント名が含まれる", async () => {
+    classifyEventReservationsMock.mockResolvedValue({
+      ok: true,
+      value: { ...EMPTY_BREAKDOWN, reserved: 2 },
+    });
+    wrapper = await openDialog();
+    const preview = document.querySelector('[data-testid="mail-preview"]');
+    expect(preview).not.toBeNull();
+    const subject = document.querySelector(
+      '[data-testid="mail-preview-subject"]',
+    );
+    expect(subject?.textContent).toContain("イベント中止のお知らせ");
+    expect(subject?.textContent).toContain("ゆる練 vol.42");
+    const body = document.querySelector('[data-testid="mail-preview-body"]');
+    expect(body?.textContent).toContain("新宿スポーツセンター");
+    // メッセージ未入力時は本文に主催者からのお知らせ欄が描画されない
+    expect(body?.textContent).not.toContain("主催者からのお知らせ:");
+  });
+
+  it("主催者メッセージ入力時にプレビュー本文へ理由欄が反応する", async () => {
+    classifyEventReservationsMock.mockResolvedValue({
+      ok: true,
+      value: { ...EMPTY_BREAKDOWN, reserved: 1 },
+    });
+    wrapper = await openDialog();
+    const textarea = document.querySelector(
+      '[data-testid="organizer-message"]',
+    ) as HTMLTextAreaElement;
+    textarea.value = "雨天中止のためキャンセルします";
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    await flushPromises();
+    const body = document.querySelector('[data-testid="mail-preview-body"]');
+    expect(body?.textContent).toContain("主催者からのお知らせ:");
+    expect(body?.textContent).toContain("雨天中止のためキャンセルします");
+  });
+
+  it("event meta 取得失敗時はプレビューを描画しない", async () => {
+    classifyEventReservationsMock.mockResolvedValue({
+      ok: true,
+      value: { ...EMPTY_BREAKDOWN, reserved: 2 },
+    });
+    fetchEventCancellationMetaMock.mockResolvedValue({
+      ok: false,
+      error: { code: "PERMISSION_DENIED", message: "rls" },
+    });
+    wrapper = await openDialog();
+    expect(document.querySelector('[data-testid="mail-preview"]')).toBeNull();
+    // textarea 自体は引き続き表示される
+    expect(
+      document.querySelector('[data-testid="organizer-message"]'),
+    ).not.toBeNull();
   });
 
   it("breakdown 取得失敗: role='alert' でエラー表示 + 削除ボタン disabled", async () => {

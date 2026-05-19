@@ -27,9 +27,13 @@ export {
   updateEvent,
   deleteEvent,
   classifyEventReservations,
+  fetchActiveReservationRecipients,
+  fetchEventCancellationMeta,
   type EventsListFilter,
   type EventsListResult,
   type EventReservationBreakdown,
+  type ActiveReservationRecipient,
+  type EventCancellationMeta,
   type FetchError,
   type FetchErrorCode,
 } from "./api/eventQueries";

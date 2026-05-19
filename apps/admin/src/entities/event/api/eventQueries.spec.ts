@@ -10,6 +10,7 @@ function makeBuilder() {
   const builder: Record<string, unknown> = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
     gte: vi.fn().mockReturnThis(),
     lt: vi.fn().mockReturnThis(),
     or: vi.fn().mockReturnThis(),
@@ -26,7 +27,7 @@ function makeBuilder() {
       data: builderResult.data,
       error: builderResult.error,
     })),
-    // delete().eq() is awaitable directly
+    // delete().eq() / select().eq().in() are awaitable directly
     then: undefined,
   };
   return builder;
@@ -550,6 +551,129 @@ describe("classifyEventReservations", () => {
     });
     const { classifyEventReservations } = await import("./eventQueries");
     const result = await classifyEventReservations(SAMPLE_EVENT_ID as never);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("PERMISSION_DENIED");
+  });
+});
+
+describe("fetchActiveReservationRecipients", () => {
+  const MEMBER_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const MEMBER_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+
+  it("reservations を SELECT し status in (reserved, attended) で絞る", async () => {
+    currentBuilder.in = vi.fn().mockResolvedValue({
+      data: [
+        {
+          member_id: MEMBER_A,
+          members: { id: MEMBER_A, email: "alice@example.com" },
+        },
+        {
+          member_id: MEMBER_B,
+          members: { id: MEMBER_B, email: "bob@example.com" },
+        },
+      ],
+      error: null,
+    });
+    const { fetchActiveReservationRecipients } = await import("./eventQueries");
+    const result = await fetchActiveReservationRecipients(
+      SAMPLE_EVENT_ID as never,
+    );
+    expect(fromMock).toHaveBeenCalledWith("reservations");
+    expect(currentBuilder.select).toHaveBeenCalledWith(
+      "member_id, members:member_id(id, email)",
+    );
+    expect(currentBuilder.eq).toHaveBeenCalledWith("event_id", SAMPLE_EVENT_ID);
+    expect(currentBuilder.in).toHaveBeenCalledWith("status", [
+      "reserved",
+      "attended",
+    ]);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toEqual([
+        { memberId: MEMBER_A, email: "alice@example.com" },
+        { memberId: MEMBER_B, email: "bob@example.com" },
+      ]);
+    }
+  });
+
+  it("有効予約 0 件のとき空配列を返す", async () => {
+    currentBuilder.in = vi.fn().mockResolvedValue({ data: [], error: null });
+    const { fetchActiveReservationRecipients } = await import("./eventQueries");
+    const result = await fetchActiveReservationRecipients(
+      SAMPLE_EVENT_ID as never,
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value).toEqual([]);
+  });
+
+  it("有効予約 1 件のとき 1 件返す", async () => {
+    currentBuilder.in = vi.fn().mockResolvedValue({
+      data: [
+        {
+          member_id: MEMBER_A,
+          members: { id: MEMBER_A, email: "alice@example.com" },
+        },
+      ],
+      error: null,
+    });
+    const { fetchActiveReservationRecipients } = await import("./eventQueries");
+    const result = await fetchActiveReservationRecipients(
+      SAMPLE_EVENT_ID as never,
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value).toHaveLength(1);
+  });
+
+  it("同一 memberId が複数行ある場合は重複排除して 1 件にする", async () => {
+    currentBuilder.in = vi.fn().mockResolvedValue({
+      data: [
+        {
+          member_id: MEMBER_A,
+          members: { id: MEMBER_A, email: "alice@example.com" },
+        },
+        {
+          member_id: MEMBER_A,
+          members: { id: MEMBER_A, email: "alice@example.com" },
+        },
+      ],
+      error: null,
+    });
+    const { fetchActiveReservationRecipients } = await import("./eventQueries");
+    const result = await fetchActiveReservationRecipients(
+      SAMPLE_EVENT_ID as never,
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value).toHaveLength(1);
+  });
+
+  it("members JOIN が null の行は除外する (orphan reservation 防御)", async () => {
+    currentBuilder.in = vi.fn().mockResolvedValue({
+      data: [
+        { member_id: null, members: null },
+        {
+          member_id: MEMBER_A,
+          members: { id: MEMBER_A, email: "alice@example.com" },
+        },
+      ],
+      error: null,
+    });
+    const { fetchActiveReservationRecipients } = await import("./eventQueries");
+    const result = await fetchActiveReservationRecipients(
+      SAMPLE_EVENT_ID as never,
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value).toHaveLength(1);
+  });
+
+  it("SELECT 失敗時は FetchError を返す", async () => {
+    currentBuilder.in = vi.fn().mockResolvedValue({
+      data: null,
+      error: { code: "42501", message: "permission denied" },
+    });
+    const { fetchActiveReservationRecipients } = await import("./eventQueries");
+    const result = await fetchActiveReservationRecipients(
+      SAMPLE_EVENT_ID as never,
+    );
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe("PERMISSION_DENIED");
   });
