@@ -31,6 +31,34 @@ export default defineConfig({
       "@shared":   fileURLToPath(new URL("./src/shared",    import.meta.url)),
     },
   },
+  // vendor 別 chunk 分割。更新頻度・サイズが大きく異なる依存を 4 グループに分離し、
+  // 初期表示の chunk サイズ低減と戻り訪問時のキャッシュ効率を両立する。
+  // 関連: openspec/specs/lp-build-optimization/spec.md
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("node_modules/@sentry/")) return "vendor-sentry";
+          if (id.includes("node_modules/@supabase/")) return "vendor-supabase";
+          if (
+            id.includes("node_modules/vuetify/") ||
+            id.includes("node_modules/vite-plugin-vuetify/")
+          ) {
+            return "vendor-vuetify";
+          }
+          if (
+            id.includes("node_modules/vue/") ||
+            id.includes("node_modules/@vue/") ||
+            id.includes("node_modules/@tanstack/")
+          ) {
+            return "vendor-vue";
+          }
+          return undefined;
+        },
+      },
+    },
+  },
   // ローカル開発時のポートを 5173 で固定し、reservation (5174) との
   // 衝突を防ぐ。strictPort により空きポートへの自動フォールバックは禁止。
   server: {
