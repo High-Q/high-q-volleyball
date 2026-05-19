@@ -172,9 +172,10 @@ async function onGuestChange(
             >
               {{ row.__initial }}
             </span>
-            <span class="font-jp text-sm font-medium text-ink">{{
-              row.display_name
-            }}</span>
+            <span class="font-jp text-sm font-medium text-ink"
+              >{{ row.display_name
+              }}<template v-if="row.nickname">（{{ row.nickname }}）</template></span
+            >
             <Badge v-if="row.is_first_time" tone="accent">初回</Badge>
           </span>
         </TableCell>
