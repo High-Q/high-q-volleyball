@@ -359,6 +359,7 @@ view は events × venues の `LEFT JOIN` と、reservations の集計サブク�
 - `event_id` (uuid) — reservations.event_id
 - `member_id` (uuid NULL) — reservations.member_id（退会済み会員の予約は NULL）
 - `display_name` (text) — `COALESCE(members.display_name, '退会済み会員')`
+- `nickname` (text NULL) — `members.nickname`。退会済み会員（`member_id IS NULL`）は常に NULL を返す
 - `email` (text NULL) — members.email（退会済み会員は NULL）
 - `experience_level` (text NULL) — members.experience_level（退会済み会員は NULL）
 - `guest_count` (smallint) — reservations.guest_count
@@ -373,7 +374,7 @@ view は reservations × members（LEFT JOIN）× events（INNER JOIN）の組�
 
 #### Scenario: 全列が返る
 - **WHEN** admin が `SELECT * FROM event_participants_view WHERE event_id = '<uuid>'` を実行
-- **THEN** 上記の全列を含む参加者行が返る
+- **THEN** 上記の全列（`nickname` を含む）を含む参加者行が返る
 
 #### Scenario: cancelled 除外
 - **WHEN** ある event の reservations に reserved 3 件 + cancelled 2 件 + attended 1 件が存在する
@@ -381,7 +382,15 @@ view は reservations × members（LEFT JOIN）× events（INNER JOIN）の組�
 
 #### Scenario: 退会済み会員の過去予約
 - **WHEN** ある event の attended 予約の中に、その後退会した会員の予約が 1 件含まれる
-- **THEN** view は当該行を `display_name = '退会済み会員'` / `email = NULL` / `experience_level = NULL` / `member_id = NULL` / `is_first_time = false` で返す
+- **THEN** view は当該行を `display_name = '退会済み会員'` / `nickname = NULL` / `email = NULL` / `experience_level = NULL` / `member_id = NULL` / `is_first_time = false` で返す
+
+#### Scenario: nickname の返却（あり）
+- **WHEN** ある active な予約の `members.nickname = 'たろちゃん'` が設定されている
+- **THEN** view の当該行の `nickname` は `'たろちゃん'` を返す。`display_name` は変わらず `members.display_name` の値
+
+#### Scenario: nickname の返却（NULL）
+- **WHEN** ある active な予約の `members.nickname IS NULL`
+- **THEN** view の当該行の `nickname` は NULL を返す
 
 #### Scenario: is_first_time が true
 - **WHEN** ある member の予約のうち、当該 event より前に他イベントで attended 履歴がゼロ
