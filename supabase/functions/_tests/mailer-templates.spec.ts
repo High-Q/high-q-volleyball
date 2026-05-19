@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  renderEventCancellationMail,
   renderReservationCancelledMail,
   renderReservationConfirmedMail,
   renderReservationUpdatedMail,
+  type EventCancellationMailInput,
   type ReservationCancelledInput,
   type ReservationConfirmedInput,
 } from "../_shared/mailer-templates.ts";
@@ -275,6 +277,81 @@ describe("renderReservationCancelledMail", () => {
 
   it("生 UUID 形式は subject / body のどこにも出ない", () => {
     const { subject, body } = renderReservationCancelledMail(baseCancelled);
+    expect(subject).not.toMatch(UUID_RE);
+    expect(body).not.toMatch(UUID_RE);
+  });
+});
+
+const baseEventCancellation: EventCancellationMailInput = {
+  eventName: "金曜の夜練 (中級〜)",
+  startAtJst: "2026年5月22日 (金) 19:30〜21:30",
+  venueName: "新宿スポーツセンター 第 2 体育館",
+  organizerMessage: undefined,
+  lineOpenChatUrl: "https://line.me/ti/g2/example",
+  reservationBaseUrl: "https://reservation.example",
+  supportNote: "メールが届かない場合は迷惑メールフォルダもご確認ください。",
+};
+
+describe("renderEventCancellationMail", () => {
+  it("同一入力で同一出力 (純粋関数)", () => {
+    const a = renderEventCancellationMail(baseEventCancellation);
+    const b = renderEventCancellationMail(baseEventCancellation);
+    expect(a.subject).toBe(b.subject);
+    expect(a.body).toBe(b.body);
+  });
+
+  it("件名にイベント名と『イベント中止のお知らせ』が含まれる", () => {
+    const { subject } = renderEventCancellationMail(baseEventCancellation);
+    expect(subject).toContain(baseEventCancellation.eventName);
+    expect(subject).toContain("イベント中止のお知らせ");
+  });
+
+  it("本文にイベント名 / 開催日時 / 会場 / LINE / マイページ URL が含まれる", () => {
+    const { body } = renderEventCancellationMail(baseEventCancellation);
+    expect(body).toContain(baseEventCancellation.eventName);
+    expect(body).toContain(baseEventCancellation.startAtJst);
+    expect(body).toContain(baseEventCancellation.venueName);
+    expect(body).toContain(baseEventCancellation.lineOpenChatUrl);
+    expect(body).toContain(baseEventCancellation.reservationBaseUrl);
+    expect(body).toContain(baseEventCancellation.supportNote);
+  });
+
+  it("organizerMessage が undefined のとき本文に主催者からのお知らせ欄を出さない", () => {
+    const { body } = renderEventCancellationMail(baseEventCancellation);
+    expect(body).not.toContain("主催者からのお知らせ:");
+  });
+
+  it("organizerMessage が空文字のとき本文に主催者からのお知らせ欄を出さない", () => {
+    const { body } = renderEventCancellationMail({
+      ...baseEventCancellation,
+      organizerMessage: "   ",
+    });
+    expect(body).not.toContain("主催者からのお知らせ:");
+  });
+
+  it("organizerMessage が値ありのとき本文の理由欄に描画される", () => {
+    const { body } = renderEventCancellationMail({
+      ...baseEventCancellation,
+      organizerMessage: "雨天のため中止します。次回ご参加お待ちしています。",
+    });
+    expect(body).toContain("主催者からのお知らせ:");
+    expect(body).toContain("雨天のため中止します。次回ご参加お待ちしています。");
+  });
+
+  it("本文に予約番号 (#HQ-) プレフィックスを含まない", () => {
+    const { body } = renderEventCancellationMail({
+      ...baseEventCancellation,
+      organizerMessage: "中止します",
+    });
+    expect(body).not.toContain("#HQ-");
+    expect(body).not.toContain("予約番号");
+  });
+
+  it("生 UUID 形式は subject / body のどこにも出ない", () => {
+    const { subject, body } = renderEventCancellationMail({
+      ...baseEventCancellation,
+      organizerMessage: "中止します",
+    });
     expect(subject).not.toMatch(UUID_RE);
     expect(body).not.toMatch(UUID_RE);
   });

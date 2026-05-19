@@ -151,6 +151,15 @@ export function renderReservationUpdatedMail(
   };
 }
 
+// renderEventCancellationMail / EventCancellationMailInput は admin アプリの
+// 削除確認 Dialog でも本文プレビュー描画に再利用するため、SSOT として
+// `packages/shared/src/mail-templates/event-cancellation.ts` に移管済。
+// Edge Function は本ファイルから re-export を経由して同一実装を共有する。
+export {
+  renderEventCancellationMail,
+  type EventCancellationMailInput,
+} from "../../../packages/shared/src/mail-templates/event-cancellation.ts";
+
 export function renderReservationCancelledMail(
   input: ReservationCancelledInput,
 ): { subject: string; body: string } {

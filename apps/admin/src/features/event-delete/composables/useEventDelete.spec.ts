@@ -3,16 +3,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineComponent, h, nextTick } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 
-const { deleteEventMock, classifyEventReservationsMock, toastMock } =
-  vi.hoisted(() => ({
-    deleteEventMock: vi.fn(),
-    classifyEventReservationsMock: vi.fn(),
-    toastMock: vi.fn(),
-  }));
+const {
+  deleteEventMock,
+  classifyEventReservationsMock,
+  fetchActiveReservationRecipientsMock,
+  fetchEventCancellationMetaMock,
+  triggerEventCancellationNotificationMock,
+  toastMock,
+} = vi.hoisted(() => ({
+  deleteEventMock: vi.fn(),
+  classifyEventReservationsMock: vi.fn(),
+  fetchActiveReservationRecipientsMock: vi.fn(),
+  fetchEventCancellationMetaMock: vi.fn(),
+  triggerEventCancellationNotificationMock: vi.fn(),
+  toastMock: vi.fn(),
+}));
 
 vi.mock("@/entities/event", () => ({
   deleteEvent: deleteEventMock,
   classifyEventReservations: classifyEventReservationsMock,
+  fetchActiveReservationRecipients: fetchActiveReservationRecipientsMock,
+  fetchEventCancellationMeta: fetchEventCancellationMetaMock,
+}));
+
+vi.mock("@/shared/api/event-cancellation-notification", () => ({
+  triggerEventCancellationNotification:
+    triggerEventCancellationNotificationMock,
 }));
 
 vi.mock("@/shared/ui/useToast", () => ({
@@ -70,6 +86,19 @@ beforeEach(() => {
     ok: true,
     value: EMPTY_BREAKDOWN,
   });
+  fetchActiveReservationRecipientsMock.mockResolvedValue({
+    ok: true,
+    value: [],
+  });
+  fetchEventCancellationMetaMock.mockResolvedValue({
+    ok: true,
+    value: {
+      eventName: "金曜の夜練",
+      startAtIso: "2026-05-22T19:30:00+09:00",
+      venueName: "新宿スポーツセンター",
+    },
+  });
+  triggerEventCancellationNotificationMock.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -251,11 +280,193 @@ describe("useEventDelete", () => {
     mount(C, { global: { plugins: [router] } });
     await api!.open();
     const p = api!.confirm();
-    await nextTick();
+    // confirm() は snapshot fetch を 2 件 await した後に deleteEvent を呼ぶため、
+    // microtask 数回分まわして deleteEvent のモックに到達させる。
+    for (let i = 0; i < 5; i += 1) await nextTick();
     expect(api!.isDeleting.value).toBe(true);
     resolveFn!({ ok: true, value: undefined });
     await p;
     expect(api!.isDeleting.value).toBe(false);
+  });
+
+  it("有効予約 0 件のとき triggerEventCancellationNotification は呼ばれない", async () => {
+    deleteEventMock.mockResolvedValue({ ok: true, value: undefined });
+    fetchActiveReservationRecipientsMock.mockResolvedValue({
+      ok: true,
+      value: [],
+    });
+    const router = buildRouter();
+    await router.push(`/events/${EVENT_ID}/edit`);
+    let api: ReturnType<typeof useEventDelete>;
+    const C = makeHarness((a) => {
+      api = a;
+    });
+    mount(C, { global: { plugins: [router] } });
+    await api!.open();
+    await api!.confirm();
+    expect(triggerEventCancellationNotificationMock).not.toHaveBeenCalled();
+  });
+
+  it("有効予約あり時はスナップショット取得 → DELETE → Edge Function 呼び出しの順で発火", async () => {
+    const callOrder: string[] = [];
+    fetchActiveReservationRecipientsMock.mockImplementation(async () => {
+      callOrder.push("snapshot");
+      return {
+        ok: true,
+        value: [
+          {
+            memberId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            email: "alice@example.com",
+          },
+        ],
+      };
+    });
+    fetchEventCancellationMetaMock.mockImplementation(async () => {
+      callOrder.push("meta");
+      return {
+        ok: true,
+        value: {
+          eventName: "金曜の夜練",
+          startAtIso: "2026-05-22T19:30:00+09:00",
+          venueName: "新宿スポーツセンター",
+        },
+      };
+    });
+    deleteEventMock.mockImplementation(async () => {
+      callOrder.push("delete");
+      return { ok: true, value: undefined };
+    });
+    triggerEventCancellationNotificationMock.mockImplementation(async () => {
+      callOrder.push("notify");
+    });
+    const router = buildRouter();
+    await router.push(`/events/${EVENT_ID}/edit`);
+    let api: ReturnType<typeof useEventDelete>;
+    const C = makeHarness((a) => {
+      api = a;
+    });
+    mount(C, { global: { plugins: [router] } });
+    await api!.open();
+    await api!.confirm();
+    expect(triggerEventCancellationNotificationMock).toHaveBeenCalledTimes(1);
+    // snapshot は並列実行のため順不同。重要なのは notify が delete の後にあること
+    expect(callOrder).toContain("snapshot");
+    expect(callOrder).toContain("meta");
+    expect(callOrder.indexOf("delete")).toBeLessThan(callOrder.indexOf("notify"));
+  });
+
+  it("スナップショット取得失敗時は Edge Function 呼び出しがスキップされ DELETE / Toast / redirect は通常進行", async () => {
+    fetchActiveReservationRecipientsMock.mockResolvedValue({
+      ok: false,
+      error: { code: "SERVER_ERROR", message: "boom" },
+    });
+    deleteEventMock.mockResolvedValue({ ok: true, value: undefined });
+    const router = buildRouter();
+    const pushSpy = vi.spyOn(router, "push");
+    await router.push(`/events/${EVENT_ID}/edit`);
+    let api: ReturnType<typeof useEventDelete>;
+    const C = makeHarness((a) => {
+      api = a;
+    });
+    mount(C, { global: { plugins: [router] } });
+    await api!.open();
+    await api!.confirm();
+    expect(triggerEventCancellationNotificationMock).not.toHaveBeenCalled();
+    expect(deleteEventMock).toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalled();
+    expect(pushSpy).toHaveBeenCalledWith("/events");
+  });
+
+  it("Edge Function 呼び出しが throw しても confirm() は Success 扱い", async () => {
+    fetchActiveReservationRecipientsMock.mockResolvedValue({
+      ok: true,
+      value: [
+        {
+          memberId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          email: "alice@example.com",
+        },
+      ],
+    });
+    deleteEventMock.mockResolvedValue({ ok: true, value: undefined });
+    triggerEventCancellationNotificationMock.mockImplementation(() => {
+      throw new Error("network down");
+    });
+    const router = buildRouter();
+    const pushSpy = vi.spyOn(router, "push");
+    await router.push(`/events/${EVENT_ID}/edit`);
+    let api: ReturnType<typeof useEventDelete>;
+    const C = makeHarness((a) => {
+      api = a;
+    });
+    mount(C, { global: { plugins: [router] } });
+    await api!.open();
+    await api!.confirm();
+    expect(api!.deleteError.value).toBeNull();
+    expect(toastMock).toHaveBeenCalled();
+    expect(pushSpy).toHaveBeenCalledWith("/events");
+  });
+
+  it("organizerMessage が Edge Function 引数に正しく渡る", async () => {
+    fetchActiveReservationRecipientsMock.mockResolvedValue({
+      ok: true,
+      value: [
+        {
+          memberId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          email: "alice@example.com",
+        },
+      ],
+    });
+    deleteEventMock.mockResolvedValue({ ok: true, value: undefined });
+    const router = buildRouter();
+    await router.push(`/events/${EVENT_ID}/edit`);
+    let api: ReturnType<typeof useEventDelete>;
+    const C = makeHarness((a) => {
+      api = a;
+    });
+    mount(C, { global: { plugins: [router] } });
+    await api!.open();
+    await api!.confirm("雨天中止のため");
+    expect(triggerEventCancellationNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventId: EVENT_ID,
+        eventName: "金曜の夜練",
+        venueName: "新宿スポーツセンター",
+        organizerMessage: "雨天中止のため",
+        snapshotRecipients: [
+          {
+            memberId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            email: "alice@example.com",
+          },
+        ],
+      }),
+    );
+  });
+
+  it("organizerMessage が空文字 / 空白のみのとき payload から省く", async () => {
+    fetchActiveReservationRecipientsMock.mockResolvedValue({
+      ok: true,
+      value: [
+        {
+          memberId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          email: "alice@example.com",
+        },
+      ],
+    });
+    deleteEventMock.mockResolvedValue({ ok: true, value: undefined });
+    const router = buildRouter();
+    await router.push(`/events/${EVENT_ID}/edit`);
+    let api: ReturnType<typeof useEventDelete>;
+    const C = makeHarness((a) => {
+      api = a;
+    });
+    mount(C, { global: { plugins: [router] } });
+    await api!.open();
+    await api!.confirm("   ");
+    expect(triggerEventCancellationNotificationMock).toHaveBeenCalledTimes(1);
+    const arg = triggerEventCancellationNotificationMock.mock.calls[0]?.[0] as
+      | { organizerMessage?: string }
+      | undefined;
+    expect(arg?.organizerMessage).toBeUndefined();
   });
 
   it("canConfirm は isDeleting 中は false", async () => {
@@ -276,7 +487,7 @@ describe("useEventDelete", () => {
     await api!.open();
     expect(api!.canConfirm.value).toBe(true);
     const p = api!.confirm();
-    await nextTick();
+    for (let i = 0; i < 5; i += 1) await nextTick();
     expect(api!.canConfirm.value).toBe(false);
     resolveFn!({ ok: true, value: undefined });
     await p;

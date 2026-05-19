@@ -219,3 +219,147 @@ export function validateReservationNotificationPayload(
     },
   };
 }
+
+export type EventCancellationRecipient = {
+  memberId: string;
+  email: string;
+};
+
+export type EventCancellationNotificationPayload = {
+  eventId: string;
+  eventName: string;
+  startAtJst: string;
+  venueName: string;
+  snapshotRecipients: EventCancellationRecipient[];
+  organizerMessage?: string;
+};
+
+const ORGANIZER_MESSAGE_MAX = 500;
+
+export function validateEventCancellationNotificationPayload(
+  raw: unknown,
+):
+  | { ok: true; payload: EventCancellationNotificationPayload }
+  | { ok: false; errors: ValidationError[] } {
+  const errors: ValidationError[] = [];
+  if (typeof raw !== "object" || raw === null) {
+    return {
+      ok: false,
+      errors: [{ field: "_root", message: "payload が不正です" }],
+    };
+  }
+  const data = raw as Record<string, unknown>;
+
+  const eventId = typeof data.eventId === "string" ? data.eventId.trim() : "";
+  if (!UUID_RE.test(eventId)) {
+    errors.push({
+      field: "eventId",
+      message: "eventId は UUID 形式で指定してください",
+    });
+  }
+
+  const eventName =
+    typeof data.eventName === "string" ? data.eventName.trim() : "";
+  if (!eventName) {
+    errors.push({ field: "eventName", message: "eventName を指定してください" });
+  }
+
+  const startAtJst =
+    typeof data.startAtJst === "string" ? data.startAtJst.trim() : "";
+  if (!startAtJst) {
+    errors.push({
+      field: "startAtJst",
+      message: "startAtJst を指定してください",
+    });
+  }
+
+  const venueName =
+    typeof data.venueName === "string" ? data.venueName.trim() : "";
+  if (!venueName) {
+    errors.push({ field: "venueName", message: "venueName を指定してください" });
+  }
+
+  let snapshotRecipients: EventCancellationRecipient[] = [];
+  if (!Array.isArray(data.snapshotRecipients)) {
+    errors.push({
+      field: "snapshotRecipients",
+      message: "snapshotRecipients は配列で指定してください",
+    });
+  } else if (data.snapshotRecipients.length === 0) {
+    errors.push({
+      field: "snapshotRecipients",
+      message: "snapshotRecipients が空です",
+    });
+  } else {
+    const seenMemberIds = new Set<string>();
+    const accepted: EventCancellationRecipient[] = [];
+    data.snapshotRecipients.forEach((row, idx) => {
+      if (typeof row !== "object" || row === null) {
+        errors.push({
+          field: `snapshotRecipients[${idx}]`,
+          message: "受信者レコードが不正です",
+        });
+        return;
+      }
+      const r = row as Record<string, unknown>;
+      const memberId = typeof r.memberId === "string" ? r.memberId.trim() : "";
+      const email =
+        typeof r.email === "string" ? r.email.trim().toLowerCase() : "";
+      if (!UUID_RE.test(memberId)) {
+        errors.push({
+          field: `snapshotRecipients[${idx}].memberId`,
+          message: "memberId は UUID 形式で指定してください",
+        });
+        return;
+      }
+      if (!EMAIL_RE.test(email)) {
+        errors.push({
+          field: `snapshotRecipients[${idx}].email`,
+          message: "email の形式が正しくありません",
+        });
+        return;
+      }
+      if (seenMemberIds.has(memberId)) {
+        // 重複 memberId はサイレントに 1 件にまとめる (Edge Function 側でも重複排除)
+        return;
+      }
+      seenMemberIds.add(memberId);
+      accepted.push({ memberId, email });
+    });
+    snapshotRecipients = accepted;
+  }
+
+  let organizerMessage: string | undefined;
+  if (data.organizerMessage !== undefined && data.organizerMessage !== null) {
+    if (typeof data.organizerMessage !== "string") {
+      errors.push({
+        field: "organizerMessage",
+        message: "organizerMessage は文字列で指定してください",
+      });
+    } else if (data.organizerMessage.length > ORGANIZER_MESSAGE_MAX) {
+      errors.push({
+        field: "organizerMessage",
+        message: `organizerMessage は ${ORGANIZER_MESSAGE_MAX} 文字以内で指定してください`,
+      });
+    } else {
+      const trimmed = data.organizerMessage.trim();
+      organizerMessage = trimmed.length > 0 ? trimmed : undefined;
+    }
+  }
+
+  if (errors.length > 0) {
+    return { ok: false, errors };
+  }
+
+  return {
+    ok: true,
+    payload: {
+      eventId,
+      eventName,
+      startAtJst,
+      venueName,
+      snapshotRecipients,
+      organizerMessage,
+    },
+  };
+}

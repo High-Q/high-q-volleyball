@@ -10,7 +10,8 @@
     "./api": "./src/api/index.ts",
     "./types": "./src/types/index.ts",
     "./consent": "./src/consent/index.ts",
-    "./observability": "./src/observability/index.ts"
+    "./observability": "./src/observability/index.ts",
+    "./mail-templates": "./src/mail-templates/index.ts"
   },
   "scripts": {
     "lint": "echo 'lint via root config' && exit 0",
