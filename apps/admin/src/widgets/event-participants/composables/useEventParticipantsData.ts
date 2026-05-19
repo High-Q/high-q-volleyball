@@ -63,6 +63,7 @@ function applyFilter(
     out = out.filter(
       (r) =>
         r.display_name.toLowerCase().includes(q) ||
+        (r.nickname !== null && r.nickname.toLowerCase().includes(q)) ||
         r.email.toLowerCase().includes(q),
     );
   }

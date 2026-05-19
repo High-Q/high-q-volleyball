@@ -50,10 +50,20 @@ describe("getEventParticipants", () => {
     });
   });
 
-  it("成功時に行配列を返す", async () => {
+  it("成功時に行配列を返す（nickname 列を含む）", async () => {
     builderResult.data = [
-      { reservation_id: "r1", display_name: "田中", is_first_time: true },
-      { reservation_id: "r2", display_name: "佐藤", is_first_time: false },
+      {
+        reservation_id: "r1",
+        display_name: "田中",
+        nickname: "たろちゃん",
+        is_first_time: true,
+      },
+      {
+        reservation_id: "r2",
+        display_name: "佐藤",
+        nickname: null,
+        is_first_time: false,
+      },
     ];
     const { getEventParticipants } = await import("./reservationQueries");
 
@@ -63,6 +73,8 @@ describe("getEventParticipants", () => {
     if (result.ok) {
       expect(result.value).toHaveLength(2);
       expect(result.value[0]!.display_name).toBe("田中");
+      expect(result.value[0]!.nickname).toBe("たろちゃん");
+      expect(result.value[1]!.nickname).toBeNull();
     }
   });
 

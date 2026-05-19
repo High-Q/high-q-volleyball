@@ -29,6 +29,7 @@ function makeRow(overrides: Partial<{
   experience_level: "beginner" | "intermediate" | "experienced";
   checked_in_at: string | null;
   is_first_time: boolean;
+  nickname: string | null;
 }>) {
   return {
     reservation_id: "r1",
@@ -42,6 +43,7 @@ function makeRow(overrides: Partial<{
     checked_in_at: null,
     created_at: "2026-04-27T05:32:00Z",
     is_first_time: true,
+    nickname: null as string | null,
     ...overrides,
   };
 }
@@ -180,6 +182,66 @@ describe("useEventParticipantsData — filter 適用", () => {
     const { composable } = await setup(rows, "q=%E4%BD%90&exp=experienced");
     expect(composable.data.value).toHaveLength(1);
     expect(composable.data.value[0]!.display_name).toBe("佐藤 健太");
+  });
+
+  it("?q=たろ で nickname 部分一致絞り込み（display_name には含まれない）", async () => {
+    const nicknameRows = [
+      makeRow({
+        reservation_id: "rA",
+        display_name: "山田 太郎",
+        email: "yamada@example.com",
+        nickname: "たろちゃん",
+      }),
+      makeRow({
+        reservation_id: "rB",
+        display_name: "鈴木 一郎",
+        email: "suzuki@example.com",
+        nickname: null,
+      }),
+    ];
+    const { composable } = await setup(nicknameRows, "q=%E3%81%9F%E3%82%8D");
+    expect(composable.data.value).toHaveLength(1);
+    expect(composable.data.value[0]!.display_name).toBe("山田 太郎");
+  });
+
+  it("?q=<英字> で nickname の lowercase 一致もヒット", async () => {
+    const nicknameRows = [
+      makeRow({
+        reservation_id: "rA",
+        display_name: "山田 太郎",
+        email: "yamada@example.com",
+        nickname: "Taro",
+      }),
+      makeRow({
+        reservation_id: "rB",
+        display_name: "鈴木 一郎",
+        email: "suzuki@example.com",
+        nickname: null,
+      }),
+    ];
+    const { composable } = await setup(nicknameRows, "q=taro");
+    expect(composable.data.value).toHaveLength(1);
+    expect(composable.data.value[0]!.reservation_id).toBe("rA");
+  });
+
+  it("nickname が null のみの集団に対する検索で誤マッチが起きない", async () => {
+    const nullOnlyRows = [
+      makeRow({
+        reservation_id: "rA",
+        display_name: "山田 太郎",
+        email: "yamada@example.com",
+        nickname: null,
+      }),
+      makeRow({
+        reservation_id: "rB",
+        display_name: "鈴木 一郎",
+        email: "suzuki@example.com",
+        nickname: null,
+      }),
+    ];
+    // 短絡評価により null は検索対象外（display_name / email にも該当しないクエリ）
+    const { composable } = await setup(nullOnlyRows, "q=zzzzzz");
+    expect(composable.data.value).toHaveLength(0);
   });
 
   it("rawData は filter で変化しない（StatCard 集計用）", async () => {

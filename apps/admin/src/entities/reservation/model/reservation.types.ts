@@ -31,4 +31,10 @@ export interface ParticipantRow {
   created_at: string;
   /** 当該 member が当該 event.start_at より前に他イベントで attended ゼロなら true (D2) */
   is_first_time: boolean;
+  /**
+   * 会員のニックネーム（任意）。null = 未登録、または退会済み会員。
+   * UI では氏名と全角括弧で併記、検索の部分一致対象。
+   * 関連: openspec/changes/admin-event-detail-show-nickname/specs/data-schema/spec.md
+   */
+  nickname: string | null;
 }
