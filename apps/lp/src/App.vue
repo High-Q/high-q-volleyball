@@ -17,14 +17,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, defineAsyncComponent } from "vue";
 import { SiteHeader } from "@widgets/site-header";
 import { SiteFooter } from "@widgets/site-footer";
-import NotFoundView from "@shared/ui/NotFoundView.vue";
 import { HomePage } from "@pages/home";
-import { ExternalTransmissionPage } from "@pages/external-transmission";
-import { PrivacyPolicyPage } from "@pages/privacy";
 import { ConsentBanner } from "@widgets/consent-banner";
+
+// 初回 paint 必須は HomePage のみ。他は dynamic import で別 chunk 化。
+// 関連: openspec/specs/lp-build-optimization/spec.md
+const ExternalTransmissionPage = defineAsyncComponent(() =>
+  import("@pages/external-transmission").then((m) => m.ExternalTransmissionPage)
+);
+const PrivacyPolicyPage = defineAsyncComponent(() =>
+  import("@pages/privacy").then((m) => m.PrivacyPolicyPage)
+);
+const NotFoundView = defineAsyncComponent(() =>
+  import("@shared/ui/NotFoundView.vue")
+);
 import { getConsent, onConsentChange } from "@high-q/shared/consent";
 import { loadGtm } from "@shared/lib/loadGtm";
 
