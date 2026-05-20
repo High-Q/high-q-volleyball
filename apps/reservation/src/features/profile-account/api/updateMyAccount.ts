@@ -1,27 +1,36 @@
 import { getSupabase } from "@/shared/api/supabase";
 import {
-  createDisplayName,
+  createFirstName,
+  createLastName,
   createPhone,
   validateOptionalNickname,
   type MemberId,
 } from "@/entities/member";
 
 /**
- * 自分の display_name のみを更新する。
- * Smart constructor `createDisplayName` を経由して空欄/長さを弾く。
+ * 自分の姓・名 (last_name / first_name) を 1 回の UPDATE で同時に更新する。
+ *
+ * #281: display_name 単体更新は廃止。`last_name` / `first_name` を渡すと、
+ * DB トリガ `sync_members_display_name_trg` が `display_name = last_name || ' ' || first_name`
+ * を自動同期する。アプリ側から `display_name` を直接書き込む経路は塞いでいる
+ * (RLS の WITH CHECK 句で本人 UPDATE は `display_name` 変更を拒否)。
+ *
+ * Smart constructor `createLastName` / `createFirstName` を経由して空欄/長さを弾く。
  */
-export async function updateMyDisplayName(
+export async function updateMyName(
   memberId: MemberId,
-  raw: string,
-): Promise<string> {
-  const value = createDisplayName(raw);
+  rawLastName: string,
+  rawFirstName: string,
+): Promise<{ lastName: string; firstName: string }> {
+  const lastName = createLastName(rawLastName);
+  const firstName = createFirstName(rawFirstName);
   const supabase = getSupabase();
   const { error } = await supabase
     .from("members")
-    .update({ display_name: value })
+    .update({ last_name: lastName, first_name: firstName })
     .eq("id", memberId as string);
   if (error !== null) throw error;
-  return value;
+  return { lastName, firstName };
 }
 
 /**

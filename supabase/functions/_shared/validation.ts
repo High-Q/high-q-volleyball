@@ -10,7 +10,9 @@ export type ValidationError = {
 
 export type SignupPayload = {
   email: string;
-  display_name: string;
+  // #281: お名前は last_name / first_name の 2 属性に分離。display_name は受け取らない。
+  last_name: string;
+  first_name: string;
   birthday: string; // YYYY-MM-DD
   phone: string;
   experience_level: "beginner" | "intermediate" | "experienced";
@@ -39,11 +41,19 @@ export function validateSignupPayload(
     errors.push({ field: "email", message: "メールアドレスの形式が正しくありません" });
   }
 
-  const display_name = typeof data.display_name === "string" ? data.display_name.trim() : "";
-  if (!display_name) {
-    errors.push({ field: "display_name", message: "お名前を入力してください" });
-  } else if (display_name.length > 50) {
-    errors.push({ field: "display_name", message: "お名前は 50 文字以内で入力してください" });
+  // #281: 姓・名 2 フィールド。それぞれ 1〜32 文字必須。
+  const last_name = typeof data.last_name === "string" ? data.last_name.trim() : "";
+  if (!last_name) {
+    errors.push({ field: "last_name", message: "姓を入力してください" });
+  } else if (last_name.length > 32) {
+    errors.push({ field: "last_name", message: "姓は 32 文字以内で入力してください" });
+  }
+
+  const first_name = typeof data.first_name === "string" ? data.first_name.trim() : "";
+  if (!first_name) {
+    errors.push({ field: "first_name", message: "名を入力してください" });
+  } else if (first_name.length > 32) {
+    errors.push({ field: "first_name", message: "名は 32 文字以内で入力してください" });
   }
 
   const birthday = typeof data.birthday === "string" ? data.birthday.trim() : "";
@@ -125,7 +135,8 @@ export function validateSignupPayload(
     ok: true,
     payload: {
       email,
-      display_name,
+      last_name,
+      first_name,
       birthday,
       phone: phone_normalized,
       experience_level: experience_level as typeof EXPERIENCE_LEVELS[number],

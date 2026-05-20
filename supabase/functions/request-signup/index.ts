@@ -104,7 +104,9 @@ export async function handleRequestSignup(req: Request): Promise<Response> {
       {
         email: payload.email,
         payload: {
-          display_name: payload.display_name,
+          // #281: 姓・名を独立 2 キーで保存。display_name キーは含めない。
+          last_name: payload.last_name,
+          first_name: payload.first_name,
           birthday: payload.birthday,
           phone: payload.phone,
           experience_level: payload.experience_level,

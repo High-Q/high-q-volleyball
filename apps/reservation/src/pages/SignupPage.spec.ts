@@ -56,13 +56,16 @@ async function mountPage(initial = "/signup") {
 }
 
 async function fillValidForm(wrapper: Awaited<ReturnType<typeof mountPage>>["wrapper"]) {
+  // #281: 姓・名 2 フィールド分離後の入力順
+  //   0: email, 1: last_name(姓), 2: first_name(名), 3: nickname,
+  //   4: birthday, 5: phone, 6-8: experience radios, 末尾: terms
   const inputs = wrapper.findAll("input");
   await inputs[0]!.setValue("rem@example.com"); // email
-  await inputs[1]!.setValue("レム テスト"); // display_name
-  await inputs[2]!.setValue("レム"); // nickname
-  await inputs[3]!.setValue("1995-03-15"); // birthday
-  await inputs[4]!.setValue("090-1234-5678"); // phone
-  // experience_level radios are inputs 5/6/7 — beginner is default
+  await inputs[1]!.setValue("レム"); // last_name (姓)
+  await inputs[2]!.setValue("テスト"); // first_name (名)
+  await inputs[3]!.setValue("レム"); // nickname
+  await inputs[4]!.setValue("1995-03-15"); // birthday
+  await inputs[5]!.setValue("090-1234-5678"); // phone
   // terms checkbox
   const termsCheckbox = inputs[inputs.length - 1]!;
   await termsCheckbox.setValue(true);
@@ -78,6 +81,9 @@ describe("SignupPage (#189)", () => {
     expect(wrapper.find('input[type="date"]').exists()).toBe(true);
     expect(wrapper.find('input[type="tel"]').exists()).toBe(true);
     expect(wrapper.find('input[type="checkbox"]').exists()).toBe(true);
+    // #281: 姓・名 2 フィールドが独立して描画され autocomplete 属性が分かれている
+    expect(wrapper.find('input[autocomplete="family-name"]').exists()).toBe(true);
+    expect(wrapper.find('input[autocomplete="given-name"]').exists()).toBe(true);
     // CTA は同意 OFF のため disabled
     const cta = wrapper.findAll("button").find((b) => b.text().includes("認証コードを送信する"));
     expect(cta?.attributes("disabled")).toBeDefined();

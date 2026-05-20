@@ -14,12 +14,19 @@ import {
 import { Button } from "@high-q/ui";
 import { useAuthSession } from "@/features/auth";
 import type { MemberId } from "@/entities/member";
-import { updateMyDisplayName } from "../api/updateMyAccount";
+import { updateMyName } from "../api/updateMyAccount";
 
+/**
+ * #281: お名前編集モーダル。姓・名 2 入力で 1 回の UPDATE で同時保存する。
+ *
+ * `display_name` は DB トリガ `sync_members_display_name_trg` が
+ * `last_name || ' ' || first_name` に自動同期するため、本ダイアログでは扱わない。
+ */
 const props = defineProps<{
   open: boolean;
   memberId: MemberId;
-  initialValue: string;
+  initialLastName: string;
+  initialFirstName: string;
 }>();
 
 const emit = defineEmits<{
@@ -27,17 +34,24 @@ const emit = defineEmits<{
   saved: [];
 }>();
 
-const value = ref<string>(props.initialValue);
-const errorMsg = ref<string | null>(null);
+const lastName = ref<string>(props.initialLastName);
+const firstName = ref<string>(props.initialFirstName);
+const lastNameError = ref<string | null>(null);
+const firstNameError = ref<string | null>(null);
+const formError = ref<string | null>(null);
 const submitting = ref<boolean>(false);
 const session = useAuthSession();
 
 watch(
-  () => [props.open, props.initialValue] as const,
-  ([open, init]) => {
+  () =>
+    [props.open, props.initialLastName, props.initialFirstName] as const,
+  ([open, initLast, initFirst]) => {
     if (open === true) {
-      value.value = init;
-      errorMsg.value = null;
+      lastName.value = initLast;
+      firstName.value = initFirst;
+      lastNameError.value = null;
+      firstNameError.value = null;
+      formError.value = null;
       submitting.value = false;
     }
   },
@@ -46,15 +60,25 @@ watch(
 async function onSubmit(): Promise<void> {
   if (submitting.value) return;
   submitting.value = true;
-  errorMsg.value = null;
+  lastNameError.value = null;
+  firstNameError.value = null;
+  formError.value = null;
   try {
-    await updateMyDisplayName(props.memberId, value.value);
+    await updateMyName(props.memberId, lastName.value, firstName.value);
     await session.refresh();
     emit("saved");
     emit("update:open", false);
   } catch (cause) {
-    errorMsg.value =
+    const message =
       cause instanceof Error ? cause.message : "更新に失敗しました。";
+    // Smart constructor のエラーをフィールド単位に振り分ける
+    if (/姓/.test(message)) {
+      lastNameError.value = message;
+    } else if (/名/.test(message)) {
+      firstNameError.value = message;
+    } else {
+      formError.value = message;
+    }
   } finally {
     submitting.value = false;
   }
@@ -71,20 +95,39 @@ function onCancel(): void {
       <AlertDialogHeader>
         <AlertDialogTitle>お名前を変更</AlertDialogTitle>
         <AlertDialogDescription>
-          表示用のお名前を変更します。会員サイト全体で表示されます。
+          姓と名をそれぞれ入力してください。表示用のお名前は自動で結合されます。
         </AlertDialogDescription>
       </AlertDialogHeader>
       <form class="flex flex-col gap-hq-3" @submit.prevent="onSubmit">
-        <FormField :error="errorMsg ?? undefined">
-          <Label html-for="profile-display-name">お名前</Label>
-          <Input
-            id="profile-display-name"
-            v-model="value"
-            type="text"
-            autocomplete="name"
-            :disabled="submitting"
-          />
-        </FormField>
+        <div class="grid grid-cols-2 gap-hq-3">
+          <FormField :error="lastNameError ?? undefined">
+            <Label html-for="profile-last-name">姓</Label>
+            <Input
+              id="profile-last-name"
+              v-model="lastName"
+              type="text"
+              autocomplete="family-name"
+              placeholder="田中"
+              :disabled="submitting"
+            />
+          </FormField>
+          <FormField :error="firstNameError ?? undefined">
+            <Label html-for="profile-first-name">名</Label>
+            <Input
+              id="profile-first-name"
+              v-model="firstName"
+              type="text"
+              autocomplete="given-name"
+              placeholder="美咲"
+              :disabled="submitting"
+            />
+          </FormField>
+        </div>
+        <p
+          v-if="formError !== null"
+          role="alert"
+          class="text-xs text-danger"
+        >{{ formError }}</p>
       </form>
       <AlertDialogFooter>
         <Button

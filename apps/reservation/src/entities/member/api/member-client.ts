@@ -10,13 +10,17 @@ import type {
 
 // reservation アプリは admin 専用列 `admin_note` を取得しない (#150)。
 // 列指定 SELECT に統一する運用を維持すること (rls-policies capability 参照)。
+// #281: last_name / first_name を追加。display_name はトリガ同期される派生値だが
+// nickname fallback / 表示用に引き続き SELECT する。
 const MEMBER_COLUMNS =
-  "id, email, display_name, nickname, birthday, phone, experience_level, role, profile, created_at, updated_at";
+  "id, email, last_name, first_name, display_name, nickname, birthday, phone, experience_level, role, profile, created_at, updated_at";
 
 function rowToMember(row: MemberRow): Member {
   return {
     id: createMemberId(row.id),
     email: row.email,
+    lastName: row.last_name,
+    firstName: row.first_name,
     displayName: row.display_name,
     nickname: row.nickname,
     birthday: row.birthday,
@@ -46,7 +50,9 @@ export async function fetchMyMember(uid: string): Promise<Member | null> {
 }
 
 export type UpdateMemberPayload = {
-  displayName: string;
+  // #281: displayName は廃止。lastName / firstName を渡すと DB トリガで display_name が同期される。
+  lastName: string;
+  firstName: string;
   nickname: string | null;
   birthday: string;
   phone: string;
@@ -81,7 +87,8 @@ export async function updateMyMember(
   const { data, error } = await supabase
     .from("members")
     .update({
-      display_name: payload.displayName,
+      last_name: payload.lastName,
+      first_name: payload.firstName,
       nickname: payload.nickname,
       birthday: payload.birthday,
       phone: payload.phone,

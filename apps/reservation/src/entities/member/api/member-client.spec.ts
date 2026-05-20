@@ -13,7 +13,9 @@ const UID = "00000000-0000-0000-0000-000000000001";
 const memberRow = {
   id: UID,
   email: "test@example.com",
-  display_name: "test",
+  last_name: "test",
+  first_name: "user",
+  display_name: "test user",
   nickname: "ミサキ",
   birthday: "1995-03-15",
   phone: "090-1234-5678",
@@ -40,6 +42,13 @@ describe("fetchMyMember", () => {
 
     expect(supabaseMock.from).toHaveBeenCalledWith("members");
     // #150: admin 専用列 admin_note を取得しないため明示列指定 SELECT を使う
+    // #281: last_name / first_name / display_name の 3 つを SELECT する
+    expect(select).toHaveBeenCalledWith(
+      expect.stringContaining("last_name"),
+    );
+    expect(select).toHaveBeenCalledWith(
+      expect.stringContaining("first_name"),
+    );
     expect(select).toHaveBeenCalledWith(
       expect.stringContaining("display_name"),
     );
@@ -49,7 +58,9 @@ describe("fetchMyMember", () => {
     );
     expect(eq).toHaveBeenCalledWith("id", UID);
     expect(result?.id).toBe(UID);
-    expect(result?.displayName).toBe("test");
+    expect(result?.lastName).toBe("test");
+    expect(result?.firstName).toBe("user");
+    expect(result?.displayName).toBe("test user");
     expect(result?.nickname).toBe("ミサキ");
     expect(result?.profile.signup_completed).toBe(true);
   });
@@ -120,7 +131,8 @@ describe("updateMyMember", () => {
 
     const { updateMyMember } = await import("./member-client");
     await updateMyMember(UID, {
-      displayName: "新しい名前",
+      lastName: "新しい",
+      firstName: "名前",
       nickname: "ミサキ",
       birthday: "1995-03-15",
       phone: "090-1234-5678",
@@ -131,7 +143,8 @@ describe("updateMyMember", () => {
     expect(supabaseMock.from).toHaveBeenCalledTimes(2);
     expect(updateFn).toHaveBeenCalledWith(
       expect.objectContaining({
-        display_name: "新しい名前",
+        last_name: "新しい",
+        first_name: "名前",
         nickname: "ミサキ",
         profile: expect.objectContaining({
           existing_key: "preserved",
@@ -140,6 +153,10 @@ describe("updateMyMember", () => {
         }),
       }),
     );
+    // display_name は明示指定しない (DB トリガで自動同期)
+    const callArgs = (updateFn.mock.calls as unknown as unknown[][])[0];
+    const callArg = (callArgs?.[0] ?? {}) as Record<string, unknown>;
+    expect(callArg).not.toHaveProperty("display_name");
   });
 
   it("既存 profile が無い場合も signup_completed: true で UPDATE する", async () => {
@@ -168,7 +185,8 @@ describe("updateMyMember", () => {
 
     const { updateMyMember } = await import("./member-client");
     await updateMyMember(UID, {
-      displayName: "x",
+      lastName: "x",
+      firstName: "y",
       nickname: null,
       birthday: "2000-01-01",
       phone: "090-0000-0000",

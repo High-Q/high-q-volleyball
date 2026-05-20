@@ -66,6 +66,8 @@ const sampleEvent: EventDetail = {
 const member: Member = {
   id: "mb-1" as unknown as Member["id"],
   email: "misaki@example.com",
+  lastName: "田中",
+  firstName: "美咲",
   displayName: "田中 美咲",
   nickname: null,
   birthday: "1995-03-15",

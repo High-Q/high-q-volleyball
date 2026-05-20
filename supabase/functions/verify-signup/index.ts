@@ -91,8 +91,28 @@ export async function handleVerifySignup(req: Request): Promise<Response> {
   }
 
   // 検証成功 → auth.users + members 作成
-  const formPayload = pending.payload as {
-    display_name: string;
+  // #281: payload schema は last_name / first_name の 2 キー必須。
+  //       旧 schema (display_name のみ) の signup_pending 行はここで早期検知する。
+  const rawPayload = pending.payload as Record<string, unknown>;
+  if (
+    typeof rawPayload.last_name !== "string" ||
+    typeof rawPayload.first_name !== "string"
+  ) {
+    // 旧 schema (#281 migration 直前の payload) を検知。
+    // 該当行は安全側で削除し、クライアントにフォームからの再発行を促す。
+    await supabase.from("signup_pending").delete().eq("email", email);
+    return jsonResponse(
+      {
+        error: "payload-schema-outdated",
+        message:
+          "登録フォームの仕様が更新されました。お手数ですが、フォームから再度認証コードを発行してください。",
+      },
+      { status: 400 },
+    );
+  }
+  const formPayload = rawPayload as {
+    last_name: string;
+    first_name: string;
     birthday: string;
     phone: string;
     experience_level: "beginner" | "intermediate" | "experienced";
@@ -117,12 +137,15 @@ export async function handleVerifySignup(req: Request): Promise<Response> {
   // members を正式値で UPSERT
   // on_auth_user_created トリガが placeholder 行を作っているため、id 衝突で UPDATE になる。
   // 確実性のため UPSERT で表現する。
+  // #281: last_name / first_name を明示的に渡す。
+  //       display_name は sync_members_display_name_trg トリガで自動同期される
+  //       ため、ここでは明示指定しない。
   const memberRow = {
     id: userId,
     email,
-    display_name: formPayload.display_name,
+    last_name: formPayload.last_name,
+    first_name: formPayload.first_name,
     nickname: formPayload.nickname,
-    // birthday / phone / experience_level は MVP1 で members に列追加済み（既存 spec 要件）
     birthday: formPayload.birthday,
     phone: formPayload.phone,
     experience_level: formPayload.experience_level,

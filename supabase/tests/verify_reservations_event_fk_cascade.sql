@@ -82,11 +82,12 @@ begin
   end if;
 
   -- 一時的なテストユーザーを 3 件作成 (cascade テスト後にロールバック)
-  insert into public.members (id, email, display_name, name_kana, phone_number, birth_year, experience_level)
+  -- #281: last_name / first_name が NOT NULL。display_name はトリガ同期。
+  insert into public.members (id, email, last_name, first_name, birthday, experience_level)
   values
-    (gen_random_uuid(), 'cascade_test_a@example.com', 'CascadeTestA', 'カスケードテストエー', '09000000001', 2000, 'beginner'),
-    (gen_random_uuid(), 'cascade_test_b@example.com', 'CascadeTestB', 'カスケードテストビー', '09000000002', 2000, 'beginner'),
-    (gen_random_uuid(), 'cascade_test_c@example.com', 'CascadeTestC', 'カスケードテストシー', '09000000003', 2000, 'beginner')
+    (gen_random_uuid(), 'cascade_test_a@example.com', 'Cascade', 'TestA', '2000-01-01', 'beginner'),
+    (gen_random_uuid(), 'cascade_test_b@example.com', 'Cascade', 'TestB', '2000-01-01', 'beginner'),
+    (gen_random_uuid(), 'cascade_test_c@example.com', 'Cascade', 'TestC', '2000-01-01', 'beginner')
   returning id into v_member_a_id;
 
   select id into v_member_b_id from public.members where email = 'cascade_test_b@example.com';
