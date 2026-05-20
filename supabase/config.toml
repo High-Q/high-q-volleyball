@@ -380,6 +380,19 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# -----------------------------------------------------------------------------
+# 個別 Edge Function の設定
+# -----------------------------------------------------------------------------
+# verify_jwt = false: クライアントから Authorization header / JWT 無しで呼べる。
+# signup フロー（未認証ユーザーが叩く）は false が必須。CLI からの deploy 時に
+# `--no-verify-jwt` flag 付け忘れで verify_jwt が true に戻る事故を防ぐため
+# ソース管理する。
+[functions.request-signup]
+verify_jwt = false
+
+[functions.verify-signup]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
