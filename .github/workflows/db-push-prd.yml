@@ -1,0 +1,125 @@
+name: prd Supabase db push
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [master]
+    paths:
+      - "supabase/migrations/**"
+  push:
+    branches: [master]
+    paths:
+      - "supabase/migrations/**"
+
+concurrency:
+  group: db-push-prd-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  dry-run:
+    name: dry-run (PR diff against prd)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Enable corepack (use packageManager from root package.json)
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Restore pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install dependencies (offline if cache hit)
+        run: pnpm install --frozen-lockfile
+
+      - name: Link to prd Supabase project
+        run: pnpm exec supabase link --project-ref "${{ secrets.SUPABASE_PRD_PROJECT_REF }}"
+
+      - name: Show migration files included in this PR
+        run: |
+          {
+            echo "### Migration files in this PR"
+            echo ""
+            git diff --name-only --diff-filter=A "origin/${{ github.base_ref }}...HEAD" -- 'supabase/migrations/**' || true
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show schema diff against prd (read-only)
+        run: |
+          {
+            echo ""
+            echo "### Schema diff vs prd (public schema)"
+            echo ""
+            echo '```sql'
+            pnpm exec supabase db diff --linked --schema public || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  apply:
+    name: apply migrations to prd
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: prd-db-push
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Enable corepack (use packageManager from root package.json)
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Restore pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install dependencies (offline if cache hit)
+        run: pnpm install --frozen-lockfile
+
+      - name: Link to prd Supabase project
+        run: pnpm exec supabase link --project-ref "${{ secrets.SUPABASE_PRD_PROJECT_REF }}"
+
+      - name: Apply migrations to prd
+        run: pnpm exec supabase db push --include-all
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "### prd db push result"
+            echo ""
+            echo "- Status: ${{ job.status }}"
+            echo "- Commit SHA: \`${{ github.sha }}\`"
+            echo "- Ref: \`${{ github.ref }}\`"
+            echo ""
+            echo "### Migration files in this push"
+            echo ""
+            ls -1 supabase/migrations/ | sed 's/^/- /'
+          } >> "$GITHUB_STEP_SUMMARY"
