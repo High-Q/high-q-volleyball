@@ -267,23 +267,100 @@ node -v              # v22.x.x であること
 - **Secret Key** (`sbs_xxx`、旧 `service_role` 相当) は `previewValue` を含むあらゆる場所に書いてはならない (RLS バイパス)
 - prd の URL/Key は翔太郎くん本人のみが Supabase Dashboard で所有し、Claude には共有しない
 
-### Migration の dev / prd 同期運用ルール（#184 で確立）
+### Migration の dev / prd 同期運用ルール（#184 で確立、#268 で prd 側を自動化）
 
-新規 migration を `supabase/migrations/<timestamp>_<name>.sql` として追加した際は、**dev に push したら同セッションで prd にも push する**。スキーマドリフト禁止。
+新規 migration を `supabase/migrations/<timestamp>_<name>.sql` として追加した際の運用:
+
+- **dev**: 引き続き手動 push（テスト用途で自由に汚していい前提）
+- **prd**: master マージ時に GitHub Actions（`.github/workflows/db-push-prd.yml`）が承認ゲート付きで自動適用。スキーマドリフト禁止のため master マージで自動同期される
 
 ```bash
-# 1. dev にリンク済の状態で migration を追加して dev に push
-pnpm db:push   # = supabase db push (現在のリンク先 = dev)
-
-# 2. 同セッションで prd に切替して push
-pnpm exec supabase link --project-ref <prd-project-ref>   # 翔太郎くん作業 (DB password 入力)
-pnpm exec supabase db push                                # レム作業
-
-# 3. 完了後、必ず dev に戻す (誤操作防止)
-pnpm exec supabase link --project-ref <dev-project-ref>
+# dev への適用は手動（レム実施）
+pnpm db:push   # = supabase db push (リンク先 = dev)
 ```
 
-CI 自動化（master マージ時に prd へ自動 push）は Phase 3 別 Issue で検討。当面は手動運用。
+prd への適用は PR をマージするだけ。直前に `supabase link` を prd へ切り替える手動運用は **#268 以降不要**。手動で prd に link して push する従来運用は緊急時のフォールバックとして手順だけ残す（後述の rollback セクション参照）。
+
+### prd 自動 db push ワークフロー（#268 で導入）
+
+`.github/workflows/db-push-prd.yml` が master マージ時に prd Supabase へ migration を自動適用する。
+
+#### トリガーと挙動
+
+| イベント | 対象パス | 起動するジョブ | 動作 |
+|---|---|---|---|
+| `pull_request` (master 向け) | `supabase/migrations/**` 変更時のみ | `dry-run` | prd に link して `supabase db diff --linked --schema public` を実行。スキーマ差分を job summary に出力（書き込みなし） |
+| `push` (master) | `supabase/migrations/**` 変更時のみ | `apply` | `prd-db-push` Environment 承認後に `supabase db push --include-all` で prd に migration 適用 |
+
+migration を含まない PR / push ではワークフロー自体が起動しない（path filter）。
+
+#### 必須 Secrets
+
+| Name | 値の出どころ | 用途 |
+|---|---|---|
+| `SUPABASE_ACCESS_TOKEN` | [Supabase Account → Access Tokens](https://supabase.com/dashboard/account/tokens) で「High Q prd db push CI」名で発行 | CLI 認証 |
+| `SUPABASE_PRD_PROJECT_REF` | prd プロジェクトの project-ref（1Password 管理） | `supabase link --project-ref` の引数 |
+| `SUPABASE_DB_PASSWORD` | prd DB password（1Password 管理） | DB 接続認証。CLI に環境変数で渡す（コマンドライン引数では渡さない） |
+
+#### Environment 承認ゲート（`prd-db-push`）
+
+GitHub Settings → Environments → `prd-db-push` に Required reviewers として翔太郎くん（Owner）を登録する。apply ジョブはこの Environment を要求するため、master push のたびに翔太郎くんが Approve するまで適用は開始されない。安全側に倒した設計で、grep ベースの「危険操作のみ承認」案は採用せず、全本適用で承認を要求する。
+
+#### 通知
+
+明示的な Slack / Sentry 連携は持たない。GitHub Actions 標準のジョブ失敗通知メールが翔太郎くん（Owner）に届く前提で運用する。リポジトリ Notification 設定で「Actions: Failed workflows only」相当が有効になっていること。
+
+#### dry-run の見方
+
+PR の Actions タブで `prd Supabase db push` ワークフローの run → `dry-run` ジョブ → **Summary** に「Migration files in this PR」と「Schema diff vs prd (public schema)」が表示される。マージ前に翔太郎くんが目視確認する。
+
+### prd db push rollback 手順（#268 で整備）
+
+prd への migration 適用が壊れた場合の戻し方。状況に応じて 3 つの手段がある。
+
+#### ① ワークフロー自体に問題があった場合 — ワークフロー revert
+
+```bash
+# 該当ワークフローを直近の正常コミットに戻す PR を作る
+git checkout master && git pull
+git checkout -b fix/<issue>-revert-db-push-prd
+git revert <bad-commit>            # .github/workflows/db-push-prd.yml の問題コミットを戻す
+git push -u origin HEAD
+gh pr create --title "fix: revert db-push-prd workflow" --body "理由: <...>"
+```
+
+ワークフロー YAML 自体の問題（permissions / syntax / step 漏れ）はこちらで対応する。
+
+#### ② prd の DB 状態が壊れた場合 — Supabase Daily Backup から restore
+
+無料プランは過去 **7 日分** の Daily Backup を保持。
+
+1. Supabase Dashboard → prd プロジェクト → **Database → Backups**
+2. 戻したい時刻のバックアップを選択 → **Restore**
+3. 数分待って restore 完了
+4. アプリ側に古いキャッシュが残っている場合は Render Dashboard で各サービスを Re-deploy
+
+**注意**: restore は破壊的操作。実施前に翔太郎くんが影響範囲（restore 時点以降の本番データ書き込みが消える）を理解した上で実施する。Phase 1 段階ではユーザー数が少なく許容範囲だが、運用拡大後は Point-in-Time Recovery（Pro プラン以上）を検討する。
+
+#### ③ 部分的に壊れた場合 — 手動ロールバック migration を発行
+
+DROP した列を取り戻したい、構造の一部だけ戻したい、といったケースは forward-only 方針に従って「打ち消し migration」を新規追加する。
+
+```bash
+# 1. レム or 翔太郎くんが新規 migration を作る
+pnpm exec supabase migration new revert_<対象>
+
+# 2. supabase/migrations/<timestamp>_revert_<対象>.sql に逆向き SQL を書く
+#    例: 削除した列を ADD COLUMN し直す等
+
+# 3. dev で確認
+pnpm db:push
+
+# 4. PR を作って通常フローで master マージ
+#    → db-push-prd.yml が自動で prd に適用する
+```
+
+DROP した列に格納されていたデータは戻らない（ロールバック migration は構造だけ戻す）。データ復旧は ② の Daily Backup restore と組み合わせる。
 
 ## Supabase Edge Functions（#189 で導入）
 
