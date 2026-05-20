@@ -5,7 +5,7 @@ export { default as NicknameEditDialog } from "./ui/NicknameEditDialog.vue";
 export { default as PhoneEditDialog } from "./ui/PhoneEditDialog.vue";
 export { default as EmailEditDialog } from "./ui/EmailEditDialog.vue";
 export {
-  updateMyDisplayName,
+  updateMyName,
   updateMyNickname,
   updateMyPhone,
   requestMyEmailChange,

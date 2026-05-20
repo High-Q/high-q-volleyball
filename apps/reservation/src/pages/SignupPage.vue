@@ -34,7 +34,9 @@ const profileLead =
 
 const form = reactive({
   email: "",
-  display_name: "",
+  // #281: 氏名は姓・名 2 フィールド独立入力。
+  last_name: "",
+  first_name: "",
   nickname: "",
   birthday: "",
   phone: "",
@@ -83,7 +85,8 @@ const experienceOptions = [
 async function onSubmit() {
   const ok = await submit({
     email: form.email,
-    display_name: form.display_name,
+    last_name: form.last_name,
+    first_name: form.first_name,
     nickname: form.nickname,
     birthday: form.birthday,
     phone: form.phone,
@@ -157,18 +160,33 @@ async function onSubmit() {
           へお進みください。
         </p>
 
-        <FormField label="お名前" :error="fieldErrors.display_name">
-          <template #default="{ fieldId, ariaInvalid }">
-            <Input
-              :id="fieldId"
-              v-model="form.display_name"
-              autocomplete="name"
-              placeholder="例: 田中 美咲"
-              :aria-invalid="ariaInvalid"
-              :disabled="isLoading"
-            />
-          </template>
-        </FormField>
+        <!-- #281: 姓・名 2 フィールド独立入力。横並び (モバイル 390px でも収まる) -->
+        <div class="grid grid-cols-2 gap-hq-3">
+          <FormField label="姓" :error="fieldErrors.last_name">
+            <template #default="{ fieldId, ariaInvalid }">
+              <Input
+                :id="fieldId"
+                v-model="form.last_name"
+                autocomplete="family-name"
+                placeholder="田中"
+                :aria-invalid="ariaInvalid"
+                :disabled="isLoading"
+              />
+            </template>
+          </FormField>
+          <FormField label="名" :error="fieldErrors.first_name">
+            <template #default="{ fieldId, ariaInvalid }">
+              <Input
+                :id="fieldId"
+                v-model="form.first_name"
+                autocomplete="given-name"
+                placeholder="美咲"
+                :aria-invalid="ariaInvalid"
+                :disabled="isLoading"
+              />
+            </template>
+          </FormField>
+        </div>
 
         <FormField
           label="ニックネーム"

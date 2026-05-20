@@ -8,6 +8,8 @@ export type {
 } from "./model/member.types";
 export { createMemberId } from "./model/MemberId";
 export { createDisplayName } from "./model/displayName";
+export { createLastName } from "./model/lastName";
+export { createFirstName } from "./model/firstName";
 export { createNickname, validateOptionalNickname } from "./model/nickname";
 export { createBirthday } from "./model/birthday";
 export { createPhone } from "./model/phone";

@@ -131,11 +131,14 @@ begin
   end if;
 
   -- members 行が存在しない場合は作成 (FK は auth.users 側で満たされる)
-  insert into public.members (id, email, display_name, birthday)
+  -- #281: last_name / first_name が NOT NULL になったため明示指定。
+  --       display_name はトリガで自動同期されるため省略 (指定しても上書きされる)。
+  insert into public.members (id, email, last_name, first_name, birthday)
   values (
     test_member_id,
     coalesce((select email from auth.users where id = test_member_id), 'unknown@example.com'),
-    'Trigger Test',
+    'Trigger',
+    'Test',
     '1990-01-01'
   )
   on conflict (id) do nothing;

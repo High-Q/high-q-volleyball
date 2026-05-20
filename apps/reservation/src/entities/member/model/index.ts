@@ -8,6 +8,8 @@ export type {
 } from "./member.types";
 export { createMemberId } from "./MemberId";
 export { createDisplayName } from "./displayName";
+export { createLastName } from "./lastName";
+export { createFirstName } from "./firstName";
 export { createBirthday } from "./birthday";
 export { createPhone } from "./phone";
 export { createExperienceLevel } from "./experienceLevel";

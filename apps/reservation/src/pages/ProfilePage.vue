@@ -162,7 +162,8 @@ const upcomingReservationCount = computed<number>(() => {
       <DisplayNameEditDialog
         :open="editField === 'displayName'"
         :member-id="member.id"
-        :initial-value="member.displayName"
+        :initial-last-name="member.lastName"
+        :initial-first-name="member.firstName"
         @update:open="(v) => (v ? null : closeEdit())"
         @saved="onAccountSaved"
       />

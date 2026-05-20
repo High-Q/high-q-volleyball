@@ -30,21 +30,35 @@ afterEach(() => {
 
 const memberId = createMemberId("00000000-0000-0000-0000-00000000ffff");
 
-describe("updateMyDisplayName", () => {
-  it("空欄は createDisplayName が例外を投げ、UPDATE 発行されない", async () => {
-    const { updateMyDisplayName } = await import("./updateMyAccount");
-    await expect(updateMyDisplayName(memberId, "  ")).rejects.toThrow(
-      /お名前を入力してください/,
+describe("updateMyName", () => {
+  it("姓空欄は createLastName が例外を投げ、UPDATE 発行されない", async () => {
+    const { updateMyName } = await import("./updateMyAccount");
+    await expect(updateMyName(memberId, "  ", "美咲")).rejects.toThrow(
+      /姓を入力してください/,
     );
     expect(supabaseMock.from).not.toHaveBeenCalled();
   });
 
-  it("正常値は trim 済の値で UPDATE 発行", async () => {
-    const { updateMyDisplayName } = await import("./updateMyAccount");
-    await updateMyDisplayName(memberId, "  田中 美希  ");
+  it("名空欄は createFirstName が例外を投げ、UPDATE 発行されない", async () => {
+    const { updateMyName } = await import("./updateMyAccount");
+    await expect(updateMyName(memberId, "田中", "  ")).rejects.toThrow(
+      /名を入力してください/,
+    );
+    expect(supabaseMock.from).not.toHaveBeenCalled();
+  });
+
+  it("正常値は trim 済の姓・名で 1 回の UPDATE 発行 (display_name は指定しない)", async () => {
+    const { updateMyName } = await import("./updateMyAccount");
+    const result = await updateMyName(memberId, "  田中  ", "  美希  ");
+    expect(result).toEqual({ lastName: "田中", firstName: "美希" });
+    expect(builderMock.update).toHaveBeenCalledTimes(1);
     expect(builderMock.update).toHaveBeenCalledWith({
-      display_name: "田中 美希",
+      last_name: "田中",
+      first_name: "美希",
     });
+    // display_name は明示指定しない (DB トリガで自動同期されるため)
+    const updateCallArg = builderMock.update.mock.calls[0]?.[0] ?? {};
+    expect(updateCallArg).not.toHaveProperty("display_name");
   });
 });
 

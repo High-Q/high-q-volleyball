@@ -111,15 +111,17 @@ values
   );
 
 -- -----------------------------------------------------------------------------
--- Step 2: members の display_name / experience_level を UPDATE
---   トリガーが email の @ 前を仮 display_name にしているのでオーバーライド
+-- Step 2: members の last_name / first_name / experience_level を UPDATE
+--   トリガーが email の @ 前を仮 last_name に、'(未設定)' を仮 first_name にして
+--   いる (#281 split_members_name_last_first migration 以降) のでオーバーライド。
+--   display_name はトリガで last_name || ' ' || first_name に自動同期される。
 -- -----------------------------------------------------------------------------
 
-update public.members set display_name = '田中 美咲',   experience_level = 'beginner'      where id = '11111111-aaaa-4aaa-8aaa-aaaaaaaaaa01';
-update public.members set display_name = '佐藤 健太',   experience_level = 'experienced'   where id = '11111111-aaaa-4aaa-8aaa-aaaaaaaaaa02';
-update public.members set display_name = '中村 あかり', experience_level = 'intermediate'  where id = '11111111-aaaa-4aaa-8aaa-aaaaaaaaaa03';
-update public.members set display_name = '高橋 直樹',   experience_level = 'beginner'      where id = '11111111-aaaa-4aaa-8aaa-aaaaaaaaaa04';
-update public.members set display_name = '鈴木 翔太郎', experience_level = 'experienced'   where id = '11111111-aaaa-4aaa-8aaa-aaaaaaaaaa05';
+update public.members set last_name = '田中',   first_name = '美咲',   experience_level = 'beginner'      where id = '11111111-aaaa-4aaa-8aaa-aaaaaaaaaa01';
+update public.members set last_name = '佐藤',   first_name = '健太',   experience_level = 'experienced'   where id = '11111111-aaaa-4aaa-8aaa-aaaaaaaaaa02';
+update public.members set last_name = '中村',   first_name = 'あかり', experience_level = 'intermediate'  where id = '11111111-aaaa-4aaa-8aaa-aaaaaaaaaa03';
+update public.members set last_name = '高橋',   first_name = '直樹',   experience_level = 'beginner'      where id = '11111111-aaaa-4aaa-8aaa-aaaaaaaaaa04';
+update public.members set last_name = '鈴木',   first_name = '翔太郎', experience_level = 'experienced'   where id = '11111111-aaaa-4aaa-8aaa-aaaaaaaaaa05';
 
 -- -----------------------------------------------------------------------------
 -- Step 3: 対象 event を選定

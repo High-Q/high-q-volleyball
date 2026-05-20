@@ -15,6 +15,10 @@ export type MemberProfile = {
 export type Member = {
   id: MemberId;
   email: string;
+  // #281: 姓・名は独立 NOT NULL 属性。display_name は DB トリガで自動同期される
+  //       派生表示用属性で、`last_name + ' ' + first_name` と等しい。
+  lastName: string;
+  firstName: string;
   displayName: string;
   nickname: string | null;
   birthday: string;
@@ -29,6 +33,8 @@ export type Member = {
 export type MemberRow = {
   id: string;
   email: string;
+  last_name: string;
+  first_name: string;
   display_name: string;
   nickname: string | null;
   birthday: string;

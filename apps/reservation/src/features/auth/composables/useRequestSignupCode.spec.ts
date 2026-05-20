@@ -10,7 +10,9 @@ vi.mock("@/shared/api/supabase", () => ({
 
 const validForm = {
   email: "rem@example.com",
-  display_name: "レム テスト",
+  // #281: 姓・名 2 フィールド
+  last_name: "レム",
+  first_name: "テスト",
   nickname: "レム",
   birthday: "1995-03-15",
   phone: "090-1234-5678",
@@ -73,7 +75,7 @@ describe("useRequestSignupCode", () => {
     expect(c.fieldErrors.value.birthday).toBeTruthy();
   });
 
-  it("成功で expiresAt をセットし success 状態", async () => {
+  it("成功で expiresAt をセットし success 状態 (#281: 姓・名 2 キーで送信)", async () => {
     invokeMock.mockResolvedValue({
       data: { ok: true, expiresAt: "2026-05-11T11:00:00.000Z" },
       error: null,
@@ -87,13 +89,37 @@ describe("useRequestSignupCode", () => {
     expect(invokeMock).toHaveBeenCalledWith("request-signup", {
       body: expect.objectContaining({
         email: "rem@example.com",
-        display_name: "レム テスト",
+        last_name: "レム",
+        first_name: "テスト",
         nickname: "レム",
         birthday: "1995-03-15",
         phone: "090-1234-5678",
         experience_level: "beginner",
       }),
     });
+    // display_name は送信しない (Edge Function 側で last_name / first_name から復元)
+    const body = invokeMock.mock.calls[0]?.[1]?.body ?? {};
+    expect(body).not.toHaveProperty("display_name");
+  });
+
+  it("#281: 姓だけ入力で名空欄は last_name OK / first_name エラーになり API は呼ばれない", async () => {
+    const { useRequestSignupCode } = await import("./useRequestSignupCode");
+    const c = useRequestSignupCode();
+    const ok = await c.submit({ ...validForm, first_name: "  " });
+    expect(ok).toBe(false);
+    expect(invokeMock).not.toHaveBeenCalled();
+    expect(c.fieldErrors.value.last_name).toBeUndefined();
+    expect(c.fieldErrors.value.first_name).toBeTruthy();
+  });
+
+  it("#281: 名だけ入力で姓空欄は first_name OK / last_name エラーになり API は呼ばれない", async () => {
+    const { useRequestSignupCode } = await import("./useRequestSignupCode");
+    const c = useRequestSignupCode();
+    const ok = await c.submit({ ...validForm, last_name: "" });
+    expect(ok).toBe(false);
+    expect(invokeMock).not.toHaveBeenCalled();
+    expect(c.fieldErrors.value.last_name).toBeTruthy();
+    expect(c.fieldErrors.value.first_name).toBeUndefined();
   });
 
   it("既登録エラー（409 already-registered）で errorCode='already-registered' + email field error", async () => {

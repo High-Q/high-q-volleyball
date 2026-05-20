@@ -2,16 +2,19 @@ import { ref } from "vue";
 import { getSupabase } from "@/shared/api/supabase";
 import {
   createBirthday,
-  createDisplayName,
   createExperienceLevel,
+  createFirstName,
+  createLastName,
   createPhone,
   validateOptionalNickname,
 } from "@/entities/member";
 import type { ExperienceLevel } from "@/entities/member";
 
+// #281: 氏名は last_name / first_name の 2 フィールドに分離。
 export type SignupFormData = {
   email: string;
-  display_name: string;
+  last_name: string;
+  first_name: string;
   nickname: string;
   birthday: string;
   phone: string;
@@ -24,7 +27,8 @@ type Status = "idle" | "loading" | "success" | "error";
 export type SignupFieldErrors = Partial<
   Record<
     | "email"
-    | "display_name"
+    | "last_name"
+    | "first_name"
     | "nickname"
     | "birthday"
     | "phone"
@@ -75,11 +79,18 @@ export function useRequestSignupCode() {
       errs.terms = "利用規約とプライバシーポリシーへの同意が必要です";
     }
 
-    let displayName = "";
+    let lastName = "";
     try {
-      displayName = createDisplayName(form.display_name);
+      lastName = createLastName(form.last_name);
     } catch (e) {
-      errs.display_name = (e as Error).message;
+      errs.last_name = (e as Error).message;
+    }
+
+    let firstName = "";
+    try {
+      firstName = createFirstName(form.first_name);
+    } catch (e) {
+      errs.first_name = (e as Error).message;
     }
 
     let nickname: string | null = null;
@@ -124,7 +135,8 @@ export function useRequestSignupCode() {
       const { data, error } = await supabase.functions.invoke("request-signup", {
         body: {
           email,
-          display_name: displayName,
+          last_name: lastName,
+          first_name: firstName,
           birthday,
           phone,
           experience_level: experience,

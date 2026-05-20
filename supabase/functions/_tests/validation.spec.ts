@@ -6,7 +6,8 @@ import {
 
 const validBase = {
   email: "rem@example.com",
-  display_name: "レム テスト",
+  last_name: "レム",
+  first_name: "テスト",
   birthday: "1995-03-15",
   phone: "090-1234-5678",
   experience_level: "beginner",
@@ -20,6 +21,8 @@ describe("validateSignupPayload", () => {
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.payload.email).toBe("rem@example.com");
+      expect(r.payload.last_name).toBe("レム");
+      expect(r.payload.first_name).toBe("テスト");
       expect(r.payload.phone).toBe("090-1234-5678");
       expect(r.payload.nickname).toBe("レム");
     }
@@ -61,15 +64,34 @@ describe("validateSignupPayload", () => {
     if (!r.ok) expect(r.errors.find((e) => e.field === "email")).toBeTruthy();
   });
 
-  it("display_name 空でエラー", () => {
-    const r = validateSignupPayload({ ...validBase, display_name: "" });
+  it("last_name 空でエラー", () => {
+    const r = validateSignupPayload({ ...validBase, last_name: "" });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors.find((e) => e.field === "display_name")).toBeTruthy();
+    if (!r.ok) expect(r.errors.find((e) => e.field === "last_name")).toBeTruthy();
   });
 
-  it("display_name 51 文字超でエラー", () => {
-    const r = validateSignupPayload({ ...validBase, display_name: "あ".repeat(51) });
+  it("first_name 空でエラー", () => {
+    const r = validateSignupPayload({ ...validBase, first_name: "" });
     expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.find((e) => e.field === "first_name")).toBeTruthy();
+  });
+
+  it("last_name のみ入力で first_name 空はエラー", () => {
+    const r = validateSignupPayload({ ...validBase, first_name: "   " });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.find((e) => e.field === "first_name")).toBeTruthy();
+  });
+
+  it("last_name 33 文字超でエラー", () => {
+    const r = validateSignupPayload({ ...validBase, last_name: "あ".repeat(33) });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.find((e) => e.field === "last_name")).toBeTruthy();
+  });
+
+  it("first_name 33 文字超でエラー", () => {
+    const r = validateSignupPayload({ ...validBase, first_name: "あ".repeat(33) });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.find((e) => e.field === "first_name")).toBeTruthy();
   });
 
   it("birthday 未来日でエラー", () => {
