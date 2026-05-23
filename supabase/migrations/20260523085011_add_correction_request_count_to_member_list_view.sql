@@ -68,3 +68,5 @@ grant select on public.member_list_view to authenticated;
 --     limit 1;
 --   -- 期待: 0
 -- =============================================================================
+
+-- (no-op trailing comment to re-trigger CI #296)
