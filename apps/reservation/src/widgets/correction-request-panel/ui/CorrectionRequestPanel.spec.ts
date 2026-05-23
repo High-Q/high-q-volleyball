@@ -84,12 +84,12 @@ describe("CorrectionRequestPanel (#296)", () => {
   it("各 field の日本語ラベルと message が描画される", async () => {
     const { wrapper } = await mountPanel("inline", [
       makeRequest("birthday", "本人確認書類と一致しません"),
-      makeRequest("last_name", "ローマ字 → 漢字に直してください"),
+      makeRequest("display_name", "ローマ字 → 漢字に直してください"),
     ]);
     const text = wrapper.text();
     expect(text).toContain("生年月日");
     expect(text).toContain("本人確認書類と一致しません");
-    expect(text).toContain("お名前 (姓)");
+    expect(text).toContain("お名前");
     expect(text).toContain("ローマ字 → 漢字に直してください");
   });
 
@@ -102,18 +102,10 @@ describe("CorrectionRequestPanel (#296)", () => {
     expect(router.currentRoute.value.query.edit).toBe("birthday");
   });
 
-  it("last_name の「修正する」で /profile?edit=displayName に遷移", async () => {
+  it("display_name の「修正する」で /profile?edit=displayName に遷移", async () => {
     const router = makeRouter();
-    const { wrapper } = await mountPanel("profile", [makeRequest("last_name")], router);
-    await wrapper.find("[data-field='last_name'] button").trigger("click");
-    await flushPromises();
-    expect(router.currentRoute.value.query.edit).toBe("displayName");
-  });
-
-  it("first_name の「修正する」で /profile?edit=displayName に遷移", async () => {
-    const router = makeRouter();
-    const { wrapper } = await mountPanel("inline", [makeRequest("first_name")], router);
-    await wrapper.find("[data-field='first_name'] button").trigger("click");
+    const { wrapper } = await mountPanel("profile", [makeRequest("display_name")], router);
+    await wrapper.find("[data-field='display_name'] button").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query.edit).toBe("displayName");
   });

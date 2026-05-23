@@ -84,19 +84,13 @@ describe("updateMyName", () => {
     expect(arg).not.toHaveProperty("display_name");
   });
 
-  it("#296 last_name + first_name の correction_requests を同時消化", async () => {
+  it("#296 display_name の correction_request を消化（姓・名 統合）", async () => {
     const { updateMyName } = await import("./updateMyAccount");
     const { updateFn } = mockSelectThenUpdate({
       signup_completed: true,
       correction_requests: [
         {
-          field: "last_name",
-          message: "ローマ字→漢字",
-          requested_at: "2026-05-23T00:00:00Z",
-          requested_by: ADMIN_ID,
-        },
-        {
-          field: "first_name",
+          field: "display_name",
           message: "ローマ字→漢字",
           requested_at: "2026-05-23T00:00:00Z",
           requested_by: ADMIN_ID,

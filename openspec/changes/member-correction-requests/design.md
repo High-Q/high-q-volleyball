@@ -40,7 +40,7 @@
 
 ```ts
 type CorrectionRequest = {
-  field: "last_name" | "first_name" | "birthday" | "phone" | "experience_level" | "nickname";
+  field: "display_name" | "birthday" | "phone" | "experience_level" | "nickname";
   message: string;       // 1〜500 文字、admin が書く自由文
   requested_at: string;  // ISO 8601
   requested_by: string;  // admin の member UUID（監査用）
@@ -48,6 +48,8 @@ type CorrectionRequest = {
 ```
 
 `field` enum はアプリ層で限定する（DB レベル CHECK はしない、jsonb の柔軟性を保つ）。
+
+`display_name` は姓・名 (`last_name` / `first_name`) を一括で扱う統合 field。氏名編集モーダル (`DisplayNameEditDialog`) が両カラムを 1 度に更新するため、admin が個別選択する意味がなく、UI 表記も「お名前」1 つに集約する（2026-05-23 UX レビューでの決定）。
 
 ### 決定 2: アプリ全体最前面のモーダル方式（dismiss はセッション内のみ）
 
@@ -72,7 +74,7 @@ dismiss state を localStorage に永続化しない理由：「翔太郎くん�
 
 | field | mutation | 削除ルール |
 |---|---|---|
-| `last_name` / `first_name` | `updateMyName` | `last_name` または `first_name` を含む 2 エントリ両方削除 |
+| `display_name` | `updateMyName` | `display_name` エントリ削除（姓・名 同時更新で 1 件） |
 | `birthday` | `updateMyBirthday` (新規) | `birthday` エントリ削除 |
 | `phone` | `updateMyPhone` | `phone` エントリ削除 |
 | `experience_level` | `updateMyExperienceLevel` (既存) | `experience_level` エントリ削除 |
@@ -107,7 +109,7 @@ ProfilePage 既存パターン（`editField` ref）を再利用。バナーが `
 
 例: バナーから `router.push('/profile?edit=birthday')` → ProfilePage が `editField.value = 'birthday'` をセット → `BirthdayEditDialog` が `:open=true` で開く。
 
-姓・名 修正依頼の場合、`field` 値は `last_name` または `first_name` だが、編集モーダルは共通の `DisplayNameEditDialog`（姓・名 2 入力モーダル）。マッピングは routing 側で `last_name | first_name → displayName` に変換。
+氏名修正依頼の場合、`field` 値は `display_name`。編集モーダルは `DisplayNameEditDialog`（姓・名 2 入力モーダル）。マッピングは routing 側で `display_name → displayName` (kebab→camel) に変換。
 
 ### 決定 6: admin UI の配置
 

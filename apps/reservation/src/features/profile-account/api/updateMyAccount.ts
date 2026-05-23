@@ -46,7 +46,9 @@ async function buildProfileWithConsumed(
  * を自動同期する。アプリ側から `display_name` を直接書き込む経路は塞いでいる
  * (RLS の WITH CHECK 句で本人 UPDATE は `display_name` 変更を拒否)。
  *
- * #296: 同 mutation で `correction_requests` の `last_name` / `first_name` 両エントリも消化する。
+ * #296: 同 mutation で `correction_requests` の `display_name` エントリも消化する。
+ * (姓・名 を独立フィールドで扱わない方針に 2026-05-23 統合。modal が両方を 1 度に
+ * 編集するため、admin / 会員側とも単一の「お名前」として扱う。)
  *
  * Smart constructor `createLastName` / `createFirstName` を経由して空欄/長さを弾く。
  */
@@ -57,10 +59,7 @@ export async function updateMyName(
 ): Promise<{ lastName: string; firstName: string }> {
   const lastName = createLastName(rawLastName);
   const firstName = createFirstName(rawFirstName);
-  const nextProfile = await buildProfileWithConsumed(memberId, [
-    "last_name",
-    "first_name",
-  ]);
+  const nextProfile = await buildProfileWithConsumed(memberId, ["display_name"]);
   const supabase = getSupabase();
   const { error } = await supabase
     .from("members")

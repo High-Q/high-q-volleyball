@@ -33,8 +33,7 @@ import { Button } from "@high-q/ui";
  */
 
 const FIELD_OPTIONS: ReadonlyArray<{ value: CorrectionField; label: string }> = [
-  { value: "last_name", label: CORRECTION_FIELD_LABEL.last_name },
-  { value: "first_name", label: CORRECTION_FIELD_LABEL.first_name },
+  { value: "display_name", label: CORRECTION_FIELD_LABEL.display_name },
   { value: "birthday", label: CORRECTION_FIELD_LABEL.birthday },
   { value: "phone", label: CORRECTION_FIELD_LABEL.phone },
   { value: "experience_level", label: CORRECTION_FIELD_LABEL.experience_level },

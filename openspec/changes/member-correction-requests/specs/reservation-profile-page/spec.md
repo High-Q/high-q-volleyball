@@ -88,7 +88,7 @@ ProfilePage は LEVEL セクションで `members.experience_level` を変更可
 
 UPDATE は `last_name` / `first_name` の両列を 1 回の UPDATE 文で同時に行う SHALL。アプリ層から `display_name` 列を直接指定 SHALL NOT し、DB トリガ `sync_members_display_name()` による同期に依存する MUST。
 
-更新成功時、対応する `profile.correction_requests` の `field=last_name` および `field=first_name` の両エントリを **同時に削除** MUST する（`member-correction-requests` capability「修正完了時の自動消化」に従う）。片方のエントリのみ存在する場合は該当する 1 件のみを削除 SHALL する。
+更新成功時、対応する `profile.correction_requests` の `field=display_name` エントリを **同時に削除** MUST する（`member-correction-requests` capability「修正完了時の自動消化」に従う）。`display_name` は姓・名 を一括で扱う統合 field であり、admin / 会員側とも「お名前」1 つとして提示される。
 
 #### Scenario: 姓のみ変更成功
 - **WHEN** モーダルで姓「田中」→「鈴木」に変更し（名「美咲」は据置）「保存」を押す
@@ -110,13 +110,9 @@ UPDATE は `last_name` / `first_name` の両列を 1 回の UPDATE 文で同時�
 - **WHEN** モーダルで姓「田中」、名を空欄にして「保存」を押す
 - **THEN** API は呼ばれず、名フィールドに「名を入力してください」のエラーが表示される
 
-#### Scenario: 修正依頼の自動消化（姓・名 両エントリ）
-- **WHEN** `field=last_name` および `field=first_name` の 2 件の `correction_request` を持つ会員が氏名編集モーダルで保存成功
-- **THEN** 該当 2 エントリが `profile.correction_requests` から同時に削除される
-
-#### Scenario: 修正依頼の自動消化（姓のみ）
-- **WHEN** `field=last_name` のみの `correction_request` を持つ会員が氏名編集モーダルで保存成功
-- **THEN** `field=last_name` のエントリのみ削除される（`field=first_name` のエントリは存在しないため変化なし）
+#### Scenario: 修正依頼の自動消化
+- **WHEN** `field=display_name` の `correction_request` を持つ会員が氏名編集モーダルで保存成功
+- **THEN** 該当エントリが `profile.correction_requests` から削除される
 
 ### Requirement: ニックネーム編集モーダル
 

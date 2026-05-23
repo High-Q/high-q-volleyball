@@ -40,8 +40,7 @@ function targetFor(
   field: CorrectionField,
 ): { path: string; query: Record<string, string> } {
   switch (field) {
-    case "last_name":
-    case "first_name":
+    case "display_name":
       return { path: "/profile", query: { edit: "displayName" } };
     case "birthday":
       return { path: "/profile", query: { edit: "birthday" } };

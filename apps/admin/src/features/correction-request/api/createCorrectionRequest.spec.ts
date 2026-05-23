@@ -133,7 +133,7 @@ describe("createCorrectionRequest", () => {
     const selectChain = setupSelectMock({
       correction_requests: [
         {
-          field: "last_name",
+          field: "display_name",
           message: "ローマ字→漢字",
           requested_at: "2026-05-22T00:00:00.000Z",
           requested_by: ADMIN_ID,

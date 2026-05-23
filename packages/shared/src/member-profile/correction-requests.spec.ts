@@ -51,26 +51,26 @@ describe("removeCorrectionRequests", () => {
       correction_requests: [
         makeRequest("birthday"),
         makeRequest("phone"),
-        makeRequest("last_name"),
+        makeRequest("display_name"),
       ],
     };
     const result = removeCorrectionRequests(profile, ["phone"]);
     expect(result.correction_requests).toHaveLength(2);
     expect(result.correction_requests?.map((r) => r.field)).toEqual([
       "birthday",
-      "last_name",
+      "display_name",
     ]);
   });
 
-  it("複数 field を一度に削除（姓・名 セット）", () => {
+  it("複数 field を一度に削除", () => {
     const profile: MemberProfile = {
       correction_requests: [
-        makeRequest("last_name"),
-        makeRequest("first_name"),
+        makeRequest("display_name"),
+        makeRequest("nickname"),
         makeRequest("birthday"),
       ],
     };
-    const result = removeCorrectionRequests(profile, ["last_name", "first_name"]);
+    const result = removeCorrectionRequests(profile, ["display_name", "nickname"]);
     expect(result.correction_requests).toHaveLength(1);
     expect(result.correction_requests?.[0]?.field).toBe("birthday");
   });
@@ -159,8 +159,7 @@ describe("hasCorrectionRequest", () => {
 describe("CORRECTION_FIELD_LABEL", () => {
   it("全 field に日本語ラベルがある", () => {
     expect(CORRECTION_FIELD_LABEL.birthday).toBe("生年月日");
-    expect(CORRECTION_FIELD_LABEL.last_name).toBe("お名前 (姓)");
-    expect(CORRECTION_FIELD_LABEL.first_name).toBe("お名前 (名)");
+    expect(CORRECTION_FIELD_LABEL.display_name).toBe("お名前");
     expect(CORRECTION_FIELD_LABEL.phone).toBe("電話番号");
     expect(CORRECTION_FIELD_LABEL.experience_level).toBe("経験レベル");
     expect(CORRECTION_FIELD_LABEL.nickname).toBe("ニックネーム");

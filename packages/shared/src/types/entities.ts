@@ -170,8 +170,7 @@ export type EventUpdate = {
  * jsonb 配列の 1 要素。詳細は openspec/specs/member-correction-requests/spec.md。
  */
 export type CorrectionField =
-  | "last_name"
-  | "first_name"
+  | "display_name"
   | "birthday"
   | "phone"
   | "experience_level"

@@ -76,10 +76,13 @@ export function hasCorrectionRequest(
 
 /**
  * UI 表示用の field 日本語ラベル。
+ *
+ * 注: `display_name` は姓・名 両方を編集モーダル 1 つで扱うため、admin / 会員側
+ * とも単一の「お名前」として扱う。`last_name` / `first_name` 個別の field は
+ * 持たない (#296 UX 改善, 2026-05-23)。
  */
 export const CORRECTION_FIELD_LABEL: Record<CorrectionField, string> = {
-  last_name: "お名前 (姓)",
-  first_name: "お名前 (名)",
+  display_name: "お名前",
   birthday: "生年月日",
   phone: "電話番号",
   experience_level: "経験レベル",
