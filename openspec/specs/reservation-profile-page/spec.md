@@ -58,6 +58,8 @@ ProfilePage は LEVEL セクションで `members.experience_level` を変更可
 
 選択肢の押下で即時保存（`supabase.from('members').update({ experience_level: <value> }).eq('id', auth.uid())`）を行い、成功で `useAuthSession.refresh()` を呼ぶ MUST。「変更ボタン」を別途設けない（即時保存方式）。
 
+経験レベル更新成功時、対応する `profile.correction_requests` の `field=experience_level` エントリを **同時に削除** MUST する（`member-correction-requests` capability「修正完了時の自動消化」に従う）。
+
 説明文「当日のチーム分けと、初心者向けイベントのご案内に使います。いつでも変更できます。」をセクション冒頭に表示する MUST。
 
 #### Scenario: 初期表示
@@ -75,6 +77,10 @@ ProfilePage は LEVEL セクションで `members.experience_level` を変更可
 #### Scenario: enum 外の値を弾く
 - **WHEN** Smart constructor `createExperienceLevel('unknown')` が経験レベル UPDATE 前に呼ばれる
 - **THEN** 例外が投げられ、UPDATE は発行されない
+
+#### Scenario: 修正依頼の自動消化
+- **WHEN** `field=experience_level` の `correction_request` を持つ会員が経験レベルを押下して即時保存成功
+- **THEN** 該当エントリが `profile.correction_requests` から削除される
 
 ### Requirement: ACCOUNT セクション（アカウント情報の表示と編集）
 
@@ -113,6 +119,8 @@ ProfilePage は ACCOUNT セクションで以下 4 行を SHALL 表示する:
 
 UPDATE は `last_name` / `first_name` の両列を 1 回の UPDATE 文で同時に行う SHALL。アプリ層から `display_name` 列を直接指定 SHALL NOT し、DB トリガ `sync_members_display_name()` による同期に依存する MUST。
 
+更新成功時、対応する `profile.correction_requests` の `field=display_name` エントリを **同時に削除** MUST する（`member-correction-requests` capability「修正完了時の自動消化」に従う）。`display_name` は姓・名 を一括で扱う統合 field であり、admin / 会員側とも「お名前」1 つとして提示される。
+
 #### Scenario: 姓のみ変更成功
 - **WHEN** モーダルで姓「田中」→「鈴木」に変更し（名「美咲」は据置）「保存」を押す
 - **THEN** `UPDATE members SET last_name = '鈴木', first_name = '美咲'` が発行され、トリガにより `display_name = '鈴木 美咲'` に更新される。モーダルが閉じてヘッダ大見出し（ニックネーム未設定時）と ACCOUNT 行が新しい値に更新される
@@ -133,11 +141,17 @@ UPDATE は `last_name` / `first_name` の両列を 1 回の UPDATE 文で同時�
 - **WHEN** モーダルで姓「田中」、名を空欄にして「保存」を押す
 - **THEN** API は呼ばれず、名フィールドに「名を入力してください」のエラーが表示される
 
+#### Scenario: 修正依頼の自動消化
+- **WHEN** `field=display_name` の `correction_request` を持つ会員が氏名編集モーダルで保存成功
+- **THEN** 該当エントリが `profile.correction_requests` から削除される
+
 ### Requirement: ニックネーム編集モーダル
 
 「ニックネーム」行の編集モーダルは `members.nickname` を更新する SHALL。文字種・文字数のバリデーションは reservation-member-auth および data-schema spec の既存ルール（1〜15 文字 / 日本語+ASCII英字のみ / 数字・記号・絵文字禁止）に従う MUST。
 
 モーダルには「ニックネームをクリア」ボタンを併置し、押下で `nickname = NULL` に UPDATE する MUST。空文字で「保存」を押した場合も NULL 化として扱う SHALL。
+
+更新成功時（NULL 化を含む）、対応する `profile.correction_requests` の `field=nickname` エントリを **同時に削除** MUST する。
 
 #### Scenario: ニックネーム新規設定
 - **WHEN** ニックネーム未設定の会員が「ミサキ」を入力して「保存」を押す
@@ -158,6 +172,10 @@ UPDATE は `last_name` / `first_name` の両列を 1 回の UPDATE 文で同時�
 #### Scenario: 文字数違反
 - **WHEN** 16 文字以上の値を入力して「保存」を押す
 - **THEN** API は呼ばれず、フィールドに「ニックネームは 15 文字以内で入力してください」のエラーが表示される
+
+#### Scenario: 修正依頼の自動消化
+- **WHEN** `field=nickname` の `correction_request` を持つ会員がニックネーム編集モーダルで保存成功（設定 / NULL 化 いずれも）
+- **THEN** 該当エントリが `profile.correction_requests` から削除される
 
 ### Requirement: メール編集モーダル
 
@@ -191,6 +209,8 @@ UPDATE は `last_name` / `first_name` の両列を 1 回の UPDATE 文で同時�
 
 「電話番号」行の編集モーダルは `members.phone` を更新する SHALL。Smart constructor `createPhone()` のバリデーション（070/080/090 から始まる携帯番号 / 桁数チェック / ハイフン正規化）を通る値のみ保存される MUST。
 
+更新成功時、対応する `profile.correction_requests` の `field=phone` エントリを **同時に削除** MUST する。
+
 #### Scenario: 電話番号変更成功（区切りなし入力）
 - **WHEN** 「09098765432」を入力して「保存」を押す
 - **THEN** `createPhone()` で正規化された `'090-9876-5432'` が `members.phone` に UPDATE される
@@ -202,6 +222,10 @@ UPDATE は `last_name` / `first_name` の両列を 1 回の UPDATE 文で同時�
 #### Scenario: 桁数不足
 - **WHEN** 「090-1234」を入力して「保存」を押す
 - **THEN** API は呼ばれず、フィールドに「電話番号の桁数が正しくありません」のエラーが表示される
+
+#### Scenario: 修正依頼の自動消化
+- **WHEN** `field=phone` の `correction_request` を持つ会員が電話番号編集モーダルで保存成功
+- **THEN** 該当エントリが `profile.correction_requests` から削除される
 
 ### Requirement: STATS セクション（参加統計）
 
@@ -388,4 +412,54 @@ dialog はフォーカストラップ・Esc キー・背景クリックで閉じ
 #### Scenario: スクリーンリーダー
 - **WHEN** スクリーンリーダーで「アカウントを削除する」ボタンに到達
 - **THEN** ボタンが danger なアクションであることがアクセシブル名から伝わる
+
+### Requirement: 生年月日編集モーダル
+
+ProfilePage は **生年月日編集モーダル**（`BirthdayEditDialog`）を MUST 提供する。本モーダルはバナー経由（`/profile?edit=birthday`）または将来的な ACCOUNT セクションからの編集動線で起動 SHALL される。
+
+入力フォーマット: `<input type="date">`（YYYY-MM-DD）。バリデーションは Smart constructor `createBirthday()` で過去日付 + 100 年以内を担保 MUST する。
+
+更新時は `members.birthday` を SET し、対応する `profile.correction_requests` の `field=birthday` エントリを **同時に削除** MUST する（`member-correction-requests` capability「修正完了時の自動消化」に従う）。
+
+#### Scenario: 生年月日変更成功
+- **WHEN** モーダルで生年月日を `1995-03-15` に設定して「保存」を押す
+- **THEN** `members.birthday` が `1995-03-15` に UPDATE され、もし `field=birthday` の `correction_request` エントリがあれば削除される
+
+#### Scenario: 未来日付を弾く
+- **WHEN** 未来日付を入力して「保存」を押す
+- **THEN** API は呼ばれず、フィールドに「生年月日は過去の日付を入力してください」のエラーが表示される
+
+#### Scenario: 100 年より前を弾く
+- **WHEN** 100 年より前の日付を入力して「保存」を押す
+- **THEN** API は呼ばれず、フィールドに「生年月日が正しくありません」のエラーが表示される
+
+### Requirement: `?edit=` クエリパラメータでの初期モーダル起動
+
+ProfilePage は URL クエリ `?edit=<field>` を持って到達した場合、`onMounted` 時に該当 field の編集モーダルを自動で開く MUST。許容値:
+
+- `?edit=displayName` → 氏名編集モーダル（姓・名 2 フィールド）
+- `?edit=birthday` → 生年月日編集モーダル
+- `?edit=phone` → 電話番号編集モーダル
+- `?edit=nickname` → ニックネーム編集モーダル
+- `?edit=email` → メール編集モーダル
+
+許容値以外のクエリは無視 SHALL（モーダルは開かない）。クエリは ProfilePage マウント時に消費 MUST し、モーダル close で URL から `?edit=` を除去 SHALL する（ブラウザの戻る/進む操作で同モーダルを再起動できる挙動は維持しない）。
+
+ProfilePage 内の `experience_level` は LEVEL セクションが inline 配置のためモーダル経路を持たない MUST NOT。`?edit=experienceLevel` のような値は未サポート SHALL であり、代替手段として LEVEL セクションへのスクロール動線（バナー側で実装）を持つ。
+
+#### Scenario: ?edit=birthday でのアクセス
+- **WHEN** 認証済会員が `/profile?edit=birthday` を直接開く
+- **THEN** ProfilePage が描画完了し次第、生年月日編集モーダルが `:open=true` の状態で表示される
+
+#### Scenario: モーダル close で URL クエリ除去
+- **WHEN** `?edit=birthday` で開かれたモーダルを閉じる
+- **THEN** URL が `/profile` に書き換わり、`?edit=` クエリが消える
+
+#### Scenario: 未サポート値の無視
+- **WHEN** `/profile?edit=invalid` を開く
+- **THEN** ProfilePage は通常表示され、モーダルは開かない（クエリも変化させない）
+
+#### Scenario: experience_level は未サポート
+- **WHEN** `/profile?edit=experienceLevel` を開く
+- **THEN** モーダルは開かない（experience_level は LEVEL セクションの inline 編集のため）
 

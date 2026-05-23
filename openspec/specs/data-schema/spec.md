@@ -46,6 +46,15 @@ High Q の MVP1 で必要な 5 テーブル (events / members / reservations / v
 
 `admin_note` 列は別 change で追加済み。NULL 許容、DB レベルの CHECK 制約は付与 MUST NOT する（長さ制限はアプリ層で 500 文字）。新規会員作成時は NULL のまま作成され、admin が `/members` 画面の詳細 sheet 経由で UPDATE するときのみ値が入る。本人（非 admin）からの UPDATE は RLS WITH CHECK 句で拒否される（`rls-policies` capability に従う）。
 
+`profile` jsonb 列は系統的に複数の運用キーを保持する SHALL。本 change 適用後の認知済キーは:
+
+- `signup_completed` (boolean) — signup フロー完了マーカー（既存）
+- `terms_agreed_at` (ISO 8601 string) — 利用規約同意時刻（既存）
+- `name_split_needed` (boolean, optional) — 移行時の姓・名分離不能フラグ（既存）
+- `correction_requests` (array, optional) — admin による未対応の修正依頼一覧（**本 change で追加**）。各要素は `{ field, message, requested_at, requested_by }` 形式 SHALL。空配列 / キー未定義は「未対応依頼なし」と等価に扱う MUST。詳細スキーマは `member-correction-requests` capability を参照
+
+`correction_requests` の書き込み主体は admin および会員サイトの各 `updateMyXxx` mutation（自動消化用の削除のみ）SHALL であり、それ以外のアプリ経路から本キーへの書き込みを行う SHALL NOT。
+
 #### Scenario: 新規会員行の作成経路
 - **WHEN** 本 change 適用後に `auth.users` への INSERT が発生する
 - **THEN** その経路は Edge Function `verify-signup` 内の admin API 呼び出しのみであり、`signup_pending` の payload で `members` 行も即座に正式値（`last_name` / `first_name` を含む）で埋まる
@@ -89,6 +98,14 @@ High Q の MVP1 で必要な 5 テーブル (events / members / reservations / v
 #### Scenario: admin_note の空文字 / NULL 復元
 - **WHEN** admin が `UPDATE members SET admin_note = NULL WHERE id = :id` を発行
 - **THEN** 1 行更新され、`admin_note IS NULL` 状態に戻る
+
+#### Scenario: correction_requests キーの初期状態
+- **WHEN** signup フロー（`verify-signup`）で新規作成された会員行を SELECT
+- **THEN** `profile.correction_requests` キーは未定義であり、アプリ層は空配列扱いする
+
+#### Scenario: correction_requests のキー追加
+- **WHEN** admin が会員に修正依頼を作成する
+- **THEN** 該当会員の `profile.correction_requests` 配列にエントリが 1 件 push される（既存配列があれば append、未定義なら新規配列として作成）
 
 ### Requirement: reservations テーブル
 
@@ -576,12 +593,13 @@ AWS DynamoDB に存在する `location` が空文字（`""`）または欠落の
 - `attended_count` (integer) — 当該 member の `reservations.status = 'attended'` の件数（同伴は含まない、member 単位）
 - `last_attended_at` (timestamptz) — 当該 member が `status = 'attended'` を持つ events のうち最も新しい `events.start_at`。attended 履歴ゼロのときは NULL
 - `created_at` (timestamptz) — members.created_at（参考列、ソート対象外）
+- `correction_request_count` (integer) — 当該 member の `profile.correction_requests` 配列の要素数。キー未定義 / 空配列のときは 0 を返す
 
-view は members × reservations × events の LEFT JOIN ベースで構成し、`reservations.status = 'attended'` で絞った集計サブクエリを join する形を取る。view は `SECURITY INVOKER` で作成 MUST し、参照テーブルの RLS を継承する。
+view は members × reservations × events の LEFT JOIN ベースで構成し、`reservations.status = 'attended'` で絞った集計サブクエリを join する形を取る。`correction_request_count` は `jsonb_array_length(coalesce(profile->'correction_requests', '[]'::jsonb))` で算出 SHALL する。view は `SECURITY INVOKER` で作成 MUST し、参照テーブルの RLS を継承する。
 
 #### Scenario: 全列が返る
 - **WHEN** admin が `SELECT * FROM member_list_view LIMIT 1` を実行
-- **THEN** 上記の全列が返る
+- **THEN** 上記の全列（`correction_request_count` を含む）が返る
 
 #### Scenario: attended 履歴ありの会員
 - **WHEN** ある member が events 3 件で `status = 'attended'`、1 件で `status = 'reserved'`、1 件で `status = 'cancelled'` を持つ
@@ -602,6 +620,14 @@ view は members × reservations × events の LEFT JOIN ベースで構成し�
 #### Scenario: 非 admin の SELECT
 - **WHEN** 非 admin ユーザーが `SELECT * FROM member_list_view` を実行
 - **THEN** `members` テーブルの SELECT RLS により自分の行のみ返る（admin_note 列含む。本人の閲覧経路はアプリ層列指定で除外、`rls-policies` capability に従う）
+
+#### Scenario: correction_request_count = 0 のとき
+- **WHEN** `profile.correction_requests` キーが未定義の会員の `member_list_view` 行を取得
+- **THEN** `correction_request_count = 0` が返る
+
+#### Scenario: correction_request_count = N のとき
+- **WHEN** `profile.correction_requests` 配列が 3 要素ある会員の `member_list_view` 行を取得
+- **THEN** `correction_request_count = 3` が返る
 
 ### Requirement: member_history_view ビュー
 
