@@ -18,6 +18,7 @@ import {
 import { SignOutButton } from "@/features/profile-sign-out";
 import { AccountDeletionSection } from "@/features/account-deletion";
 import { AppFooter } from "@/widgets/app-footer";
+import { CorrectionRequestPanel } from "@/widgets/correction-request-panel";
 import {
   fetchMyReservations,
   type MyReservationItem,
@@ -169,6 +170,12 @@ const upcomingReservationCount = computed<number>(() => {
       </div>
       <template v-else>
         <ProfileHeader :member="member" />
+
+        <CorrectionRequestPanel
+          v-if="member.correctionRequests.length > 0"
+          mode="profile"
+          :requests="member.correctionRequests"
+        />
 
         <p
           v-if="successNotice !== null"

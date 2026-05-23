@@ -193,7 +193,7 @@ function onWithdrawn(): void {
             />
 
             <section
-              class="space-y-hq-2 border-t border-danger/30 pt-hq-4"
+              class="space-y-hq-2 mt-hq-8 border-t-2 border-danger/30 pt-hq-6"
               aria-labelledby="member-danger-zone-heading"
             >
               <h3

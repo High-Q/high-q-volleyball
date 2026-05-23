@@ -12,7 +12,7 @@ vi.mock("@/features/auth", () => ({
     status: ref("authenticated"),
     isProfileComplete: ref(true),
     hasIdentityDocument: ref(true),
-    member: ref({ displayName: "山田 太郎", nickname: null }),
+    member: ref({ displayName: "山田 太郎", nickname: null, correctionRequests: [] }),
     session: ref({ user: { id: "00000000-0000-0000-0000-000000000001" } }),
     signOut: vi.fn(),
   }),

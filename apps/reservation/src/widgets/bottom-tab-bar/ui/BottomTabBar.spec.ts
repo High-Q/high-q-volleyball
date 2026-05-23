@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
+import { ref } from "vue";
 import {
   createMemoryHistory,
   createRouter,
@@ -9,6 +10,13 @@ import BottomTabBar from "./BottomTabBar.vue";
 
 vi.mock("@/shared/lib/useBottomTabBarVisible", () => ({
   useBottomTabBarVisible: () => ({ value: true }),
+}));
+
+// #296: BottomTabBar が useAuthSession を参照するためダミー Session を mock
+vi.mock("@/features/auth", () => ({
+  useAuthSession: () => ({
+    member: ref<{ correctionRequests: never[] } | null>(null),
+  }),
 }));
 
 const routes: RouteRecordRaw[] = [

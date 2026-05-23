@@ -5,7 +5,6 @@ import {
   type CorrectionField,
   type MemberId,
 } from "@high-q/shared";
-import { Button } from "@high-q/ui";
 import { useCorrectionRequests } from "../composables/useCorrectionRequests";
 import CorrectionRequestCreateDialog from "./CorrectionRequestCreateDialog.vue";
 
@@ -76,7 +75,7 @@ async function onWithdraw(field: CorrectionField): Promise<void> {
 </script>
 
 <template>
-  <section class="space-y-hq-2" aria-labelledby="correction-requests-heading">
+  <section class="space-y-hq-2 pt-hq-2" aria-labelledby="correction-requests-heading">
     <div class="flex items-center justify-between">
       <h3
         id="correction-requests-heading"
@@ -84,13 +83,20 @@ async function onWithdraw(field: CorrectionField): Promise<void> {
       >
         修正依頼
       </h3>
-      <Button
-        variant="outline"
-        size="sm"
+      <button
         type="button"
+        class="inline-flex items-center gap-hq-1 font-jp text-xs text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded-hq-xs px-hq-1"
+        data-testid="correction-create-trigger"
         @click="isDialogOpen = true"
-      >修正依頼を作成</Button>
+      >
+        <span aria-hidden="true">＋</span>
+        <span>依頼を追加</span>
+      </button>
     </div>
+
+    <p class="font-jp text-[11px] text-muted">
+      会員の <span class="font-medium text-ink">ホーム画面とプロフィール</span> に確認のお願いとして表示されます。
+    </p>
 
     <template v-if="requests.phase.value === 'loading'">
       <p class="font-jp text-xs text-muted">読み込み中…</p>
@@ -103,10 +109,14 @@ async function onWithdraw(field: CorrectionField): Promise<void> {
     </template>
 
     <template v-else>
-      <p
+      <div
         v-if="requests.entries.value.length === 0"
-        class="font-jp text-xs text-muted"
-      >修正依頼はありません</p>
+        class="rounded-hq-md border border-dashed border-hairline bg-paper-warm px-hq-3 py-hq-2"
+      >
+        <p class="font-jp text-xs text-muted">
+          未対応の依頼はありません。生年月日・氏名など特定の属性だけ訂正してほしい時に使います。
+        </p>
+      </div>
 
       <ul
         v-else
@@ -130,13 +140,12 @@ async function onWithdraw(field: CorrectionField): Promise<void> {
                 {{ formatTimestamp(entry.requested_at) }}
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               type="button"
+              class="font-jp text-xs text-muted hover:text-ink underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded-hq-xs px-hq-1 disabled:opacity-50"
               :disabled="withdrawingField === entry.field"
               @click="onWithdraw(entry.field)"
-            >{{ withdrawingField === entry.field ? "取り下げ中…" : "取り下げ" }}</Button>
+            >{{ withdrawingField === entry.field ? "取り下げ中…" : "取り下げ" }}</button>
           </div>
         </li>
       </ul>

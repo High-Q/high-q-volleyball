@@ -2,7 +2,6 @@
 import { ConsentBanner } from "@/widgets/consent-banner";
 import { AppFooter } from "@/widgets/app-footer";
 import { BottomTabBar } from "@/widgets/bottom-tab-bar";
-import { CorrectionRequestModal } from "@/widgets/correction-request-modal";
 import {
   BOTTOM_TAB_BAR_HEIGHT_PX,
   useBottomTabBarVisible,
@@ -27,5 +26,4 @@ const showBottomTabBar = useBottomTabBarVisible();
   </div>
   <BottomTabBar />
   <ConsentBanner />
-  <CorrectionRequestModal />
 </template>
