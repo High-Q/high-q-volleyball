@@ -8,15 +8,10 @@ import {
 } from "@/features/event-listing";
 import { HomeHeader } from "@/widgets/home-header";
 import { HomeNextCard } from "@/widgets/home-next-card";
-import { CorrectionRequestBanner } from "@/widgets/correction-request-banner";
 import { useAuthSession } from "@/features/auth";
 import { resolveMemberDisplayName } from "@/entities/member";
 
 const session = useAuthSession();
-
-const correctionRequests = computed(
-  () => session.member.value?.correctionRequests ?? [],
-);
 
 const memberForHeader = computed(() => ({
   displayName: session.member.value?.displayName ?? "",
@@ -70,13 +65,6 @@ async function reloadAll(): Promise<void> {
 <template>
   <main class="min-h-screen bg-paper text-ink font-jp flex flex-col">
     <HomeHeader :member="memberForHeader" />
-
-    <section
-      v-if="correctionRequests.length > 0"
-      class="px-hq-5 pt-hq-3"
-    >
-      <CorrectionRequestBanner :requests="correctionRequests" />
-    </section>
 
     <section class="px-hq-5 pt-hq-3 pb-hq-4">
       <Kicker>— こんにちは、{{ greetingName }}さん</Kicker>

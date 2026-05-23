@@ -83,9 +83,11 @@ email 編集（`requestMyEmailChange`）は本 capability の対象外 SHALL（a
 - **WHEN** `field=birthday` の依頼を持つ会員が `nickname` を更新
 - **THEN** `birthday` の依頼は配列に残る
 
-### Requirement: 会員サイトの修正依頼バナー
+### Requirement: 会員サイトの修正依頼モーダル
 
-`apps/reservation` の認証済ユーザーが最初に到達する `/events` ページは、`members.profile.correction_requests` が 1 件以上ある場合、ページ上部に **警告バナー** を MUST 表示する。バナーは未対応の全エントリを縦に積み上げ表示 SHALL し、各エントリは：
+`apps/reservation` の認証済ユーザーに対し、`members.profile.correction_requests` が 1 件以上ある場合は **アプリ全体の最前面に warning 色調のモーダル** を MUST 表示する。モーダルは radix-vue の Portal 経由で App.vue 直下に mount され、どのページでも前面に出る MUST。配色は危険度を示すため `border-danger` + `bg-danger-soft` を用い、タイトルに ⚠ アイコンを添える MUST。
+
+モーダルは未対応の全エントリを縦に積み上げ表示 SHALL し、各エントリは：
 
 - 該当 field の日本語ラベル（例: 「生年月日」「お名前 (姓)」「お名前 (名)」「電話番号」「経験レベル」「ニックネーム」）
 - admin が入力した `message` テキスト
@@ -95,32 +97,42 @@ email 編集（`requestMyEmailChange`）は本 capability の対象外 SHALL（a
 
 「修正する」ボタン押下時の遷移:
 
-- `last_name` / `first_name` / `birthday` / `phone` / `nickname` → `/profile?edit=<対応するモーダルキー>` に遷移し、当該編集モーダルを自動で開く
-- `experience_level` → `/profile` に遷移し、LEVEL セクションへスクロール + 短時間ハイライト
+- `last_name` / `first_name` / `birthday` / `phone` / `nickname` → `/profile?edit=<対応するモーダルキー>` に遷移し、当該編集モーダルを自動で開く（同時にこのモーダル自体は dismiss する）
+- `experience_level` → `/profile?edit=experienceLevel` に遷移し、LEVEL セクションへスクロール + 短時間ハイライト
 
-バナーは **dismiss できない** MUST（修正完了 / admin 取り下げ以外では消えない）。
+モーダルは **「閉じる」ボタン**で dismiss 可能 MUST。dismiss 状態はセッション内メモリのみで保持 SHALL し、ブラウザリロード / 再ログイン (auth-callback による navigation) / 異なる member.id への切替（ログアウト→別アカウントログイン）で **再表示** される MUST。修正完了 / admin 取り下げで `correction_requests` が空になれば、dismiss 状態に関わらず自動的に非表示になる MUST。
 
-`/events` 以外の認証済ページ（`/profile` / `/reservation/:id` 等）には MUST NOT バナーを表示する。
+#### Scenario: 1 件の依頼でモーダル表示
+- **WHEN** 認証済会員に `field=birthday` の未対応依頼が 1 件ある状態でアプリを開く
+- **THEN** 最前面にモーダルが開き、「生年月日」ラベルと message テキスト、「修正する」ボタンを含む 1 行が表示される
 
-#### Scenario: 1 件の依頼でバナー表示
-- **WHEN** 認証済会員に `field=birthday` の未対応依頼が 1 件ある状態で `/events` を開く
-- **THEN** ページ上部に「生年月日」ラベルと message テキスト、「修正する」ボタンを含むバナーが 1 件表示される
-
-#### Scenario: 0 件ならバナー非表示
+#### Scenario: 0 件ならモーダル非表示
 - **WHEN** 認証済会員の `correction_requests` が空配列または未定義
-- **THEN** `/events` 上部にバナーは表示されない
+- **THEN** モーダルは描画されない（DOM にも出ない）
 
 #### Scenario: 「修正する」ボタンで該当モーダルが開く
-- **WHEN** バナーの `field=birthday` 行で「修正する」ボタンを押す
-- **THEN** `/profile?edit=birthday` に遷移し、生年月日編集モーダルが自動で開いた状態になる
+- **WHEN** モーダルの `field=birthday` 行で「修正する」ボタンを押す
+- **THEN** `/profile?edit=birthday` に遷移し、生年月日編集モーダルが自動で開いた状態になる（本 modal は dismiss される）
 
 #### Scenario: experience_level の動線
-- **WHEN** バナーの `field=experience_level` 行で「修正する」ボタンを押す
-- **THEN** `/profile` に遷移し、LEVEL セクションが画面内に来るようスクロールし、当該セクションが一時的にハイライトされる
+- **WHEN** モーダルの `field=experience_level` 行で「修正する」ボタンを押す
+- **THEN** `/profile?edit=experienceLevel` に遷移し、LEVEL セクションが画面内に来るようスクロールし、当該セクションが一時的にハイライトされる
 
-#### Scenario: /profile ではバナーが出ない
-- **WHEN** `correction_requests` が 1 件以上ある会員が `/profile` を直接開く
-- **THEN** `/profile` ページ自体にはバナーは出ない（home 専用）
+#### Scenario: 「閉じる」ボタンで dismiss
+- **WHEN** モーダル右下の「閉じる」ボタンを押す
+- **THEN** モーダルが閉じ、SPA 内で他ページに navigate しても再表示されない
+
+#### Scenario: ページリロードで再表示
+- **WHEN** dismiss 後にブラウザリロード
+- **THEN** モジュール再評価により dismiss 状態がリセットされ、再びモーダルが表示される
+
+#### Scenario: 異なる member への切替で再表示
+- **WHEN** dismiss 後にログアウト → 別の会員 ID でログイン (member.id が変わる)
+- **THEN** dismiss 状態がリセットされ、新しい会員に未対応依頼があれば再表示される
+
+#### Scenario: 修正完了で自動消滅
+- **WHEN** 該当 field の更新成功で `correction_requests` が空配列になる
+- **THEN** dismiss 状態に関わらずモーダルが自動で閉じ、再表示されない
 
 ### Requirement: admin 詳細 sheet の修正依頼セクション
 
