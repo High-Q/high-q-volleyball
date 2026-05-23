@@ -70,6 +70,7 @@ const member: Member = {
   firstName: "美咲",
   displayName: "田中 美咲",
   nickname: null,
+  correctionRequests: [],
   birthday: "1995-03-15",
   phone: "090-1234-5678",
   experienceLevel: "beginner",

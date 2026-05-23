@@ -36,6 +36,8 @@ export interface MemberListRow {
   attended_count: number;
   /** 最新 attended events.start_at。attended 履歴ゼロのとき NULL。 */
   last_attended_at: string | null;
+  /** #296 未対応の修正依頼件数。profile.correction_requests 配列長。 */
+  correction_request_count: number;
 }
 
 /**

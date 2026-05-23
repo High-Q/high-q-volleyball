@@ -16,6 +16,7 @@ const MEMBER_COLUMNS =
   "id, email, last_name, first_name, display_name, nickname, birthday, phone, experience_level, role, profile, created_at, updated_at";
 
 function rowToMember(row: MemberRow): Member {
+  const profile = (row.profile ?? {}) as MemberProfile;
   return {
     id: createMemberId(row.id),
     email: row.email,
@@ -27,7 +28,10 @@ function rowToMember(row: MemberRow): Member {
     phone: row.phone,
     experienceLevel: createExperienceLevel(row.experience_level),
     role: row.role === "admin" ? "admin" : "member",
-    profile: (row.profile ?? {}) as MemberProfile,
+    profile,
+    correctionRequests: Array.isArray(profile.correction_requests)
+      ? profile.correction_requests
+      : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

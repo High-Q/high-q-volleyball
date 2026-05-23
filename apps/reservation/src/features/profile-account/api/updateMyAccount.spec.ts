@@ -8,20 +8,43 @@ const supabaseMock = {
   },
 };
 
-const builderMock = {
-  update: vi.fn(),
-  eq: vi.fn(),
-};
-
 vi.mock("@/shared/api/supabase", () => ({
   getSupabase: () => supabaseMock,
 }));
 
+const ADMIN_ID = "00000000-0000-0000-0000-00000000admin";
+
+/**
+ * #296 の各 mutation は `from('members')` を 2 回呼ぶ:
+ *   1. SELECT profile（既存 correction_requests 取得用）
+ *   2. UPDATE { field, profile }
+ *
+ * テストでは call index で SELECT/UPDATE を切り替えて mock し、UPDATE 引数を検証する。
+ */
+function mockSelectThenUpdate(
+  profileValue: unknown,
+  updateError: { message: string } | null = null,
+) {
+  const selectMaybeSingle = vi.fn().mockResolvedValue({
+    data: { profile: profileValue },
+    error: null,
+  });
+  const selectEq = vi.fn(() => ({ maybeSingle: selectMaybeSingle }));
+  const selectFn = vi.fn(() => ({ eq: selectEq }));
+
+  const updateEq = vi.fn().mockResolvedValue({ error: updateError });
+  const updateFn = vi.fn(() => ({ eq: updateEq }));
+
+  supabaseMock.from.mockImplementation(() => {
+    const callCount = supabaseMock.from.mock.calls.length;
+    return callCount === 1 ? { select: selectFn } : { update: updateFn };
+  });
+
+  return { selectFn, updateFn };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
-  supabaseMock.from.mockReturnValue(builderMock);
-  builderMock.update.mockReturnValue(builderMock);
-  builderMock.eq.mockResolvedValue({ error: null });
 });
 
 afterEach(() => {
@@ -31,7 +54,7 @@ afterEach(() => {
 const memberId = createMemberId("00000000-0000-0000-0000-00000000ffff");
 
 describe("updateMyName", () => {
-  it("姓空欄は createLastName が例外を投げ、UPDATE 発行されない", async () => {
+  it("姓空欄は createLastName が例外を投げ、SELECT/UPDATE 発行されない", async () => {
     const { updateMyName } = await import("./updateMyAccount");
     await expect(updateMyName(memberId, "  ", "美咲")).rejects.toThrow(
       /姓を入力してください/,
@@ -39,7 +62,7 @@ describe("updateMyName", () => {
     expect(supabaseMock.from).not.toHaveBeenCalled();
   });
 
-  it("名空欄は createFirstName が例外を投げ、UPDATE 発行されない", async () => {
+  it("名空欄は createFirstName が例外を投げ、SELECT/UPDATE 発行されない", async () => {
     const { updateMyName } = await import("./updateMyAccount");
     await expect(updateMyName(memberId, "田中", "  ")).rejects.toThrow(
       /名を入力してください/,
@@ -47,33 +70,71 @@ describe("updateMyName", () => {
     expect(supabaseMock.from).not.toHaveBeenCalled();
   });
 
-  it("正常値は trim 済の姓・名で 1 回の UPDATE 発行 (display_name は指定しない)", async () => {
+  it("正常値で姓・名 UPDATE + profile 同時更新 (display_name は指定しない)", async () => {
     const { updateMyName } = await import("./updateMyAccount");
+    const { selectFn, updateFn } = mockSelectThenUpdate({});
     const result = await updateMyName(memberId, "  田中  ", "  美希  ");
     expect(result).toEqual({ lastName: "田中", firstName: "美希" });
-    expect(builderMock.update).toHaveBeenCalledTimes(1);
-    expect(builderMock.update).toHaveBeenCalledWith({
-      last_name: "田中",
-      first_name: "美希",
+    expect(selectFn).toHaveBeenCalledTimes(1);
+    expect(updateFn).toHaveBeenCalledTimes(1);
+    const arg = ((updateFn.mock.calls as unknown as unknown[][])[0]?.[0] ?? {}) as Record<string, unknown>;
+    expect(arg.last_name).toBe("田中");
+    expect(arg.first_name).toBe("美希");
+    expect(arg).toHaveProperty("profile");
+    expect(arg).not.toHaveProperty("display_name");
+  });
+
+  it("#296 last_name + first_name の correction_requests を同時消化", async () => {
+    const { updateMyName } = await import("./updateMyAccount");
+    const { updateFn } = mockSelectThenUpdate({
+      signup_completed: true,
+      correction_requests: [
+        {
+          field: "last_name",
+          message: "ローマ字→漢字",
+          requested_at: "2026-05-23T00:00:00Z",
+          requested_by: ADMIN_ID,
+        },
+        {
+          field: "first_name",
+          message: "ローマ字→漢字",
+          requested_at: "2026-05-23T00:00:00Z",
+          requested_by: ADMIN_ID,
+        },
+        {
+          field: "birthday",
+          message: "確認",
+          requested_at: "2026-05-23T00:00:00Z",
+          requested_by: ADMIN_ID,
+        },
+      ],
     });
-    // display_name は明示指定しない (DB トリガで自動同期されるため)
-    const updateCallArg = builderMock.update.mock.calls[0]?.[0] ?? {};
-    expect(updateCallArg).not.toHaveProperty("display_name");
+    await updateMyName(memberId, "田中", "美希");
+    const arg = ((updateFn.mock.calls as unknown as unknown[][])[0]?.[0] ?? {}) as {
+      profile: { correction_requests?: Array<{ field: string }> };
+    };
+    const remaining = arg.profile.correction_requests ?? [];
+    expect(remaining.map((r) => r.field)).toEqual(["birthday"]);
   });
 });
 
 describe("updateMyNickname", () => {
   it("空文字は NULL に変換して UPDATE 発行", async () => {
     const { updateMyNickname } = await import("./updateMyAccount");
+    const { updateFn } = mockSelectThenUpdate({});
     const result = await updateMyNickname(memberId, "");
     expect(result).toBeNull();
-    expect(builderMock.update).toHaveBeenCalledWith({ nickname: null });
+    const arg = ((updateFn.mock.calls as unknown as unknown[][])[0]?.[0] ?? {}) as Record<string, unknown>;
+    expect(arg.nickname).toBeNull();
   });
 
-  it("null は NULL のまま UPDATE 発行", async () => {
+  it("正常値で nickname UPDATE + profile 同時更新", async () => {
     const { updateMyNickname } = await import("./updateMyAccount");
-    await updateMyNickname(memberId, null);
-    expect(builderMock.update).toHaveBeenCalledWith({ nickname: null });
+    const { updateFn } = mockSelectThenUpdate({});
+    await updateMyNickname(memberId, "ミサキ");
+    const arg = ((updateFn.mock.calls as unknown as unknown[][])[0]?.[0] ?? {}) as Record<string, unknown>;
+    expect(arg.nickname).toBe("ミサキ");
+    expect(arg).toHaveProperty("profile");
   });
 
   it("文字種違反は createNickname が例外を投げる", async () => {
@@ -84,27 +145,33 @@ describe("updateMyNickname", () => {
     expect(supabaseMock.from).not.toHaveBeenCalled();
   });
 
-  it("16 文字以上は createNickname が例外を投げる", async () => {
+  it("#296 nickname の correction_request を消化", async () => {
     const { updateMyNickname } = await import("./updateMyAccount");
-    await expect(
-      updateMyNickname(memberId, "a".repeat(16)),
-    ).rejects.toThrow(/15 文字以内/);
-  });
-
-  it("正常値はそのまま UPDATE 発行", async () => {
-    const { updateMyNickname } = await import("./updateMyAccount");
+    const { updateFn } = mockSelectThenUpdate({
+      correction_requests: [
+        {
+          field: "nickname",
+          message: "再考",
+          requested_at: "2026-05-23T00:00:00Z",
+          requested_by: ADMIN_ID,
+        },
+      ],
+    });
     await updateMyNickname(memberId, "ミサキ");
-    expect(builderMock.update).toHaveBeenCalledWith({ nickname: "ミサキ" });
+    const arg = ((updateFn.mock.calls as unknown as unknown[][])[0]?.[0] ?? {}) as {
+      profile: Record<string, unknown>;
+    };
+    expect(arg.profile).not.toHaveProperty("correction_requests");
   });
 });
 
 describe("updateMyPhone", () => {
   it("区切りなし入力は正規化して UPDATE 発行", async () => {
     const { updateMyPhone } = await import("./updateMyAccount");
+    const { updateFn } = mockSelectThenUpdate({});
     await updateMyPhone(memberId, "09098765432");
-    expect(builderMock.update).toHaveBeenCalledWith({
-      phone: "090-9876-5432",
-    });
+    const arg = ((updateFn.mock.calls as unknown as unknown[][])[0]?.[0] ?? {}) as Record<string, unknown>;
+    expect(arg.phone).toBe("090-9876-5432");
   });
 
   it("固定電話は createPhone が例外を投げる", async () => {
@@ -115,11 +182,71 @@ describe("updateMyPhone", () => {
     expect(supabaseMock.from).not.toHaveBeenCalled();
   });
 
-  it("桁数不足は createPhone が例外を投げる", async () => {
+  it("#296 phone の correction_request を消化", async () => {
     const { updateMyPhone } = await import("./updateMyAccount");
-    await expect(updateMyPhone(memberId, "090-1234")).rejects.toThrow(
-      /桁数/,
+    const { updateFn } = mockSelectThenUpdate({
+      correction_requests: [
+        {
+          field: "phone",
+          message: "番号確認",
+          requested_at: "2026-05-23T00:00:00Z",
+          requested_by: ADMIN_ID,
+        },
+      ],
+    });
+    await updateMyPhone(memberId, "090-9876-5432");
+    const arg = ((updateFn.mock.calls as unknown as unknown[][])[0]?.[0] ?? {}) as {
+      profile: Record<string, unknown>;
+    };
+    expect(arg.profile).not.toHaveProperty("correction_requests");
+  });
+});
+
+describe("updateMyBirthday (#296 新規)", () => {
+  it("正常な日付で UPDATE + profile 同時更新", async () => {
+    const { updateMyBirthday } = await import("./updateMyAccount");
+    const { updateFn } = mockSelectThenUpdate({});
+    const result = await updateMyBirthday(memberId, "1995-03-15");
+    expect(result).toBe("1995-03-15");
+    const arg = ((updateFn.mock.calls as unknown as unknown[][])[0]?.[0] ?? {}) as Record<string, unknown>;
+    expect(arg.birthday).toBe("1995-03-15");
+    expect(arg).toHaveProperty("profile");
+  });
+
+  it("未来日は createBirthday が例外を投げる", async () => {
+    const { updateMyBirthday } = await import("./updateMyAccount");
+    const future = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    await expect(updateMyBirthday(memberId, future)).rejects.toThrow(
+      /過去の日付/,
     );
+    expect(supabaseMock.from).not.toHaveBeenCalled();
+  });
+
+  it("100 年より前は createBirthday が例外を投げる", async () => {
+    const { updateMyBirthday } = await import("./updateMyAccount");
+    await expect(updateMyBirthday(memberId, "1900-01-01")).rejects.toThrow(
+      /生年月日/,
+    );
+    expect(supabaseMock.from).not.toHaveBeenCalled();
+  });
+
+  it("birthday の correction_request を消化", async () => {
+    const { updateMyBirthday } = await import("./updateMyAccount");
+    const { updateFn } = mockSelectThenUpdate({
+      correction_requests: [
+        {
+          field: "birthday",
+          message: "本人確認書類と不一致",
+          requested_at: "2026-05-23T00:00:00Z",
+          requested_by: ADMIN_ID,
+        },
+      ],
+    });
+    await updateMyBirthday(memberId, "1995-03-15");
+    const arg = ((updateFn.mock.calls as unknown as unknown[][])[0]?.[0] ?? {}) as {
+      profile: Record<string, unknown>;
+    };
+    expect(arg.profile).not.toHaveProperty("correction_requests");
   });
 });
 

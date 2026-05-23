@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { Button } from "@high-q/ui";
 import { useAuthSession } from "@/features/auth";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
@@ -8,6 +9,7 @@ import { LevelEditSection } from "@/features/profile-level-edit";
 import { StatsSection } from "@/features/profile-stats";
 import {
   AccountSection,
+  BirthdayEditDialog,
   DisplayNameEditDialog,
   NicknameEditDialog,
   PhoneEditDialog,
@@ -23,6 +25,8 @@ import {
 
 const session = useAuthSession();
 const member = computed(() => session.member.value);
+const route = useRoute();
+const router = useRouter();
 
 const reservations = ref<MyReservationItem[]>([]);
 const loading = ref<boolean>(true);
@@ -47,11 +51,58 @@ async function load(): Promise<void> {
   }
 }
 
+const levelSectionEl = ref<HTMLDivElement | null>(null);
+const levelHighlighted = ref<boolean>(false);
+const levelHighlightClass = computed(() =>
+  levelHighlighted.value ? "ring-2 ring-accent ring-offset-2" : "",
+);
+let levelHighlightTimer: ReturnType<typeof setTimeout> | null = null;
+
+function focusLevelSection(): void {
+  // 次の paint で scroll + highlight を行う (要素がマウント済前提)
+  requestAnimationFrame(() => {
+    levelSectionEl.value?.scrollIntoView({ behavior: "smooth", block: "center" });
+    levelHighlighted.value = true;
+    if (levelHighlightTimer !== null) clearTimeout(levelHighlightTimer);
+    levelHighlightTimer = setTimeout(() => {
+      levelHighlighted.value = false;
+    }, 2500);
+  });
+}
+
 onMounted(() => {
   void load();
+
+  // #296: ?edit=<field> クエリで対応する編集モーダルを自動起動
+  const raw = route.query.edit;
+  const value = typeof raw === "string" ? raw : null;
+  if (value === "experienceLevel") {
+    // experience_level は LEVEL セクションが inline 配置のためモーダルではなくスクロール + ハイライト
+    focusLevelSection();
+    // クエリは消費する
+    const { edit: _e, ...rest } = route.query;
+    void router.replace({ query: rest });
+  } else if (
+    value !== null &&
+    (SUPPORTED_EDIT_FIELDS as ReadonlyArray<string>).includes(value)
+  ) {
+    editField.value = value as EditField;
+  }
+  // experience_level は LEVEL セクションへスクロールでも別経路（hash 由来）でも受ける
+  if (route.hash === "#profile-level-section") {
+    focusLevelSection();
+  }
 });
 
-type EditField = "displayName" | "nickname" | "email" | "phone";
+type EditField = "displayName" | "nickname" | "email" | "phone" | "birthday";
+const SUPPORTED_EDIT_FIELDS: ReadonlyArray<EditField> = [
+  "displayName",
+  "nickname",
+  "email",
+  "phone",
+  "birthday",
+];
+
 const editField = ref<EditField | null>(null);
 
 function onEditAccount(field: EditField): void {
@@ -60,6 +111,11 @@ function onEditAccount(field: EditField): void {
 
 function closeEdit(): void {
   editField.value = null;
+  // #296: ?edit= クエリは消費 (戻る/進む 操作で同モーダルを再起動できる挙動は維持しない)
+  if (route.query.edit !== undefined) {
+    const { edit: _edit, ...rest } = route.query;
+    void router.replace({ query: rest });
+  }
 }
 
 function onAccountSaved(): void {
@@ -132,10 +188,17 @@ const upcomingReservationCount = computed<number>(() => {
           <Button variant="outline" size="sm" type="button" @click="load">再試行</Button>
         </div>
 
-        <LevelEditSection
-          :member-id="member.id"
-          :initial-level="member.experienceLevel"
-        />
+        <div
+          id="profile-level-section"
+          ref="levelSectionEl"
+          class="rounded-hq-lg transition-colors duration-700"
+          :class="levelHighlightClass"
+        >
+          <LevelEditSection
+            :member-id="member.id"
+            :initial-level="member.experienceLevel"
+          />
+        </div>
 
         <AccountSection :member="member" @edit="onEditAccount" />
 
@@ -178,6 +241,13 @@ const upcomingReservationCount = computed<number>(() => {
         :open="editField === 'phone'"
         :member-id="member.id"
         :initial-value="member.phone"
+        @update:open="(v) => (v ? null : closeEdit())"
+        @saved="onAccountSaved"
+      />
+      <BirthdayEditDialog
+        :open="editField === 'birthday'"
+        :member-id="member.id"
+        :initial-value="member.birthday"
         @update:open="(v) => (v ? null : closeEdit())"
         @saved="onAccountSaved"
       />

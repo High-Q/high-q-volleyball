@@ -165,6 +165,40 @@ export type EventUpdate = {
 // members
 // =============================================================================
 
+/**
+ * #296 admin から会員プロフィールへの修正依頼。`members.profile.correction_requests`
+ * jsonb 配列の 1 要素。詳細は openspec/specs/member-correction-requests/spec.md。
+ */
+export type CorrectionField =
+  | "last_name"
+  | "first_name"
+  | "birthday"
+  | "phone"
+  | "experience_level"
+  | "nickname";
+
+export type CorrectionRequest = {
+  field: CorrectionField;
+  /** admin 入力の自由文。1〜500 文字。 */
+  message: string;
+  /** ISO 8601 タイムスタンプ。エントリ作成時。 */
+  requested_at: string;
+  /** 依頼を作成した admin の members.id（UUID 文字列）。 */
+  requested_by: string;
+};
+
+/**
+ * members.profile jsonb の認知済構造。空オブジェクトが既定値。
+ * 未認知のキーは無視する SHALL。
+ */
+export type MemberProfile = {
+  signup_completed?: boolean;
+  terms_agreed_at?: string;
+  name_split_needed?: boolean;
+  correction_requests?: CorrectionRequest[];
+  [key: string]: unknown;
+};
+
 export type Member = {
   /** auth.users.id と同一値（PK 兼 FK）。 */
   id: MemberId;
@@ -177,8 +211,8 @@ export type Member = {
   phone: string | null;
   experience_level: ExperienceLevel;
   role: MemberRole;
-  /** 拡張属性。空オブジェクトが既定値。 */
-  profile: Record<string, unknown>;
+  /** 拡張属性。空オブジェクトが既定値。認知済キーは MemberProfile を参照。 */
+  profile: MemberProfile;
   created_at: string;
   updated_at: string;
 };
