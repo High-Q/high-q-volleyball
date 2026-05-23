@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Button } from "@high-q/ui";
 import { useAuthSession } from "@/features/auth";
@@ -71,30 +71,6 @@ function focusLevelSection(): void {
   });
 }
 
-onMounted(() => {
-  void load();
-
-  // #296: ?edit=<field> クエリで対応する編集モーダルを自動起動
-  const raw = route.query.edit;
-  const value = typeof raw === "string" ? raw : null;
-  if (value === "experienceLevel") {
-    // experience_level は LEVEL セクションが inline 配置のためモーダルではなくスクロール + ハイライト
-    focusLevelSection();
-    // クエリは消費する
-    const { edit: _e, ...rest } = route.query;
-    void router.replace({ query: rest });
-  } else if (
-    value !== null &&
-    (SUPPORTED_EDIT_FIELDS as ReadonlyArray<string>).includes(value)
-  ) {
-    editField.value = value as EditField;
-  }
-  // experience_level は LEVEL セクションへスクロールでも別経路（hash 由来）でも受ける
-  if (route.hash === "#profile-level-section") {
-    focusLevelSection();
-  }
-});
-
 type EditField = "displayName" | "nickname" | "email" | "phone" | "birthday";
 const SUPPORTED_EDIT_FIELDS: ReadonlyArray<EditField> = [
   "displayName",
@@ -106,17 +82,62 @@ const SUPPORTED_EDIT_FIELDS: ReadonlyArray<EditField> = [
 
 const editField = ref<EditField | null>(null);
 
+function clearEditQuery(): void {
+  if (route.query.edit === undefined) return;
+  const { edit: _edit, ...rest } = route.query;
+  void router.replace({ query: rest });
+}
+
+// #296: ?edit=<field> クエリを単一の真の値として watch し、editField に同期する。
+// この watch は immediate=true で初回マウント時の状態も拾うため、onMounted では
+// load() のみを呼べばよい。
+//   - パネルから「修正する」→ router.push(?edit=birthday) → watch 発火 → モーダル開く
+//   - モーダルキャンセル → closeEdit() で query 削除 → watch 発火 → editField=null
+//   - 同じページで再度「修正する」→ query 再追加 → watch 発火 → モーダル再オープン
+watch(
+  () => route.query.edit,
+  (raw) => {
+    const value = typeof raw === "string" ? raw : null;
+    if (value === "experienceLevel") {
+      focusLevelSection();
+      clearEditQuery();
+      editField.value = null;
+      return;
+    }
+    if (
+      value !== null &&
+      (SUPPORTED_EDIT_FIELDS as ReadonlyArray<string>).includes(value)
+    ) {
+      editField.value = value as EditField;
+    } else {
+      editField.value = null;
+    }
+  },
+  { immediate: true },
+);
+
+onMounted(() => {
+  void load();
+  // hash 由来で LEVEL セクションへスクロールする旧経路も受ける
+  if (route.hash === "#profile-level-section") {
+    focusLevelSection();
+  }
+});
+
 function onEditAccount(field: EditField): void {
-  editField.value = field;
+  // ACCOUNT セクションのインライン編集経路。URL にも反映してパネル経由と挙動を統一する。
+  if (route.query.edit === field) {
+    editField.value = field; // 同 query で連続クリックされたら watch 走らないので明示セット
+    return;
+  }
+  void router.replace({ query: { ...route.query, edit: field } });
 }
 
 function closeEdit(): void {
+  // editField は watch (?edit クエリ削除) 経由で null になる
+  clearEditQuery();
+  // 既に query が消えている場合（パネル外経路など）に備え、念のため明示クリア
   editField.value = null;
-  // #296: ?edit= クエリは消費 (戻る/進む 操作で同モーダルを再起動できる挙動は維持しない)
-  if (route.query.edit !== undefined) {
-    const { edit: _edit, ...rest } = route.query;
-    void router.replace({ query: rest });
-  }
 }
 
 function onAccountSaved(): void {
