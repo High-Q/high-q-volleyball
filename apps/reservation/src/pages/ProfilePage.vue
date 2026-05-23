@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { Button } from "@high-q/ui";
 import { useAuthSession } from "@/features/auth";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
@@ -8,6 +9,7 @@ import { LevelEditSection } from "@/features/profile-level-edit";
 import { StatsSection } from "@/features/profile-stats";
 import {
   AccountSection,
+  BirthdayEditDialog,
   DisplayNameEditDialog,
   NicknameEditDialog,
   PhoneEditDialog,
@@ -16,6 +18,7 @@ import {
 import { SignOutButton } from "@/features/profile-sign-out";
 import { AccountDeletionSection } from "@/features/account-deletion";
 import { AppFooter } from "@/widgets/app-footer";
+import { CorrectionRequestPanel } from "@/widgets/correction-request-panel";
 import {
   fetchMyReservations,
   type MyReservationItem,
@@ -23,6 +26,8 @@ import {
 
 const session = useAuthSession();
 const member = computed(() => session.member.value);
+const route = useRoute();
+const router = useRouter();
 
 const reservations = ref<MyReservationItem[]>([]);
 const loading = ref<boolean>(true);
@@ -47,18 +52,91 @@ async function load(): Promise<void> {
   }
 }
 
-onMounted(() => {
-  void load();
-});
+const levelSectionEl = ref<HTMLDivElement | null>(null);
+const levelHighlighted = ref<boolean>(false);
+const levelHighlightClass = computed(() =>
+  levelHighlighted.value ? "ring-2 ring-accent ring-offset-2" : "",
+);
+let levelHighlightTimer: ReturnType<typeof setTimeout> | null = null;
 
-type EditField = "displayName" | "nickname" | "email" | "phone";
+function focusLevelSection(): void {
+  // 次の paint で scroll + highlight を行う (要素がマウント済前提)
+  requestAnimationFrame(() => {
+    levelSectionEl.value?.scrollIntoView({ behavior: "smooth", block: "center" });
+    levelHighlighted.value = true;
+    if (levelHighlightTimer !== null) clearTimeout(levelHighlightTimer);
+    levelHighlightTimer = setTimeout(() => {
+      levelHighlighted.value = false;
+    }, 2500);
+  });
+}
+
+type EditField = "displayName" | "nickname" | "email" | "phone" | "birthday";
+const SUPPORTED_EDIT_FIELDS: ReadonlyArray<EditField> = [
+  "displayName",
+  "nickname",
+  "email",
+  "phone",
+  "birthday",
+];
+
 const editField = ref<EditField | null>(null);
 
+function clearEditQuery(): void {
+  if (route.query.edit === undefined) return;
+  const { edit: _edit, ...rest } = route.query;
+  void router.replace({ query: rest });
+}
+
+// #296: ?edit=<field> クエリを単一の真の値として watch し、editField に同期する。
+// この watch は immediate=true で初回マウント時の状態も拾うため、onMounted では
+// load() のみを呼べばよい。
+//   - パネルから「修正する」→ router.push(?edit=birthday) → watch 発火 → モーダル開く
+//   - モーダルキャンセル → closeEdit() で query 削除 → watch 発火 → editField=null
+//   - 同じページで再度「修正する」→ query 再追加 → watch 発火 → モーダル再オープン
+watch(
+  () => route.query.edit,
+  (raw) => {
+    const value = typeof raw === "string" ? raw : null;
+    if (value === "experienceLevel") {
+      focusLevelSection();
+      clearEditQuery();
+      editField.value = null;
+      return;
+    }
+    if (
+      value !== null &&
+      (SUPPORTED_EDIT_FIELDS as ReadonlyArray<string>).includes(value)
+    ) {
+      editField.value = value as EditField;
+    } else {
+      editField.value = null;
+    }
+  },
+  { immediate: true },
+);
+
+onMounted(() => {
+  void load();
+  // hash 由来で LEVEL セクションへスクロールする旧経路も受ける
+  if (route.hash === "#profile-level-section") {
+    focusLevelSection();
+  }
+});
+
 function onEditAccount(field: EditField): void {
-  editField.value = field;
+  // ACCOUNT セクションのインライン編集経路。URL にも反映してパネル経由と挙動を統一する。
+  if (route.query.edit === field) {
+    editField.value = field; // 同 query で連続クリックされたら watch 走らないので明示セット
+    return;
+  }
+  void router.replace({ query: { ...route.query, edit: field } });
 }
 
 function closeEdit(): void {
+  // editField は watch (?edit クエリ削除) 経由で null になる
+  clearEditQuery();
+  // 既に query が消えている場合（パネル外経路など）に備え、念のため明示クリア
   editField.value = null;
 }
 
@@ -114,6 +192,12 @@ const upcomingReservationCount = computed<number>(() => {
       <template v-else>
         <ProfileHeader :member="member" />
 
+        <CorrectionRequestPanel
+          v-if="member.correctionRequests.length > 0"
+          mode="profile"
+          :requests="member.correctionRequests"
+        />
+
         <p
           v-if="successNotice !== null"
           role="status"
@@ -132,10 +216,17 @@ const upcomingReservationCount = computed<number>(() => {
           <Button variant="outline" size="sm" type="button" @click="load">再試行</Button>
         </div>
 
-        <LevelEditSection
-          :member-id="member.id"
-          :initial-level="member.experienceLevel"
-        />
+        <div
+          id="profile-level-section"
+          ref="levelSectionEl"
+          class="rounded-hq-lg transition-colors duration-700"
+          :class="levelHighlightClass"
+        >
+          <LevelEditSection
+            :member-id="member.id"
+            :initial-level="member.experienceLevel"
+          />
+        </div>
 
         <AccountSection :member="member" @edit="onEditAccount" />
 
@@ -178,6 +269,13 @@ const upcomingReservationCount = computed<number>(() => {
         :open="editField === 'phone'"
         :member-id="member.id"
         :initial-value="member.phone"
+        @update:open="(v) => (v ? null : closeEdit())"
+        @saved="onAccountSaved"
+      />
+      <BirthdayEditDialog
+        :open="editField === 'birthday'"
+        :member-id="member.id"
+        :initial-value="member.birthday"
         @update:open="(v) => (v ? null : closeEdit())"
         @saved="onAccountSaved"
       />

@@ -9,6 +9,7 @@ const baseMember: Member = {
   firstName: "user",
   displayName: "test user",
   nickname: null,
+  correctionRequests: [],
   birthday: "1995-03-15",
   phone: "090-1234-5678",
   experienceLevel: "beginner",

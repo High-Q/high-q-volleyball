@@ -46,9 +46,16 @@ void fields; // 拡張ポイント、現状未使用
         </h2>
         <p class="font-mono text-xs text-muted">{{ member.email }}</p>
       </div>
-      <Badge :tone="EXPERIENCE_TONE[member.experience_level]">
-        {{ EXPERIENCE_LABEL[member.experience_level] }}
-      </Badge>
+      <div class="flex flex-wrap items-center justify-end gap-hq-2">
+        <Badge :tone="EXPERIENCE_TONE[member.experience_level]">
+          {{ EXPERIENCE_LABEL[member.experience_level] }}
+        </Badge>
+        <Badge
+          v-if="member.correction_request_count > 0"
+          tone="warn"
+          data-testid="header-correction-badge"
+        >修正依頼 {{ member.correction_request_count }}</Badge>
+      </div>
     </div>
 
     <dl class="grid grid-cols-3 gap-hq-3 rounded-hq-sm bg-paper-warm p-hq-3">

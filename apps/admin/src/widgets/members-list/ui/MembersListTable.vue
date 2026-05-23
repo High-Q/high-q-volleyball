@@ -186,6 +186,11 @@ function onRowKeyDown(memberId: string, event: KeyboardEvent): void {
               {{ row.__initial }}
             </span>
             <span class="font-medium">{{ row.display_name }}</span>
+            <Badge
+              v-if="row.correction_request_count > 0"
+              tone="warn"
+              data-testid="correction-badge"
+            >修正依頼 {{ row.correction_request_count }}</Badge>
           </span>
         </TableCell>
         <TableCell class="font-mono text-xs text-muted whitespace-nowrap">

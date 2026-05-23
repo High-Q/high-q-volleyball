@@ -1,4 +1,11 @@
-import { type Result, ok, err } from "@high-q/shared";
+import {
+  type Result,
+  ok,
+  err,
+  type CorrectionRequest,
+  type MemberProfile,
+  getCorrectionRequests,
+} from "@high-q/shared";
 import type { MemberId } from "@high-q/shared";
 import { getSupabase } from "@/shared/api/supabase";
 import type {
@@ -88,7 +95,7 @@ export async function fetchMembersList(
     let query = supabase
       .from("member_list_view")
       .select(
-        "id, display_name, email, experience_level, admin_note, created_at, first_attended_at, attended_count, last_attended_at",
+        "id, display_name, email, experience_level, admin_note, created_at, first_attended_at, attended_count, last_attended_at, correction_request_count",
         { count: "exact" },
       );
 
@@ -278,7 +285,7 @@ export async function fetchMemberListRowById(
     const { data, error } = await supabase
       .from("member_list_view")
       .select(
-        "id, display_name, email, experience_level, admin_note, created_at, first_attended_at, attended_count, last_attended_at",
+        "id, display_name, email, experience_level, admin_note, created_at, first_attended_at, attended_count, last_attended_at, correction_request_count",
       )
       .eq("id", memberId as unknown as string)
       .maybeSingle();
@@ -286,6 +293,41 @@ export async function fetchMemberListRowById(
       return err({ code: classifyError(error), message: error.message });
     }
     return ok((data ?? null) as MemberListRow | null);
+  } catch (cause) {
+    if (cause instanceof TypeError) {
+      return err({ code: "NETWORK_ERROR", message: cause.message });
+    }
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return err({ code: "SERVER_ERROR", message });
+  }
+}
+
+// =============================================================================
+// fetchMemberCorrectionRequests
+// =============================================================================
+
+/**
+ * #296 詳細 sheet の修正依頼セクションが、対象 member の未対応 correction_requests
+ * 一覧を取得するための関数。`members.profile->correction_requests` jsonb 配列を返す。
+ * member_list_view は count のみを返すため、実エントリ取得には別経路を取る。
+ */
+export async function fetchMemberCorrectionRequests(
+  memberId: MemberId,
+): Promise<Result<CorrectionRequest[], FetchError>> {
+  const supabase = getSupabase();
+  try {
+    const { data, error } = await supabase
+      .from("members")
+      .select("profile")
+      .eq("id", memberId as unknown as string)
+      .maybeSingle();
+    if (error) {
+      return err({ code: classifyError(error), message: error.message });
+    }
+    if (data === null || data === undefined) {
+      return ok([]);
+    }
+    return ok(getCorrectionRequests((data.profile ?? {}) as MemberProfile));
   } catch (cause) {
     if (cause instanceof TypeError) {
       return err({ code: "NETWORK_ERROR", message: cause.message });

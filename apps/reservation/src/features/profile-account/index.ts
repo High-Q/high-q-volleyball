@@ -8,5 +8,7 @@ export {
   updateMyName,
   updateMyNickname,
   updateMyPhone,
+  updateMyBirthday,
   requestMyEmailChange,
 } from "./api/updateMyAccount";
+export { default as BirthdayEditDialog } from "./ui/BirthdayEditDialog.vue";

@@ -12,6 +12,9 @@ import {
 import { Skeleton } from "@/shared/ui";
 import { AdminNoteEditForm } from "@/features/member-admin-note-edit";
 import { MemberWithdrawalDialog } from "@/features/member-withdrawal";
+import { CorrectionRequestSection } from "@/features/correction-request";
+import { useAuthSession } from "@/features/auth";
+import type { MemberId } from "@high-q/shared";
 import { useMemberDetailSheet } from "../composables/useMemberDetailSheet";
 import MemberDetailHeader from "./MemberDetailHeader.vue";
 import MemberHistoryTable from "./MemberHistoryTable.vue";
@@ -36,9 +39,27 @@ const emit = defineEmits<{
   saved: [memberId: string, note: string | null];
   /** 会員削除成功時に発火。Page から一覧 widget へ行除去を伝搬するため。 */
   withdrawn: [memberId: string];
+  /** #296 修正依頼の件数変化時に発火。Page から一覧 widget のバッジを更新するため。 */
+  correctionChanged: [memberId: string, count: number];
 }>();
 
 const sheet = useMemberDetailSheet();
+const authSession = useAuthSession();
+
+const adminMemberId = computed<MemberId | null>(() => {
+  const uid = authSession.session.value?.user?.id ?? null;
+  return uid === null ? null : (uid as unknown as MemberId);
+});
+
+function onCorrectionChanged(count: number): void {
+  if (sheet.member.value) {
+    emit(
+      "correctionChanged",
+      sheet.member.value.id as unknown as string,
+      count,
+    );
+  }
+}
 
 const isOpen = computed<boolean>(() => sheet.isOpen.value);
 
@@ -163,8 +184,16 @@ function onWithdrawn(): void {
               @saved="onSaved"
             />
 
+            <CorrectionRequestSection
+              v-if="adminMemberId !== null"
+              :key="`correction-${sheet.member.value.id}`"
+              :member-id="sheet.member.value.id"
+              :admin-member-id="adminMemberId"
+              @changed="onCorrectionChanged"
+            />
+
             <section
-              class="space-y-hq-2 border-t border-danger/30 pt-hq-4"
+              class="space-y-hq-2 mt-hq-8 border-t-2 border-danger/30 pt-hq-6"
               aria-labelledby="member-danger-zone-heading"
             >
               <h3

@@ -1,3 +1,5 @@
+import type { CorrectionRequest } from "@high-q/shared";
+
 declare const memberIdBrand: unique symbol;
 
 export type MemberId = string & { readonly [memberIdBrand]: "MemberId" };
@@ -9,6 +11,9 @@ export type MemberRole = "member" | "admin";
 export type MemberProfile = {
   signup_completed?: boolean;
   terms_agreed_at?: string;
+  name_split_needed?: boolean;
+  /** #296 admin による未対応の修正依頼一覧。 */
+  correction_requests?: CorrectionRequest[];
   [key: string]: unknown;
 };
 
@@ -26,6 +31,8 @@ export type Member = {
   experienceLevel: ExperienceLevel;
   role: MemberRole;
   profile: MemberProfile;
+  /** #296 未対応の修正依頼。profile.correction_requests のシュガー。空配列で正規化。 */
+  correctionRequests: CorrectionRequest[];
   createdAt: string;
   updatedAt: string;
 };

@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useRoute, type RouteLocationRaw } from "vue-router";
 import { useBottomTabBarVisible } from "@/shared/lib/useBottomTabBarVisible";
+import { useAuthSession } from "@/features/auth";
 
 /**
  * 会員サイトの Bottom Tab Bar (ホーム / 履歴 / プロフィール)。
@@ -12,12 +13,18 @@ import { useBottomTabBarVisible } from "@/shared/lib/useBottomTabBarVisible";
  *
  * - position: fixed で常に画面下部に固定 (スクロールしても見える)
  * - 表示条件は useBottomTabBarVisible() に集約 (App.vue の pb 切替と共通化)
+ * - #296: プロフィールタブに correctionRequests 件数バッジ表示
  */
 
 type TabKey = "home" | "history" | "profile";
 
 const route = useRoute();
 const isVisible = useBottomTabBarVisible();
+const session = useAuthSession();
+
+const profileBadgeCount = computed<number>(
+  () => session.member.value?.correctionRequests.length ?? 0,
+);
 
 const activeTab = computed<TabKey | null>(() => {
   const path = route.path;
@@ -88,21 +95,28 @@ const TABS: ReadonlyArray<Tab> = [
         <circle cx="12" cy="12" r="9" />
         <path d="M12 7v5l3 2" />
       </svg>
-      <svg
-        v-else
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        :stroke-width="activeTab === 'profile' ? 1.7 : 1.4"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="9" r="3.5" />
-        <path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" />
-      </svg>
+      <span v-else class="relative">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          :stroke-width="activeTab === 'profile' ? 1.7 : 1.4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="9" r="3.5" />
+          <path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" />
+        </svg>
+        <span
+          v-if="tab.key === 'profile' && profileBadgeCount > 0"
+          class="absolute -top-1 -right-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-medium text-paper ring-2 ring-paper"
+          data-testid="profile-tab-correction-badge"
+          :aria-label="`未対応 ${profileBadgeCount} 件`"
+        >{{ profileBadgeCount }}</span>
+      </span>
       <span
         class="font-jp text-xs"
         style="letter-spacing: 0.05em;"

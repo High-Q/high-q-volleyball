@@ -7,7 +7,7 @@ TBD - created by archiving change admin-members-list-screen. Update Purpose afte
 
 `apps/admin` の `/members` 画面は、以下の列を持つ DataTable で会員を一覧表示しなければならない（SHALL）:
 
-1. **名前** — `members.display_name`。先頭文字のアバター丸 + 氏名を横並び表示
+1. **名前** — `members.display_name`。先頭文字のアバター丸 + 氏名を横並び表示。修正依頼が 1 件以上ある会員は **氏名の横に「修正依頼 N」バッジ**（N は `correction_request_count`）を MUST 表示する（warning tone の小さい chip）
 2. **メール** — `members.email`。等幅フォント・muted トーン
 3. **経験** — `members.experience_level` を `初回`（beginner）/ `中級`（intermediate）/ `経験者`（experienced）に翻訳した Badge。tone は `experienced = success` / `intermediate = accent` / `beginner = neutral`
 4. **初回参加** — `member_list_view.first_attended_at` を `YYYY/MM/DD` 形式で表示。NULL（未参加）の場合は `—`
@@ -36,6 +36,14 @@ TBD - created by archiving change admin-members-list-screen. Update Purpose afte
 #### Scenario: メモ長文のプレビュー
 - **WHEN** `admin_note` が 100 文字の値の会員を描画
 - **THEN** メモセルは先頭 40 文字 + `…` で表示される（行を超えた省略）
+
+#### Scenario: 修正依頼バッジの表示
+- **WHEN** `correction_request_count = 2` の会員行を描画
+- **THEN** 氏名セル内に「修正依頼 2」の warning tone バッジが表示される
+
+#### Scenario: 修正依頼ゼロでバッジなし
+- **WHEN** `correction_request_count = 0` の会員行を描画
+- **THEN** 氏名セルにバッジは表示されない
 
 ### Requirement: フィルタ・検索・ソート
 
@@ -131,6 +139,7 @@ TBD - created by archiving change admin-members-list-screen. Update Purpose afte
 - 会員基本情報（氏名 / メール / 経験レベル / 生年月日 / 電話 / 初回参加日 / 累計参加回数 / 最終参加日）
 - 参加履歴テーブル（`member_history_view` から member_id でフィルタ取得）
 - 運営メモ編集フォーム（textarea、最大 500 文字、改行可、保存ボタン）
+- **修正依頼セクション** — 当該会員の未対応 `correction_requests` 一覧を表示し、新規作成 / 取り下げ操作を行う。詳細は `member-correction-requests` capability「admin 詳細 sheet の修正依頼セクション」を参照
 
 sheet の開閉状態は URL クエリ `?detail=:id` で同期 SHALL し、ブラウザ戻る/進む/リロードで復元される。Esc キー / 背景クリック / 閉じるボタンで `?detail=` がクリアされ sheet が閉じる。
 
@@ -157,6 +166,10 @@ sheet の開閉状態は URL クエリ `?detail=:id` で同期 SHALL し、ブ�
 #### Scenario: ブラウザ戻るで閉じる
 - **WHEN** sheet 開いた状態でブラウザの戻るボタン
 - **THEN** sheet が閉じ、一覧画面に戻る（フィルタ・ページネーション状態は保持）
+
+#### Scenario: 修正依頼セクションの表示
+- **WHEN** 修正依頼 2 件を持つ会員の詳細 sheet を開く
+- **THEN** 運営メモ編集フォームの下（または横）に修正依頼セクションが描画され、2 件の未対応エントリと「修正依頼を作成」ボタンが見える
 
 ### Requirement: 詳細 sheet の参加履歴表示
 

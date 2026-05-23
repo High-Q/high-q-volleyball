@@ -17,6 +17,7 @@ export {
   fetchMembersSummary,
   fetchMemberHistory,
   fetchMemberListRowById,
+  fetchMemberCorrectionRequests,
   updateMemberAdminNote,
   type ExperienceFilter,
   type AttendedRange,
