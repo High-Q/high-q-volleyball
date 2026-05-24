@@ -37,13 +37,13 @@
 
 - プラン: **Free** (#269 / memory feedback_cost_zero_default 準拠、費用一切かけない方針)
 - **Supabase 自動バックアップは存在しない**。商用稼働中の DB 損失リスクは Free プランの構造的弱点
-- 補完策: **GitHub Actions による週次自動 pg_dump (#299 で実装) + 重要 migration 適用前の手動 pg_dump (§ 3)** の 2 段構えで合理的水準を確保
+- 補完策: **GitHub Actions による週次自動 pg_dump (#299 で実装済み、`.github/workflows/backup-prd.yml`) + 重要 migration 適用前の手動 pg_dump (§ 3)** の 2 段構えで合理的水準を確保
 - 月次確認: 翔太郎くんが GitHub Actions の `backup-prd.yml` ワークフロー実行履歴を目視し、直近 4 週分の pg_dump が連続取得されていることを確認。失敗があれば即対応
 
 ### 1.3 Storage バケット (`identity-documents`) のバックアップに関する現状リスク
 
 - Supabase Free プランは DB 自動バックアップも非対応であり、Storage バケット (本人確認書類画像) も当然 **自動バックアップ対象外**
-- #299 で実装する GitHub Actions 自動 pg_dump も Postgres DB のみが対象で、Storage バケットは別計画が必要
+- #299 で実装した GitHub Actions 自動 pg_dump (`backup-prd.yml`) も Postgres DB のみが対象で、Storage バケットは別計画が必要
 - 本人確認書類画像 (`identity-documents` バケット) が損失した場合の業務影響:
   - 会員からの再提出依頼が必要 (会員体験の毀損)
   - 提出済画像の Storage path は DB の `identity_documents` テーブルに記録されているが、Storage 実体が無いため画面表示不可
@@ -80,7 +80,7 @@
 
 ## 3. 重要 migration 適用前の手動 pg_dump 取得手順
 
-カテゴリ 2 (要 rollback SQL) または カテゴリ 3 (rollback 不可) の migration を prd に適用する直前に、保険として pg_dump で DB 全体のスナップショットを取得する。Free プランは Supabase 自動バックアップが存在せず、GitHub Actions 自動 pg_dump (#299) も週次のため、適用直前スナップショットでカバーする。
+カテゴリ 2 (要 rollback SQL) または カテゴリ 3 (rollback 不可) の migration を prd に適用する直前に、保険として pg_dump で DB 全体のスナップショットを取得する。Free プランは Supabase 自動バックアップが存在せず、GitHub Actions 自動 pg_dump (#299, `backup-prd.yml`) も週次のため、適用直前スナップショットでカバーする。手動取得手順の代わりに GitHub Actions UI から `backup-prd.yml` の `workflow_dispatch` (Run workflow ボタン) を起動して直前スナップショットを取得することも可能。
 
 ### 3.1 取得タイミング
 
@@ -204,7 +204,7 @@ dev プロジェクトに prd pg_dump を restore して動作確認したい場
 
 ### 6.1 手順
 
-1. GitHub Actions の `backup-prd.yml` (#299 で導入) の最新 run を開き、Artifacts から prd pg_dump をダウンロード
+1. GitHub Actions の `backup-prd.yml` (#299) の最新 run を開き、Artifacts から prd pg_dump をダウンロード
 2. もしくは翔太郎くんローカルの手動 pg_dump (§ 3) ファイルを使用
 3. dev プロジェクトの DB を一旦リセット (`supabase db reset --linked` 等、dev データ消失を許容する場合のみ)
 4. ダウンロードした SQL ダンプを dev に restore (`psql` または Supabase Dashboard の SQL Editor)
@@ -236,15 +236,32 @@ prd で障害が発生した場合の復旧手段を 3 観点で整理する。�
 ### 7.2 DB 層の障害: GitHub Actions 自動 pg_dump からの restore
 
 - 症状: migration 適用後にデータ破損 / アプリエラーが多発
-- 対応 (Free プラン、#299 のワークフロー導入後):
-  1. GitHub Actions の `backup-prd.yml` の run 一覧から、障害発生直前の正常な run を選ぶ
-  2. Artifacts から prd pg_dump をダウンロード (90 日以内のものから選択)
-  3. 復元前に **必ず dev で動作確認**: dev に restore してアプリが正常動作することを確認
-  4. prd への restore は psql で慎重に実施 (上書き前に現在の prd を § 3 の手動 pg_dump で別途バックアップ)
-  5. 復旧後にアプリ動作確認
+- 前提: 本 SOP 公開後、`.github/workflows/backup-prd.yml` (#299) が週次自動 pg_dump を取得し GitHub Artifacts に 90 日保持している。dump は `public` + `auth` の 2 スキーマを含み、`auth.users` と `members` の FK 整合を保ったまま restore 可能
+- 対応 (Free プラン、GitHub Actions Artifacts からの restore 手順):
+  1. **dump の取得**:
+     - GitHub リポジトリ → "Actions" タブ → 左ペインから `backup prd Supabase (weekly pg_dump)` ワークフローを選択
+     - run 一覧から障害発生直前の正常 run を開く (90 日以内のものから選択)
+     - run ページ下部の "Artifacts" セクションで `prd-backup-<YYYYMMDD_HHMMSS>` を翔太郎くんローカル端末にダウンロード (zip 形式で配布される)
+     - ダウンロードした zip を展開し `prd_<YYYYMMDD_HHMMSS>.sql` を取り出す
+  2. **dev で動作確認 (必須)**:
+     - 取り出した dump を翔太郎くん dev 端末で `~/Documents/high-q-backups/restore-staging/` 等に一時配置
+     - dev プロジェクトを `supabase db reset --linked` 等で初期化 (dev データ消失を許容)
+     - `psql` または Supabase Dashboard の SQL Editor で dump を dev に restore
+     - dev URL (PR Preview または `pnpm dev`) でアプリ起動、会員ジャーニーが正常動作することを確認
+  3. **prd 上書き前の保険スナップショット**:
+     - 上書き直前の prd 状態を § 3 の手動 pg_dump 手順で別途バックアップ取得 (`prd_pre_<YYYYMMDD_HHMMSS>_emergency_restore.sql`)
+     - 上書き失敗時のロールバック手段として保持
+  4. **prd への restore**:
+     - psql で慎重に実施。Supabase Dashboard 経由 SQL Editor は大規模 dump に不向きなため psql を推奨
+     - 既存スキーマ削除 → dump 流し込みの順序、トランザクション境界に注意
+  5. **復旧後のアプリ動作確認**: 管理画面・予約サイト双方で会員データ・予約データ・本人確認書類画像参照が正常動作することを確認
+  6. **ダウンロードした dump の事後処理**: 復旧完了後、ローカル端末上の dump ファイル (取り出した `.sql` および展開元 zip) は速やかに削除。**GitHub / Slack / メール / Claude へのチャットペースト等で外部送信しない MUST** (§ 3.3 と同じアクセス制御原則)
 - 対応 (Pro プラン昇格後): Supabase PITR で障害発生直前の任意時点に復旧可能 (RPO 短縮)
 - 所要時間: 数十分〜数時間 (DB サイズに依存)
-- **重要な制約**: GitHub Actions 自動 pg_dump は週次のため、最大 7 日分の最新データが失われるリスクあり (RPO ≦ 7 日)。重要 migration 適用前は § 3 の手動 pg_dump を直前スナップショットとして取得し、RPO を短縮する
+- **重要な制約**:
+  - GitHub Actions 自動 pg_dump は週次のため、最大 7 日分の最新データが失われるリスクあり (RPO ≦ 7 日)。重要 migration 適用前は § 3 の手動 pg_dump を直前スナップショットとして取得し、RPO を短縮する
+  - GitHub Artifacts の保持期間は 90 日。90 日経過した backup は GitHub によって自動削除されるため復旧不可。90 日以上前の状態への復旧が必要な障害は § 3 の翔太郎くんローカル手動 pg_dump (Time Machine バックアップ対象) からのみ復旧可能
+- **アクセス権**: GitHub Artifacts は private リポジトリの Repo Read 権限以上の Collaborator のみダウンロード可能。High Q リポジトリは private で翔太郎くん 1 人 Owner のため、dump への実質アクセスは翔太郎くんのみ。Collaborator 追加時は本人確認書類画像 / 会員データ流出リスクとして再評価必須
 
 ### 7.3 手動 rollback SQL 適用 (カテゴリ 2 migration の場合のみ)
 
@@ -322,9 +339,9 @@ prd で障害が発生した場合の復旧手段を 3 観点で整理する。�
 
 ## 10. 既存・別 Issue で扱う項目
 
-### 10.1 本 PR と並行で別 Issue 化済み
+### 10.1 本 SOP 公開後に Apply 完了済み
 
-- **#299 GitHub Actions による prd Supabase 定期 pg_dump 自動化 (Free プラン補完)**: 本 SOP の柱となる週次自動 pg_dump 実装。本 PR ship 後に Apply 開始
+- **#299 GitHub Actions による prd Supabase 定期 pg_dump 自動化 (Free プラン補完)**: 本 SOP の柱となる週次自動 pg_dump 実装。`.github/workflows/backup-prd.yml` として運用中 (cron `0 18 * * 6` UTC = 毎週日曜 03:00 JST + workflow_dispatch 手動実行対応、Artifacts 保持 90 日)。復旧手順は § 7.2 を参照
 
 ### 10.2 MVP3 で検討する別 Issue
 
@@ -353,3 +370,4 @@ prd で障害が発生した場合の復旧手段を 3 観点で整理する。�
 | 日付 | 改訂内容 | 改訂者 |
 |---|---|---|
 | 2026-05-24 | 初版作成。Issue #269 対応として Supabase 自動バックアップ仕様 / Pro プラン昇格判断 / 重要 migration 適用前 pg_dump 手順 / migration 3 分類運用ルール / 既存 21 件をカテゴリ 3 一括宣言 / 復旧手順 / 障害時復旧フロー / 漏洩時 SOP 連携 / 法令準拠根拠 / MVP3 オフロード項目 を明文化 | 翔太郎くん / レム |
+| 2026-05-25 | Issue #299 対応として GitHub Actions 週次自動 pg_dump ワークフロー (`backup-prd.yml`) を実装、§ 7.2 に Artifacts ダウンロードからの restore 詳細手順 (前提・90 日制約・アクセス権)・§ 10.1 を「実装済み」表現に更新、SOP 全体の「導入予定」未来形表現を「実装済み・運用中」現在形に変換 | 翔太郎くん / レム |
