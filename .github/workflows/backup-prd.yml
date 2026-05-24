@@ -1,0 +1,125 @@
+name: backup prd Supabase (weekly pg_dump)
+
+on:
+  schedule:
+    # 毎週日曜 03:00 JST = UTC 土曜 18:00 (cron は UTC)
+    # 日本のイベントは土曜開催が中心。土曜の DB 変更を直近 backup に取り込むタイミング
+    - cron: "0 18 * * 6"
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "手動実行の理由 (例: 重要 migration 適用前スナップショット取得)"
+        required: false
+        default: "manual dispatch"
+
+concurrency:
+  group: backup-prd-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: dump prd Supabase to GitHub Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Enable corepack (use packageManager from root package.json)
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Restore pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install dependencies (offline if cache hit)
+        run: pnpm install --frozen-lockfile
+
+      - name: Link to prd Supabase project
+        run: pnpm exec supabase link --project-ref "${{ secrets.SUPABASE_PRD_PROJECT_REF }}"
+
+      - name: Compute dump file name and timestamp
+        id: meta
+        run: |
+          TS="$(date -u +%Y%m%d_%H%M%S)"
+          DUMP_FILE="prd_${TS}.sql"
+          ARTIFACT_NAME="prd-backup-${TS}"
+          {
+            echo "timestamp=${TS}"
+            echo "dump_file=${DUMP_FILE}"
+            echo "artifact_name=${ARTIFACT_NAME}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Dump prd Supabase (public + auth schemas, schema + data)
+        run: |
+          pnpm exec supabase db dump \
+            --linked \
+            --schema public \
+            --schema auth \
+            -f "${{ steps.meta.outputs.dump_file }}"
+
+      - name: Inspect dump file metadata (no content leak)
+        id: inspect
+        run: |
+          DUMP_FILE="${{ steps.meta.outputs.dump_file }}"
+          SIZE_BYTES=$(wc -c < "$DUMP_FILE")
+          SIZE_HUMAN=$(du -h "$DUMP_FILE" | awk '{print $1}')
+          LINE_COUNT=$(wc -l < "$DUMP_FILE")
+          {
+            echo "size_bytes=${SIZE_BYTES}"
+            echo "size_human=${SIZE_HUMAN}"
+            echo "line_count=${LINE_COUNT}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload dump to GitHub Artifacts (retention 90 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.artifact_name }}
+          path: ${{ steps.meta.outputs.dump_file }}
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "### prd Supabase pg_dump result"
+            echo ""
+            echo "- Status: ${{ job.status }}"
+            echo "- Trigger: ${{ github.event_name }}"
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "- Reason: ${{ github.event.inputs.reason }}"
+            fi
+            echo "- Commit SHA: \`${{ github.sha }}\`"
+            echo "- Ref: \`${{ github.ref }}\`"
+            echo "- Dump file: \`${{ steps.meta.outputs.dump_file }}\`"
+            echo "- Artifact: \`${{ steps.meta.outputs.artifact_name }}\` (retention 90 days)"
+            echo "- Size: ${{ steps.inspect.outputs.size_human }} (${{ steps.inspect.outputs.size_bytes }} bytes)"
+            echo "- Line count: ${{ steps.inspect.outputs.line_count }}"
+            echo ""
+            echo "### Schemas included"
+            echo ""
+            echo "- \`public\` (アプリケーション全データ: members / reservations / identity_documents / events / venues 等)"
+            echo "- \`auth\` (Supabase Auth: auth.users 等、members の FK 整合確保)"
+            echo ""
+            echo "### Restore"
+            echo ""
+            echo "復旧手順は \`docs/06-品質・セキュリティ/14-バックアップ復旧SOP.md\` § 7.2 を参照。"
+          } >> "$GITHUB_STEP_SUMMARY"
