@@ -236,26 +236,33 @@ prd で障害が発生した場合の復旧手段を 3 観点で整理する。�
 ### 7.2 DB 層の障害: GitHub Actions 自動 pg_dump からの restore
 
 - 症状: migration 適用後にデータ破損 / アプリエラーが多発
-- 前提: 本 SOP 公開後、`.github/workflows/backup-prd.yml` (#299) が週次自動 pg_dump を取得し GitHub Artifacts に 90 日保持している。dump は `public` + `auth` の 2 スキーマを含み、`auth.users` と `members` の FK 整合を保ったまま restore 可能
+- 前提: 本 SOP 公開後、`.github/workflows/backup-prd.yml` (#299) が週次自動 pg_dump を取得し GitHub Artifacts に 90 日保持している。dump は `public` + `auth` の 2 スキーマを含み、`auth.users` と `members` の FK 整合を保ったまま restore 可能。Artifact は **3 ファイル構成** (schema / data / roles) で、`supabase db dump` のデフォルトが schema-only であるため明示的に data も別ファイルで取得している
+- Artifact ファイル構成 (1 つの `prd-backup-<YYYYMMDD_HHMMSS>` artifact 内に同梱):
+  - `prd_<YYYYMMDD_HHMMSS>_schema.sql`: スキーマ DDL (CREATE TABLE / FUNCTION / TRIGGER / POLICY / GRANT 等)
+  - `prd_<YYYYMMDD_HHMMSS>_data.sql`: COPY 形式のデータ本体 (`public` 全テーブル + `auth.users` 等)。`auth.audit_log_entries` / `flow_state` / `refresh_tokens` / `sessions` / `one_time_tokens` は除外 (session/audit ノイズで復旧目的不要)
+  - `prd_<YYYYMMDD_HHMMSS>_roles.sql`: クラスタロール定義 (`auth.users` の OWNER 再現に必要)
 - 対応 (Free プラン、GitHub Actions Artifacts からの restore 手順):
   1. **dump の取得**:
      - GitHub リポジトリ → "Actions" タブ → 左ペインから `backup prd Supabase (weekly pg_dump)` ワークフローを選択
      - run 一覧から障害発生直前の正常 run を開く (90 日以内のものから選択)
-     - run ページ下部の "Artifacts" セクションで `prd-backup-<YYYYMMDD_HHMMSS>` を翔太郎くんローカル端末にダウンロード (zip 形式で配布される)
-     - ダウンロードした zip を展開し `prd_<YYYYMMDD_HHMMSS>.sql` を取り出す
+     - run ページ下部の "Artifacts" セクションで `prd-backup-<YYYYMMDD_HHMMSS>` を翔太郎くんローカル端末にダウンロード (zip 形式で配布、3 ファイル同梱)
+     - ダウンロードした zip を展開し `_schema.sql` / `_data.sql` / `_roles.sql` の 3 ファイルを取り出す
   2. **dev で動作確認 (必須)**:
-     - 取り出した dump を翔太郎くん dev 端末で `~/Documents/high-q-backups/restore-staging/` 等に一時配置
+     - 取り出した dump 群を翔太郎くん dev 端末で `~/Documents/high-q-backups/restore-staging/` 等に一時配置
      - dev プロジェクトを `supabase db reset --linked` 等で初期化 (dev データ消失を許容)
-     - `psql` または Supabase Dashboard の SQL Editor で dump を dev に restore
+     - 以下の順序で `psql` または Supabase Dashboard の SQL Editor で dev に restore:
+       1. `_roles.sql` (クラスタロール、既存と重複時の `already exists` エラーは無視)
+       2. `_schema.sql` (DDL)
+       3. `_data.sql` (COPY でデータ流し込み)
      - dev URL (PR Preview または `pnpm dev`) でアプリ起動、会員ジャーニーが正常動作することを確認
   3. **prd 上書き前の保険スナップショット**:
      - 上書き直前の prd 状態を § 3 の手動 pg_dump 手順で別途バックアップ取得 (`prd_pre_<YYYYMMDD_HHMMSS>_emergency_restore.sql`)
      - 上書き失敗時のロールバック手段として保持
   4. **prd への restore**:
      - psql で慎重に実施。Supabase Dashboard 経由 SQL Editor は大規模 dump に不向きなため psql を推奨
-     - 既存スキーマ削除 → dump 流し込みの順序、トランザクション境界に注意
+     - 既存スキーマ削除 → roles → schema → data の順序、トランザクション境界に注意
   5. **復旧後のアプリ動作確認**: 管理画面・予約サイト双方で会員データ・予約データ・本人確認書類画像参照が正常動作することを確認
-  6. **ダウンロードした dump の事後処理**: 復旧完了後、ローカル端末上の dump ファイル (取り出した `.sql` および展開元 zip) は速やかに削除。**GitHub / Slack / メール / Claude へのチャットペースト等で外部送信しない MUST** (§ 3.3 と同じアクセス制御原則)
+  6. **ダウンロードした dump の事後処理**: 復旧完了後、ローカル端末上の dump ファイル群 (取り出した `.sql` および展開元 zip) は速やかに削除。**GitHub / Slack / メール / Claude へのチャットペースト等で外部送信しない MUST** (§ 3.3 と同じアクセス制御原則)
 - 対応 (Pro プラン昇格後): Supabase PITR で障害発生直前の任意時点に復旧可能 (RPO 短縮)
 - 所要時間: 数十分〜数時間 (DB サイズに依存)
 - **重要な制約**:
@@ -371,3 +378,4 @@ prd で障害が発生した場合の復旧手段を 3 観点で整理する。�
 |---|---|---|
 | 2026-05-24 | 初版作成。Issue #269 対応として Supabase 自動バックアップ仕様 / Pro プラン昇格判断 / 重要 migration 適用前 pg_dump 手順 / migration 3 分類運用ルール / 既存 21 件をカテゴリ 3 一括宣言 / 復旧手順 / 障害時復旧フロー / 漏洩時 SOP 連携 / 法令準拠根拠 / MVP3 オフロード項目 を明文化 | 翔太郎くん / レム |
 | 2026-05-25 | Issue #299 対応として GitHub Actions 週次自動 pg_dump ワークフロー (`backup-prd.yml`) を実装、§ 7.2 に Artifacts ダウンロードからの restore 詳細手順 (前提・90 日制約・アクセス権)・§ 10.1 を「実装済み」表現に更新、SOP 全体の「導入予定」未来形表現を「実装済み・運用中」現在形に変換 | 翔太郎くん / レム |
+| 2026-05-25 | #299 動作確認で `supabase db dump` がデフォルト schema-only である仕様判明、data が含まれない不具合を発見し fix。ワークフローを schema / data / roles の 3 ダンプ構成に変更、§ 7.2 の restore 手順も roles → schema → data の 3 ステップに更新 | 翔太郎くん / レム |
