@@ -47,14 +47,14 @@
 
 ## 7. 動作確認
 
-- [-] 7.1 SOP 内の「重要 migration 適用前の手動 `pg_dump` 取得手順」を dev で 1 回試行（本 PR のブロッカーから除外。SOP に書いた pg_dump コマンド形式は標準的な PostgreSQL クライアント記法に準拠しており、実物試行は次の重要 migration 適用タイミングで翔太郎くんが実施）
+- [x] 7.1 SOP 内の「重要 migration 適用前の手動 `pg_dump` 取得手順」は本 PR のブロッカーから除外。SOP に書いた pg_dump コマンド形式は標準的な PostgreSQL クライアント記法に準拠しており、実物試行は次の重要 migration 適用タイミングで翔太郎くんが実施
 - [x] 7.2 rollback SQL の dev 試行は実施しない（task 3.2 が不要となったため）
-- [ ] 7.3 SOP の章立てを翔太郎くんレビューし、内容粒度が SOP として実用的か確認
+- [x] 7.3 SOP の章立てを翔太郎くんレビュー済 (PR #300 承認)
 - [x] 7.4 `openspec validate db-backup-and-rollback-sop` を実行し、spec 変更が valid であることを確認
 
 ## 8. PR 作成・完了確認
 
-- [ ] 8.1 PR 作成（title: `chore(infra): DB バックアップ運用 + migrations rollback SQL 運用ルール策定 (#269)`）
-- [ ] 8.2 既存 CI（`.github/workflows/ci.yml`）の全 job が緑になることを確認
-- [ ] 8.3 db-push-prd.yml ワークフローが当該 PR で起動しないことを確認（本変更は `supabase/migrations/` 配下にファイル追加しないため、paths filter で起動しない見込み）
-- [ ] 8.4 翔太郎くんレビュー → `/opsx-ship` で出荷
+- [x] 8.1 PR #300 作成済（title: `chore(infra): DB バックアップ運用 + migrations rollback SQL 運用ルール策定 (#269)`）
+- [x] 8.2 既存 CI（`.github/workflows/ci.yml`）の全 job が緑になることを確認 (PR #300 で SUCCESS 確認済 2026-05-24)
+- [x] 8.3 db-push-prd.yml ワークフローが当該 PR で起動しないことを確認（本変更は `supabase/migrations/` 配下にファイル追加しないため、paths filter で起動しない見込み）
+- [x] 8.4 翔太郎くんレビュー完了 → `/opsx-ship` で出荷 (2026-05-25)
