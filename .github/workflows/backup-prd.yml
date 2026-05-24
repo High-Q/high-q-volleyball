@@ -55,44 +55,83 @@ jobs:
       - name: Link to prd Supabase project
         run: pnpm exec supabase link --project-ref "${{ secrets.SUPABASE_PRD_PROJECT_REF }}"
 
-      - name: Compute dump file name and timestamp
+      - name: Compute dump file names and timestamp
         id: meta
         run: |
           TS="$(date -u +%Y%m%d_%H%M%S)"
-          DUMP_FILE="prd_${TS}.sql"
+          SCHEMA_FILE="prd_${TS}_schema.sql"
+          DATA_FILE="prd_${TS}_data.sql"
+          ROLES_FILE="prd_${TS}_roles.sql"
           ARTIFACT_NAME="prd-backup-${TS}"
           {
             echo "timestamp=${TS}"
-            echo "dump_file=${DUMP_FILE}"
+            echo "schema_file=${SCHEMA_FILE}"
+            echo "data_file=${DATA_FILE}"
+            echo "roles_file=${ROLES_FILE}"
             echo "artifact_name=${ARTIFACT_NAME}"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Dump prd Supabase (public + auth schemas, schema + data)
+      - name: Dump schema (DDL only, public + auth)
         run: |
           pnpm exec supabase db dump \
             --linked \
             --schema public \
             --schema auth \
-            -f "${{ steps.meta.outputs.dump_file }}"
+            -f "${{ steps.meta.outputs.schema_file }}"
+
+      - name: Dump data (COPY format, public + auth, excluding noisy auth audit tables)
+        run: |
+          pnpm exec supabase db dump \
+            --linked \
+            --data-only \
+            --use-copy \
+            --schema public \
+            --schema auth \
+            --exclude 'auth.audit_log_entries' \
+            --exclude 'auth.flow_state' \
+            --exclude 'auth.refresh_tokens' \
+            --exclude 'auth.sessions' \
+            --exclude 'auth.one_time_tokens' \
+            -f "${{ steps.meta.outputs.data_file }}"
+
+      - name: Dump cluster roles (auth.users 復元時に必要なロール定義)
+        run: |
+          pnpm exec supabase db dump \
+            --linked \
+            --role-only \
+            -f "${{ steps.meta.outputs.roles_file }}"
 
       - name: Inspect dump file metadata (no content leak)
         id: inspect
         run: |
-          DUMP_FILE="${{ steps.meta.outputs.dump_file }}"
-          SIZE_BYTES=$(wc -c < "$DUMP_FILE")
-          SIZE_HUMAN=$(du -h "$DUMP_FILE" | awk '{print $1}')
-          LINE_COUNT=$(wc -l < "$DUMP_FILE")
+          SCHEMA_FILE="${{ steps.meta.outputs.schema_file }}"
+          DATA_FILE="${{ steps.meta.outputs.data_file }}"
+          ROLES_FILE="${{ steps.meta.outputs.roles_file }}"
+          SCHEMA_SIZE=$(du -h "$SCHEMA_FILE" | awk '{print $1}')
+          DATA_SIZE=$(du -h "$DATA_FILE" | awk '{print $1}')
+          ROLES_SIZE=$(du -h "$ROLES_FILE" | awk '{print $1}')
+          SCHEMA_LINES=$(wc -l < "$SCHEMA_FILE")
+          DATA_LINES=$(wc -l < "$DATA_FILE")
+          ROLES_LINES=$(wc -l < "$ROLES_FILE")
+          TOTAL_BYTES=$(( $(wc -c < "$SCHEMA_FILE") + $(wc -c < "$DATA_FILE") + $(wc -c < "$ROLES_FILE") ))
           {
-            echo "size_bytes=${SIZE_BYTES}"
-            echo "size_human=${SIZE_HUMAN}"
-            echo "line_count=${LINE_COUNT}"
+            echo "schema_size=${SCHEMA_SIZE}"
+            echo "data_size=${DATA_SIZE}"
+            echo "roles_size=${ROLES_SIZE}"
+            echo "schema_lines=${SCHEMA_LINES}"
+            echo "data_lines=${DATA_LINES}"
+            echo "roles_lines=${ROLES_LINES}"
+            echo "total_bytes=${TOTAL_BYTES}"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Upload dump to GitHub Artifacts (retention 90 days)
+      - name: Upload dump set to GitHub Artifacts (retention 90 days)
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.meta.outputs.artifact_name }}
-          path: ${{ steps.meta.outputs.dump_file }}
+          path: |
+            ${{ steps.meta.outputs.schema_file }}
+            ${{ steps.meta.outputs.data_file }}
+            ${{ steps.meta.outputs.roles_file }}
           retention-days: 90
           if-no-files-found: error
 
@@ -109,17 +148,30 @@ jobs:
             fi
             echo "- Commit SHA: \`${{ github.sha }}\`"
             echo "- Ref: \`${{ github.ref }}\`"
-            echo "- Dump file: \`${{ steps.meta.outputs.dump_file }}\`"
             echo "- Artifact: \`${{ steps.meta.outputs.artifact_name }}\` (retention 90 days)"
-            echo "- Size: ${{ steps.inspect.outputs.size_human }} (${{ steps.inspect.outputs.size_bytes }} bytes)"
-            echo "- Line count: ${{ steps.inspect.outputs.line_count }}"
             echo ""
-            echo "### Schemas included"
+            echo "### Dump files (3 ファイル構成)"
             echo ""
-            echo "- \`public\` (アプリケーション全データ: members / reservations / identity_documents / events / venues 等)"
-            echo "- \`auth\` (Supabase Auth: auth.users 等、members の FK 整合確保)"
+            echo "| ファイル | 内容 | サイズ | 行数 |"
+            echo "|---|---|---|---|"
+            echo "| \`${{ steps.meta.outputs.schema_file }}\` | スキーマ (DDL: CREATE TABLE / FUNCTION / POLICY 等) | ${{ steps.inspect.outputs.schema_size }} | ${{ steps.inspect.outputs.schema_lines }} |"
+            echo "| \`${{ steps.meta.outputs.data_file }}\` | データ (COPY 形式、auth audit/session 系除外) | ${{ steps.inspect.outputs.data_size }} | ${{ steps.inspect.outputs.data_lines }} |"
+            echo "| \`${{ steps.meta.outputs.roles_file }}\` | クラスタロール (auth.users 復元時に必要) | ${{ steps.inspect.outputs.roles_size }} | ${{ steps.inspect.outputs.roles_lines }} |"
             echo ""
-            echo "### Restore"
+            echo "Total bytes: ${{ steps.inspect.outputs.total_bytes }}"
             echo ""
-            echo "復旧手順は \`docs/06-品質・セキュリティ/14-バックアップ復旧SOP.md\` § 7.2 を参照。"
+            echo "### Schemas / Tables included"
+            echo ""
+            echo "- \`public\` 全テーブル (members / reservations / identity_documents / events / venues / signup_pending)"
+            echo "- \`auth.users\` (会員アカウント、members FK 整合確保)"
+            echo "- \`auth\` のその他 OAuth/MFA/identities 関連テーブル"
+            echo "- 除外: \`auth.audit_log_entries\` / \`auth.flow_state\` / \`auth.refresh_tokens\` / \`auth.sessions\` / \`auth.one_time_tokens\` (session/audit ノイズ、復旧目的に不要、サイズ肥大の主因)"
+            echo ""
+            echo "### Restore order"
+            echo ""
+            echo "1. \`<timestamp>_roles.sql\` (クラスタロール、既存と重複時は無視)"
+            echo "2. \`<timestamp>_schema.sql\` (DDL を空 DB に適用)"
+            echo "3. \`<timestamp>_data.sql\` (COPY でデータ流し込み)"
+            echo ""
+            echo "詳細復旧手順は \`docs/06-品質・セキュリティ/14-バックアップ復旧SOP.md\` § 7.2 を参照。"
           } >> "$GITHUB_STEP_SUMMARY"
