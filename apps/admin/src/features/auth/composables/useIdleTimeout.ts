@@ -11,13 +11,14 @@
  *   へ戻ることを確認。確認後は元に戻す（コミットしない）。
  *
  * 関連:
- *   openspec/changes/admin-login-magic-link/specs/admin-auth/spec.md
- *     "JWT 30 分 + idle timeout 15 分" Requirement
- *   openspec/changes/admin-login-magic-link/design.md (D12)
+ *   openspec/specs/admin-auth/spec.md
+ *     "JWT 1 時間 + クライアント側 idle timeout 3 時間" Requirement
+ *   Issue #297: Supabase Auth `inactivity_timeout` は Pro プラン限定のため、
+ *   Free プラン枠でクライアント側 idle 3 時間で代替する設計。
  */
 
 const IDLE_EVENTS = ["mousedown", "keydown", "touchstart", "scroll"] as const;
-const IDLE_LIMIT_MS = 15 * 60 * 1000; // 15 分
+const IDLE_LIMIT_MS = 3 * 60 * 60 * 1000; // 3 時間
 
 export function useIdleTimeout() {
   let onIdleHandler: (() => void) | null = null;
