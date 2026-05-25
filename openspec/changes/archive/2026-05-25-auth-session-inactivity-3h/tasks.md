@@ -17,8 +17,8 @@
 
 ## 4. PR 作成・ユーザー確認
 
-- [ ] 4.1 ブランチ `fix/297-auth-session-inactivity-3h` (既に切替済) に本 change の変更をコミットする (1 PR = 1 コミット可)
-- [ ] 4.2 PR を Issue #297 と紐付けて作成する。本文では「当初の採用方針 A (Supabase `inactivity_timeout`) が Pro プラン限定機能で Free プランでは実装不可だったため、案 B クライアント側 idle 3h に方針転換」した経緯を Test Plan / Summary で明示する
+- [x] 4.1 ブランチ `fix/297-auth-session-inactivity-3h` (既に切替済) に本 change の変更をコミットする (1 PR = 1 コミット可)
+- [x] 4.2 PR を Issue #297 と紐付けて作成する。本文では「当初の採用方針 A (Supabase `inactivity_timeout`) が Pro プラン限定機能で Free プランでは実装不可だったため、案 B クライアント側 idle 3h に方針転換」した経緯を Test Plan / Summary で明示する
 - [ ] 4.3 翔太郎くんの Render PR Preview 確認 OK を待つ (基本動線: admin ログイン → 保護ルート遷移 → ログアウト)
 
 ## 5. /opsx:sync / archive / merge

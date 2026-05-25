@@ -201,22 +201,6 @@ TBD - created by archiving change admin-login-magic-link. Update Purpose after a
 - **WHEN** ユーザーが AAL1 状態のまま
 - **THEN** `is_admin()` RPC は呼ばれず、`useAuthSession.isAdmin` は `null`（未判定）のまま
 
-### Requirement: JWT 30 分 + idle timeout 15 分
-
-セッションの JWT 有効期限は 30 分（1800 秒）SHALL。これは Supabase Dashboard 側の設定だが、コードは `autoRefreshToken: true` により refresh token から自動更新する。さらにクライアント側で **idle timeout 15 分**を MUST 実装する: 最後のユーザー操作（`mousedown` / `keydown` / `touchstart` / `scroll` のいずれか）から 15 分経過で `signOut` を呼ぶ。
-
-#### Scenario: アクティブ操作中はサインアウトされない
-- **WHEN** ユーザーが定期的にクリック・キー入力を行っている
-- **THEN** idle timer がリセットされ続け、サインアウトされない
-
-#### Scenario: 15 分放置で auto signOut
-- **WHEN** ユーザーが 15 分間一切の操作を行わない
-- **THEN** `signOut` が呼ばれ、保護ルートにアクセスすれば `/login` にリダイレクトされる
-
-#### Scenario: JWT 自動更新
-- **WHEN** ユーザーがアクティブな状態で 30 分以上操作を続ける
-- **THEN** Supabase SDK が refresh token から JWT を自動更新し、ユーザーは再ログインを求められない
-
 ### Requirement: TOTP factor 紛失時の運用
 
 `apps/admin` のコード上では TOTP factor 削除機能を SHALL NOT 実装する（オーナーが factor 紛失時にログインできなくなった場合の運用は Supabase Dashboard で factor 削除 → 次回ログインで再 setup）。リカバリーコード生成も MVP1 では実装しない。
@@ -224,4 +208,26 @@ TBD - created by archiving change admin-login-magic-link. Update Purpose after a
 #### Scenario: コードに factor 削除 API が存在しない
 - **WHEN** `apps/admin` のコード全体を grep する
 - **THEN** `mfa.unenroll` の呼び出しが `auth-client.ts` 含めて存在しない
+
+### Requirement: JWT 1 時間 + クライアント側 idle timeout 3 時間
+
+セッションの JWT 有効期限は 1 時間（3600 秒）SHALL とする。これは Supabase Auth の `jwt_expiry` 設定で規定され、クライアントは `autoRefreshToken: true` により refresh token から自動更新する。
+
+加えて、`apps/admin` はクライアント側で **idle timeout 3 時間** を MUST 実装する: 最後のユーザー操作 (`mousedown` / `keydown` / `touchstart` / `scroll` のいずれか) から 3 時間 (10,800,000 ms) 経過で `useAuthSession.signOut()` を呼ぶ。Supabase Auth のサーバ側 `inactivity_timeout` は Pro プラン限定機能のため本 capability では SHALL NOT 依存する (将来 Pro 昇格時にサーバ側移行する change を別途起こす想定)。
+
+#### Scenario: アクティブ操作中はサインアウトされない
+- **WHEN** admin ユーザーが定期的にクリック・キー入力・タッチ・スクロールを行っている
+- **THEN** idle timer がリセットされ続け、サインアウトされない
+
+#### Scenario: 3 時間放置で auto signOut
+- **WHEN** admin ユーザーが 3 時間 (10,800,000 ms) 一切の `mousedown` / `keydown` / `touchstart` / `scroll` イベントを発生させない
+- **THEN** `signOut` が呼ばれ、保護ルートにアクセスすれば `/login` にリダイレクトされる
+
+#### Scenario: JWT 自動更新
+- **WHEN** admin ユーザーがアクティブな状態で 1 時間以上操作を続ける
+- **THEN** Supabase SDK が refresh token から JWT を自動更新し、ユーザーは再ログインを求められない
+
+#### Scenario: クライアント側 idle timer の起動
+- **WHEN** `apps/admin` が起動する
+- **THEN** `main.ts` で `useIdleTimeout()` が `start(() => signOut())` 付きで呼ばれており、document level のイベントリスナーが登録されている
 
