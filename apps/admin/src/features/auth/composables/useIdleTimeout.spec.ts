@@ -34,13 +34,13 @@ describe("useIdleTimeout", () => {
     t.stop();
   });
 
-  it("15 分 (900_000ms) 経過で onIdle が呼ばれる", async () => {
+  it("3 時間 (10_800_000ms) 経過で onIdle が呼ばれる", async () => {
     const onIdle = vi.fn();
     const { useIdleTimeout } = await import("./useIdleTimeout");
     const t = useIdleTimeout();
     t.start(onIdle);
 
-    vi.advanceTimersByTime(900_000 - 1);
+    vi.advanceTimersByTime(10_800_000 - 1);
     expect(onIdle).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(2);
@@ -55,9 +55,9 @@ describe("useIdleTimeout", () => {
     const t = useIdleTimeout();
     t.start(onIdle);
 
-    vi.advanceTimersByTime(800_000);
+    vi.advanceTimersByTime(10_700_000);
     document.dispatchEvent(new Event("mousedown"));
-    vi.advanceTimersByTime(800_000); // ここまでで合計 1_600_000ms だがリセットされたので idle にはなっていない
+    vi.advanceTimersByTime(10_700_000); // ここまでで合計 21_400_000ms だがリセットされたので idle にはなっていない
     expect(onIdle).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(200_000);
@@ -78,7 +78,7 @@ describe("useIdleTimeout", () => {
       expect(removeSpy).toHaveBeenCalledWith(ev, expect.any(Function));
     }
 
-    vi.advanceTimersByTime(2_000_000);
+    vi.advanceTimersByTime(12_000_000);
     expect(onIdle).not.toHaveBeenCalled();
   });
 
@@ -89,7 +89,7 @@ describe("useIdleTimeout", () => {
     t.start(onIdle);
     t.start(onIdle);
 
-    vi.advanceTimersByTime(900_001);
+    vi.advanceTimersByTime(10_800_001);
     expect(onIdle).toHaveBeenCalledTimes(1);
 
     t.stop();
