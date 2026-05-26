@@ -7,11 +7,14 @@ import {
   jstMonth,
   jstWeekday,
 } from "@/shared/lib/jst-calendar";
+import AvailabilityChip from "@/shared/ui/AvailabilityChip.vue";
 
 const WEEKDAY_JA = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
 const props = defineProps<{
   event: EventListItem;
+  /** availability 取得中の間は true (一覧画面側で loading フラグを束ねて渡す) */
+  availabilityLoading?: boolean;
 }>();
 
 const startDate = computed(() => new Date(props.event.startAt));
@@ -64,6 +67,10 @@ const feeLabel = computed(() => formatFee(props.event.fee));
         <span aria-hidden="true"> · </span>
         <span data-testid="event-row-fee">{{ feeLabel }}</span>
       </p>
+      <AvailabilityChip
+        :availability="event.availability"
+        :loading="availabilityLoading"
+      />
     </div>
   </router-link>
 </template>
