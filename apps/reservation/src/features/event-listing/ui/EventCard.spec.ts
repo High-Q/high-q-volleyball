@@ -12,6 +12,7 @@ const stubEvent: EventListItem = {
   venueId: unsafeVenueId("22222222-2222-2222-2222-222222222222"),
   venueName: "亀戸スポーツセンター",
   fee: 1000,
+  availability: null,
 };
 
 const routes = [

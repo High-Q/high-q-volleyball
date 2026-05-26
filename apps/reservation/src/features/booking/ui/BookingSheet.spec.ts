@@ -61,6 +61,7 @@ const sampleEvent: EventDetail = {
   fee: 1000,
   meetingPoint: "正面ロビー",
   mapUrl: "https://maps.example.com/kameido",
+  availability: null,
 };
 
 const member: Member = {

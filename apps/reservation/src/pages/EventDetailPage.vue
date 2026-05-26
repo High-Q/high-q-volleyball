@@ -98,6 +98,7 @@ function goToList(): void {
     <EventStickyCta
       v-if="event !== null"
       :fee="event.fee"
+      :availability="event.availability"
       @proceed="bookingSheetOpen = true"
     />
 

@@ -63,6 +63,7 @@ const eventA: EventListItem = {
   venueId: unsafeVenueId("11111111-1111-1111-1111-111111111111"),
   venueName: "亀戸スポーツセンター",
   fee: 1000,
+  availability: null,
 };
 
 const eventB: EventListItem = {
@@ -73,6 +74,7 @@ const eventB: EventListItem = {
   venueId: unsafeVenueId("11111111-1111-1111-1111-111111111111"),
   venueName: "亀戸スポーツセンター",
   fee: 1000,
+  availability: null,
 };
 
 const reservationOnA: MyReservationItem = {
