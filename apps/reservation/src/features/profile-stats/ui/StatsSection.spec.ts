@@ -26,6 +26,7 @@ function makeItem(
       endAt: startAt,
       fee: null,
       venueName: "亀戸スポーツセンター",
+      availability: null,
     },
   };
 }

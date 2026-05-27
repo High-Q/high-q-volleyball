@@ -5,6 +5,7 @@ import {
   type MyReservationItem,
 } from "@/entities/reservation";
 import { formatCountdownLabel } from "@/widgets/reservation-detail-card";
+import AvailabilityStrip from "@/shared/ui/AvailabilityStrip.vue";
 import {
   jstDay,
   jstHours,
@@ -98,7 +99,17 @@ const reservationNumber = computed(() =>
     </div>
 
     <div
-      class="mt-hq-3 px-hq-5 py-hq-3 border-t border-paper/10 flex items-center gap-hq-3"
+      class="mt-hq-3 px-hq-5 py-hq-3 border-t border-paper/10"
+      data-testid="next-availability-strip"
+    >
+      <AvailabilityStrip
+        :availability="reservation.event.availability"
+        variant="dark"
+      />
+    </div>
+
+    <div
+      class="px-hq-5 py-hq-3 border-t border-paper/10 flex items-center gap-hq-3"
     >
       <span
         class="font-jp text-xs text-paper/85"

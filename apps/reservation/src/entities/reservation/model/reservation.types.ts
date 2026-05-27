@@ -82,6 +82,8 @@ export type MyReservationDetail = {
     endAt: string;
     fee: number | null;
     venueName: string;
+    /** 予約埋まり具合 (Issue #305)。取得失敗時は null */
+    availability: import("@/entities/event").EventAvailability | null;
   };
 };
 

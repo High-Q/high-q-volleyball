@@ -1,13 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const supabaseMock = {
-  from: vi.fn(),
-};
-
-const builderMock = {
+const reservationsBuilder = {
   select: vi.fn(),
   eq: vi.fn(),
   order: vi.fn(),
+};
+
+const availabilityBuilder = {
+  select: vi.fn(),
+  in: vi.fn(),
+};
+
+const supabaseMock = {
+  from: vi.fn((table: string) =>
+    table === "event_availability_view" ? availabilityBuilder : reservationsBuilder,
+  ),
 };
 
 vi.mock("@/shared/api/supabase", () => ({
@@ -16,10 +23,14 @@ vi.mock("@/shared/api/supabase", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  supabaseMock.from.mockReturnValue(builderMock);
-  builderMock.select.mockReturnValue(builderMock);
-  builderMock.eq.mockReturnValue(builderMock);
-  builderMock.order.mockReturnValue(builderMock);
+  supabaseMock.from.mockImplementation((table: string) =>
+    table === "event_availability_view" ? availabilityBuilder : reservationsBuilder,
+  );
+  reservationsBuilder.select.mockReturnValue(reservationsBuilder);
+  reservationsBuilder.eq.mockReturnValue(reservationsBuilder);
+  reservationsBuilder.order.mockReturnValue(reservationsBuilder);
+  availabilityBuilder.select.mockReturnValue(availabilityBuilder);
+  availabilityBuilder.in.mockResolvedValue({ data: [], error: null });
 });
 
 afterEach(() => {
@@ -29,17 +40,17 @@ afterEach(() => {
 describe("fetchMyReservations", () => {
   it("自分の member_id を WHERE で渡し、start_at DESC で取得する", async () => {
     const uid = "00000000-0000-0000-0000-000000000001";
-    builderMock.order.mockResolvedValueOnce({ data: [], error: null });
+    reservationsBuilder.order.mockResolvedValueOnce({ data: [], error: null });
 
     const { fetchMyReservations } = await import("./myReservations");
     await fetchMyReservations(uid);
 
     expect(supabaseMock.from).toHaveBeenCalledWith("reservations");
-    expect(builderMock.select).toHaveBeenCalledWith(
+    expect(reservationsBuilder.select).toHaveBeenCalledWith(
       expect.stringContaining("events(id, name, start_at"),
     );
-    expect(builderMock.eq).toHaveBeenCalledWith("member_id", uid);
-    expect(builderMock.order).toHaveBeenCalledWith("start_at", {
+    expect(reservationsBuilder.eq).toHaveBeenCalledWith("member_id", uid);
+    expect(reservationsBuilder.order).toHaveBeenCalledWith("start_at", {
       foreignTable: "events",
       ascending: false,
     });
@@ -47,7 +58,7 @@ describe("fetchMyReservations", () => {
 
   it("JOIN 結果から MyReservationItem に変換する (events の各列が揃う)", async () => {
     const uid = "00000000-0000-0000-0000-000000000001";
-    builderMock.order.mockResolvedValueOnce({
+    reservationsBuilder.order.mockResolvedValueOnce({
       data: [
         {
           id: "11111111-1111-1111-1111-111111111111",
@@ -83,7 +94,7 @@ describe("fetchMyReservations", () => {
   });
 
   it("events.fee が NULL のとき venues.default_fee にフォールバック", async () => {
-    builderMock.order.mockResolvedValueOnce({
+    reservationsBuilder.order.mockResolvedValueOnce({
       data: [
         {
           id: "11111111-1111-1111-1111-111111111111",
@@ -113,7 +124,7 @@ describe("fetchMyReservations", () => {
   });
 
   it("error が返ってきたら throw する", async () => {
-    builderMock.order.mockResolvedValueOnce({
+    reservationsBuilder.order.mockResolvedValueOnce({
       data: null,
       error: { message: "RLS denied", code: "42501" },
     });
@@ -124,7 +135,7 @@ describe("fetchMyReservations", () => {
   });
 
   it("events が NULL の行はフィルタで除外する (孤立予約は表示しない)", async () => {
-    builderMock.order.mockResolvedValueOnce({
+    reservationsBuilder.order.mockResolvedValueOnce({
       data: [
         {
           id: "11111111-1111-1111-1111-111111111111",
@@ -143,5 +154,86 @@ describe("fetchMyReservations", () => {
       "00000000-0000-0000-0000-000000000001",
     );
     expect(items).toHaveLength(0);
+  });
+
+  // ---------- Issue #305: availability merge ----------
+
+  it("availability を merge して MyReservationItem.event.availability に埋める", async () => {
+    const uid = "00000000-0000-0000-0000-000000000001";
+    const evId = "22222222-2222-2222-2222-222222222222";
+    reservationsBuilder.order.mockResolvedValueOnce({
+      data: [
+        {
+          id: "11111111-1111-1111-1111-111111111111",
+          status: "reserved",
+          guest_count: 0,
+          cancelled_at: null,
+          event_id: evId,
+          member_id: uid,
+          events: {
+            id: evId,
+            name: "ゆる練 vol.45",
+            start_at: "2026-06-03T10:00:00Z",
+            end_at: "2026-06-03T12:00:00Z",
+            fee: 1000,
+            venue_id: "33333333-3333-3333-3333-333333333333",
+            venues: { name: "亀戸スポーツセンター", default_fee: null },
+          },
+        },
+      ],
+      error: null,
+    });
+    availabilityBuilder.in.mockResolvedValueOnce({
+      data: [{ event_id: evId, capacity: null, reserved_count: 9 }],
+      error: null,
+    });
+    const { fetchMyReservations } = await import("./myReservations");
+    const items = await fetchMyReservations(uid);
+    expect(items[0]?.event.availability).toEqual({
+      eventId: evId,
+      capacity: null,
+      reservedCount: 9,
+    });
+  });
+
+  it("availability 取得失敗時は availability=null で fallback、主データは継続", async () => {
+    const uid = "00000000-0000-0000-0000-000000000001";
+    reservationsBuilder.order.mockResolvedValueOnce({
+      data: [
+        {
+          id: "11111111-1111-1111-1111-111111111111",
+          status: "reserved",
+          guest_count: 0,
+          cancelled_at: null,
+          event_id: "22222222-2222-2222-2222-222222222222",
+          member_id: uid,
+          events: {
+            id: "22222222-2222-2222-2222-222222222222",
+            name: "ゆる練",
+            start_at: "2026-06-03T10:00:00Z",
+            end_at: "2026-06-03T12:00:00Z",
+            fee: 1000,
+            venue_id: "33333333-3333-3333-3333-333333333333",
+            venues: { name: "v", default_fee: null },
+          },
+        },
+      ],
+      error: null,
+    });
+    availabilityBuilder.in.mockResolvedValueOnce({
+      data: null,
+      error: { message: "view down" },
+    });
+    const { fetchMyReservations } = await import("./myReservations");
+    const items = await fetchMyReservations(uid);
+    expect(items[0]?.event.availability).toBeNull();
+    expect(items[0]?.event.name).toBe("ゆる練");
+  });
+
+  it("reservations が 0 件のとき availability クエリは発行しない", async () => {
+    reservationsBuilder.order.mockResolvedValueOnce({ data: [], error: null });
+    const { fetchMyReservations } = await import("./myReservations");
+    await fetchMyReservations("00000000-0000-0000-0000-000000000001");
+    expect(supabaseMock.from).not.toHaveBeenCalledWith("event_availability_view");
   });
 });

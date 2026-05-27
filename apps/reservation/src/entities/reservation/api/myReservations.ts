@@ -5,12 +5,19 @@ import {
   unsafeVenueId,
 } from "@high-q/shared";
 import { getSupabase } from "@/shared/api/supabase";
+import type { EventAvailability } from "@/entities/event";
 import type {
   EventId,
   MemberId,
   ReservationId,
   ReservationStatus,
 } from "../model/reservation.types";
+
+type AvailabilityRow = {
+  event_id: string;
+  capacity: number | null;
+  reserved_count: number;
+};
 
 /**
  * プロフィール画面 (/profile) で表示する自分の予約 + 紐付くイベント要約。
@@ -31,6 +38,8 @@ export type MyReservationItem = {
     endAt: string;
     fee: number | null;
     venueName: string;
+    /** 予約埋まり具合 (Issue #305)。取得失敗時は null */
+    availability: EventAvailability | null;
   };
 };
 
@@ -72,9 +81,48 @@ export async function fetchMyReservations(
   if (data === null) {
     return [];
   }
-  return (data as unknown as MyReservationRow[])
+  const items = (data as unknown as MyReservationRow[])
     .filter((row): row is MyReservationRow & { events: NonNullable<MyReservationRow["events"]> } => row.events !== null)
     .map(rowToItem);
+  if (items.length === 0) {
+    return items;
+  }
+  const eventIds = items.map((i) => i.event.id);
+  const availabilityMap = await fetchAvailabilityMap(eventIds);
+  return items.map((i) => ({
+    ...i,
+    event: {
+      ...i.event,
+      availability: availabilityMap.get(i.event.id) ?? null,
+    },
+  }));
+}
+
+/**
+ * `event_availability_view` から複数 event_id の予約埋まり具合を取得する。
+ * 取得失敗時は空 Map を返し、呼び出し側で各 event に `availability: null` が割り当てられる
+ * (主データの描画を阻害しないため、ここで throw しない)。
+ */
+async function fetchAvailabilityMap(
+  ids: string[],
+): Promise<Map<string, EventAvailability>> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("event_availability_view")
+    .select("event_id, capacity, reserved_count")
+    .in("event_id", ids);
+  if (error || data === null) {
+    return new Map();
+  }
+  const map = new Map<string, EventAvailability>();
+  for (const row of data as unknown as AvailabilityRow[]) {
+    map.set(row.event_id, {
+      eventId: unsafeEventId(row.event_id),
+      capacity: row.capacity,
+      reservedCount: row.reserved_count,
+    });
+  }
+  return map;
 }
 
 function rowToItem(
@@ -94,6 +142,7 @@ function rowToItem(
       endAt: row.events.end_at,
       fee: row.events.fee ?? row.events.venues?.default_fee ?? null,
       venueName: row.events.venues?.name ?? "",
+      availability: null,
     },
   };
 }

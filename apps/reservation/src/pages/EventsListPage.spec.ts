@@ -89,6 +89,7 @@ const reservationOnA: MyReservationItem = {
     endAt: eventA.endAt,
     fee: eventA.fee,
     venueName: eventA.venueName,
+    availability: null,
   },
 };
 

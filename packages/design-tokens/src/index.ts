@@ -25,6 +25,10 @@ const color = Object.freeze({
   warnSoft: "rgba(212,160,74,0.10)",
   danger: "#9c4030",
   dangerSoft: "rgba(156,64,48,0.10)",
+  // dark トーン (黒地カードに乗せる場合の WCAG AA 確保用、Issue #305)
+  successOnDark: "#a8c08a",
+  warnOnDark: "#d9a76a",
+  dangerOnDark: "#e08672",
 });
 
 const font = Object.freeze({
