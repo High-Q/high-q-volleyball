@@ -391,6 +391,11 @@ Supabase Dashboard → Edge Functions → Secrets に以下を登録する MUST:
 |---|---|---|
 | `GMAIL_USER` | `high.q.volleyball@gmail.com` | Gmail SMTP 送信元 |
 | `GMAIL_APP_PASSWORD` | Google アプリパスワード（16 文字） | Gmail SMTP 認証 |
+| `OWNER_NOTIFICATION_EMAIL` | オーナー受信用アドレス（例: `high.q.volleyball@gmail.com`） | 本人確認書類 pending 発生時のオーナー通知先（#284 / `send-identity-document-pending-notification`）。未設定時は通知 skip + ログ出力 |
+| `ADMIN_BASE_URL` | dev: `http://localhost:5173` (ローカル admin / reservation 同時起動時は `5174`) / preview: 該当 PR の admin Preview URL (任意設定) / 本番: `https://high-q-admin.onrender.com` | 本人確認 pending 通知メールの admin 詳細画面リンク base。未設定時は本番既定値にフォールバック。dev は admin を Render にデプロイしておらずローカル常駐のため localhost を指す |
+| `RESERVATION_BASE_URL` | dev: `https://high-q-reservation-dev.onrender.com` / 本番: `https://high-q-reservation.onrender.com` | 予約完了 / キャンセル / イベント中止メールのマイページ URL base。未設定時は本番既定値にフォールバック |
+| `MAIL_SUPPRESS_SEND` | dev / preview: `true` / 本番: 未設定 (false 相当) | dev / preview で会員 / オーナー宛実送信を一律抑制 |
+| `MAIL_ALLOWED_RECIPIENTS` | preview で翔太郎くん自身宛のみ実送信したいとき: 該当アドレスをカンマ区切り。通常は未設定 | 抑制モードを使わず allowList で限定送信したい場合の補助 |
 
 `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` は Supabase が自動注入するため設定不要。
 

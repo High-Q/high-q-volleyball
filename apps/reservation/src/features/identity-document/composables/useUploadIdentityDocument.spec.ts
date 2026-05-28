@@ -26,6 +26,11 @@ vi.mock("@/features/auth", () => ({
   useAuthSession: () => sessionState,
 }));
 
+const notificationMock = {
+  triggerIdentityDocumentPendingNotification: vi.fn(async () => undefined),
+};
+vi.mock("@/shared/api/identity-document-notification", () => notificationMock);
+
 const MEMBER_ID = "uid-001";
 const DOC_ID = "doc-1";
 const PATH_FRONT = `${MEMBER_ID}/${DOC_ID}-front.jpg`;
@@ -43,6 +48,9 @@ beforeEach(() => {
   apiMock.buildStoragePath.mockImplementation(
     (mid: string, did: string, side: "front" | "back") =>
       `${mid}/${did}-${side}.jpg`,
+  );
+  notificationMock.triggerIdentityDocumentPendingNotification.mockResolvedValue(
+    undefined,
   );
 });
 
@@ -422,5 +430,139 @@ describe("submit — エラー / ロールバック", () => {
 
     const r = await c.submit();
     expect(r).toEqual({ ok: false, error: "db_failed" });
+  });
+});
+
+describe("submit — オーナー通知 trigger (#284)", () => {
+  it("表面のみ happy path で triggerIdentityDocumentPendingNotification が DOC_ID で 1 回呼ばれる", async () => {
+    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.uploadFileToStorage.mockResolvedValue(undefined);
+    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
+
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("drivers_license");
+    await c.selectFile("front", makeJpeg("front.jpg"));
+
+    await c.submit();
+    expect(
+      notificationMock.triggerIdentityDocumentPendingNotification,
+    ).toHaveBeenCalledTimes(1);
+    expect(
+      notificationMock.triggerIdentityDocumentPendingNotification,
+    ).toHaveBeenCalledWith(DOC_ID);
+  });
+
+  it("表裏両方 happy path でも trigger は 1 回 (表裏で 2 回呼ばれない)", async () => {
+    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.uploadFileToStorage.mockResolvedValue(undefined);
+    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
+
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("residence_card");
+    await c.selectFile("front", makeJpeg("front.jpg"));
+    await c.selectFile("back", makeJpeg("back.jpg"));
+
+    await c.submit();
+    expect(
+      notificationMock.triggerIdentityDocumentPendingNotification,
+    ).toHaveBeenCalledTimes(1);
+  });
+
+  it("storage_failed_front 分岐では trigger を呼ばない", async () => {
+    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.uploadFileToStorage.mockRejectedValue(new Error("storage down"));
+
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("drivers_license");
+    await c.selectFile("front", makeJpeg());
+
+    await c.submit();
+    expect(
+      notificationMock.triggerIdentityDocumentPendingNotification,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("storage_failed_back 分岐では trigger を呼ばない", async () => {
+    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.uploadFileToStorage
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("storage down"));
+
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("residence_card");
+    await c.selectFile("front", makeJpeg("front.jpg"));
+    await c.selectFile("back", makeJpeg("back.jpg"));
+
+    await c.submit();
+    expect(
+      notificationMock.triggerIdentityDocumentPendingNotification,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("db_failed (最終 UPDATE 失敗) でも trigger を呼ばない", async () => {
+    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.uploadFileToStorage.mockResolvedValue(undefined);
+    apiMock.confirmStoragePaths.mockRejectedValue(new Error("update fail"));
+
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("drivers_license");
+    await c.selectFile("front", makeJpeg());
+
+    await c.submit();
+    expect(
+      notificationMock.triggerIdentityDocumentPendingNotification,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("db_failed (INSERT 失敗) でも trigger を呼ばない", async () => {
+    apiMock.insertPendingRecord.mockRejectedValue(new Error("db down"));
+
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("drivers_license");
+    await c.selectFile("front", makeJpeg());
+
+    await c.submit();
+    expect(
+      notificationMock.triggerIdentityDocumentPendingNotification,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("trigger 内部失敗が submit の成功判定を覆さない", async () => {
+    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.uploadFileToStorage.mockResolvedValue(undefined);
+    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
+    // notification 側は元々握りつぶす設計だが、defensive に rejected でも submit が ok を返すことを確認
+    notificationMock.triggerIdentityDocumentPendingNotification.mockRejectedValue(
+      new Error("notification down"),
+    );
+
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("drivers_license");
+    await c.selectFile("front", makeJpeg("front.jpg"));
+
+    const r = await c.submit();
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value).toBe(DOC_ID);
   });
 });

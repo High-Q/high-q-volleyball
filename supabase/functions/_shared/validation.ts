@@ -231,6 +231,45 @@ export function validateReservationNotificationPayload(
   };
 }
 
+export type IdentityDocumentPendingNotificationPayload = {
+  identityDocumentId: string;
+};
+
+export function validateIdentityDocumentPendingNotificationPayload(
+  raw: unknown,
+):
+  | { ok: true; payload: IdentityDocumentPendingNotificationPayload }
+  | { ok: false; errors: ValidationError[] } {
+  const errors: ValidationError[] = [];
+  if (typeof raw !== "object" || raw === null) {
+    return {
+      ok: false,
+      errors: [{ field: "_root", message: "payload が不正です" }],
+    };
+  }
+  const data = raw as Record<string, unknown>;
+
+  const identityDocumentId =
+    typeof data.identityDocumentId === "string"
+      ? data.identityDocumentId.trim()
+      : "";
+  if (!UUID_RE.test(identityDocumentId)) {
+    errors.push({
+      field: "identityDocumentId",
+      message: "identityDocumentId は UUID 形式で指定してください",
+    });
+  }
+
+  if (errors.length > 0) {
+    return { ok: false, errors };
+  }
+
+  return {
+    ok: true,
+    payload: { identityDocumentId },
+  };
+}
+
 export type EventCancellationRecipient = {
   memberId: string;
   email: string;

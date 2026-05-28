@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   renderEventCancellationMail,
+  renderIdentityDocumentPendingNotificationMail,
   renderReservationCancelledMail,
   renderReservationConfirmedMail,
   renderReservationUpdatedMail,
   type EventCancellationMailInput,
+  type IdentityDocumentPendingNotificationInput,
   type ReservationCancelledInput,
   type ReservationConfirmedInput,
 } from "../_shared/mailer-templates.ts";
@@ -354,5 +356,95 @@ describe("renderEventCancellationMail", () => {
     });
     expect(subject).not.toMatch(UUID_RE);
     expect(body).not.toMatch(UUID_RE);
+  });
+});
+
+const baseIdentityPending: IdentityDocumentPendingNotificationInput = {
+  memberDisplayName: "山田 太郎",
+  uploadedAtIso: "2026-05-29T10:30:00Z",
+  detailUrl:
+    "https://high-q-admin.onrender.com/identity-documents/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+};
+
+describe("renderIdentityDocumentPendingNotificationMail", () => {
+  it("同一入力で同一出力 (純粋関数)", () => {
+    const a = renderIdentityDocumentPendingNotificationMail(baseIdentityPending);
+    const b = renderIdentityDocumentPendingNotificationMail(baseIdentityPending);
+    expect(a.subject).toBe(b.subject);
+    expect(a.body).toBe(b.body);
+  });
+
+  it("件名は固定文言 (会員名 / 日時 / 書類種別を含まない)", () => {
+    const { subject } = renderIdentityDocumentPendingNotificationMail(
+      baseIdentityPending,
+    );
+    expect(subject).toBe("【High Q】本人確認書類の確認依頼があります");
+    expect(subject).not.toContain(baseIdentityPending.memberDisplayName);
+    expect(subject).not.toContain("2026");
+  });
+
+  it("本文に会員 display_name が含まれる", () => {
+    const { body } = renderIdentityDocumentPendingNotificationMail(
+      baseIdentityPending,
+    );
+    expect(body).toContain("山田 太郎");
+  });
+
+  it("本文に admin 詳細画面 URL が含まれる", () => {
+    const { body } = renderIdentityDocumentPendingNotificationMail(
+      baseIdentityPending,
+    );
+    expect(body).toContain(baseIdentityPending.detailUrl);
+  });
+
+  it("本文の提出日時が JST に換算されて含まれる (UTC +09:00)", () => {
+    // 2026-05-29T10:30:00Z = JST 2026-05-29 19:30
+    const { body } = renderIdentityDocumentPendingNotificationMail(
+      baseIdentityPending,
+    );
+    expect(body).toContain("2026/05/29 19:30");
+  });
+
+  it("本文に ISO 文字列の生表示は含まれない", () => {
+    const { body } = renderIdentityDocumentPendingNotificationMail(
+      baseIdentityPending,
+    );
+    expect(body).not.toContain("2026-05-29T10:30:00Z");
+  });
+
+  it("本文に email / 電話 / document_type の値が含まれない (個人情報非露出)", () => {
+    const { body } = renderIdentityDocumentPendingNotificationMail({
+      ...baseIdentityPending,
+      memberDisplayName: "プライバシー テスト",
+    });
+    expect(body).not.toContain("@");
+    expect(body).not.toContain("080-");
+    expect(body).not.toContain("090-");
+    expect(body).not.toContain("070-");
+    expect(body).not.toContain("運転免許証");
+    expect(body).not.toContain("マイナンバー");
+    expect(body).not.toContain("drivers_license");
+    expect(body).not.toContain("my_number_card_masked");
+  });
+
+  it("本文に生 UUID 形式単独表示は出ない (URL 経由の含有は許可)", () => {
+    const { subject, body } = renderIdentityDocumentPendingNotificationMail(
+      baseIdentityPending,
+    );
+    expect(subject).not.toMatch(UUID_RE);
+    const linesWithoutUrl = body
+      .split("\n")
+      .filter((line) => !line.includes("http"))
+      .join("\n");
+    expect(linesWithoutUrl).not.toMatch(UUID_RE);
+  });
+
+  it("UTC 深夜帯の入力が翌日 JST に正しく換算される", () => {
+    // 2026-05-29T23:30:00Z = JST 2026-05-30 08:30
+    const { body } = renderIdentityDocumentPendingNotificationMail({
+      ...baseIdentityPending,
+      uploadedAtIso: "2026-05-29T23:30:00Z",
+    });
+    expect(body).toContain("2026/05/30 08:30");
   });
 });
