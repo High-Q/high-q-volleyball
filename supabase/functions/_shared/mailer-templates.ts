@@ -160,6 +160,50 @@ export {
   type EventCancellationMailInput,
 } from "../../../packages/shared/src/mail-templates/event-cancellation.ts";
 
+export type IdentityDocumentPendingNotificationInput = {
+  memberDisplayName: string;
+  uploadedAtIso: string; // 受信時に JST 換算する
+  detailUrl: string; // {ADMIN_BASE_URL}/identity-documents/{id}
+};
+
+function formatUploadedAtJst(iso: string): string {
+  // YYYY/MM/DD HH:mm を JST で組み立てる。Intl は環境差を避けて
+  // UTC からの +9 時間オフセットを手動加算する。
+  const utc = new Date(iso);
+  if (Number.isNaN(utc.getTime())) {
+    return iso; // 不正入力はそのまま返す (呼び出し側のテストで検出する想定)
+  }
+  const jst = new Date(utc.getTime() + 9 * 60 * 60 * 1000);
+  const yyyy = jst.getUTCFullYear();
+  const mm = String(jst.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(jst.getUTCDate()).padStart(2, "0");
+  const hh = String(jst.getUTCHours()).padStart(2, "0");
+  const mi = String(jst.getUTCMinutes()).padStart(2, "0");
+  return `${yyyy}/${mm}/${dd} ${hh}:${mi}`;
+}
+
+export function renderIdentityDocumentPendingNotificationMail(
+  input: IdentityDocumentPendingNotificationInput,
+): { subject: string; body: string } {
+  const uploadedJst = formatUploadedAtJst(input.uploadedAtIso);
+  const body = [
+    "本人確認書類の確認依頼が届いています。",
+    "",
+    `会員名: ${input.memberDisplayName}`,
+    `提出日時: ${uploadedJst}`,
+    "",
+    `確認画面: ${input.detailUrl}`,
+    "",
+    "上記リンクから管理画面で内容を確認し、承認 / 差し戻しの操作をお願いします。",
+    "",
+    ...SIGNATURE,
+  ].join("\n");
+  return {
+    subject: "【High Q】本人確認書類の確認依頼があります",
+    body,
+  };
+}
+
 export function renderReservationCancelledMail(
   input: ReservationCancelledInput,
 ): { subject: string; body: string } {

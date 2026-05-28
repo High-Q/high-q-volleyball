@@ -31,6 +31,7 @@ import {
   rollbackRecord,
   uploadFileToStorage,
 } from "../api/identity-document-client";
+import { triggerIdentityDocumentPendingNotification } from "@/shared/api/identity-document-notification";
 import { convertHeicToJpeg, isHeicFile } from "../lib/convertHeicToJpeg";
 
 const ALLOWED_MIME = new Set([
@@ -276,6 +277,8 @@ export function useUploadIdentityDocument(): UseUploadIdentityDocument {
 
     submitting.value = false;
     succeeded.value = true;
+    // #284: pending 発生をオーナーへ fire-and-forget 通知。失敗は upload 成功判定に影響しない。
+    void triggerIdentityDocumentPendingNotification(docId);
     return { ok: true, value: docId as IdentityDocumentId };
   }
 
