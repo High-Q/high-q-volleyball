@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { EventListItem } from "@/entities/event";
+import type { ReservationId } from "@/entities/reservation";
 import { formatFee, formatTimeRange } from "@/shared/lib/format-date";
 import {
   jstDay,
@@ -15,6 +16,13 @@ const props = defineProps<{
   event: EventListItem;
   /** availability 取得中の間は true (一覧画面側で loading フラグを束ねて渡す) */
   availabilityLoading?: boolean;
+  /**
+   * 当該行のイベントに対する自分の予約 ID。
+   * 渡された場合は遷移先を `/reservations/{reservationId}` に切り替え、「予約済」chip を描画する。
+   * NEXT カードに昇格した最早 1 件は呼び出し側 (EventsListPage) で除外されるため、
+   * 本 props で扱うのは 2 件目以降の自分予約。
+   */
+  reservationId?: ReservationId | null;
 }>();
 
 const startDate = computed(() => new Date(props.event.startAt));
@@ -35,17 +43,29 @@ const timeLabel = computed(() =>
   formatTimeRange(props.event.startAt, props.event.endAt),
 );
 const feeLabel = computed(() => formatFee(props.event.fee));
+
+const hasMyReservation = computed(
+  () => props.reservationId !== null && props.reservationId !== undefined,
+);
+
+const linkTo = computed(() =>
+  hasMyReservation.value
+    ? {
+        name: "reservation-detail",
+        params: { reservationId: props.reservationId as ReservationId },
+      }
+    : { name: "event-detail", params: { id: props.event.id } },
+);
 </script>
 
 <template>
   <router-link
-    :to="{ name: 'event-detail', params: { id: event.id } }"
+    :to="linkTo"
     class="flex items-center gap-hq-4 px-hq-4 py-hq-4 bg-paper-warm border border-hairline rounded-hq-md no-underline text-ink hover:shadow-hq-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition"
     data-testid="event-row"
   >
     <div
-      class="flex flex-col items-center justify-center pr-hq-3 border-r border-hairline shrink-0"
-      style="width: 64px;"
+      class="flex flex-col items-center justify-center pr-hq-3 border-r border-hairline shrink-0 w-16"
     >
       <span
         class="font-mono text-sm font-medium text-ink"
@@ -67,10 +87,18 @@ const feeLabel = computed(() => formatFee(props.event.fee));
         <span aria-hidden="true"> · </span>
         <span data-testid="event-row-fee">{{ feeLabel }}</span>
       </p>
-      <AvailabilityChip
-        :availability="event.availability"
-        :loading="availabilityLoading"
-      />
+      <div class="flex items-center gap-hq-2 flex-wrap">
+        <AvailabilityChip
+          :availability="event.availability"
+          :loading="availabilityLoading"
+        />
+        <span
+          v-if="hasMyReservation"
+          class="inline-flex items-center font-jp text-xs font-medium leading-none px-hq-2 py-hq-1 rounded-hq-pill bg-accent-soft text-accent"
+          data-testid="event-row-mine-badge"
+          aria-label="自分が予約済み"
+        >予約済</span>
+      </div>
     </div>
   </router-link>
 </template>
