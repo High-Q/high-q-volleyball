@@ -7,8 +7,11 @@ import {
   unsafeReservationId,
   unsafeVenueId,
 } from "@high-q/shared";
-import type { EventListItem } from "@/entities/event";
-import type { MyReservationItem } from "@/entities/reservation";
+import type { EventId, EventListItem } from "@/entities/event";
+import type {
+  MyReservationItem,
+  ReservationId,
+} from "@/entities/reservation";
 
 // ---------- mocks ----------
 const memberRef = ref<{ displayName: string; nickname: string | null } | null>({
@@ -38,6 +41,7 @@ const upcomingState = {
 };
 const nextState = {
   reservation: ref<MyReservationItem | null>(null),
+  mineByEventId: ref<ReadonlyMap<EventId, ReservationId>>(new Map()),
   loading: ref<boolean>(false),
   error: ref<Error | null>(null),
   reload: vi.fn(),
@@ -117,6 +121,7 @@ beforeEach(() => {
   upcomingState.loading.value = false;
   upcomingState.error.value = null;
   nextState.reservation.value = null;
+  nextState.mineByEventId.value = new Map();
   nextState.loading.value = false;
   nextState.error.value = null;
 });
@@ -215,6 +220,68 @@ describe("EventsListPage - 他のイベント", () => {
     const { wrapper } = await mountPage();
     const row = wrapper.find('[data-testid="event-row"]');
     expect(row.attributes("href")).toBe(`/events/${eventA.id}`);
+  });
+
+  describe("自分予約あり行 (mineByEventId 経由)", () => {
+    const reservationOnB = unsafeReservationId(
+      "99998888-7777-6666-5555-444433332222",
+    );
+
+    it("自分予約あり行は /reservations/:reservationId への router-link を持つ", async () => {
+      nextState.reservation.value = reservationOnA; // NEXT = eventA
+      nextState.mineByEventId.value = new Map([
+        [eventA.id, reservationOnA.id],
+        [eventB.id, reservationOnB],
+      ]);
+      upcomingState.events.value = [eventA, eventB];
+      const { wrapper } = await mountPage();
+      // eventA は NEXT で除外。残るのは eventB (自分予約あり 2 件目)
+      const rows = wrapper.findAll('[data-testid="event-row"]');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.attributes("href")).toBe(
+        `/reservations/${reservationOnB}`,
+      );
+    });
+
+    it("自分予約あり行のみに「予約済」 chip が描画される", async () => {
+      // eventC は自分予約なし
+      const eventC: EventListItem = {
+        ...eventB,
+        id: unsafeEventId("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+        name: "ゆる練 vol.45",
+      };
+      nextState.reservation.value = null; // NEXT なし
+      nextState.mineByEventId.value = new Map([[eventB.id, reservationOnB]]);
+      upcomingState.events.value = [eventB, eventC];
+      const { wrapper } = await mountPage();
+      const rows = wrapper.findAll('[data-testid="event-row"]');
+      expect(rows).toHaveLength(2);
+      // 1 行目 (eventB): 予約済 chip あり、reservation-detail へ
+      expect(
+        rows[0]?.find('[data-testid="event-row-mine-badge"]').exists(),
+      ).toBe(true);
+      expect(rows[0]?.attributes("href")).toBe(
+        `/reservations/${reservationOnB}`,
+      );
+      // 2 行目 (eventC): 予約済 chip なし、event-detail へ
+      expect(
+        rows[1]?.find('[data-testid="event-row-mine-badge"]').exists(),
+      ).toBe(false);
+      expect(rows[1]?.attributes("href")).toBe(`/events/${eventC.id}`);
+    });
+
+    it("自分予約マップが空のとき: 「予約済」 chip は 1 つも描画されず、全行が /events/:id を指す", async () => {
+      nextState.reservation.value = null;
+      nextState.mineByEventId.value = new Map();
+      upcomingState.events.value = [eventA, eventB];
+      const { wrapper } = await mountPage();
+      const rows = wrapper.findAll('[data-testid="event-row"]');
+      expect(
+        wrapper.findAll('[data-testid="event-row-mine-badge"]'),
+      ).toHaveLength(0);
+      expect(rows[0]?.attributes("href")).toBe(`/events/${eventA.id}`);
+      expect(rows[1]?.attributes("href")).toBe(`/events/${eventB.id}`);
+    });
   });
 });
 

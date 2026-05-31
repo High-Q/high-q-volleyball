@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { unsafeEventId, unsafeVenueId } from "@high-q/shared";
+import {
+  unsafeEventId,
+  unsafeReservationId,
+  unsafeVenueId,
+} from "@high-q/shared";
 import { mountWithRouter } from "@/test/mountWithRouter";
 import EventRow from "./EventRow.vue";
 import type { EventAvailability, EventListItem } from "@/entities/event";
 
 const EV_ID = unsafeEventId("11111111-1111-1111-1111-111111111111");
 const V_ID = unsafeVenueId("22222222-2222-2222-2222-222222222222");
+const R_ID = unsafeReservationId("33333333-3333-3333-3333-333333333333");
 
 function makeAvailability(
   capacity: number | null,
@@ -31,6 +36,11 @@ const routes = [
     path: "/events/:id",
     name: "event-detail",
     component: { template: "<div>detail</div>" },
+  },
+  {
+    path: "/reservations/:reservationId",
+    name: "reservation-detail",
+    component: { template: "<div>reservation</div>" },
   },
 ];
 
@@ -132,6 +142,67 @@ describe("EventRow", () => {
         "ゆる練 vol.43",
       );
       expect(wrapper.get('[data-testid="event-row-fee"]').text()).toBe("1,000 円");
+    });
+  });
+
+  describe("自分予約あり時の挙動 (reservationId 渡し)", () => {
+    it("reservationId 未指定: router-link は /events/:id を指す (従来挙動)", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent },
+      });
+      const link = wrapper.findComponent({ name: "RouterLink" });
+      expect(link.props("to")).toEqual({
+        name: "event-detail",
+        params: { id: baseEvent.id },
+      });
+    });
+
+    it("reservationId = null: router-link は /events/:id を指す (従来挙動)", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent, reservationId: null },
+      });
+      const link = wrapper.findComponent({ name: "RouterLink" });
+      expect(link.props("to")).toEqual({
+        name: "event-detail",
+        params: { id: baseEvent.id },
+      });
+    });
+
+    it("reservationId 指定時: router-link は /reservations/:reservationId を指す", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent, reservationId: R_ID },
+      });
+      const link = wrapper.findComponent({ name: "RouterLink" });
+      expect(link.props("to")).toEqual({
+        name: "reservation-detail",
+        params: { reservationId: R_ID },
+      });
+    });
+
+    it("reservationId 未指定: 「予約済」 chip は描画されない", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent },
+      });
+      expect(
+        wrapper.find('[data-testid="event-row-mine-badge"]').exists(),
+      ).toBe(false);
+    });
+
+    it("reservationId = null: 「予約済」 chip は描画されない", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent, reservationId: null },
+      });
+      expect(
+        wrapper.find('[data-testid="event-row-mine-badge"]').exists(),
+      ).toBe(false);
+    });
+
+    it("reservationId 指定時: 「予約済」 chip が描画される", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent, reservationId: R_ID },
+      });
+      const badge = wrapper.get('[data-testid="event-row-mine-badge"]');
+      expect(badge.text()).toContain("予約済");
     });
   });
 });

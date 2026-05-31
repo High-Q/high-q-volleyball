@@ -33,6 +33,7 @@ const uid = session.session.value?.user.id ?? "";
 
 const {
   reservation: nextReservation,
+  mineByEventId,
   loading: nextLoading,
   error: nextError,
   reload: reloadNext,
@@ -145,6 +146,7 @@ async function reloadAll(): Promise<void> {
               v-for="event in otherEvents"
               :key="event.id"
               :event="event"
+              :reservation-id="mineByEventId.get(event.id) ?? null"
             />
           </div>
         </section>
