@@ -8,8 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit -p tsconfig.json",
-    "lint": "eslint --ext .ts,.tsx,.vue src",
-    "stylelint": "stylelint \"src/**/*.vue\"",
+    "lint": "pnpm exec eslint --ext .ts,.tsx,.vue src",
+    "stylelint": "pnpm exec stylelint \"src/**/*.vue\"",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest"
