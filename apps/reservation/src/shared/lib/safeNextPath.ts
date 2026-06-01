@@ -10,6 +10,8 @@
  *   - バックスラッシュを含まない (一部ブラウザの URL 解釈差を防ぐ)
  *   - 認証導線 (`/login` / `/signup` / `/signup/...` / `/auth/...`) への循環を防ぐ
  */
+// open redirect 防御のため意図的に制御文字 (\x00-\x1f / \x7f) をマッチさせる
+// eslint-disable-next-line no-control-regex
 const CONTROL_CHAR_PATTERN = /[\x00-\x1f\x7f]/;
 const BLOCKED_PREFIXES = [
   "/login",

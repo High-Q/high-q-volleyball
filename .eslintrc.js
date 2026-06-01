@@ -113,15 +113,19 @@ module.exports = {
         // cross-slice の private file 直接 import 禁止 (Public API = index.ts 経由のみ)
         "boundaries/no-private": ["error", { allowUncles: false }],
 
-        // Supabase client は shared/api/ のみ
-        "no-restricted-imports": [
+        // Supabase client は shared/api/ のみ (type-only import は許可)
+        // 基本 no-restricted-imports は allowTypeImports をサポートしないため、
+        // @typescript-eslint 版を使用 (admin/reservation 共に TS 構文のため可)
+        "no-restricted-imports": "off",
+        "@typescript-eslint/no-restricted-imports": [
           "error",
           {
             patterns: [
               {
                 group: ["@supabase/supabase-js"],
                 message:
-                  "Supabase client は shared/api/ 経由のみ。features / widgets / entities から直接 import 禁止。",
+                  "Supabase client は shared/api/ 経由のみ。features / widgets / entities から直接 import 禁止 (type import のみ可)。",
+                allowTypeImports: true,
               },
             ],
           },
@@ -161,6 +165,18 @@ module.exports = {
       files: ["apps/*/src/shared/api/**/*.{ts,tsx,vue}"],
       rules: {
         "no-restricted-imports": "off",
+        "@typescript-eslint/no-restricted-imports": "off",
+      },
+    },
+
+    // -------------------------------------------------------------------------
+    // shared/ui/ : shadcn-vue primitives は HTML 予約名 (Dialog / Input / Select 等) と
+    //             同名でコピーされる慣習があるため vue/no-reserved-component-names を許容
+    // -------------------------------------------------------------------------
+    {
+      files: ["apps/*/src/shared/ui/**/*.{ts,tsx,vue}"],
+      rules: {
+        "vue/no-reserved-component-names": "off",
       },
     },
 
@@ -189,6 +205,7 @@ module.exports = {
       rules: {
         "no-restricted-syntax": "off",
         "no-restricted-imports": "off",
+        "@typescript-eslint/no-restricted-imports": "off",
       },
     },
   ],
