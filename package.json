@@ -40,15 +40,18 @@
     "@typescript-eslint/parser": "^8.60.0",
     "@vitest/coverage-v8": "^2.1.9",
     "dependency-cruiser": "^17.4.3",
+    "eslint": "^8.57.1",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-boundaries": "^6.0.2",
     "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-vue": "^9.33.0",
     "postcss-html": "^1.8.1",
     "stylelint": "^17.12.0",
     "stylelint-config-recommended-vue": "^1.6.1",
     "stylelint-config-standard": "^40.0.0",
     "supabase": "^2.98.2",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "vue-eslint-parser": "^9.4.3"
   }
 }
