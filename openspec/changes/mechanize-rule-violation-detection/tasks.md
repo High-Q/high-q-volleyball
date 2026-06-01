@@ -65,18 +65,18 @@
 
 ## 9. ドキュメント更新
 
-- [ ] 9.1 `CLAUDE.md` Pillar 2 / 4 に「機械検知の責務は ESLint / stylelint / dependency-cruiser / CI script で固定化」「意味理解が必要な部分はレム self-check 責務」を明記
-- [ ] 9.2 `CLAUDE.md` に「migration-safety allowlist 追加時は PR コメントで理由必須」のルール追記
-- [ ] 9.3 `openspec/project.md` の「ESLint で境界自動検証」記述を実装と整合化（具体的に `eslint-plugin-boundaries` 採用と明記）
-- [ ] 9.4 `docs/03-アーキテクチャ/04-開発・コーディング規約.md` に boundaries / no-restricted-imports / stylelint / dependency-cruiser 設定の概要と例外運用を追記
-- [ ] 9.5 `docs/06-品質・セキュリティ/03-アクセス制御・認可設計.md` に「新規 migration の RLS は CI で機械検知」明記
-- [ ] 9.6 `docs/06-品質・セキュリティ/08-本人確認書類取扱SOP.md` に「マイナンバー text 列禁止は CI で機械検知」明記
-- [ ] 9.7 `docs/07-テスト/01-テスト戦略・方針.md` に「coverage threshold / 4 状態テスト存在 / E2E 件数」の CI 連携節を追加
+- [x] 9.1 `CLAUDE.md` Pillar 2 / 4 に「機械検知の責務は ESLint / stylelint / dependency-cruiser / CI script で固定化」「意味理解が必要な部分はレム self-check 責務」を明記
+- [x] 9.2 `CLAUDE.md` に「migration-safety allowlist 追加時は PR コメントで理由必須」のルール追記
+- [x] 9.3 `openspec/project.md` の「ESLint で境界自動検証」記述を実装と整合化（具体的に `eslint-plugin-boundaries` 採用と明記）
+- [x] 9.4 `docs/03-アーキテクチャ/04-開発・コーディング規約.md` に boundaries / no-restricted-imports / stylelint / dependency-cruiser 設定の概要と例外運用を追記
+- [x] 9.5 `docs/06-品質・セキュリティ/03-アクセス制御・認可設計.md` に「新規 migration の RLS は CI で機械検知」明記
+- [x] 9.6 `docs/06-品質・セキュリティ/08-本人確認書類取扱SOP.md` に「マイナンバー text 列禁止は CI で機械検知」明記
+- [x] 9.7 `docs/07-テスト/01-テスト戦略・方針.md` に「coverage threshold / 4 状態テスト存在 / E2E 件数」の CI 連携節を追加
 
 ## 10. 最終確認
 
-- [ ] 10.1 `pnpm -r lint` / `pnpm depcruise` / `pnpm -r stylelint` / `pnpm -r test:coverage` がすべてローカルで pass
+- [x] 10.1 `pnpm -r lint` / `pnpm depcruise` / `pnpm -r stylelint` / `pnpm -r test:coverage` がすべてローカルで pass
 - [ ] 10.2 `act` または PR ドラフトで CI 全 job 緑を確認（typecheck / lint / test / build / e2e / static-checks）
-- [ ] 10.3 `openspec validate mechanize-rule-violation-detection` が pass
+- [x] 10.3 `openspec validate mechanize-rule-violation-detection` が pass
 - [ ] 10.4 PR description に Test plan として「ローカル lint / coverage 結果」「CI 緑のスクリーンショット or run URL」「stylelint warning 件数」「coverage threshold 初期値の根拠」を記載
 - [ ] 10.5 follow-up Issue を起票（stylelint warning の error 昇格 / coverage threshold 引き上げ計画）

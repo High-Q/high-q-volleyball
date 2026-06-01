@@ -35,6 +35,16 @@ DB enum 値と日本語ラベルの対応は [packages/shared/src/types/labels.t
 
 CLAUDE.md セキュリティルール「マイナンバーカードの個人番号 (12 桁) をテキスト列として保管するコード禁止」を維持しつつ、**マスク済み画像のみ**は本人確認書類として受け付ける。
 
+### 機械検知（CI `migration-safety` job）
+
+新規 migration がマイナンバーを text 系列で保管しようとした場合、CI で機械的に検出して fail させる。
+
+| 検知 | 対象 | 例外 |
+|---|---|---|
+| 名前パターンが `my_number` / `mynumber` / `personal_number` / `national_id` / `個人番号` / `マイナンバー` のいずれか | かつ型が `text` / `varchar` / `char` | 列名に `image_path` / `image_url` / `mask` / `photo` を含むもの（画像メタデータ列は許容） |
+
+実装: `scripts/static-checks/migrations/check-my-number.sh`。本検査は warning ではなく **error** で扱い、検知時に CI が fail して PR を merge できなくする。
+
 ### アップロード時の UX 三重防壁（reservation 側 #92 ✅ 実装済 / 2026-05-05）
 
 1. **注意喚起 UI**: 書類種別で「マイナンバーカード」を選択した時点で警告メッセージを表示
