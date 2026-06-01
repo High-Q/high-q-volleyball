@@ -3,12 +3,19 @@ import {
   unsafeReservationId,
 } from "@high-q/shared";
 import { getSupabase } from "@/shared/api/supabase";
+import type { EventAvailability } from "@/entities/event";
 import type {
   MemberId,
   MyReservationDetail,
   ReservationId,
   ReservationStatus,
 } from "../model/reservation.types";
+
+type AvailabilityRow = {
+  event_id: string;
+  capacity: number | null;
+  reserved_count: number;
+};
 
 /**
  * 予約詳細画面用の単一取得 API。
@@ -68,11 +75,40 @@ export async function fetchMyReservation(
   if (row.events === null) {
     return null;
   }
-  return rowToDetail(
+  const detail = rowToDetail(
     row as MyReservationDetailRow & {
       events: NonNullable<MyReservationDetailRow["events"]>;
     },
   );
+  const availability = await fetchAvailabilityOne(row.events.id);
+  return {
+    ...detail,
+    event: { ...detail.event, availability },
+  };
+}
+
+/**
+ * 単一 event_id の予約埋まり具合を取得する。取得失敗時は null を返し、
+ * 詳細画面側で fallback 表示する。主データは継続描画される。
+ */
+async function fetchAvailabilityOne(
+  id: string,
+): Promise<EventAvailability | null> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("event_availability_view")
+    .select("event_id, capacity, reserved_count")
+    .eq("event_id", id)
+    .maybeSingle();
+  if (error || data === null) {
+    return null;
+  }
+  const row = data as unknown as AvailabilityRow;
+  return {
+    eventId: unsafeEventId(row.event_id),
+    capacity: row.capacity,
+    reservedCount: row.reserved_count,
+  };
 }
 
 function rowToDetail(
@@ -94,6 +130,7 @@ function rowToDetail(
       endAt: row.events.end_at,
       fee: row.events.fee ?? row.events.venues?.default_fee ?? null,
       venueName: row.events.venues?.name ?? "",
+      availability: null,
     },
   };
 }

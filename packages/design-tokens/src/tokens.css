@@ -16,6 +16,9 @@
   --hq-color-warn-soft: rgba(212,160,74,0.10);
   --hq-color-danger: #9c4030;
   --hq-color-danger-soft: rgba(156,64,48,0.10);
+  --hq-color-success-on-dark: #a8c08a;
+  --hq-color-warn-on-dark: #d9a76a;
+  --hq-color-danger-on-dark: #e08672;
   --hq-font-jp-display: "Klee One", "Shippori Mincho", "Noto Serif JP", serif;
   --hq-font-jp: "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif;
   --hq-font-mono: "JetBrains Mono", ui-monospace, monospace;

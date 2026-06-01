@@ -27,6 +27,7 @@ function fixture(
       endAt: partial.startAt,
       fee: 1500,
       venueName: "venue",
+      availability: null,
     },
   };
 }

@@ -35,6 +35,12 @@ describe("HQ design tokens — color", () => {
     expect(HQ.color.danger).toBe("#9c4030");
     expect(HQ.color.dangerSoft).toBe("rgba(156,64,48,0.10)");
   });
+
+  it("dark トーン (successOnDark / warnOnDark / dangerOnDark) が黒地用に定義されている (Issue #305)", () => {
+    expect(HQ.color.successOnDark).toBe("#a8c08a");
+    expect(HQ.color.warnOnDark).toBe("#d9a76a");
+    expect(HQ.color.dangerOnDark).toBe("#e08672");
+  });
 });
 
 describe("HQ design tokens — font", () => {

@@ -73,6 +73,7 @@ const baseReservation: MyReservationDetail = {
     endAt: FUTURE_END,
     fee: 1000,
     venueName: "亀戸スポーツセンター",
+    availability: null,
   },
 };
 

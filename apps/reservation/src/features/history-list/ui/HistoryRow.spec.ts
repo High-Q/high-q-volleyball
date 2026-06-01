@@ -44,6 +44,7 @@ function makeItem(
       endAt: "2026-05-12T21:30:00+09:00",
       fee: null,
       venueName: "亀戸スポーツセンター",
+      availability: null,
       ...overrides,
     },
   };

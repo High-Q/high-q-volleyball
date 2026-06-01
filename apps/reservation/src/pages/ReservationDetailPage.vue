@@ -21,6 +21,7 @@ import type { EventDetail } from "@/entities/event";
 import {
   CancelPolicyBox,
   DarkFactCard,
+  ReservationAvailabilityStatus,
   ReservationMetaTable,
 } from "@/widgets/reservation-detail-card";
 
@@ -319,6 +320,11 @@ function goHistory(): void {
         <ReservationMetaTable
           :fee="reservation.event.fee"
           :guest-count="reservation.guestCount"
+        />
+
+        <!-- 予約状況セクション (Issue #305) -->
+        <ReservationAvailabilityStatus
+          :availability="reservation.event.availability"
         />
 
         <!-- 編集 CTA: 前向きアクションをプライマリに昇格 (#215) -->

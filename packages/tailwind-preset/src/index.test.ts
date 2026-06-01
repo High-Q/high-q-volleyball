@@ -27,6 +27,13 @@ describe("@high-q/tailwind-preset", () => {
       expect(colors.danger).toBe(HQ.color.danger);
       expect(colors["danger-soft"]).toBe(HQ.color.dangerSoft);
     });
+
+    it("dark トーン色を kebab-case で展開する (Issue #305)", () => {
+      const colors = preset.theme.extend.colors;
+      expect(colors["success-on-dark"]).toBe(HQ.color.successOnDark);
+      expect(colors["warn-on-dark"]).toBe(HQ.color.warnOnDark);
+      expect(colors["danger-on-dark"]).toBe(HQ.color.dangerOnDark);
+    });
   });
 
   describe("fontFamily (kebab-case 展開)", () => {
