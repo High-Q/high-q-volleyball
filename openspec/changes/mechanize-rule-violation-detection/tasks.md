@@ -17,17 +17,17 @@
 
 ## 3. stylelint 設定追加
 
-- [ ] 3.1 ルートに `.stylelintrc.cjs` を追加: `stylelint-config-standard` + `stylelint-config-recommended-vue` + Vue SFC syntax
-- [ ] 3.2 custom rule で `.vue` 内 `<style>` ブロックの生 `px` / `rem` 数値（0 と 100% 等の dimensionless を除く）と生 hex/rgb カラーを warning 検知
-- [ ] 3.3 `apps/admin` / `apps/reservation` の `package.json` に `stylelint` script (`stylelint "src/**/*.vue"`) を追加
-- [ ] 3.4 stylelint を `apps/lp` 対象外として設定（`ignoreFiles` で `apps/lp/**` を除外）
+- [x] 3.1 ルートに `.stylelintrc.cjs` を追加: `stylelint-config-standard` + `stylelint-config-recommended-vue` + Vue SFC syntax
+- [x] 3.2 custom rule で `.vue` 内 `<style>` ブロックの生 `px` / `rem` 数値（0 と 100% 等の dimensionless を除く）と生 hex/rgb カラーを warning 検知
+- [x] 3.3 `apps/admin` / `apps/reservation` の `package.json` に `stylelint` script (`stylelint "src/**/*.vue"`) を追加
+- [x] 3.4 stylelint を `apps/lp` 対象外として設定（`ignoreFiles` で `apps/lp/**` を除外）
 
 ## 4. dependency-cruiser 設定追加
 
-- [ ] 4.1 ルートに `dependency-cruiser.config.js` を追加: FSD レイヤー方向ルールを `forbidden` セクションで定義
-- [ ] 4.2 `apps/lp` は対象外として `exclude` 設定
-- [ ] 4.3 ルート `package.json` に `depcruise` script (`depcruise apps/admin/src apps/reservation/src --config dependency-cruiser.config.js`) を追加
-- [ ] 4.4 ローカルで `pnpm depcruise` を実行し違反件数を記録
+- [x] 4.1 ルートに `dependency-cruiser.config.js` を追加: FSD レイヤー方向ルールを `forbidden` セクションで定義
+- [x] 4.2 `apps/lp` は対象外として `exclude` 設定
+- [x] 4.3 ルート `package.json` に `depcruise` script (`depcruise apps/admin/src apps/reservation/src --config dependency-cruiser.config.js`) を追加
+- [x] 4.4 ローカルで `pnpm depcruise` を実行し違反件数を記録
 
 ## 5. 静的検査 script の実装
 
@@ -42,10 +42,10 @@
 
 ## 6. vitest coverage threshold 設定
 
-- [ ] 6.1 `apps/admin/vitest.config.ts` `apps/reservation/vitest.config.ts` に `coverage` セクションを追加（provider: v8, reporter: text + html + json-summary）
-- [ ] 6.2 Step 1.1 の実測値を元に初期 threshold を設定（実測値 -10% を初期値、最低でも lines 50% / branches 40% / functions 50%）
-- [ ] 6.3 `packages/shared` の vitest config にも同様の coverage 設定追加
-- [ ] 6.4 ローカルで `pnpm -r test:coverage` を実行し threshold 達成を確認
+- [x] 6.1 `apps/admin/vitest.config.ts` `apps/reservation/vitest.config.ts` に `coverage` セクションを追加（provider: v8, reporter: text + html + json-summary）
+- [x] 6.2 Step 1.1 の実測値を元に初期 threshold を設定（実測値 -10% を初期値、最低でも lines 50% / branches 40% / functions 50%）
+- [x] 6.3 `packages/shared` の vitest config にも同様の coverage 設定追加
+- [x] 6.4 ローカルで `pnpm -r test:coverage` を実行し threshold 達成を確認
 
 ## 7. CI ワークフロー拡張
 
