@@ -49,19 +49,19 @@
 
 ## 7. CI ワークフロー拡張
 
-- [ ] 7.1 `.github/workflows/ci.yml` の `lint` job を `pnpm -r lint` に変更し、全アプリ対象化
-- [ ] 7.2 `.github/workflows/ci.yml` に `static-checks` job を追加（needs: install）: `grep-service-role.sh` / `depcruise` / `stylelint` / `grep-4state-tests.sh` / `count-e2e-files.sh` を step として実行
-- [ ] 7.3 `.github/workflows/ci.yml` に `migration-safety` job を追加（needs: install、paths-filter で `supabase/migrations/**` 変更時のみ起動）: `check-rls.sh` / `check-my-number.sh` / `check-rollback-comment.sh` を step として実行
-- [ ] 7.4 `.github/workflows/ci.yml` の `test` job を `pnpm -r test:coverage` に変更し、coverage report を `actions/upload-artifact` で 14 日保存 + job summary に出力
-- [ ] 7.5 warning は `::warning::` annotation で出力するよう各 script を調整（GitHub Actions 上で見やすくする）
+- [x] 7.1 `.github/workflows/ci.yml` の `lint` job を `pnpm -r lint` に変更し、全アプリ対象化
+- [x] 7.2 `.github/workflows/ci.yml` に `static-checks` job を追加（needs: install）: `grep-service-role.sh` / `depcruise` / `stylelint` / `grep-4state-tests.sh` / `count-e2e-files.sh` を step として実行
+- [x] 7.3 `.github/workflows/ci.yml` に `migration-safety` job を追加（needs: install、paths-filter で `supabase/migrations/**` 変更時のみ起動）: `check-rls.sh` / `check-my-number.sh` / `check-rollback-comment.sh` を step として実行
+- [x] 7.4 `.github/workflows/ci.yml` の `test` job を `pnpm -r test:coverage` に変更し、coverage report を `actions/upload-artifact` で 14 日保存 + job summary に出力
+- [x] 7.5 warning は `::warning::` annotation で出力するよう各 script を調整（GitHub Actions 上で見やすくする）
 
 ## 8. 既存コード lint error 解消
 
-- [ ] 8.1 `pnpm -r lint` で検出された ESLint error を順に修正（FSD boundaries / no-restricted-imports / service_role 違反）
-- [ ] 8.2 `pnpm depcruise` で検出された依存方向違反を修正
-- [ ] 8.3 stylelint warning は本 change では error 昇格せず、件数記録のみで先送り（別 Issue で扱う）
-- [ ] 8.4 `pnpm -r test:coverage` で threshold 未達があれば Apply 中に threshold 値を実測 -10% に再調整
-- [ ] 8.5 全 app で `pnpm -r lint` / `pnpm depcruise` / `pnpm -r test:coverage` がローカルで pass することを確認
+- [x] 8.1 `pnpm -r lint` で検出された ESLint error を順に修正（FSD boundaries / no-restricted-imports / service_role 違反）
+- [x] 8.2 `pnpm depcruise` で検出された依存方向違反を修正
+- [x] 8.3 stylelint warning は本 change では error 昇格せず、件数記録のみで先送り（別 Issue で扱う）
+- [x] 8.4 `pnpm -r test:coverage` で threshold 未達があれば Apply 中に threshold 値を実測 -10% に再調整
+- [x] 8.5 全 app で `pnpm -r lint` / `pnpm depcruise` / `pnpm -r test:coverage` がローカルで pass することを確認
 
 ## 9. ドキュメント更新
 

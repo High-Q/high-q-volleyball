@@ -101,8 +101,11 @@ jobs:
       - name: Install dependencies (offline if cache hit)
         run: pnpm install --frozen-lockfile
 
-      - name: Run lint (apps/lp only)
-        run: pnpm --filter @high-q/lp lint
+      - name: Run lint across all apps
+        run: pnpm -r lint
+
+      - name: Run stylelint (admin / reservation)
+        run: pnpm -r --if-present stylelint
 
   test:
     name: test
@@ -133,8 +136,37 @@ jobs:
       - name: Install dependencies (offline if cache hit)
         run: pnpm install --frozen-lockfile
 
-      - name: Run tests across workspaces
-        run: pnpm -r test
+      - name: Run tests with coverage
+        run: pnpm -r --if-present test:coverage
+
+      - name: Coverage summary to job step
+        if: always()
+        run: |
+          {
+            echo "## Coverage Summary"
+            for f in apps/admin/coverage/coverage-summary.json \
+                     apps/reservation/coverage/coverage-summary.json \
+                     packages/shared/coverage/coverage-summary.json; do
+              if [ -f "$f" ]; then
+                pkg=$(echo "$f" | awk -F'/' '{print $1"/"$2}')
+                echo ""
+                echo "### $pkg"
+                node -e "const s=require('./$f').total; console.log('| metric | pct |\\n|---|---|\\n| lines | '+s.lines.pct+'% |\\n| branches | '+s.branches.pct+'% |\\n| functions | '+s.functions.pct+'% |\\n| statements | '+s.statements.pct+'% |')"
+              fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-${{ github.run_id }}
+          path: |
+            apps/admin/coverage/
+            apps/reservation/coverage/
+            packages/shared/coverage/
+          retention-days: 14
+          if-no-files-found: ignore
 
   build:
     name: build
@@ -226,3 +258,88 @@ jobs:
             test-results/
           retention-days: 14
           if-no-files-found: ignore
+
+  static-checks:
+    name: static-checks
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Restore pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install dependencies (offline if cache hit)
+        run: pnpm install --frozen-lockfile
+
+      # 静的検査 (FSD 補助 / service_role 露出 / 4 状態 テスト / E2E 件数)
+      - name: service_role grep
+        run: bash scripts/static-checks/grep-service-role.sh
+
+      - name: dependency-cruiser (FSD layer enforcement)
+        run: pnpm depcruise
+
+      - name: 4-state UI test presence (warning)
+        run: bash scripts/static-checks/grep-4state-tests.sh
+
+      - name: E2E file count per feature (warning)
+        run: bash scripts/static-checks/count-e2e-files.sh
+
+  migration-safety:
+    name: migration-safety
+    needs: install
+    runs-on: ubuntu-latest
+    # supabase/migrations/** が変更された場合のみ起動
+    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'force-migration-checks') || github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # PR でファイル変更検出に必要な fetch-depth
+          fetch-depth: 0
+
+      - name: Detect migration changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            migrations:
+              - 'supabase/migrations/**'
+
+      - name: Setup Node
+        if: steps.changes.outputs.migrations == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Check RLS coverage in new migrations
+        if: steps.changes.outputs.migrations == 'true'
+        run: bash scripts/static-checks/migrations/check-rls.sh
+
+      - name: Check my_number SOP compliance
+        if: steps.changes.outputs.migrations == 'true'
+        run: bash scripts/static-checks/migrations/check-my-number.sh
+
+      - name: Check rollback comment presence (warning)
+        if: steps.changes.outputs.migrations == 'true'
+        run: bash scripts/static-checks/migrations/check-rollback-comment.sh
+
+      - name: Migrations unchanged - skipping safety checks
+        if: steps.changes.outputs.migrations != 'true'
+        run: echo "supabase/migrations/** に変更がないため migration-safety はスキップしました。"
