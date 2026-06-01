@@ -24,5 +24,25 @@ export default defineConfig({
     // 影響なし。本来は test 自体を更に軽くしたいが、現状は timeout 拡張で安定化。
     testTimeout: 10000,
     hookTimeout: 10000,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "json-summary"],
+      include: ["src/**/*.{ts,tsx,vue}"],
+      exclude: [
+        "src/**/*.spec.{ts,tsx}",
+        "src/test/**",
+        "src/**/*.d.ts",
+        "src/main.ts",
+        "src/env.d.ts",
+      ],
+      // baseline 計測: lines 89.7 / branches 87.59 / functions 77.4 / statements 89.7
+      // design.md D8 (段階導入): 実測 -10% を初期値。Group 8 で追加の error 修正後に再計測。
+      thresholds: {
+        lines: 75,
+        branches: 70,
+        functions: 65,
+        statements: 75,
+      },
+    },
   },
 });

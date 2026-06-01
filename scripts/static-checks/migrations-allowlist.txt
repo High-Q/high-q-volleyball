@@ -1,0 +1,31 @@
+# Migration allowlist for static-checks (check-rls.sh / check-rollback-comment.sh).
+#
+# 本ファイルに列挙された migration は RLS / ロールバックコメントの検査対象から除外される。
+# 本 change のマージ時点で既存の migration を一括登録。
+#
+# 新規追加時のルール:
+# - 原則として新規 migration は RLS / ロールバックコメントを満たすべきであり、allowlist 追加は最終手段
+# - allowlist に追加する場合は PR コメントで理由を明示すること (CLAUDE.md Pillar 4 参照)
+# - コメント行 (#) と空行は無視される
+20260426000000_init_high_q.sql
+20260428143738_db_schema_foundation.sql
+20260429000000_table_grants.sql
+20260430120000_event_list_view.sql
+20260501210240_event_detail_views.sql
+20260502165034_event_detail_view_v2_headcount.sql
+20260502172040_event_detail_view_v3_member_breakdown.sql
+20260504231456_split_identity_documents_storage_path.sql
+20260505030613_relax_identity_documents_storage_path_front.sql
+20260505182545_fix_ariake_venue_address.sql
+20260505184227_add_venues_meeting_point.sql
+20260507000000_add_members_nickname.sql
+20260511000000_add_signup_pending.sql
+20260511000100_grant_service_role.sql
+20260515133901_add_members_admin_note_and_views.sql
+20260516000000_member_withdrawal_flow.sql
+20260517215530_change_reservations_event_fk_to_cascade.sql
+20260519163927_add_nickname_to_event_participants_view.sql
+20260520160254_split_members_name_last_first.sql
+20260520164020_fix_known_split_needed_members.sql
+20260523085011_add_correction_request_count_to_member_list_view.sql
+20260526124434_event_availability_view.sql

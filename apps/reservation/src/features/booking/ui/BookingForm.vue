@@ -30,19 +30,23 @@ const props = defineProps<{
 
 const guestLabel = computed(() => `${props.draft.guestCount} 名`);
 
+// 親が provide する reactive object を直接 mutate する設計上、vue/no-mutating-props を抑止
 function decGuest(): void {
   if (props.draft.guestCount > 0) {
+    // eslint-disable-next-line vue/no-mutating-props
     props.draft.guestCount = props.draft.guestCount - 1;
   }
 }
 function incGuest(): void {
   if (props.draft.guestCount < MAX_GUEST_COUNT) {
+    // eslint-disable-next-line vue/no-mutating-props
     props.draft.guestCount = props.draft.guestCount + 1;
   }
 }
 
 function onNoteInput(e: Event): void {
   const t = e.target as HTMLTextAreaElement;
+  // eslint-disable-next-line vue/no-mutating-props
   props.draft.note = t.value;
 }
 

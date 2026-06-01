@@ -29,3 +29,7 @@ pnpm-debug.log*
 *.sln
 *.sw?
 package-lock.json
+
+# vitest coverage report (generated per Issue #180/#181)
+coverage/
+**/coverage/

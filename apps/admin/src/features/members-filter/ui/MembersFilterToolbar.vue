@@ -66,7 +66,7 @@ function onSearchInput(event: Event): void {
 }
 
 const totalLabel = computed<string>(() => `${0} 〜 ${0}`);
-void totalLabel; // 将来の表示用、現状未使用警告抑止
+void totalLabel.value; // 将来の表示用、現状未使用警告抑止
 </script>
 
 <template>

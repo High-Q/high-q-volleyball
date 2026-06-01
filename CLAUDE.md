@@ -112,7 +112,19 @@ UI 変更タスク連続時は、各タスクごとに `pnpm exec vitest run` / 
 app → pages → widgets → features → entities → shared
 ```
 
-依存方向は上位 → 下位の一方向のみ。各スライスは `index.ts`（Public API）経由で外部 import。Supabase client は `shared/api/` のみ。Branded Types でドメイン識別子を表現、生の `string`/`number` 直使用禁止。エラーは `Result<T>` 型で技術エラーとビジネス異常系を区別。
+依存方向は上位 → 下位の一方向のみ。各スライスは `index.ts`（Public API）経由で外部 import。Supabase client は `shared/api/` のみ（type-only import は features 等から可）。Branded Types でドメイン識別子を表現、生の `string`/`number` 直使用禁止。エラーは `Result<T>` 型で技術エラーとビジネス異常系を区別。
+
+### 機械検知（admin / reservation 対象、LP は #310 完了まで対象外）
+
+| 検知対象 | ツール | severity |
+|---|---|---|
+| FSD 依存方向 (上位 → 下位の一方向) | `eslint-plugin-boundaries` + `dependency-cruiser` | error |
+| cross-slice の Public API 経由 | `boundaries/no-private` | error |
+| Supabase client の `shared/api/` 集約 | `@typescript-eslint/no-restricted-imports` (allowTypeImports) | error |
+| `service_role` のクライアント側露出 | `no-restricted-syntax` (Edge Function は対象外) | error |
+| HQ デザイントークン経由（生 hex / 色名禁止） | `stylelint` | warning |
+
+→ 意味理解が必要なレビュー（テストの意味的妥当性 / migration の既存データ影響等）は引き続きレム self-check 責務。CLAUDE.md Pillar 3 / 4 のチェックリストで担保。
 
 詳細は `docs/03-アーキテクチャ/04-開発・コーディング規約.md`。テスト戦略は `docs/07-テスト/01-テスト戦略・方針.md`。ロギング方針は `docs/06-品質・セキュリティ/07-ロギング方針.md`。
 
@@ -151,7 +163,17 @@ Design フェーズで必ずチェック: 影響レイヤー / ビジネス異�
 
 **RLS なしのテーブル実装を Apply で行うことを禁止**。テーブル変更時は Design フェーズで「SQL Migration + TypeScript エンティティ型 + RLS ポリシー」をセットで提示。
 
-詳細は `docs/06-品質・セキュリティ/03-アクセス制御・認可設計.md`。
+### 機械検知（CI `migration-safety` job、`supabase/migrations/**` 変更時のみ起動）
+
+| 検知対象 | script | severity |
+|---|---|---|
+| 新規 migration の RLS 網羅 (`enable row level security` + `create policy` セット) | `scripts/static-checks/migrations/check-rls.sh` | error |
+| マイナンバー 12 桁 text 列禁止 SOP | `scripts/static-checks/migrations/check-my-number.sh` | error |
+| ロールバック手順コメント (`-- ROLLBACK:`) 存在 | `scripts/static-checks/migrations/check-rollback-comment.sh` | warning |
+
+既存 migration は `scripts/static-checks/migrations-allowlist.txt` で除外。**allowlist 追加時は PR コメントで理由を明示する**（運用ルール）。allowlist 追加が頻発する場合は CI rule 自体の設計を見直す。
+
+詳細は `docs/06-品質・セキュリティ/03-アクセス制御・認可設計.md`、SOP は `docs/06-品質・セキュリティ/08-本人確認書類取扱SOP.md`。
 
 ---
 

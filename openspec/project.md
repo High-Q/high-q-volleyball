@@ -42,8 +42,13 @@ app → pages → widgets → features → entities → shared
 ```
 
 - 各スライスは `index.ts`（Public API）を持ち、外部から直接パスで import 禁止
-- Supabase client は `shared/api/` のみに存在
-- ESLint（`eslint-plugin-boundaries`）でレイヤー境界を自動検証
+- Supabase client は `shared/api/` のみに存在（type-only import は features 等から可）
+- 機械検知（admin / reservation 対象、LP は #310 完了まで対象外）:
+  - ESLint `eslint-plugin-boundaries` でレイヤー境界 + Public API 経由を強制
+  - ESLint `@typescript-eslint/no-restricted-imports` で `@supabase/supabase-js` を `shared/api/` に集約
+  - ESLint `no-restricted-syntax` で `service_role` のクライアント露出を禁止
+  - `dependency-cruiser` でレイヤー方向を CI 側からも二重検知
+  - `stylelint` で生 hex / 名前付きカラーを warning（HQ デザイントークン経由を促進）
 
 ## 開発プロセス（openspec ワークフロー）
 

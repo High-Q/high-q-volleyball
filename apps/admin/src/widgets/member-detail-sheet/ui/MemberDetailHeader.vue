@@ -28,7 +28,7 @@ function formatDate(iso: string | null): string {
 const fields = computed<
   ReadonlyArray<{ label: string; value: string; mono?: boolean }>
 >(() => []);
-void fields; // 拡張ポイント、現状未使用
+void fields.value; // 拡張ポイント、現状未使用
 </script>
 
 <template>
