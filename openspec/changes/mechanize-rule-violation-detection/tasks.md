@@ -76,7 +76,7 @@
 ## 10. 最終確認
 
 - [x] 10.1 `pnpm -r lint` / `pnpm depcruise` / `pnpm -r stylelint` / `pnpm -r test:coverage` がすべてローカルで pass
-- [ ] 10.2 `act` または PR ドラフトで CI 全 job 緑を確認（typecheck / lint / test / build / e2e / static-checks）
+- [x] 10.2 `act` または PR ドラフトで CI 全 job 緑を確認（typecheck / lint / test / build / e2e / static-checks）
 - [x] 10.3 `openspec validate mechanize-rule-violation-detection` が pass
 - [x] 10.4 PR description に Test plan として「ローカル lint / coverage 結果」「CI 緑のスクリーンショット or run URL」「stylelint warning 件数」「coverage threshold 初期値の根拠」を記載
 - [x] 10.5 follow-up Issue を起票（stylelint warning の error 昇格 / coverage threshold 引き上げ計画）
