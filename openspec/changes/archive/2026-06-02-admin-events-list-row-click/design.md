@@ -32,24 +32,29 @@
 
 **選択肢:**
 
-- **A. 行内オーバーレイ `<router-link class="absolute inset-0">`** — `<tr>` を `relative` にして、絶対配置の透明リンクを敷く。「編集」列のみ `relative z-10` で上層に重ねる
+- **A. オーバーレイ `<router-link class="absolute inset-0">` を日付セル内に配置** — `<tr>` と日付 `<TableCell>` を `relative` にして、絶対配置の透明リンクを敷く
 - **B. 各セルを個別に `<router-link>` でラップ** — 「編集」列以外の各セルの中身を `<router-link>` で囲む
+- **C. card-link パターン: タイトル列の `<router-link>` に `before:absolute before:inset-0 before:content-['']` を付与** — リンク本体はタイトル文字列、`::before` 疑似要素が `<TableRow class="relative">` を positioning context として行全体まで広がる
 
-**選定: A（オーバーレイ）**
+**選定: C（card-link `::before` パターン）**
+
+**実装中に A から C に切り替えた経緯:**
+
+当初は A（オーバーレイ link を日付セル内に配置）で実装したが、日付 `<TableCell>` 自身にも `relative` を付けてしまったため、`<a class="absolute inset-0">` の positioning context が日付セルになり、結果としてオーバーレイが日付セル分しか覆わないバグが発生（翔太郎くんから「日付エリアしか押せない」とフィードバック）。修正方針として「日付セルの `relative` を外して `<tr>` を context にする」も検討したが、ブラウザ間で `<tr>` への `position: relative` の扱いに微妙な差がある懸念があり、より堅牢で a11y セマンティクスとしても優れた C パターンに切り替えた。
 
 **理由:**
 
-- a11y: 行 1 つあたりリンクが 2 個（詳細リンク + 編集リンク）で済む。B は最大 6 リンク/行 になり SR ナビゲーションが冗長
-- DOM 構造: B では各セルの `text-overflow / whitespace-nowrap / RemainBar / Badge` をリンクでラップする必要があり、Badge 内 CSS や RemainBar の `flex` レイアウトが崩れるリスクがある
-- 既存タイトル列リンクとの整合: A の場合、既存タイトル列の `<router-link>` は撤去できる（オーバーレイが代替）。B の場合、既存タイトル列リンクと並立になり「同じ行内に複数の同遷移先リンク」が発生
-- shadcn-vue Table primitives との相性: A は `<tr>` レベルの追加で完結、Table 系プリミティブを改変しない
+- a11y: 行 1 つあたりリンクが 2 個（タイトルリンク + 編集リンク）で済む。B は最大 6 リンク/行 になり SR ナビゲーションが冗長
+- セマンティクス: リンク本体がタイトル文字列そのもの。スクリーンリーダーには `aria-label="<イベント名> の詳細を見る"` で読み上げられる
+- DOM 構造: B では各セルの `text-overflow / whitespace-nowrap / RemainBar / Badge` をリンクでラップする必要があり、レイアウトが崩れるリスクがある
+- 堅牢性: `::before` の positioning context は `<TableRow class="relative">` を確実に拾う。`<tr>` への positioning は仕様上 OK だが、card-link `::before` パターンの方が広く使われており枯れた実装
+- shadcn-vue Table primitives との相性: `<TableRow class="relative">` の追加で完結、Table 系プリミティブを改変しない
 
 **実装メモ:**
 
-- `<TableRow>` 直下に `<td>` で透明オーバーレイリンクを置く方法は HTML 仕様上 `<tr>` の子は `<td>/<th>` のみのため避ける。代わりに、`EventsTable.vue` の行構造内に空セルを足すのではなく、**最初の `<TableCell>` 内（日付列）に `relative` を付け、その中で `<router-link class="absolute inset-0">` を行幅まで `width: 100vw` のように広げる方式は採らない**
-- 採用方式: **`<TableRow>` の `<tr>` 要素に `relative` クラスを足し、オーバーレイ用 `<router-link>` を `<TableCell>` 内ではなく `<tr>` の最終子要素として配置**。ただし HTML 仕様上 `<tr>` に `<a>` を直接置けないため、代替として **日付セル内に `position: absolute; inset: 0` の `<router-link>` を置く方式**を採る
-- 編集列の `<router-link>` には `relative z-10` を付与し、オーバーレイより上層でクリックを奪う
-- title セル内の既存 `<router-link>` は撤去し、テキスト直書きに戻す（オーバーレイが遷移を担う）。`title` 属性（hover でフルテキスト表示）は `<TableCell>` または `<span>` に移管
+- タイトル列 `<router-link>` のクラスに `before:absolute before:inset-0 before:content-['']` を追加。`<TableRow>` には `relative` を付与
+- 編集列の `<router-link>` には `relative z-10` を付与し、`::before` より上層でクリックを奪う
+- リンクテキスト自体は `block truncate max-w-[12rem] sm:max-w-xs hover:underline underline-offset-4` で従来どおり truncate、`title` 属性は `<TableCell>` 側に移管
 
 ### Decision 2: 行ホバー時の視覚フィードバック
 
