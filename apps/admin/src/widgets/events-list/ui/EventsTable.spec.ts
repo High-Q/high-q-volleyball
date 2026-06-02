@@ -176,8 +176,6 @@ describe("EventsTable", () => {
   it("操作列のリンクが /events/:id/edit を指す", async () => {
     const row = baseRow();
     const wrapper = await renderTable({ rows: [row] });
-    // 行内には title (events-detail) + edit の 2 リンクが存在する。
-    // 末尾の操作列が /events/:id/edit。
     const links = wrapper.findAll("a");
     const editLink = links.find((a) =>
       a.attributes("href")?.endsWith("/edit"),
@@ -187,16 +185,61 @@ describe("EventsTable", () => {
     );
   });
 
-  it("タイトル列のリンクが /events/:id（詳細）を指す", async () => {
+  it("詳細遷移リンクがタイトルセルに存在し /events/:id を指す（::before 疑似要素で行全体に拡張）", async () => {
     const row = baseRow();
     const wrapper = await renderTable({ rows: [row] });
     const links = wrapper.findAll("a");
-    const titleLink = links.find(
-      (a) =>
-        a.attributes("href") === `/events/${row.id}` &&
-        a.text() === row.name,
+    const detailLink = links.find(
+      (a) => a.attributes("href") === `/events/${row.id}`,
     );
-    expect(titleLink).toBeDefined();
+    expect(detailLink).toBeDefined();
+    // a11y: aria-label でイベント名を含むラベルが付与されている
+    expect(detailLink?.attributes("aria-label")).toContain(row.name);
+    // card-link パターン: ::before 疑似要素で行全体をクリック可能化
+    expect(detailLink?.classes()).toContain("before:absolute");
+    expect(detailLink?.classes()).toContain("before:inset-0");
+    expect(detailLink?.classes()).toContain("before:content-['']");
+    // リンクテキストはイベント名そのもの（タイトル列）
+    expect(detailLink?.text()).toBe(row.name);
+  });
+
+  it("詳細遷移リンクは a11y のため行ごとに 1 つに抑制する（編集リンクと合わせて行内 2 リンク）", async () => {
+    const row = baseRow();
+    const wrapper = await renderTable({ rows: [row] });
+    const rowEl = wrapper.findAll("tbody tr").at(0);
+    expect(rowEl?.findAll("a").length).toBe(2);
+  });
+
+  it("行全体クリック可能化のための positioning context が <tr> に設定されている", async () => {
+    const row = baseRow();
+    const wrapper = await renderTable({ rows: [row] });
+    // 行全体クリック化は <tr position: relative> + <a ::before absolute inset-0> で実現。
+    // <tr> が positioning context として relative になっていることが契約。
+    const rowEl = wrapper.findAll("tbody tr").at(0);
+    expect(rowEl?.classes()).toContain("relative");
+  });
+
+  it("編集リンクは relative z-10 で詳細リンクの ::before より上層にあり、行クリック遷移を奪う", async () => {
+    const row = baseRow();
+    const wrapper = await renderTable({ rows: [row] });
+    const links = wrapper.findAll("a");
+    const editLink = links.find((a) =>
+      a.attributes("href")?.endsWith("/edit"),
+    );
+    expect(editLink?.classes()).toContain("relative");
+    expect(editLink?.classes()).toContain("z-10");
+  });
+
+  it("タイトル truncate 時に title 属性でフルテキストを確認できる", async () => {
+    const row = baseRow({ name: "とても長いイベント名で truncate される可能性が高いケース" });
+    const wrapper = await renderTable({ rows: [row] });
+    // タイトル列セルに title 属性でフルテキストが保持されている
+    const titleCell = wrapper
+      .findAll("td")
+      .find((c) => c.text().includes(row.name));
+    expect(titleCell?.attributes("title")).toBe(row.name);
+    // セル内の <router-link> が truncate utility を持つ
+    expect(titleCell?.find("a").classes()).toContain("truncate");
   });
 
   it("Enter キーで sort トグルが発火", async () => {
