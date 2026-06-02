@@ -185,7 +185,7 @@ describe("EventsTable", () => {
     );
   });
 
-  it("行内に詳細遷移用のオーバーレイ <router-link> が日付セルに存在し /events/:id を指す", async () => {
+  it("詳細遷移リンクがタイトルセルに存在し /events/:id を指す（::before 疑似要素で行全体に拡張）", async () => {
     const row = baseRow();
     const wrapper = await renderTable({ rows: [row] });
     const links = wrapper.findAll("a");
@@ -195,36 +195,31 @@ describe("EventsTable", () => {
     expect(detailLink).toBeDefined();
     // a11y: aria-label でイベント名を含むラベルが付与されている
     expect(detailLink?.attributes("aria-label")).toContain(row.name);
-    // オーバーレイ方式: absolute inset-0 のクラスを持つ
-    expect(detailLink?.classes()).toContain("absolute");
-    expect(detailLink?.classes()).toContain("inset-0");
-    // オーバーレイリンクは日付セル（最初の <td>）内に配置される
-    const firstCell = wrapper.findAll("td").at(0);
-    expect(firstCell?.find("a").attributes("href")).toBe(`/events/${row.id}`);
+    // card-link パターン: ::before 疑似要素で行全体をクリック可能化
+    expect(detailLink?.classes()).toContain("before:absolute");
+    expect(detailLink?.classes()).toContain("before:inset-0");
+    expect(detailLink?.classes()).toContain("before:content-['']");
+    // リンクテキストはイベント名そのもの（タイトル列）
+    expect(detailLink?.text()).toBe(row.name);
   });
 
-  it("オーバーレイ <router-link> は a11y のため行ごとに 1 つに抑制する（編集リンクと合わせて行内 2 リンク）", async () => {
+  it("詳細遷移リンクは a11y のため行ごとに 1 つに抑制する（編集リンクと合わせて行内 2 リンク）", async () => {
     const row = baseRow();
     const wrapper = await renderTable({ rows: [row] });
     const rowEl = wrapper.findAll("tbody tr").at(0);
     expect(rowEl?.findAll("a").length).toBe(2);
   });
 
-  it("行（編集列以外のセル）クリックで /events/:id 遷移が成立する DOM が出来ている", async () => {
+  it("行全体クリック可能化のための positioning context が <tr> に設定されている", async () => {
     const row = baseRow();
     const wrapper = await renderTable({ rows: [row] });
-    // 日付・タイトル・会場・時間・予約・ステータスの各セル内にオーバーレイ link が
-    // 重ねられているかは CSS absolute inset-0 で実現するため、JSDOM では実 click
-    // 伝搬テストは行えない。代替として「オーバーレイリンクが行内に存在し /events/:id
-    // を指している」+「親 <tr> に relative が付いている（オーバーレイの positioning
-    // context として機能する）」を契約として検証する。
+    // 行全体クリック化は <tr position: relative> + <a ::before absolute inset-0> で実現。
+    // <tr> が positioning context として relative になっていることが契約。
     const rowEl = wrapper.findAll("tbody tr").at(0);
     expect(rowEl?.classes()).toContain("relative");
-    const overlay = rowEl?.find("a.absolute.inset-0");
-    expect(overlay?.attributes("href")).toBe(`/events/${row.id}`);
   });
 
-  it("編集リンクは relative z-10 でオーバーレイより上層にあり、行クリック遷移を奪う", async () => {
+  it("編集リンクは relative z-10 で詳細リンクの ::before より上層にあり、行クリック遷移を奪う", async () => {
     const row = baseRow();
     const wrapper = await renderTable({ rows: [row] });
     const links = wrapper.findAll("a");
@@ -243,8 +238,8 @@ describe("EventsTable", () => {
       .findAll("td")
       .find((c) => c.text().includes(row.name));
     expect(titleCell?.attributes("title")).toBe(row.name);
-    // セル内の span が truncate utility を持つ
-    expect(titleCell?.find("span").classes()).toContain("truncate");
+    // セル内の <router-link> が truncate utility を持つ
+    expect(titleCell?.find("a").classes()).toContain("truncate");
   });
 
   it("Enter キーで sort トグルが発火", async () => {

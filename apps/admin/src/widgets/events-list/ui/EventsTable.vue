@@ -135,19 +135,18 @@ function onHeaderKeyDown(col: SortKey, event: KeyboardEvent): void {
         :key="row.id"
         class="relative"
       >
-        <TableCell class="relative font-mono text-xs text-muted whitespace-nowrap">
-          <router-link
-            :to="{ name: 'events-detail', params: { id: row.id } }"
-            class="absolute inset-0"
-            :aria-label="`${row.name} の詳細を見る`"
-          />
+        <TableCell class="font-mono text-xs text-muted whitespace-nowrap">
           {{ row.__dateLabel }}
         </TableCell>
         <TableCell
           class="font-jp text-sm text-ink whitespace-nowrap"
           :title="row.name"
         >
-          <span class="block truncate max-w-[12rem] sm:max-w-xs">{{ row.name }}</span>
+          <router-link
+            :to="{ name: 'events-detail', params: { id: row.id } }"
+            class="block truncate max-w-[12rem] sm:max-w-xs hover:underline underline-offset-4 before:absolute before:inset-0 before:content-['']"
+            :aria-label="`${row.name} の詳細を見る`"
+          >{{ row.name }}</router-link>
         </TableCell>
         <TableCell
           class="font-jp text-sm text-muted whitespace-nowrap"
