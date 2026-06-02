@@ -130,16 +130,24 @@ function onHeaderKeyDown(col: SortKey, event: KeyboardEvent): void {
       </TableRow>
     </TableHeader>
     <TableBody>
-      <TableRow v-for="row in displayedRows" :key="row.id">
-        <TableCell class="font-mono text-xs text-muted whitespace-nowrap">
-          {{ row.__dateLabel }}
-        </TableCell>
-        <TableCell class="font-jp text-sm text-ink whitespace-nowrap">
+      <TableRow
+        v-for="row in displayedRows"
+        :key="row.id"
+        class="relative"
+      >
+        <TableCell class="relative font-mono text-xs text-muted whitespace-nowrap">
           <router-link
             :to="{ name: 'events-detail', params: { id: row.id } }"
-            class="block truncate max-w-[12rem] sm:max-w-xs hover:underline underline-offset-4"
-            :title="row.name"
-          >{{ row.name }}</router-link>
+            class="absolute inset-0"
+            :aria-label="`${row.name} の詳細を見る`"
+          />
+          {{ row.__dateLabel }}
+        </TableCell>
+        <TableCell
+          class="font-jp text-sm text-ink whitespace-nowrap"
+          :title="row.name"
+        >
+          <span class="block truncate max-w-[12rem] sm:max-w-xs">{{ row.name }}</span>
         </TableCell>
         <TableCell
           class="font-jp text-sm text-muted whitespace-nowrap"
@@ -165,10 +173,10 @@ function onHeaderKeyDown(col: SortKey, event: KeyboardEvent): void {
             {{ STATUS_LABEL[row.__display] }}
           </Badge>
         </TableCell>
-        <TableCell class="text-right whitespace-nowrap">
+        <TableCell class="relative text-right whitespace-nowrap">
           <router-link
             :to="`/events/${row.id}/edit`"
-            class="font-jp text-sm text-accent underline-offset-4 hover:underline"
+            class="relative z-10 font-jp text-sm text-accent underline-offset-4 hover:underline"
           >
             編集
           </router-link>

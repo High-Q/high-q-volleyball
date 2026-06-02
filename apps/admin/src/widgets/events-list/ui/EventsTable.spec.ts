@@ -176,8 +176,6 @@ describe("EventsTable", () => {
   it("操作列のリンクが /events/:id/edit を指す", async () => {
     const row = baseRow();
     const wrapper = await renderTable({ rows: [row] });
-    // 行内には title (events-detail) + edit の 2 リンクが存在する。
-    // 末尾の操作列が /events/:id/edit。
     const links = wrapper.findAll("a");
     const editLink = links.find((a) =>
       a.attributes("href")?.endsWith("/edit"),
@@ -187,16 +185,66 @@ describe("EventsTable", () => {
     );
   });
 
-  it("タイトル列のリンクが /events/:id（詳細）を指す", async () => {
+  it("行内に詳細遷移用のオーバーレイ <router-link> が日付セルに存在し /events/:id を指す", async () => {
     const row = baseRow();
     const wrapper = await renderTable({ rows: [row] });
     const links = wrapper.findAll("a");
-    const titleLink = links.find(
-      (a) =>
-        a.attributes("href") === `/events/${row.id}` &&
-        a.text() === row.name,
+    const detailLink = links.find(
+      (a) => a.attributes("href") === `/events/${row.id}`,
     );
-    expect(titleLink).toBeDefined();
+    expect(detailLink).toBeDefined();
+    // a11y: aria-label でイベント名を含むラベルが付与されている
+    expect(detailLink?.attributes("aria-label")).toContain(row.name);
+    // オーバーレイ方式: absolute inset-0 のクラスを持つ
+    expect(detailLink?.classes()).toContain("absolute");
+    expect(detailLink?.classes()).toContain("inset-0");
+    // オーバーレイリンクは日付セル（最初の <td>）内に配置される
+    const firstCell = wrapper.findAll("td").at(0);
+    expect(firstCell?.find("a").attributes("href")).toBe(`/events/${row.id}`);
+  });
+
+  it("オーバーレイ <router-link> は a11y のため行ごとに 1 つに抑制する（編集リンクと合わせて行内 2 リンク）", async () => {
+    const row = baseRow();
+    const wrapper = await renderTable({ rows: [row] });
+    const rowEl = wrapper.findAll("tbody tr").at(0);
+    expect(rowEl?.findAll("a").length).toBe(2);
+  });
+
+  it("行（編集列以外のセル）クリックで /events/:id 遷移が成立する DOM が出来ている", async () => {
+    const row = baseRow();
+    const wrapper = await renderTable({ rows: [row] });
+    // 日付・タイトル・会場・時間・予約・ステータスの各セル内にオーバーレイ link が
+    // 重ねられているかは CSS absolute inset-0 で実現するため、JSDOM では実 click
+    // 伝搬テストは行えない。代替として「オーバーレイリンクが行内に存在し /events/:id
+    // を指している」+「親 <tr> に relative が付いている（オーバーレイの positioning
+    // context として機能する）」を契約として検証する。
+    const rowEl = wrapper.findAll("tbody tr").at(0);
+    expect(rowEl?.classes()).toContain("relative");
+    const overlay = rowEl?.find("a.absolute.inset-0");
+    expect(overlay?.attributes("href")).toBe(`/events/${row.id}`);
+  });
+
+  it("編集リンクは relative z-10 でオーバーレイより上層にあり、行クリック遷移を奪う", async () => {
+    const row = baseRow();
+    const wrapper = await renderTable({ rows: [row] });
+    const links = wrapper.findAll("a");
+    const editLink = links.find((a) =>
+      a.attributes("href")?.endsWith("/edit"),
+    );
+    expect(editLink?.classes()).toContain("relative");
+    expect(editLink?.classes()).toContain("z-10");
+  });
+
+  it("タイトル truncate 時に title 属性でフルテキストを確認できる", async () => {
+    const row = baseRow({ name: "とても長いイベント名で truncate される可能性が高いケース" });
+    const wrapper = await renderTable({ rows: [row] });
+    // タイトル列セルに title 属性でフルテキストが保持されている
+    const titleCell = wrapper
+      .findAll("td")
+      .find((c) => c.text().includes(row.name));
+    expect(titleCell?.attributes("title")).toBe(row.name);
+    // セル内の span が truncate utility を持つ
+    expect(titleCell?.find("span").classes()).toContain("truncate");
   });
 
   it("Enter キーで sort トグルが発火", async () => {
