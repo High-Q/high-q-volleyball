@@ -152,31 +152,35 @@ LP の各セクション（Hero を除く）は、ビューポートに 15% 以�
 
 ### Requirement: X (Twitter) アイコンは公式ロゴで統一される
 
-LP 内の X 関連 SNS リンクは、`mdi-twitter` ではなく X 公式ロゴ（カスタム SVG）で表示されなければならない（SHALL）。
+LP 内の X 関連 SNS リンクは、X 公式ロゴ（"X" 字形のカスタム inline SVG）で表示されなければならない（SHALL）。鳥アイコン（旧 Twitter ロゴ）や、Vuetify / Material Design Icons 系の `mdi-twitter` 等の外部アイコンフォントに依存する表現を含めてはならない（SHALL NOT）。
 
 #### Scenario: ヘッダー X アイコンの表示
 - **WHEN** ユーザーがヘッダーの SNS ボタンを見たとき
-- **THEN** 鳥アイコン（`mdi-twitter`）ではなく X の "X" 字形ロゴが表示される
+- **THEN** 鳥アイコンや MDI 由来のアイコンではなく、X の "X" 字形 inline SVG が表示される
 
 #### Scenario: フッター X アイコンの表示
 - **WHEN** ユーザーがフッターの SNS ボタンを見たとき
-- **THEN** X の "X" 字形ロゴが表示される
+- **THEN** X の "X" 字形 inline SVG が表示される
 
 #### Scenario: Activities セクション X アイコンの表示
 - **WHEN** ユーザーが Activities セクションの SNS ボタンを見たとき
-- **THEN** X の "X" 字形ロゴが表示される
+- **THEN** X の "X" 字形 inline SVG が表示される
+
+#### Scenario: 外部アイコンフォント非依存
+- **WHEN** LP の widgets / pages / shared/ui を `grep -rn "mdi-\|@mdi/\|fa-\|@fortawesome/" apps/lp/src/` で検索する
+- **THEN** マッチ件数が 0 件である（X 含む全アイコンが inline SVG で実装されている）
 
 ### Requirement: ハードコードされたカラー値が CSS 内に存在しない
 
-LP の Vue コンポーネントには、`#F5F8FA` / `#6A96A4` / `#182F43` / `#85BBCC` 等のハードコードされたカラー値を含めてはならない（SHALL NOT）。すべての色は Vuetify テーマトークン経由で参照されなければならない（SHALL）。例外として `plugins/vuetify.js`（テーマ定義そのもの）はハードコードを許可する。
+LP の Vue コンポーネント・スタイルブロック・SCSS には、ハードコードされたカラー値（hex / rgb / hsl / 名前指定の色）を含めてはならない（SHALL NOT）。すべての色は **HQ デザイントークン経由**（CSS 変数 `var(--hq-color-*)` または `@high-q/tailwind-preset` 由来の Tailwind utility）で参照されなければならない（SHALL）。例外として `@high-q/design-tokens` パッケージ自体（トークン定義の真実の源）は値定義のためのハードコードを許可する。
 
-#### Scenario: ハードコード値の不在
-- **WHEN** `grep -rn "#F5F8FA\|#6A96A4\|#182F43\|#85BBCC" apps/lp/src/` を実行したとき
-- **THEN** `plugins/vuetify.js` 以外のファイルでマッチが0件である
+#### Scenario: LP の widgets / pages / shared/ui にハードコード色が存在しない
+- **WHEN** `grep -rnE "#[0-9a-fA-F]{3,8}\\b" apps/lp/src/widgets apps/lp/src/pages apps/lp/src/shared apps/lp/src/App.vue` を実行する
+- **THEN** マッチ件数が 0 件である（HQ デザイントークンの CSS 変数経由のみが許可される）
 
 #### Scenario: トークン経由での色参照
-- **WHEN** コンポーネントが primary 色を必要とするとき
-- **THEN** `color="primary"` または `rgb(var(--v-theme-primary))` 形式でトークン経由で参照される
+- **WHEN** コンポーネントが任意の色を必要とするとき
+- **THEN** `var(--hq-color-paper)` / `var(--hq-color-ink)` 等の CSS 変数、または `bg-paper` / `text-ink` 等の `@high-q/tailwind-preset` 由来 utility 経由で参照される
 
 ### Requirement: コンセプトカードが3列横並びで表示される
 
@@ -200,11 +204,15 @@ md ブレークポイント以上の画面幅において、コンセプトカ�
 
 ### Requirement: 全セクションの横幅がヘッダーと揃う
 
-LP の各セクション（Hero・Concept・Activities・Event）の横幅はヘッダーと同幅でなければならない（SHALL）。Hero は背景画像をフル幅で表示するが、テキスト・CTA は `v-container` 内に収める。
+LP の各セクション（Hero・Concept・Activities・Event）の横幅はヘッダーと同幅でなければならない（SHALL）。Hero は背景画像をフル幅で表示するが、テキスト・CTA は中央寄せの最大幅コンテナ内に収める（実装は Tailwind utility の `max-w-screen-*` + `mx-auto` または同等のレイアウト構造）。
 
 #### Scenario: セクション横幅の一致
 - **WHEN** ユーザーが LP を開いた場合
 - **THEN** ヘッダー・コンセプト・アクティビティ・イベント各セクションのコンテンツ左右端が揃って表示される
+
+#### Scenario: コンテナ層の実装方式
+- **WHEN** LP の各セクションの実装を確認する
+- **THEN** 中央寄せ最大幅コンテナは Tailwind utility または同等の CSS で実装されており、`v-container` を含む Vuetify 由来のコンポーネントには依存しない
 
 ### Requirement: フッターが表示される
 
