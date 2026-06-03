@@ -38,16 +38,34 @@ module.exports = {
   ],
   overrides: [
     // -------------------------------------------------------------------------
-    // LP (apps/lp) : Vue 2 essential + Vuetify ベースのみ。本 change の FSD rule は対象外。
+    // LP (apps/lp) : HQ デザインシステム移行後の TS / Vue 3 設定。
+    // FSD boundaries / restricted-imports 検査は別 Issue で個別対応する想定で本 change の
+    // 対象外（admin / reservation と同じ機械検知を LP にも広げる作業は follow-up）。
     // -------------------------------------------------------------------------
     {
-      files: ["apps/lp/**/*.{js,vue}"],
+      files: ["apps/lp/**/*.{js,ts,vue}"],
       parser: "vue-eslint-parser",
       parserOptions: {
+        parser: "@typescript-eslint/parser",
         ecmaVersion: 2022,
         sourceType: "module",
+        extraFileExtensions: [".vue"],
       },
-      extends: ["eslint:recommended", "plugin:vue/essential", "plugin:vuetify/base"],
+      plugins: ["@typescript-eslint"],
+      extends: [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:vue/vue3-essential",
+      ],
+      rules: {
+        "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/no-unused-vars": [
+          "warn",
+          { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+        ],
+        "vue/multi-word-component-names": "off",
+        "no-empty": ["error", { allowEmptyCatch: true }],
+      },
     },
 
     // -------------------------------------------------------------------------

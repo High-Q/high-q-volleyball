@@ -87,7 +87,7 @@
   </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { LINE_OPEN_CHAT_URL } from '@shared/config/sns'
 
@@ -99,9 +99,9 @@ const DRAWER_ID = 'site-drawer'
 
 const scrolled = ref(false)
 const menuOpen = ref(false)
-const hamburgerEl = ref(null)
-const drawerEl = ref(null)
-const drawerLinkEls = ref([])
+const hamburgerEl = ref<HTMLButtonElement | null>(null)
+const drawerEl = ref<HTMLElement | null>(null)
+const drawerLinkEls = ref<HTMLAnchorElement[]>([])
 
 const links = [
   { href: '#about-heading', label: 'はじめての方へ' },
@@ -111,7 +111,7 @@ const links = [
   { href: '#faq-heading', label: 'よくある質問' },
 ]
 
-function formatNum(n) {
+function formatNum(n: number) {
   return String(n).padStart(2, '0')
 }
 
@@ -132,7 +132,7 @@ function onLinkClick() {
   setTimeout(closeMenu, 80)
 }
 
-function onKeyDown(event) {
+function onKeyDown(event: KeyboardEvent) {
   if (event.key === 'Escape' && menuOpen.value) {
     closeMenu()
     hamburgerEl.value?.focus()

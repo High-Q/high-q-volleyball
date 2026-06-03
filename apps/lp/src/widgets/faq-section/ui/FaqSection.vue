@@ -38,7 +38,7 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { Kicker } from '@high-q/ui'
 
@@ -52,7 +52,7 @@ const items = [
 ]
 
 const open = ref(0)
-function toggle(i) {
+function toggle(i: number) {
   open.value = open.value === i ? -1 : i
 }
 </script>

@@ -36,7 +36,7 @@
   </aside>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useNextSession } from '../model/useNextSession'
 import { reservationEventUrl } from '@shared/config/reservation'
@@ -50,7 +50,15 @@ const targetUrl = computed(() => {
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 
-function formatDateName(event) {
+interface NextSessionEvent {
+  id: string
+  name: string
+  start: Date | null
+  end: Date | null
+  location: string
+}
+
+function formatDateName(event: NextSessionEvent) {
   const d = event.start
   if (!(d instanceof Date) || Number.isNaN(d.getTime())) return event.name
   const month = d.getMonth() + 1
@@ -59,11 +67,11 @@ function formatDateName(event) {
   return `${month}/${day} (${dow}) · ${event.name}`
 }
 
-function pad(n) {
+function pad(n: number) {
   return String(n).padStart(2, '0')
 }
 
-function formatTimeLocation(event) {
+function formatTimeLocation(event: NextSessionEvent) {
   const { start, end, location } = event
   let time = ''
   if (start instanceof Date && !Number.isNaN(start.getTime())) {

@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const builderResult = {
+interface BuilderResult {
+  data: unknown
+  error: unknown
+}
+
+const builderResult: BuilderResult = {
   data: null,
   error: null,
 }
@@ -46,7 +51,7 @@ describe('eventQueryOptions.list()', () => {
     ]
     const { eventQueryOptions } = await import('./eventQueries')
 
-    const result = await eventQueryOptions.list().queryFn()
+    const result = await (eventQueryOptions.list().queryFn as () => Promise<Array<{ id: string; name: string; location: string; start: Date; end: Date }>>)()
 
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
@@ -54,15 +59,15 @@ describe('eventQueryOptions.list()', () => {
       name:     'バレー会',
       location: '体育館A',
     })
-    expect(result[0].start).toBeInstanceOf(Date)
-    expect(result[0].end).toBeInstanceOf(Date)
+    expect(result[0]!.start).toBeInstanceOf(Date)
+    expect(result[0]!.end).toBeInstanceOf(Date)
   })
 
   it('Empty: 0 件のとき空配列を返す', async () => {
     builderResult.data = []
     const { eventQueryOptions } = await import('./eventQueries')
 
-    const result = await eventQueryOptions.list().queryFn()
+    const result = await (eventQueryOptions.list().queryFn as () => Promise<unknown>)()
 
     expect(result).toEqual([])
   })
@@ -71,19 +76,19 @@ describe('eventQueryOptions.list()', () => {
     builderResult.error = { message: 'internal error' }
     const { eventQueryOptions } = await import('./eventQueries')
 
-    await expect(eventQueryOptions.list().queryFn()).rejects.toThrow('internal error')
+    await expect((eventQueryOptions.list().queryFn as () => Promise<unknown>)()).rejects.toThrow('internal error')
   })
 
   it('Query: events を select / visibility=published / start_at>=now / order=start_at.asc / venues join を発行する', async () => {
     builderResult.data = []
     const { eventQueryOptions } = await import('./eventQueries')
 
-    await eventQueryOptions.list().queryFn()
+    await (eventQueryOptions.list().queryFn as () => Promise<unknown>)()
 
     expect(fromMock).toHaveBeenCalledWith('events')
 
     expect(currentBuilder.select).toHaveBeenCalledTimes(1)
-    const selectArg = currentBuilder.select.mock.calls[0][0]
+    const selectArg = currentBuilder.select.mock.calls[0]![0]
     expect(selectArg).toContain('id')
     expect(selectArg).toContain('name')
     expect(selectArg).toContain('start_at')
@@ -93,7 +98,7 @@ describe('eventQueryOptions.list()', () => {
     expect(currentBuilder.eq).toHaveBeenCalledWith('visibility', 'published')
 
     expect(currentBuilder.gte).toHaveBeenCalledTimes(1)
-    const [gteCol, gteVal] = currentBuilder.gte.mock.calls[0]
+    const [gteCol, gteVal] = currentBuilder.gte.mock.calls[0]!
     expect(gteCol).toBe('start_at')
     expect(gteVal).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
 

@@ -1,13 +1,9 @@
 import Vue from "@vitejs/plugin-vue";
-import Vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [
-    Vue({ template: { transformAssetUrls } }),
-    Vuetify(),
-  ],
+  plugins: [Vue()],
   resolve: {
     alias: {
       "@":         fileURLToPath(new URL("./src",           import.meta.url)),
@@ -21,12 +17,7 @@ export default defineConfig({
     globals: false,
     environment: "jsdom",
     include: ["src/**/*.spec.{ts,tsx,js,jsx}"],
-    setupFiles: ["./src/test/setup.js"],
+    setupFiles: ["./src/test/setup.ts"],
     css: false,
-    server: {
-      deps: {
-        inline: ["vuetify"],
-      },
-    },
   },
 });

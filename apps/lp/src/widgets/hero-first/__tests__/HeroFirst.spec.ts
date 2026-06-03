@@ -46,7 +46,7 @@ describe("HeroFirst", () => {
       /\.hero-first__body\s*\{([^}]*)\}/,
     );
     expect(bodyBlockMatch, ".hero-first__body block must exist").not.toBeNull();
-    const bodyBlock = bodyBlockMatch[1];
+    const bodyBlock = bodyBlockMatch![1]!;
     expect(bodyBlock).not.toMatch(/max-height\s*:/);
   });
 
@@ -58,7 +58,7 @@ describe("HeroFirst", () => {
     expect(heroBlocks.length, ".hero-first block must exist").toBeGreaterThan(0);
 
     for (const match of heroBlocks) {
-      const block = match[1];
+      const block = match[1]!;
       // Forbid `height: <fixed>` declarations on .hero-first. min-height is OK.
       const hasFixedHeight = /(^|[\s;])height\s*:/.test(block);
       expect(hasFixedHeight, `.hero-first must not declare fixed height: ${block.trim()}`).toBe(false);

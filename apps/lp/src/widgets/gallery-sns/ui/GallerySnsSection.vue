@@ -17,7 +17,7 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Kicker } from '@high-q/ui'
 import { X_URL, X_HANDLE } from '@shared/config/sns'
 </script>

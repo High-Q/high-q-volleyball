@@ -5,21 +5,25 @@ import { mount } from '@vue/test-utils'
 import { useFadeInOnScroll } from './useFadeInOnScroll'
 
 // IntersectionObserver mock の参照を保持
-let observers = []
+let observers: MockIntersectionObserver[] = []
 
 class MockIntersectionObserver {
-  constructor(cb, options) {
+  cb: (entries: { isIntersecting: boolean }[]) => void
+  options: unknown
+  observed: unknown[] = []
+  disconnect = vi.fn()
+  constructor(cb: (entries: { isIntersecting: boolean }[]) => void, options?: unknown) {
     this.cb = cb
     this.options = options
-    this.observed = []
-    this.disconnect = vi.fn()
     observers.push(this)
   }
-  observe(target) {
+  observe(target: unknown) {
     this.observed.push(target)
   }
+  unobserve() {}
+  takeRecords() { return [] }
   // テストから手動で発火
-  trigger(isIntersecting) {
+  trigger(isIntersecting: boolean) {
     this.cb([{ isIntersecting }])
   }
 }
@@ -39,7 +43,7 @@ function createTestComponent() {
 describe('useFadeInOnScroll', () => {
   beforeEach(() => {
     observers = []
-    global.IntersectionObserver = MockIntersectionObserver
+    global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver
     // matchMedia の default mock: reduced-motion 無効
     window.matchMedia = vi.fn().mockReturnValue({ matches: false, addListener: vi.fn(), removeListener: vi.fn() })
   })
@@ -59,7 +63,7 @@ describe('useFadeInOnScroll', () => {
     const wrapper = mount(Comp)
     await nextTick()
     expect(observers).toHaveLength(1)
-    observers[0].trigger(true)
+    observers[0]!.trigger(true)
     await nextTick()
     expect(wrapper.vm.isVisible).toBe(true)
   })
@@ -68,7 +72,7 @@ describe('useFadeInOnScroll', () => {
     const Comp = createTestComponent()
     const wrapper = mount(Comp)
     await nextTick()
-    observers[0].trigger(false)
+    observers[0]!.trigger(false)
     await nextTick()
     expect(wrapper.vm.isVisible).toBe(false)
   })
@@ -77,9 +81,9 @@ describe('useFadeInOnScroll', () => {
     const Comp = createTestComponent()
     mount(Comp)
     await nextTick()
-    observers[0].trigger(true)
+    observers[0]!.trigger(true)
     await nextTick()
-    expect(observers[0].disconnect).toHaveBeenCalled()
+    expect(observers[0]!.disconnect).toHaveBeenCalled()
   })
 
   it('prefers-reduced-motion: reduce のとき初期から isVisible=true', async () => {
@@ -93,7 +97,7 @@ describe('useFadeInOnScroll', () => {
   })
 
   it('IntersectionObserver が undefined のとき初期から isVisible=true（フォールバック）', async () => {
-    delete global.IntersectionObserver
+    delete (global as unknown as { IntersectionObserver?: typeof IntersectionObserver }).IntersectionObserver
     const Comp = createTestComponent()
     const wrapper = mount(Comp)
     await nextTick()
@@ -104,7 +108,7 @@ describe('useFadeInOnScroll', () => {
     const Comp = createTestComponent()
     const wrapper = mount(Comp)
     await nextTick()
-    const observer = observers[0]
+    const observer = observers[0]!
     wrapper.unmount()
     expect(observer.disconnect).toHaveBeenCalled()
   })
