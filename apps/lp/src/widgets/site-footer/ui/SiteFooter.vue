@@ -52,7 +52,7 @@
   </footer>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useConsentPanel } from '@shared/lib/consentPanel'
 import { LINE_OPEN_CHAT_URL, X_URL } from '@shared/config/sns'

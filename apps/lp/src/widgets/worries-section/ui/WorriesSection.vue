@@ -23,7 +23,7 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const items = [
   { q: 'ガチ勢ばっかりじゃない？', a: '初心者と経験者が、半々くらいです。' },
   { q: 'ひとりで来ても浮かない？', a: 'ほとんどの人がひとりで来ます。幹事が紹介する時間もあります。' },

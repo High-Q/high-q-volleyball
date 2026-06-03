@@ -12,7 +12,7 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const items = [
   { label: 'エリア', value: '江東区' },
   { label: '開催', value: '土日祝' },

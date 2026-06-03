@@ -28,7 +28,7 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Kicker } from '@high-q/ui'
 
 const steps = [

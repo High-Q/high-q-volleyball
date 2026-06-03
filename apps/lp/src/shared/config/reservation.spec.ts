@@ -36,7 +36,7 @@ describe('shared/config/reservation', () => {
     vi.stubEnv('VITE_RESERVATION_URL', 'https://reservation.example.com')
     const { reservationEventUrl } = await import('./reservation.js')
     expect(reservationEventUrl('')).toBe('')
-    expect(reservationEventUrl(undefined)).toBe('')
+    expect(reservationEventUrl(undefined as unknown as string)).toBe('')
   })
 
   it('reservationEventUrl は eventId を URL エンコードする', async () => {

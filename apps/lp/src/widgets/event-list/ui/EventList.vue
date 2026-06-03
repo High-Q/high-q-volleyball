@@ -49,7 +49,7 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { Kicker } from '@high-q/ui'
 import { useEventList } from '../model/useEventList'
@@ -65,10 +65,10 @@ const MONTH_FULL = [
 const rangeLabel = computed(() => {
   const list = events.value
   if (!list || list.length === 0) return 'Coming soon'
-  const months = list.map((e) => {
+  const months = list.map((e: { monthLabel: string }) => {
     const idx = MONTH_FULL.findIndex((m) => m.toUpperCase().startsWith(e.monthLabel))
     return idx >= 0 ? idx : -1
-  }).filter((i) => i >= 0)
+  }).filter((i: number) => i >= 0)
   if (months.length === 0) return 'Upcoming events'
   const minIdx = Math.min(...months)
   const maxIdx = Math.max(...months)
@@ -80,7 +80,7 @@ const rangeLabel = computed(() => {
     : `${minName}–${maxName} ${year}`
 })
 
-function urlFor(id) {
+function urlFor(id: string) {
   return reservationEventUrl(id)
 }
 </script>

@@ -42,7 +42,7 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Photo } from '@high-q/ui'
 import { LINE_OPEN_CHAT_URL } from '@shared/config/sns'
 </script>

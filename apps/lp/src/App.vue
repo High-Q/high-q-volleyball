@@ -1,22 +1,22 @@
 <template>
-  <v-app class="lp-app">
+  <div class="lp-app">
     <SiteHeader :transparent="pathname === '/'" />
-    <v-main class="lp-app__main" :class="{ 'lp-app__main--padded': pathname !== '/' }">
+    <main class="lp-app__main" :class="{ 'lp-app__main--padded': pathname !== '/' }">
       <div class="lp-app__frame">
         <HomePage v-if="pathname === '/'" />
         <ExternalTransmissionPage v-else-if="pathname === '/external-transmission'" />
         <PrivacyPolicyPage v-else-if="pathname === '/privacy'" />
         <NotFoundView v-else />
       </div>
-    </v-main>
+    </main>
     <div class="lp-app__footer">
       <SiteFooter />
     </div>
     <ConsentBanner />
-  </v-app>
+  </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, defineAsyncComponent } from "vue";
 import { SiteHeader } from "@widgets/site-header";
 import { SiteFooter } from "@widgets/site-footer";
@@ -26,25 +26,25 @@ import { ConsentBanner } from "@widgets/consent-banner";
 // 初回 paint 必須は HomePage のみ。他は dynamic import で別 chunk 化。
 // 関連: openspec/specs/lp-build-optimization/spec.md
 const ExternalTransmissionPage = defineAsyncComponent(() =>
-  import("@pages/external-transmission").then((m) => m.ExternalTransmissionPage)
+  import("@pages/external-transmission").then((m) => m.ExternalTransmissionPage),
 );
 const PrivacyPolicyPage = defineAsyncComponent(() =>
-  import("@pages/privacy").then((m) => m.PrivacyPolicyPage)
+  import("@pages/privacy").then((m) => m.PrivacyPolicyPage),
 );
 const NotFoundView = defineAsyncComponent(() =>
-  import("@shared/ui/NotFoundView.vue")
+  import("@shared/ui/NotFoundView.vue"),
 );
 import { getConsent, onConsentChange } from "@high-q/shared/consent";
 import { loadGtm } from "@shared/lib/loadGtm";
 
-const pathname = ref(
+const pathname = ref<string>(
   typeof window === "undefined" ? "/" : window.location.pathname,
 );
 
-let unsubConsent = null;
-let popHandler = null;
+let unsubConsent: (() => void) | null = null;
+let popHandler: (() => void) | null = null;
 
-function syncGtmFromConsent() {
+function syncGtmFromConsent(): void {
   const current = getConsent();
   if (current?.analytics === true) {
     loadGtm();
@@ -88,15 +88,21 @@ body.is-locked {
 }
 
 .lp-app {
+  min-height: 100vh;
   background: var(--hq-color-paper);
   color: var(--hq-color-ink);
   font-family: var(--hq-font-jp);
+  display: flex;
+  flex-direction: column;
 }
 
-.lp-app__main.v-main {
-  --v-layout-top: 0px;
-  padding-top: 0 !important;
+.lp-app__main {
+  flex: 1;
   background: var(--hq-color-paper);
+}
+
+.lp-app__main--padded {
+  padding-top: 80px; /* sticky header 分のオフセット */
 }
 
 .lp-app__frame {
