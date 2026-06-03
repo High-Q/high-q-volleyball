@@ -21,7 +21,7 @@
     "@high-q/ui": "workspace:*",
     "@sentry/vue": "^10.53.1",
     "@supabase/supabase-js": "^2.45.0",
-    "@vitejs/plugin-vue": "^5.0.2",
+    "@vitejs/plugin-vue": "^6.0.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "qrcode": "^1.5.4",
