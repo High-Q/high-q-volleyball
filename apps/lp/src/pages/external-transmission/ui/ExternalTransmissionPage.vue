@@ -1,81 +1,85 @@
 <template>
-  <v-container class="external-transmission-page py-12" max-width="900">
-    <v-breadcrumbs
-      :items="[
-        { title: 'High Q', href: '/' },
-        { title: '外部送信ポリシー', disabled: true },
-      ]"
-      class="px-0 pb-4"
-    />
+  <div class="external-transmission-page max-w-[900px] mx-auto px-hq-4 py-hq-8">
+    <nav class="font-jp text-sm text-muted pb-hq-4" aria-label="パンくず">
+      <a href="/" class="hover:text-ink underline-offset-2 hover:underline">High Q</a>
+      <span class="mx-hq-2" aria-hidden="true">/</span>
+      <span class="text-ink">外部送信ポリシー</span>
+    </nav>
 
-    <h1 class="text-h4 font-weight-bold mb-4">外部送信ポリシー</h1>
-    <p class="text-body-1 mb-2">
+    <h1 class="font-jp-display text-3xl font-bold text-ink mb-hq-4">外部送信ポリシー</h1>
+    <p class="font-jp text-base text-ink mb-hq-2">
       最終更新日: <time :datetime="lastUpdated">{{ lastUpdated }}</time>
     </p>
-    <p class="text-body-1 mb-6">
+    <p class="font-jp text-base text-ink mb-hq-6">
       改正電気通信事業法 §27の12（外部送信規律）に基づき、High Q
       の各サービス（ランディングページ / 管理画面 / 予約サイト）からユーザー情報が外部に送信される場合の送信先・送信される情報・利用目的を以下に公表します。
     </p>
 
-    <h2 class="text-h5 font-weight-bold mt-8 mb-4">外部送信先一覧</h2>
-    <v-table data-testid="external-transmission-table" density="comfortable">
-      <thead>
-        <tr>
-          <th>送信先</th>
-          <th>区分</th>
-          <th>送信される情報</th>
-          <th>利用目的</th>
-          <th>オプトアウト手段</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="row in transmissions" :key="row.target">
-          <td>{{ row.target }}</td>
-          <td>
-            <v-chip
-              :color="row.category === 'analytics' ? 'warning' : 'default'"
-              size="small"
-              variant="flat"
-            >
-              {{ row.category === "analytics" ? "任意" : "必須" }}
-            </v-chip>
-          </td>
-          <td>{{ row.info }}</td>
-          <td>{{ row.purpose }}</td>
-          <td>{{ row.optOut }}</td>
-        </tr>
-      </tbody>
-    </v-table>
+    <h2 class="font-jp-display text-2xl font-bold text-ink mt-hq-8 mb-hq-4">外部送信先一覧</h2>
+    <div class="overflow-x-auto">
+      <table data-testid="external-transmission-table" class="w-full font-jp text-sm text-ink border-collapse">
+        <thead>
+          <tr class="border-b border-hairline">
+            <th class="text-left py-hq-2 px-hq-2 whitespace-nowrap">送信先</th>
+            <th class="text-left py-hq-2 px-hq-2 whitespace-nowrap">区分</th>
+            <th class="text-left py-hq-2 px-hq-2">送信される情報</th>
+            <th class="text-left py-hq-2 px-hq-2">利用目的</th>
+            <th class="text-left py-hq-2 px-hq-2">オプトアウト手段</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in transmissions" :key="row.target" class="border-b border-hairline align-top">
+            <td class="py-hq-2 px-hq-2">{{ row.target }}</td>
+            <td class="py-hq-2 px-hq-2">
+              <Badge :tone="row.category === 'analytics' ? 'warn' : 'neutral'">
+                {{ row.category === "analytics" ? "任意" : "必須" }}
+              </Badge>
+            </td>
+            <td class="py-hq-2 px-hq-2">{{ row.info }}</td>
+            <td class="py-hq-2 px-hq-2">{{ row.purpose }}</td>
+            <td class="py-hq-2 px-hq-2">{{ row.optOut }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <h2 class="text-h5 font-weight-bold mt-8 mb-4">Cookie 同意状態の確認・変更</h2>
-    <p class="text-body-1 mb-4">
+    <h2 class="font-jp-display text-2xl font-bold text-ink mt-hq-8 mb-hq-4">Cookie 同意状態の確認・変更</h2>
+    <p class="font-jp text-base text-ink mb-hq-4">
       任意区分（analytics）に属する送信は、Cookie 同意設定で個別に拒否できます。下のボタンから設定パネルを開き、いつでも変更できます。
     </p>
-    <v-btn
+    <Button
       data-testid="open-consent-panel"
-      color="primary"
-      variant="flat"
+      variant="primary"
       @click="openConsent"
     >
       Cookie 同意設定を変更する
-    </v-btn>
+    </Button>
 
-    <h2 class="text-h5 font-weight-bold mt-8 mb-4">お問い合わせ</h2>
-    <p class="text-body-1">
+    <h2 class="font-jp-display text-2xl font-bold text-ink mt-hq-8 mb-hq-4">お問い合わせ</h2>
+    <p class="font-jp text-base text-ink">
       本ポリシーに関するお問い合わせは
-      <a :href="`mailto:${contactEmail}`" data-testid="contact-mailto">{{ contactEmail }}</a>
+      <a :href="`mailto:${contactEmail}`" data-testid="contact-mailto" class="underline underline-offset-2">{{ contactEmail }}</a>
       までお願いいたします。
     </p>
-  </v-container>
+  </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { Badge, Button } from "@high-q/ui";
 import { useConsentPanel } from "@shared/lib/consentPanel";
 
 const lastUpdated = "2026-05-06";
 const contactEmail = "high.q.volleyball@gmail.com";
 
-const transmissions = [
+interface Transmission {
+  target: string;
+  category: "analytics" | "necessary";
+  info: string;
+  purpose: string;
+  optOut: string;
+}
+
+const transmissions: Transmission[] = [
   {
     target: "Google Tag Manager / Google Analytics",
     category: "analytics",
@@ -114,16 +118,7 @@ const transmissions = [
 ];
 
 const consent = useConsentPanel();
-function openConsent() {
+function openConsent(): void {
   consent.open();
 }
 </script>
-
-<style scoped>
-.external-transmission-page :deep(table) {
-  font-size: 0.95rem;
-}
-.external-transmission-page :deep(table th) {
-  white-space: nowrap;
-}
-</style>
