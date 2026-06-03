@@ -102,8 +102,8 @@ importers:
         specifier: ^1.9.0
         version: 1.9.17(vue@3.5.33(typescript@5.9.3))
       tailwind-merge:
-        specifier: ^2.5.0
-        version: 2.6.1
+        specifier: ^3.6.0
+        version: 3.6.0
       vite:
         specifier: ^5.0.10
         version: 5.4.21(@types/node@22.19.17)(sass@1.69.7)
@@ -254,8 +254,8 @@ importers:
         specifier: ^1.9.0
         version: 1.9.17(vue@3.5.33(typescript@5.9.3))
       tailwind-merge:
-        specifier: ^2.5.0
-        version: 2.6.1
+        specifier: ^3.6.0
+        version: 3.6.0
       vite:
         specifier: ^5.0.10
         version: 5.4.21(@types/node@22.19.17)(sass@1.69.7)
@@ -3580,8 +3580,8 @@ packages:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
     engines: {node: '>=20'}
 
-  tailwind-merge@2.6.1:
-    resolution: {integrity: sha512-Oo6tHdpZsGpkKG88HJ8RR1rg/RdnEkQEfMoEk2x1XRI3F1AxeU+ijRXpiVUF4UbLfcxxRGw6TbUINKYdWVsQTQ==}
+  tailwind-merge@3.6.0:
+    resolution: {integrity: sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w==}
 
   tailwindcss@3.4.19:
     resolution: {integrity: sha512-3ofp+LL8E+pK/JuPLPggVAIaEuhvIz4qNcf3nA1Xn2o/7fb7s/TYpHhwGDv1ZU3PkBluUVaF8PyCHcm48cKLWQ==}
@@ -7408,7 +7408,7 @@ snapshots:
 
   tagged-tag@1.0.0: {}
 
-  tailwind-merge@2.6.1: {}
+  tailwind-merge@3.6.0: {}
 
   tailwindcss@3.4.19(tsx@4.21.0):
     dependencies:
