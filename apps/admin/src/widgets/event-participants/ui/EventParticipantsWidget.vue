@@ -129,7 +129,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="flex flex-col">
+  <div class="flex h-full flex-col">
     <EventParticipantsToolbar
       :filter="filter"
       @update:search="setSearch"
