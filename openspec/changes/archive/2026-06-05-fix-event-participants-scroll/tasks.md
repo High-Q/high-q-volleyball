@@ -27,5 +27,5 @@
 
 ## 5. 翔太郎くんへの動作確認案内
 
-- [ ] 5.1 PR を作成し、Render PR Preview の URL（admin はローカルのみのため別 dev URL は無し）と「dev DB に参加者多数イベントが無い場合の seed 手順 or 手動確認の代替」を Test Plan に明記
+- [x] 5.1 PR を作成し、Render PR Preview の URL（admin はローカルのみのため別 dev URL は無し）と「dev DB に参加者多数イベントが無い場合の seed 手順 or 手動確認の代替」を Test Plan に明記（PR #326, CI 全 11 job 緑）
 - [ ] 5.2 翔太郎くんから OK が出るまで ship フェーズには進まない（CLAUDE.md 承認ゲート）
