@@ -1,4 +1,4 @@
-import { ref, watch, type Ref } from "vue";
+import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import type { MemberId } from "@high-q/shared";
 import { useMembersFilter } from "@/features/members-filter";
 import {
@@ -15,10 +15,20 @@ import {
  * `?detail=:id` クエリを購読し、対象 member の `MemberListRow` + 参加履歴を
  * 並列取得する。クエリが消えると state をクリアする。
  *
+ * `source` 省略時は `useMembersFilter` を内部で使い、`/members` 画面の従来挙動を
+ * そのまま保持する。`source` 指定時は注入された `detail` ref と `closeDetail`
+ * を使うため、`/events/:id` 等の他ページから同じシートを再利用できる。
+ *
  * 関連:
  *   openspec/changes/admin-members-list-screen/specs/admin-members-list/spec.md
  *   openspec/changes/admin-members-list-screen/design.md (D6, D8)
+ *   openspec/changes/link-event-participants-to-member-detail/design.md (D2)
  */
+
+export interface MemberDetailSource {
+  detail: ComputedRef<string | undefined>;
+  closeDetail: () => Promise<void>;
+}
 
 export interface UseMemberDetailSheet {
   isOpen: Ref<boolean>;
@@ -33,8 +43,18 @@ export interface UseMemberDetailSheet {
   refetch: () => Promise<void>;
 }
 
-export function useMemberDetailSheet(): UseMemberDetailSheet {
-  const { filter, closeDetail } = useMembersFilter();
+function defaultSource(): MemberDetailSource {
+  const f = useMembersFilter();
+  return {
+    detail: computed<string | undefined>(() => f.filter.value.detail),
+    closeDetail: f.closeDetail,
+  };
+}
+
+export function useMemberDetailSheet(
+  source?: MemberDetailSource,
+): UseMemberDetailSheet {
+  const { detail: detailRef, closeDetail } = source ?? defaultSource();
 
   const isOpen = ref<boolean>(false);
   const member = ref<MemberListRow | null>(null);
@@ -98,7 +118,7 @@ export function useMemberDetailSheet(): UseMemberDetailSheet {
   }
 
   watch(
-    () => filter.value.detail,
+    () => detailRef.value,
     (id) => {
       if (id) {
         isOpen.value = true;
@@ -122,8 +142,9 @@ export function useMemberDetailSheet(): UseMemberDetailSheet {
   }
 
   async function refetch(): Promise<void> {
-    if (filter.value.detail) {
-      await load(filter.value.detail);
+    const id = detailRef.value;
+    if (id) {
+      await load(id);
     }
   }
 

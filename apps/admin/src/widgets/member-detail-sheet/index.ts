@@ -5,4 +5,7 @@
  */
 
 export { default as MemberDetailSheet } from "./ui/MemberDetailSheet.vue";
-export { useMemberDetailSheet } from "./composables/useMemberDetailSheet";
+export {
+  useMemberDetailSheet,
+  type MemberDetailSource,
+} from "./composables/useMemberDetailSheet";

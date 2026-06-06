@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, toRef } from "vue";
-import type { EventId } from "@high-q/shared";
+import type { EventId, MemberId } from "@high-q/shared";
 import { useParticipantsFilter } from "@/features/participants-filter";
 import { useEventParticipantsData } from "../composables/useEventParticipantsData";
 import EventParticipantsToolbar from "./EventParticipantsToolbar.vue";
@@ -45,6 +45,8 @@ const emit = defineEmits<{
    * (複数 admin の同時操作にも整合)。
    */
   "mutation-settled": [];
+  /** 氏名ボタン押下で発火。Page が `MemberDetailSheet` を開くため。 */
+  "member-clicked": [memberId: MemberId];
 }>();
 
 const {
@@ -171,6 +173,7 @@ defineExpose({
         @guest-changed="onGuestChanged"
         @cancelled="onCancelled"
         @mutation-settled="onMutationSettled"
+        @member-clicked="(id) => emit('member-clicked', id)"
       />
     </div>
   </div>

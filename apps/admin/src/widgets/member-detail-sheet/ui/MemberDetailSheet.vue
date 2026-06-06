@@ -15,7 +15,10 @@ import { MemberWithdrawalDialog } from "@/features/member-withdrawal";
 import { CorrectionRequestSection } from "@/features/correction-request";
 import { useAuthSession } from "@/features/auth";
 import type { MemberId } from "@high-q/shared";
-import { useMemberDetailSheet } from "../composables/useMemberDetailSheet";
+import {
+  useMemberDetailSheet,
+  type MemberDetailSource,
+} from "../composables/useMemberDetailSheet";
 import MemberDetailHeader from "./MemberDetailHeader.vue";
 import MemberHistoryTable from "./MemberHistoryTable.vue";
 
@@ -28,11 +31,18 @@ import MemberHistoryTable from "./MemberHistoryTable.vue";
  * - role="dialog" + aria-modal="true" は DialogContent が付与
  * - フォーカストラップ / Esc クローズ / overlay クリッククローズ は radix-vue が提供
  * - URL クエリ `?detail=:id` の同期は useMemberDetailSheet が担う
+ * - `source` 省略時は `/members` の `useMembersFilter` を購読する従来挙動。
+ *   `/events/:id` 等の他ページから使う際は `useRouteDetailQuery()` 等を渡す
  *
  * 関連:
  *   openspec/changes/admin-members-list-screen/specs/admin-members-list/spec.md
  *   openspec/changes/admin-members-list-screen/design.md (D6, D7)
+ *   openspec/changes/link-event-participants-to-member-detail/design.md (D2)
  */
+
+const props = defineProps<{
+  source?: MemberDetailSource;
+}>();
 
 const emit = defineEmits<{
   /** メモ保存成功時に発火。Page から一覧 widget へ patch を伝搬するため。 */
@@ -43,7 +53,7 @@ const emit = defineEmits<{
   correctionChanged: [memberId: string, count: number];
 }>();
 
-const sheet = useMemberDetailSheet();
+const sheet = useMemberDetailSheet(props.source);
 const authSession = useAuthSession();
 
 const adminMemberId = computed<MemberId | null>(() => {
