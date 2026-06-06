@@ -2,7 +2,7 @@
 import { computed, toRef } from "vue";
 import { useRouter } from "vue-router";
 import { RemainBar } from "@high-q/ui";
-import type { EventId } from "@high-q/shared";
+import type { EventId, MemberId } from "@high-q/shared";
 import { EventParticipantsWidget } from "@/widgets/event-participants";
 import { useEventDetailData } from "../composables/useEventDetailData";
 import EventDetailTopBar from "./EventDetailTopBar.vue";
@@ -25,6 +25,11 @@ import EventDetailErrorState from "./EventDetailErrorState.vue";
 
 const props = defineProps<{
   eventId: EventId | null;
+}>();
+
+const emit = defineEmits<{
+  /** 予約者一覧の氏名押下で発火。Page が `MemberDetailSheet` を開くため。 */
+  "member-clicked": [memberId: MemberId];
 }>();
 
 const router = useRouter();
@@ -151,6 +156,7 @@ function onMutationSettled(): void {
           @reservation-cancelled="onReservationCancelled"
           @guest-changed="onGuestChanged"
           @mutation-settled="onMutationSettled"
+          @member-clicked="(id) => emit('member-clicked', id)"
         />
       </div>
     </template>

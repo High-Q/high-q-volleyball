@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/ui";
-import type { ExperienceLevel } from "@high-q/shared";
+import type { ExperienceLevel, MemberId } from "@high-q/shared";
 import type { ParticipantRow } from "@/entities/reservation";
 import {
   CheckinToggle,
@@ -49,6 +49,8 @@ const emit = defineEmits<{
    * 整合性確保のため。
    */
   "mutation-settled": [];
+  /** 氏名ボタン押下で発火。会員詳細シートを開くため caller (Page) に通知 */
+  "member-clicked": [memberId: MemberId];
 }>();
 
 const checkin = useReservationCheckin();
@@ -70,7 +72,11 @@ interface DisplayedRow extends ParticipantRow {
   __initial: string;
   __whenLabel: string;
   __isChecked: boolean;
+  /** 退会済み会員 (`display_name === '退会済み会員'`) はクリックで開ける会員詳細が無いため、氏名をボタン化しない */
+  __isWithdrawn: boolean;
 }
+
+const WITHDRAWN_DISPLAY_NAME = "退会済み会員";
 
 function formatWhen(iso: string): string {
   const d = new Date(iso);
@@ -87,8 +93,13 @@ const displayedRows = computed<DisplayedRow[]>(() =>
     __initial: r.display_name.charAt(0),
     __whenLabel: formatWhen(r.created_at),
     __isChecked: r.checked_in_at !== null,
+    __isWithdrawn: r.display_name === WITHDRAWN_DISPLAY_NAME,
   })),
 );
+
+function onMemberClick(row: DisplayedRow): void {
+  emit("member-clicked", row.member_id);
+}
 
 async function onToggle(row: DisplayedRow): Promise<void> {
   const nextChecked = !row.__isChecked;
@@ -172,9 +183,19 @@ async function onGuestChange(
             >
               {{ row.__initial }}
             </span>
-            <span class="font-jp text-sm font-medium text-ink"
+            <button
+              v-if="!row.__isWithdrawn"
+              type="button"
+              :aria-label="`${row.display_name} の詳細を開く`"
+              class="rounded-hq-sm font-jp text-sm font-medium text-ink hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+              @click="onMemberClick(row)"
               >{{ row.display_name
-              }}<template v-if="row.nickname">（{{ row.nickname }}）</template></span
+              }}<template v-if="row.nickname">（{{ row.nickname }}）</template></button
+            >
+            <span
+              v-else
+              class="font-jp text-sm font-medium text-ink"
+              >{{ row.display_name }}</span
             >
             <Badge v-if="row.is_first_time" tone="accent">初回</Badge>
           </span>

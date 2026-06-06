@@ -140,3 +140,88 @@ describe("EventParticipantsTable - nickname 併記", () => {
     expect(text).not.toContain("佐藤 健太（");
   });
 });
+
+describe("EventParticipantsTable - 氏名ボタン (member-clicked)", () => {
+  it("氏名ボタンクリックで `member-clicked` が `row.member_id` で emit される", async () => {
+    const memberId = "11111111-1111-1111-1111-111111111111" as unknown as MemberId;
+    wrapper = mount(EventParticipantsTable, {
+      props: {
+        rows: [
+          makeRow({
+            reservation_id: "r1" as unknown as ReservationId,
+            member_id: memberId,
+            display_name: "山田 太郎",
+          }),
+        ],
+      },
+    });
+
+    const btn = wrapper.get('button[aria-label="山田 太郎 の詳細を開く"]');
+    await btn.trigger("click");
+
+    const emitted = wrapper.emitted("member-clicked");
+    expect(emitted).toBeDefined();
+    expect(emitted![0]).toEqual([memberId]);
+  });
+
+  it("Enter キーでも `member-clicked` が emit される（ボタンの既定挙動）", async () => {
+    const memberId = "22222222-2222-2222-2222-222222222222" as unknown as MemberId;
+    wrapper = mount(EventParticipantsTable, {
+      props: {
+        rows: [
+          makeRow({
+            reservation_id: "r1" as unknown as ReservationId,
+            member_id: memberId,
+            display_name: "山田 太郎",
+          }),
+        ],
+      },
+    });
+
+    const btn = wrapper.get('button[aria-label="山田 太郎 の詳細を開く"]');
+    // <button> は Enter で click イベントを発火する（ブラウザ標準挙動を JSDOM が模擬）
+    await btn.trigger("keydown.enter");
+    await btn.trigger("click");
+
+    const emitted = wrapper.emitted("member-clicked");
+    expect(emitted).toBeDefined();
+    expect(emitted![0]).toEqual([memberId]);
+  });
+
+  it("aria-label に氏名のみ含まれ、ニックネームは含まれない", () => {
+    wrapper = mount(EventParticipantsTable, {
+      props: {
+        rows: [
+          makeRow({
+            reservation_id: "r1" as unknown as ReservationId,
+            display_name: "山田 太郎",
+            nickname: "たろちゃん",
+          }),
+        ],
+      },
+    });
+
+    const btn = wrapper.get("button[aria-label]");
+    expect(btn.attributes("aria-label")).toBe("山田 太郎 の詳細を開く");
+    expect(btn.attributes("aria-label")).not.toContain("たろちゃん");
+  });
+
+  it("退会済み会員行は <button> ではなく <span> として描画される", () => {
+    wrapper = mount(EventParticipantsTable, {
+      props: {
+        rows: [
+          makeRow({
+            reservation_id: "r1" as unknown as ReservationId,
+            display_name: "退会済み会員",
+            nickname: null,
+          }),
+        ],
+      },
+    });
+
+    // aria-label 付き button が存在しない
+    expect(wrapper.find('button[aria-label*="退会済み会員"]').exists()).toBe(false);
+    // テキストは存在する
+    expect(wrapper.text()).toContain("退会済み会員");
+  });
+});
