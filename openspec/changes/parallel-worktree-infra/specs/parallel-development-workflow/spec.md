@@ -93,12 +93,12 @@ Claude は実装完了時に `.claude/skills/verify-locally/` Skill を起動 SH
 
 ### Requirement: 並列開発ガイド
 
-`docs/03-アーキテクチャ/06-並列開発ガイド.md` は 2 並列開発の全体像 (worktree 配置 / ブランチ運用 / ポート規約 / Supabase / OpenSpec / スクリプト / Skill) を網羅 SHALL し、CLAUDE.md から 1 行参照される MUST。
+`docs/03-アーキテクチャ/07-並列開発ガイド.md` は 2 並列開発の全体像 (worktree 配置 / ブランチ運用 / ポート規約 / Supabase / OpenSpec / スクリプト / Skill) を網羅 SHALL し、CLAUDE.md から 1 行参照される MUST。
 
 #### Scenario: ガイドの所在
 
 - **WHEN** 開発者または別 Claude セッションが CLAUDE.md を読む
-- **THEN** CLAUDE.md は `docs/03-アーキテクチャ/06-並列開発ガイド.md` への参照を含み、開発者は 1 ホップで全体像に到達できる
+- **THEN** CLAUDE.md は `docs/03-アーキテクチャ/07-並列開発ガイド.md` への参照を含み、開発者は 1 ホップで全体像に到達できる
 
 #### Scenario: スクリプトと Skill の整合
 

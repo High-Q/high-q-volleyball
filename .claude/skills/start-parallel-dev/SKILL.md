@@ -135,5 +135,5 @@ reservation URL: http://localhost:<port>
 ## 関連
 
 - スクリプト本体: `scripts/dev/setup-worktree.sh` / `scripts/dev/teardown-worktree.sh`
-- 全体ガイド: `docs/03-アーキテクチャ/06-並列開発ガイド.md`
+- 全体ガイド: `docs/03-アーキテクチャ/07-並列開発ガイド.md`
 - 動作確認案内 Skill: `verify-locally`

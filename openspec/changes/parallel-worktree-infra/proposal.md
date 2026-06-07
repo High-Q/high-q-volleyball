@@ -8,7 +8,7 @@
 - スクリプト `scripts/dev/teardown-worktree.sh` を追加し、マージ済み検証付きで worktree とローカルブランチを安全に掃除する
 - Skill `.claude/skills/start-parallel-dev/` を追加し、2 並列開発開始時の運用ルール (master 占有禁止 / 最新取込手順 / ポート規約 / dev DB / OpenSpec 衝突回避) を Claude が自動説明できるようにする
 - Skill `.claude/skills/verify-locally/` を追加し、実装完了時の動作確認案内を機械生成する (router.ts 確認 → URL 確定 → 4 状態 + a11y + モバイル + 権限の試験観点)
-- ドキュメント `docs/03-アーキテクチャ/06-並列開発ガイド.md` を新設し、CLAUDE.md から 1 行参照を張る
+- ドキュメント `docs/03-アーキテクチャ/07-並列開発ガイド.md` を新設し、CLAUDE.md から 1 行参照を張る
 - 本変更自体を新スクリプトで dogfooding し、ガイド手順が現場で機能することを確認する
 
 ## Capabilities
@@ -23,7 +23,7 @@
 
 ## Impact
 
-- 影響コード: `scripts/dev/` 新規 2 ファイル / `.claude/skills/` 新規 2 Skill / `docs/03-アーキテクチャ/06-並列開発ガイド.md` 新規 / `CLAUDE.md` 1 行追記
+- 影響コード: `scripts/dev/` 新規 2 ファイル / `.claude/skills/` 新規 2 Skill / `docs/03-アーキテクチャ/07-並列開発ガイド.md` 新規 / `CLAUDE.md` 1 行追記
 - ランタイム影響なし (admin / reservation / lp の本番動作には一切触れない)
 - 依存追加なし (bash + 既存 pnpm / git のみで完結)
 - CI 影響なし (新規スクリプトは CI から呼び出さず、開発者ローカル専用)

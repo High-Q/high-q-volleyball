@@ -9,7 +9,7 @@
 #   scripts/dev/teardown-worktree.sh 329
 #   scripts/dev/teardown-worktree.sh 329 --force
 #
-# 詳細は docs/03-アーキテクチャ/06-並列開発ガイド.md 参照。
+# 詳細は docs/03-アーキテクチャ/07-並列開発ガイド.md 参照。
 
 set -euo pipefail
 

@@ -58,7 +58,7 @@ git worktree list --porcelain | grep -cE '^worktree '
 # 現在ディレクトリが wt-K なら、worktree 一覧での K の出現順 (0 起点) を使い 5173+100*idx / 5174+100*idx
 ```
 
-詳細は `docs/03-アーキテクチャ/06-並列開発ガイド.md` のポート規約を参照。
+詳細は `docs/03-アーキテクチャ/07-並列開発ガイド.md` のポート規約を参照。
 
 ### Step 4: 出力テンプレで案内
 
@@ -114,6 +114,6 @@ git worktree list --porcelain | grep -cE '^worktree '
 
 ## 関連
 
-- 並列開発全体ガイド: `docs/03-アーキテクチャ/06-並列開発ガイド.md`
+- 並列開発全体ガイド: `docs/03-アーキテクチャ/07-並列開発ガイド.md`
 - 開発開始 Skill: `start-parallel-dev`
 - UI 品質基準: `CLAUDE.md` Pillar 3 / `docs/05-インターフェース/01-UI設計方針.md`

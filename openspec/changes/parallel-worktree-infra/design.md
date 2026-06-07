@@ -10,7 +10,7 @@
 - `teardown-worktree.sh <issue>` でマージ済み worktree を安全に掃除、未マージは `--force` 無しでブロック
 - 2 並列開発開始時に Claude が `start-parallel-dev` Skill で運用ルール (master 占有禁止 / 最新取込手順 / ポート規約 / dev DB / OpenSpec 衝突) を毎回必ず案内する
 - 実装完了時に Claude が `verify-locally` Skill で起動コマンド・URL・主要シナリオ・探索的試験観点を出す。URL は `router.ts` を Read して確定
-- 全体像は `docs/03-アーキテクチャ/06-並列開発ガイド.md` に集約し、CLAUDE.md からは 1 行参照のみ
+- 全体像は `docs/03-アーキテクチャ/07-並列開発ガイド.md` に集約し、CLAUDE.md からは 1 行参照のみ
 
 **Non-Goals:**
 
@@ -60,7 +60,7 @@ dev Supabase プロジェクトは 1 個しかなく、migration を 2 並列で
 
 ### 7. ドキュメントの集約場所
 
-CLAUDE.md は既に肥大化しており、本変更で新規ルールを CLAUDE.md 本体に直書きすると保守が悪化する。新規ガイド `docs/03-アーキテクチャ/06-並列開発ガイド.md` に集約し、CLAUDE.md からは Pillar 5 (Git & デプロイ安全性) 末尾に 1 行参照を追加するに留める。
+CLAUDE.md は既に肥大化しており、本変更で新規ルールを CLAUDE.md 本体に直書きすると保守が悪化する。新規ガイド `docs/03-アーキテクチャ/07-並列開発ガイド.md` に集約し、CLAUDE.md からは Pillar 5 (Git & デプロイ安全性) 末尾に 1 行参照を追加するに留める。
 
 ### 8. bash スクリプトの実装方針
 
