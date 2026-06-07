@@ -32,10 +32,10 @@
 
 ## 4. verify-locally Skill
 
-- [ ] 4.1 `.claude/skills/verify-locally/SKILL.md` 新規作成
-- [ ] 4.2 起動条件 (実装完了 / 「動作確認案内して」発話) を記述
-- [ ] 4.3 router.ts Read による URL 根拠特定手順を記述 (memory: feedback_verify_screens_before_guiding 反映)
-- [ ] 4.4 出力テンプレ: 起動コマンド / アクセス先 / 主要シナリオ / 探索的試験観点 (4 状態 + a11y + モバイル + 権限)
+- [x] 4.1 `.claude/skills/verify-locally/SKILL.md` 新規作成
+- [x] 4.2 起動条件 (実装完了 / 「動作確認案内して」発話) を記述
+- [x] 4.3 router.ts Read による URL 根拠特定手順を記述 (memory: feedback_verify_screens_before_guiding 反映)
+- [x] 4.4 出力テンプレ: 起動コマンド / アクセス先 / 主要シナリオ / 探索的試験観点 (4 状態 + a11y + モバイル + 権限)
 
 ## 5. ガイドドキュメント
 
