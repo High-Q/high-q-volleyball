@@ -45,7 +45,7 @@
 
 ## 6. Dogfooding と最終確認
 
-- [ ] 6.1 ダミー Issue 番号 (例: 99999) で setup-worktree.sh を試走し、ポート計算と出力を検証
-- [ ] 6.2 teardown-worktree.sh で試走 worktree を掃除できることを検証
-- [ ] 6.3 `openspec validate parallel-worktree-infra --strict` が通ることを確認
-- [ ] 6.4 `git status` clean を確認、コミット粒度を整理 (デフォルト: タスク群ごと、最終 1 PR = 1 コミットでも可)
+- [x] 6.1 ダミー Issue 番号 (例: 99999) で setup-worktree.sh を試走し、ポート計算と出力を検証
+- [x] 6.2 teardown-worktree.sh で試走 worktree を掃除できることを検証
+- [x] 6.3 `openspec validate parallel-worktree-infra --strict` が通ることを確認
+- [x] 6.4 `git status` clean を確認、コミット粒度を整理 (デフォルト: タスク群ごと、最終 1 PR = 1 コミットでも可)
