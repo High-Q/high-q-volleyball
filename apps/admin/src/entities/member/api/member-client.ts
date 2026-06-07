@@ -95,7 +95,7 @@ export async function fetchMembersList(
     let query = supabase
       .from("member_list_view")
       .select(
-        "id, display_name, email, experience_level, admin_note, created_at, first_attended_at, attended_count, last_attended_at, correction_request_count",
+        "id, display_name, email, experience_level, admin_note, created_at, first_attended_at, attended_count, last_attended_at, correction_request_count, has_identity_document",
         { count: "exact" },
       );
 
@@ -285,7 +285,7 @@ export async function fetchMemberListRowById(
     const { data, error } = await supabase
       .from("member_list_view")
       .select(
-        "id, display_name, email, experience_level, admin_note, created_at, first_attended_at, attended_count, last_attended_at, correction_request_count",
+        "id, display_name, email, experience_level, admin_note, created_at, first_attended_at, attended_count, last_attended_at, correction_request_count, has_identity_document",
       )
       .eq("id", memberId as unknown as string)
       .maybeSingle();

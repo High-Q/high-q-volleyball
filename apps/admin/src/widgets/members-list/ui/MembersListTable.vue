@@ -191,6 +191,12 @@ function onRowKeyDown(memberId: string, event: KeyboardEvent): void {
               tone="warn"
               data-testid="correction-badge"
             >修正依頼 {{ row.correction_request_count }}</Badge>
+            <Badge
+              v-if="!row.has_identity_document"
+              tone="neutral"
+              data-testid="incomplete-signup-badge"
+              aria-label="本人確認書類が未提出"
+            >書類未提出</Badge>
           </span>
         </TableCell>
         <TableCell class="font-mono text-xs text-muted whitespace-nowrap">

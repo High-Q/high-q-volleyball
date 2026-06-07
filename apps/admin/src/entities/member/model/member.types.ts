@@ -38,6 +38,8 @@ export interface MemberListRow {
   last_attended_at: string | null;
   /** #296 未対応の修正依頼件数。profile.correction_requests 配列長。 */
   correction_request_count: number;
+  /** #293 identity_documents 行が 1 件以上で true、`status` は問わない。 */
+  has_identity_document: boolean;
 }
 
 /**
