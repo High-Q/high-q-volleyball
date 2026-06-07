@@ -187,6 +187,8 @@ Design フェーズで必ずチェック: 影響レイヤー / ビジネス異�
 
 詳細は `docs/03-アーキテクチャ/03-インフラ・CICD構成.md`。
 
+2 並列開発 (worktree + 別 Claude セッション) の運用規約は `docs/03-アーキテクチャ/07-並列開発ガイド.md`。Skill: `start-parallel-dev` / `verify-locally` / Scripts: `scripts/dev/setup-worktree.sh` / `scripts/dev/teardown-worktree.sh`。
+
 ### Apply 完了報告 / 環境戦略
 
 - **dev / prd 分離方針**: Supabase / 環境変数 / Render 設定に触れる Design / Apply 前に必ず `docs/08-移行/01-環境戦略・本番リリース計画.md` を読む。Phase 移行に絡む変更は専用 Issue として切り出す
