@@ -163,6 +163,8 @@ Design フェーズで必ずチェック: 影響レイヤー / ビジネス異�
 
 **RLS なしのテーブル実装を Apply で行うことを禁止**。テーブル変更時は Design フェーズで「SQL Migration + TypeScript エンティティ型 + RLS ポリシー」をセットで提示。
 
+**新規テーブル migration は `supabase/templates/new_table.sql` を出発点とし、anon / authenticated / service_role の 3 ロールへの明示 GRANT を必ず含める**。`alter default privileges` の自動付与に依存しない（Supabase Data API 仕様変更により 2026-10-30 以降、既存プロジェクトでも明示 GRANT が必要）。適用後の権限状態は `supabase db query --linked --file supabase/tests/verify_grants.sql` で全テーブル × 3 ロール × 4 権限を一覧確認できる。
+
 ### 機械検知（CI `migration-safety` job、`supabase/migrations/**` 変更時のみ起動）
 
 | 検知対象 | script | severity |

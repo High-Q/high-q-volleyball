@@ -133,6 +133,12 @@ entities/<name>/
 
 > **テーブルの追加・変更を伴うすべての変更で、SQL と RLS ポリシーを必ず設計すること。**
 
+### 新規テーブル migration チェックリスト
+
+- [ ] `supabase/templates/new_table.sql` を出発点としてコピーした
+- [ ] anon / authenticated / service_role の 3 ロールへ明示 GRANT を含めた（`alter default privileges` の自動付与に依存しない）
+- [ ] 必要に応じて `supabase/tests/verify_grants.sql` を Apply 後に実行し、3 ロール × 4 権限の付与状態を検証する計画がある
+
 ### SQL Migration
 
 ```sql
