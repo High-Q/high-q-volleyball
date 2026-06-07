@@ -13,14 +13,14 @@
 
 ## 2. teardown-worktree.sh
 
-- [ ] 2.1 `scripts/dev/teardown-worktree.sh` を新規作成
-- [ ] 2.2 引数パース: `<issue> [--force]`
-- [ ] 2.3 対象 worktree パス特定: `../high-q-volleyball-wt-<issue>`
-- [ ] 2.4 マージ済み検証: 対象ブランチが `origin/master` にマージされているか `git branch --merged origin/master` で確認
-- [ ] 2.5 未マージかつ `--force` 無しなら警告して非ゼロ終了
-- [ ] 2.6 `git worktree remove <path>` 実行
-- [ ] 2.7 ローカルブランチ削除 (`git branch -d` / 未マージなら `-D`)
-- [ ] 2.8 完了サマリ出力 (削除した worktree とブランチ名)
+- [x] 2.1 `scripts/dev/teardown-worktree.sh` を新規作成
+- [x] 2.2 引数パース: `<issue> [--force]`
+- [x] 2.3 対象 worktree パス特定: `../high-q-volleyball-wt-<issue>`
+- [x] 2.4 マージ済み検証: 対象ブランチが `origin/master` にマージされているか `git branch --merged origin/master` で確認
+- [x] 2.5 未マージかつ `--force` 無しなら警告して非ゼロ終了
+- [x] 2.6 `git worktree remove <path>` 実行
+- [x] 2.7 ローカルブランチ削除 (`git branch -d` / 未マージなら `-D`)
+- [x] 2.8 完了サマリ出力 (削除した worktree とブランチ名)
 
 ## 3. start-parallel-dev Skill
 
