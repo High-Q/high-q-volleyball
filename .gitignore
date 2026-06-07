@@ -33,3 +33,6 @@ package-lock.json
 # vitest coverage report (generated per Issue #180/#181)
 coverage/
 **/coverage/
+
+# Claude Code personal/local settings (project-wide settings.json はコミット対象)
+.claude/settings.local.json

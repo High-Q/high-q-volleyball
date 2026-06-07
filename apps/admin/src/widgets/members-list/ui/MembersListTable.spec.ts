@@ -13,6 +13,7 @@ const BASE_ROW = {
   first_attended_at: null,
   attended_count: 0,
   last_attended_at: null,
+  has_identity_document: true,
 };
 
 describe("MembersListTable correction badge (#296)", () => {
@@ -65,5 +66,58 @@ describe("MembersListTable correction badge (#296)", () => {
     const badges = wrapper.findAll("[data-testid='correction-badge']");
     expect(badges).toHaveLength(1);
     expect(badges[0]?.text()).toContain("修正依頼 1");
+  });
+});
+
+describe("MembersListTable incomplete signup badge (#293)", () => {
+  it("has_identity_document = true でバッジ非表示", () => {
+    const wrapper = mount(MembersListTable, {
+      props: {
+        rows: [
+          { ...BASE_ROW, correction_request_count: 0, has_identity_document: true },
+        ],
+        sort: "last_attended_at",
+        dir: "desc",
+      },
+    });
+    expect(
+      wrapper.find("[data-testid='incomplete-signup-badge']").exists(),
+    ).toBe(false);
+  });
+
+  it("has_identity_document = false でバッジ表示 + aria-label", () => {
+    const wrapper = mount(MembersListTable, {
+      props: {
+        rows: [
+          { ...BASE_ROW, correction_request_count: 0, has_identity_document: false },
+        ],
+        sort: "last_attended_at",
+        dir: "desc",
+      },
+    });
+    const badge = wrapper.find("[data-testid='incomplete-signup-badge']");
+    expect(badge.exists()).toBe(true);
+    expect(badge.text()).toContain("書類未提出");
+    expect(badge.attributes("aria-label")).toBe("本人確認書類が未提出");
+  });
+
+  it("修正依頼バッジと書類未提出バッジが両方並列表示される", () => {
+    const wrapper = mount(MembersListTable, {
+      props: {
+        rows: [
+          { ...BASE_ROW, correction_request_count: 1, has_identity_document: false },
+        ],
+        sort: "last_attended_at",
+        dir: "desc",
+      },
+    });
+    const correctionBadge = wrapper.find("[data-testid='correction-badge']");
+    const incompleteBadge = wrapper.find(
+      "[data-testid='incomplete-signup-badge']",
+    );
+    expect(correctionBadge.exists()).toBe(true);
+    expect(incompleteBadge.exists()).toBe(true);
+    expect(correctionBadge.text()).toContain("修正依頼 1");
+    expect(incompleteBadge.text()).toContain("書類未提出");
   });
 });
