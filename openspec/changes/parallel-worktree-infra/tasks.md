@@ -24,11 +24,11 @@
 
 ## 3. start-parallel-dev Skill
 
-- [ ] 3.1 `.claude/skills/start-parallel-dev/SKILL.md` 新規作成
-- [ ] 3.2 起動条件・運用ルール (master 占有禁止 / 最新取込手順 / ポート規約) を記述
-- [ ] 3.3 dev Supabase 衝突警告セクションを追加 (migration 含む change を 2 並列で走らせない)
-- [ ] 3.4 OpenSpec 衝突警告セクションを追加 (同名 change / 同一 capability spec 編集を避ける)
-- [ ] 3.5 setup-worktree.sh 呼び出しテンプレを記述
+- [x] 3.1 `.claude/skills/start-parallel-dev/SKILL.md` 新規作成
+- [x] 3.2 起動条件・運用ルール (master 占有禁止 / 最新取込手順 / ポート規約) を記述
+- [x] 3.3 dev Supabase 衝突警告セクションを追加 (migration 含む change を 2 並列で走らせない)
+- [x] 3.4 OpenSpec 衝突警告セクションを追加 (同名 change / 同一 capability spec 編集を避ける)
+- [x] 3.5 setup-worktree.sh 呼び出しテンプレを記述
 
 ## 4. verify-locally Skill
 
