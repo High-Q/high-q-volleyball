@@ -3,11 +3,12 @@
 # setup-worktree.sh — 2 並列開発用の git worktree を 1 コマンドで構築する
 #
 # 使い方:
-#   scripts/dev/setup-worktree.sh <issue番号> <slug> [--type=feature|fix|chore] [--force-main]
+#   scripts/dev/setup-worktree.sh <issue番号> <slug> [--type=feature|fix|chore] [--force-main] [--open-vscode]
 #
 # 例:
 #   scripts/dev/setup-worktree.sh 329 add-foo
 #   scripts/dev/setup-worktree.sh 330 fix-bar --type=fix
+#   scripts/dev/setup-worktree.sh 331 add-baz --open-vscode
 #
 # 詳細は docs/03-アーキテクチャ/07-並列開発ガイド.md 参照。
 
@@ -23,7 +24,7 @@ PORT_STEP=100
 
 usage() {
   cat <<EOF
-Usage: $(basename "$0") <issue番号> <slug> [--type=feature|fix|chore] [--force-main]
+Usage: $(basename "$0") <issue番号> <slug> [--type=feature|fix|chore] [--force-main] [--open-vscode]
 
 Arguments:
   <issue番号>     GitHub Issue 番号 (数値のみ)
@@ -32,16 +33,19 @@ Arguments:
 Options:
   --type=TYPE     ブランチ prefix (feature|fix|chore, default: feature)
   --force-main    メインリポジトリが master + dirty でも続行する
+  --open-vscode   セットアップ完了後に worktree を新規 VS Code ウィンドウで開く
 
 Example:
   $(basename "$0") 329 add-foo
   $(basename "$0") 330 fix-bar --type=fix
+  $(basename "$0") 331 add-baz --open-vscode
 EOF
 }
 
 # ---- 引数パース --------------------------------------------------------------
 TYPE="feature"
 FORCE_MAIN=0
+OPEN_VSCODE=0
 POSITIONAL=()
 
 for arg in "$@"; do
@@ -51,6 +55,9 @@ for arg in "$@"; do
       ;;
     --force-main)
       FORCE_MAIN=1
+      ;;
+    --open-vscode|--code)
+      OPEN_VSCODE=1
       ;;
     -h|--help)
       usage
@@ -154,6 +161,29 @@ WT_INDEX="$((WT_COUNT - 1))"  # メインを除いた index (新規分が N 番�
 ADMIN_PORT="$((BASE_PORT_ADMIN + PORT_STEP * WT_INDEX))"
 RESERVATION_PORT="$((BASE_PORT_RESERVATION + PORT_STEP * WT_INDEX))"
 
+# ---- VS Code 起動 (任意) -----------------------------------------------------
+VSCODE_OPENED=0
+if [ "$OPEN_VSCODE" -eq 1 ]; then
+  CODE_BIN=""
+  if command -v code >/dev/null 2>&1; then
+    CODE_BIN="code"
+  elif [ -x "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" ]; then
+    CODE_BIN="/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+  fi
+
+  if [ -n "$CODE_BIN" ]; then
+    echo "==> VS Code を新規ウィンドウで起動: ${WT_PATH}"
+    "$CODE_BIN" -n "$WT_PATH"
+    VSCODE_OPENED=1
+  elif [ -d "/Applications/Visual Studio Code.app" ]; then
+    echo "==> VS Code を新規ウィンドウで起動: ${WT_PATH}"
+    open -na "Visual Studio Code" --args "$WT_PATH"
+    VSCODE_OPENED=1
+  else
+    echo "WARN: VS Code が見つからないため --open-vscode をスキップしました" >&2
+  fi
+fi
+
 # ---- 完了サマリ --------------------------------------------------------------
 cat <<EOF
 
@@ -177,6 +207,9 @@ worktree #:   ${WT_INDEX}
   1. cd ${WT_PATH}
   2. このディレクトリで別の Claude セッションを起動
   3. 最新を取り込みたい時: git fetch origin && git merge origin/master
+
+▼ VS Code を別ウィンドウで開きたい時
+  $([ "$VSCODE_OPENED" -eq 1 ] && echo "(--open-vscode 指定により起動済み)" || echo "code -n ${WT_PATH}    # PATH 未通の場合: 再実行時に --open-vscode を付与")
 
 ▼ 注意
   - master を直接 checkout しないこと (両 worktree で feature ブランチ常駐)

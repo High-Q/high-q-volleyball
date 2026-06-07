@@ -90,7 +90,7 @@ master + dirty なら、setup-worktree.sh が `--force-main` 無しでブロッ�
 
 ```bash
 cd ~/Desktop/high-q-volleyball
-scripts/dev/setup-worktree.sh <issue番号> <slug> [--type=feature|fix|chore]
+scripts/dev/setup-worktree.sh <issue番号> <slug> [--type=feature|fix|chore] [--open-vscode]
 ```
 
 例:
@@ -98,7 +98,10 @@ scripts/dev/setup-worktree.sh <issue番号> <slug> [--type=feature|fix|chore]
 ```bash
 scripts/dev/setup-worktree.sh 329 add-foo
 scripts/dev/setup-worktree.sh 330 fix-bar --type=fix
+scripts/dev/setup-worktree.sh 331 add-baz --open-vscode   # 新規 VS Code ウィンドウで起動
 ```
+
+並列で別 Claude セッションを立ち上げる流れだと VS Code ウィンドウも別で開きたいケースが多いので、翔太郎くんの意図が明確に並列セッション開始であれば `--open-vscode` 付与を提案する。
 
 ### Step 5: 新規 worktree で別 Claude セッション起動を案内
 
