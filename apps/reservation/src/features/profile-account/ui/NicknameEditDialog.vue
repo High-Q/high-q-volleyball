@@ -83,6 +83,9 @@ function onCancel(): void {
         <AlertDialogDescription>
           会員サイト上での自己呼称です。未設定の場合はお名前で表示されます。
           1〜15 文字、日本語と英字のみ。
+          <span data-testid="nickname-visibility-note">
+            設定したニックネームは、同じ予約イベントの参加者に表示されます。お名前・メール・電話番号は他参加者には表示されません。
+          </span>
         </AlertDialogDescription>
       </AlertDialogHeader>
       <form class="flex flex-col gap-hq-3" @submit.prevent="onSubmit">

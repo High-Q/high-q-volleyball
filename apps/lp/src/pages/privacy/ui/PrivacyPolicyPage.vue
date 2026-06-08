@@ -81,6 +81,14 @@
       <p class="font-jp text-base text-ink mb-hq-3">
         当サークルは、上記の利用目的の範囲を超えて、取得した個人情報を取り扱いません。
       </p>
+      <h3 class="font-jp-display text-base font-bold text-ink mt-hq-6 mb-hq-3" data-testid="nickname-display-heading">
+        会員間でのニックネーム表示について
+      </h3>
+      <p class="font-jp text-base text-ink mb-hq-3" data-testid="nickname-display-body">
+        会員プロフィールに設定したニックネームは、ご自身が予約しているイベントの他の参加者に表示されます。表示範囲はそのイベントの予約者に限られ、不特定多数に公開されることはありません。
+        氏名・メールアドレス・電話番号・生年月日・経験レベルなど、他参加者にとっての個人特定情報は表示されません。
+        ニックネームを設定されていない場合は、「参加メンバー」と汎用的に表示します。
+      </p>
     </section>
 
     <!-- 4. 第三者提供 -->
@@ -168,7 +176,8 @@
 
       <h2 class="font-jp-display text-2xl font-bold text-ink mt-hq-8 mb-hq-4">9. 改定履歴</h2>
       <ul class="pl-6 mb-hq-3 list-disc font-jp text-base text-ink">
-        <li>{{ lastUpdated }}: 初版公開</li>
+        <li>2026-05-06: 初版公開</li>
+        <li>{{ lastUpdated }}: 「会員間でのニックネーム表示について」を 3. 利用目的に追記</li>
       </ul>
 
       <h2 class="font-jp-display text-2xl font-bold text-ink mt-hq-8 mb-hq-4">10. お問い合わせ</h2>
@@ -182,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-const lastUpdated = "2026-05-06";
+const lastUpdated = "2026-06-08";
 const contactEmail = "high.q.volleyball@gmail.com";
 </script>
 

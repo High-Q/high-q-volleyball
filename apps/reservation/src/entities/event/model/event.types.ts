@@ -1,4 +1,4 @@
-import type { EventId, VenueId } from "@high-q/shared";
+import type { EventId, MemberId, VenueId } from "@high-q/shared";
 
 export type EventStatus = "scheduled" | "cancelled" | "closed";
 export type EventVisibility = "draft" | "published" | "private";
@@ -63,4 +63,19 @@ export type EventListItem = {
 export type EventDetail = EventListItem & {
   meetingPoint: string;
   mapUrl: string | null;
+};
+
+/**
+ * 予約済イベントの参加者 1 名分 (Issue #278)。
+ * `public.get_event_participant_nicknames(p_event_id uuid)` RPC の戻り値 1 行に対応。
+ * 本名 / メール / 電話番号 / 生年月日 / 経験レベル等の個人特定情報は含まない。
+ */
+export type EventParticipantNickname = {
+  memberId: MemberId;
+  /** members.nickname。未設定者は null。UI 側でマスク表記を組み立てる */
+  nickname: string | null;
+  /** 自分の予約に対応する行で true */
+  isSelf: boolean;
+  /** その予約に紐付く同伴者数 (0〜5)。UI 側で末尾サマリ集計に使う */
+  guestCount: number;
 };
