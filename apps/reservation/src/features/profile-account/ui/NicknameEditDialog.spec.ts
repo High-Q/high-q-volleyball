@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { ref } from "vue";
-import { unsafeMemberId } from "@high-q/shared";
+import { createMemberId } from "@/entities/member";
 import NicknameEditDialog from "./NicknameEditDialog.vue";
 
 vi.mock("@/features/auth", () => ({
@@ -20,7 +20,7 @@ describe("NicknameEditDialog - ニックネーム公開周知 (Issue #278)", () 
     const wrapper = mount(NicknameEditDialog, {
       props: {
         open: true,
-        memberId: unsafeMemberId("00000000-0000-0000-0000-000000000001"),
+        memberId: createMemberId("00000000-0000-0000-0000-000000000001"),
         initialValue: null,
       },
       global: {
@@ -51,7 +51,7 @@ describe("NicknameEditDialog - ニックネーム公開周知 (Issue #278)", () 
     const wrapper = mount(NicknameEditDialog, {
       props: {
         open: true,
-        memberId: unsafeMemberId("00000000-0000-0000-0000-000000000099"),
+        memberId: createMemberId("00000000-0000-0000-0000-000000000099"),
         initialValue: null,
       },
       global: {
