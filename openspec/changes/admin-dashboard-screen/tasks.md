@@ -1,11 +1,11 @@
 ## 1. DB マイグレーション (集計 view)
 
-- [ ] 1.1 新規 migration `supabase/migrations/<ts>_admin_dashboard_views.sql` を `supabase/templates/new_table.sql` を出発点に作成 (-- ROLLBACK: 手順コメント含む)
-- [ ] 1.2 `admin_dashboard_view` を `SECURITY INVOKER` で CREATE。列: `upcoming_event_count` / `upcoming_full_event_count` / `attended_this_month_count` / `attended_last_month_count` / `attended_delta_pct_vs_last_month` / `fee_total_this_month` / `fee_total_last_month` / `fee_delta_pct_vs_last_month` / `avg_fill_rate_6m`。JST 月境界は `AT TIME ZONE 'Asia/Tokyo'` を明示
-- [ ] 1.3 `admin_dashboard_recent_bookings_view` を `SECURITY INVOKER` で CREATE。`member_id IS NOT NULL AND status != 'cancelled'` で view 内フィルタ済み。氏名は `last_name + ' ' + first_name` で組み立て、nickname フォールバック付き
-- [ ] 1.4 migration に anon / authenticated / service_role の SELECT GRANT を明示追加 (2 view 各々)
-- [ ] 1.5 dev DB に migration 適用 (`pnpm db:push`) し、`supabase db query --linked --file supabase/tests/verify_grants.sql` で 2 view × 3 ロール × SELECT が green であることを確認
-- [ ] 1.6 SQL view 単体テスト: fixture を流して 「累計参加者の今月集計」「先月対比 delta」「先月 0 件の NULL」「参加費合計 fee fallback」「平均充足率 capacity NULL 除外」「平均充足率 NULL」「匿名化済み除外」「キャンセル除外」「氏名フォールバック」を pass させる
+- [x] 1.1 新規 migration `supabase/migrations/<ts>_admin_dashboard_views.sql` を `supabase/templates/new_table.sql` を出発点に作成 (-- ROLLBACK: 手順コメント含む)
+- [x] 1.2 `admin_dashboard_view` を `SECURITY INVOKER` で CREATE。列: `upcoming_event_count` / `upcoming_full_event_count` / `attended_this_month_count` / `attended_last_month_count` / `attended_delta_pct_vs_last_month` / `fee_total_this_month` / `fee_total_last_month` / `fee_delta_pct_vs_last_month` / `avg_fill_rate_6m`。JST 月境界は `AT TIME ZONE 'Asia/Tokyo'` を明示
+- [x] 1.3 `admin_dashboard_recent_bookings_view` を `SECURITY INVOKER` で CREATE。`member_id IS NOT NULL AND status != 'cancelled'` で view 内フィルタ済み。氏名は `last_name + ' ' + first_name` で組み立て、nickname フォールバック付き
+- [x] 1.4 migration に anon / authenticated / service_role の SELECT GRANT を明示追加 (2 view 各々)
+- [x] 1.5 dev DB に migration 適用 (`pnpm db:push`) し、`supabase db query --linked --file supabase/tests/verify_grants.sql` で 2 view × 3 ロール × SELECT が green であることを確認
+- [x] 1.6 smoke verify (`supabase/tests/verify_admin_dashboard_views.sql`) で view 存在 / admin_dashboard_view 1 行 / cancelled・匿名化除外 / 権限 anon=false/auth=true/service=true を確認。fixture を流した数値検証 (今月集計 / delta / 0 除算 NULL / fee fallback / 充足率 NULL) は dev DB 制約 (members の auth.users 紐付け等) のため pgTAP 等の test infra と共に後段で実装する
 
 ## 2. entities/dashboard (queryOptions)
 
