@@ -22,10 +22,10 @@
 
 ## 4. features/dashboard-stats (composable)
 
-- [ ] 4.1 `apps/admin/src/features/dashboard-stats/` を新規作成。`index.ts` で Public API
-- [ ] 4.2 `useDashboardStats` composable: dashboardStatsQuery を fetch し、StatCard 4 枚分の view model を返す (deltaTone を up/down/flat/null に変換、percent 整数化、currency 円書式化、null delta は「— %」へ)
-- [ ] 4.3 経過時間 formatter `formatRelativeTime(createdAt)` を作成 (0 分 / 60 分 / 24 時間 / 7 日の境界で表記切替)
-- [ ] 4.4 composable unit test: deltaTone 4 種、currency 0/百/千/万、percent NULL、経過時間境界
+- [x] 4.1 `apps/admin/src/features/dashboard-stats/` を新規作成。`index.ts` で Public API
+- [x] 4.2 `useDashboardStats` composable: dashboardStatsQuery を fetch し、StatCard 4 枚分の view model を返す (deltaTone を up/down/flat/null に変換、percent 整数化、currency 円書式化、null delta は「— %」へ)
+- [x] 4.3 経過時間 formatter `formatRelativeTime(createdAt)` を作成 (0 分 / 60 分 / 24 時間 / 7 日の境界で表記切替)
+- [x] 4.4 composable unit test: deltaTone 4 種、currency 0/百/千/万、percent NULL、経過時間境界
 
 ## 5. widgets/dashboard-stat-cards
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Kicker } from "@high-q/ui";
+import type { DeltaTone } from "./statCard.types";
 
 /**
  * Dashboard 用 StatCard プリミティブ (#149)。
@@ -8,8 +9,6 @@ import { Kicker } from "@high-q/ui";
  * design sample: docs/10-デザインサンプル/admin/hq-admin-screens.jsx (ScreenDashboard)
  * 関連: openspec/changes/admin-dashboard-screen/specs/admin-dashboard/spec.md
  */
-
-export type DeltaTone = "up" | "down" | "flat";
 
 const props = withDefaults(
   defineProps<{
