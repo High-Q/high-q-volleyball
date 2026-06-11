@@ -16,9 +16,9 @@
 
 ## 3. shared/ui/StatCard
 
-- [ ] 3.1 `apps/admin/src/shared/ui/StatCard.vue` を新規作成 (props: kicker / label / value / unit? / delta? / deltaTone / sub? / accent?)
-- [ ] 3.2 デザイントークン (`var(--hq-*)` / Tailwind preset utility) のみで着色。マジックナンバー禁止
-- [ ] 3.3 StatCard component test: props 組合せ (delta null / sub あり/なし / accent on/off / value 型) を網羅
+- [x] 3.1 `apps/admin/src/shared/ui/StatCard.vue` を新規作成 (props: kicker / label / value / unit? / delta? / deltaTone / sub? / accent?)
+- [x] 3.2 デザイントークン (`var(--hq-*)` / Tailwind preset utility) のみで着色。マジックナンバー禁止
+- [x] 3.3 StatCard component test: props 組合せ (delta null / sub あり/なし / accent on/off / value 型) を網羅
 
 ## 4. features/dashboard-stats (composable)
 
