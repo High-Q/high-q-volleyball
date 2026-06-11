@@ -17,13 +17,18 @@ import {
   type MyReservationDetail,
   type Reservation,
 } from "@/entities/reservation";
-import type { EventDetail } from "@/entities/event";
+import {
+  fetchEventParticipantNicknames,
+  type EventDetail,
+  type EventParticipantNickname,
+} from "@/entities/event";
 import {
   CancelPolicyBox,
   DarkFactCard,
   ReservationAvailabilityStatus,
   ReservationMetaTable,
 } from "@/widgets/reservation-detail-card";
+import { ReservationParticipantsSection } from "@/widgets/reservation-participants";
 
 /**
  * 予約詳細画面 (`/reservations/:reservationId`)。
@@ -45,6 +50,11 @@ const loading = ref<boolean>(true);
 const fetchError = ref<string | null>(null);
 const notFound = ref<boolean>(false);
 
+// 参加者セクション (Issue #278)
+const participants = ref<EventParticipantNickname[]>([]);
+const participantsLoading = ref<boolean>(true);
+const participantsError = ref<string | null>(null);
+
 const successNotice = ref<string | null>(null);
 let successTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -65,6 +75,7 @@ async function load(): Promise<void> {
       notFound.value = true;
     } else {
       reservation.value = result;
+      void loadParticipants(result.event.id);
     }
   } catch (cause) {
     fetchError.value =
@@ -73,6 +84,26 @@ async function load(): Promise<void> {
         : "予約を取得できませんでした。";
   } finally {
     loading.value = false;
+  }
+}
+
+/**
+ * 参加者セクション専用の取得処理 (Issue #278)。
+ * 予約取得成功後、event_id で RPC を呼び出す。失敗は画面全体エラーに倒さず
+ * セクション内エラー表示に留める (Meta / 予約状況 / Cancel Policy / CTA は通常描画)。
+ */
+async function loadParticipants(eventId: EventDetail["id"]): Promise<void> {
+  participantsLoading.value = true;
+  participantsError.value = null;
+  try {
+    participants.value = await fetchEventParticipantNicknames(eventId);
+  } catch (cause) {
+    participantsError.value = "参加者一覧を取得できませんでした。";
+    // 詳細ログは Sentry 連携経路で拾う (本変更ではセクション単独エラーに留める)
+    // eslint-disable-next-line no-console
+    console.error("[reservation-detail] participants fetch failed", cause);
+  } finally {
+    participantsLoading.value = false;
   }
 }
 
@@ -325,6 +356,13 @@ function goHistory(): void {
         <!-- 予約状況セクション (Issue #305) -->
         <ReservationAvailabilityStatus
           :availability="reservation.event.availability"
+        />
+
+        <!-- 参加者セクション (Issue #278): 予約状況の下、Cancel Policy の上 -->
+        <ReservationParticipantsSection
+          :participants="participants"
+          :loading="participantsLoading"
+          :error-message="participantsError"
         />
 
         <!-- 編集 CTA: 前向きアクションをプライマリに昇格 (#215) -->

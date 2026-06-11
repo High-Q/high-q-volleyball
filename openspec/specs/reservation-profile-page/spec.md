@@ -463,3 +463,31 @@ ProfilePage 内の `experience_level` は LEVEL セクションが inline 配置
 - **WHEN** `/profile?edit=experienceLevel` を開く
 - **THEN** モーダルは開かない（experience_level は LEVEL セクションの inline 編集のため）
 
+
+
+### Requirement: ニックネーム公開範囲の周知補足表示
+
+`/profile` 画面の ACCOUNT セクションのニックネーム行、および「ニックネーム編集モーダル」は、`members.nickname` が **予約イベント内で他参加者に表示される** 旨を SHALL 補足表示する。表示方法は以下のいずれかとし、両方を実装してもよい MUST:
+
+- ACCOUNT セクションのニックネーム行に補足注釈 (例: 「同じイベントの参加者に表示されます」相当) を、本文より小さい muted トーンで描画
+- ニックネーム編集モーダル本文に同等の補足文を描画
+
+補足文の文言・スタイルは HQ デザイントークン (`var(--hq-*)`) 経由で指定する MUST。マジックナンバー禁止 MUST NOT。本人による nickname の公開可否トグル / オプトイン UI は本要件の対象外 SHALL NOT (運用解釈として既存 privacy policy 同意に内包する方針)。
+
+補足文は nickname 未設定者にも表示する MUST (未設定時にも「設定すれば他参加者に表示される」旨を理解できる状態にする)。
+
+#### Scenario: ACCOUNT セクションでの補足表示
+- **WHEN** `/profile` を開く
+- **THEN** ACCOUNT セクションのニックネーム行に「同じイベントの参加者に表示されます」相当の補足注釈が描画されるか、ニックネーム編集モーダルに同等の補足文が描画される
+
+#### Scenario: ニックネーム編集モーダルでの補足表示
+- **WHEN** ニックネーム編集モーダルを開く
+- **THEN** モーダル本文に「予約イベントの参加者に表示されます」相当の補足文が描画される (ACCOUNT セクション側で実装済みなら、モーダル側はオプション)
+
+#### Scenario: nickname 未設定者への補足表示
+- **WHEN** `members.nickname = NULL` の会員が `/profile` を開く
+- **THEN** 補足文 (ACCOUNT セクション / モーダル いずれか) が描画される
+
+#### Scenario: デザイントークンの使用
+- **WHEN** 補足文のスタイルを確認
+- **THEN** 色 / フォントサイズは HQ デザイントークン経由で指定され、生 hex / px の直書きは含まれない
