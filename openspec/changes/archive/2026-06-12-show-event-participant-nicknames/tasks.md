@@ -49,8 +49,8 @@
 - [x] 7.1 `pnpm exec vitest run` 全パス: reservation 760/760 / lp 45/45 / admin 828/828 (合計 1633 件)
 - [x] 7.2 `pnpm --filter @high-q/reservation build` ✓ / `pnpm --filter @high-q/lp build` ✓
 - [x] 7.3 `pnpm exec eslint --max-warnings 0` 本 PR で追加・編集した新規ファイル群はクリア (pre-existing tech debt: NicknameEditDialog.vue の features→features 依存は master でも検出される既存問題のため対象外)
-- [ ] 7.4 翔太郎くんへの動作確認案内 (`verify-locally` Skill で `/reservations/:id` + `/profile` モーダル + `/privacy` を網羅して提示)
-- [ ] 7.5 PR 作成 + Render Preview 確認 (Preview は prd Supabase 向き → prd に migration を別途 push しないと参加者 RPC が 404 になる点を Test Plan に明記)
+- [x] 7.4 動作確認実施済 (dev seed + エッジケース 3 種のスクリーンショット往復レビューで代替。修正 OK の合図取得済)
+- [x] 7.5 PR 作成 + Render Preview 確認 (Preview は prd Supabase 向き → prd に migration を別途 push しないと参加者 RPC が 404 になる点を Test Plan に明記)
 
 ## 8. UI レビューフィードバック対応 (2026-06-11)
 
