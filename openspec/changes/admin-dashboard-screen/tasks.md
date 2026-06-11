@@ -9,10 +9,10 @@
 
 ## 2. entities/dashboard (queryOptions)
 
-- [ ] 2.1 `apps/admin/src/entities/dashboard/` を新規作成。`index.ts` で Public API を export
-- [ ] 2.2 Supabase typegen を再生成し、`admin_dashboard_view` / `admin_dashboard_recent_bookings_view` の型を取り込む
-- [ ] 2.3 queryOptions: `dashboardStatsQuery` (admin_dashboard_view 1 行取得)、`dashboardRecentBookingsQuery` (admin_dashboard_recent_bookings_view を created_at desc LIMIT 4)、`dashboardUpcomingEventsQuery` (event_list_view を start_at asc LIMIT 3)、`dashboardNearFullEventsQuery` (event_list_view から残席 1〜2)、`dashboardRecentCancellationsQuery` (reservations を 7 日窓 + cancelled で member/event embed)
-- [ ] 2.4 entities unit test (MSW): 各 query の URL / select / order / limit が仕様通りであることを検証
+- [x] 2.1 `apps/admin/src/entities/dashboard/` を新規作成。`index.ts` で Public API を export
+- [x] 2.2 admin app に typegen 機構が未導入のため、`model/dashboard.types.ts` で view 列を Branded Types 利用の手書き型として定義 (既存 admin entities の慣例に準拠)
+- [x] 2.3 既存 admin の `Result<T, FetchError>` async getter pattern (TanStack Query は未導入) で 5 つの fetcher を実装: `getDashboardStats` / `getDashboardRecentBookings` / `getDashboardUpcomingEvents` / `getDashboardNearFullEvents` / `getDashboardRecentCancellations`
+- [x] 2.4 entities unit test (MSW): 各 query の URL / select / order / limit が仕様通りであることを検証
 
 ## 3. shared/ui/StatCard
 
