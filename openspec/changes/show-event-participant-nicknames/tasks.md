@@ -51,3 +51,14 @@
 - [x] 7.3 `pnpm exec eslint --max-warnings 0` 本 PR で追加・編集した新規ファイル群はクリア (pre-existing tech debt: NicknameEditDialog.vue の features→features 依存は master でも検出される既存問題のため対象外)
 - [ ] 7.4 翔太郎くんへの動作確認案内 (`verify-locally` Skill で `/reservations/:id` + `/profile` モーダル + `/privacy` を網羅して提示)
 - [ ] 7.5 PR 作成 + Render Preview 確認 (Preview は prd Supabase 向き → prd に migration を別途 push しないと参加者 RPC が 404 になる点を Test Plan に明記)
+
+## 8. UI レビューフィードバック対応 (2026-06-11)
+
+- [x] 8.1 nickname 未設定者の表示を「参加メンバー」→「ニックネーム未設定」(text-muted グレーアウト) に変更。本物の nickname (text-ink) とスタイルで区別
+- [x] 8.2 末尾の「同伴者 +N 名」集約サマリを廃止し、予約者本人の行に「＋同伴N名」を付与 (Meta テーブル「同伴者」との同一語二重使用を解消)
+- [x] 8.3 見出しを「参加者 N名」とし、N は描画配列 (行数 + guest_count 合算) から算出 → リストとの整合をロジックで保証
+- [x] 8.4 リスト密度改善: text-base → text-sm、gap → 罫線区切り (divide-y divide-hairline)。「あなた」バッジ位置は維持
+- [x] 8.5 エッジケース: 長い nickname (DB 上限 15 文字) の折り返し / 10 名超の折りたたみ「すべて表示（あとN名）」/ 自分 1 人だけ時の補足文
+- [x] 8.6 プライバシーポリシー本文の汎用表記例も「ニックネーム未設定」に同期。spec delta (reservation-detail-page / privacy-policy-page) 更新
+- [x] 8.7 「あなた」バッジの縦 padding を除去し全行の行高を統一 (text-sm 行高 20px 以内に収める)
+- [x] 8.8 「すべて表示（あとN名）」を本文色 + シェブロンアイコン + min-h-[44px] タップ領域に変更 (「ニックネーム未設定」のグレーアウトと区別)

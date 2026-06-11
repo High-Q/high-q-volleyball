@@ -24,19 +24,18 @@ ReservationDetailPage は「予約状況」セクションの **下** かつ Can
 
 参加者セクションは取得結果を `reservations.created_at ASC` の並び順を保ったまま 1 行 1 名で SHALL 表示する。各行は以下を MUST 表示する:
 
-- nickname (`get_event_participant_nicknames.nickname`)。NULL または空文字のときは「参加メンバー」と SHALL 表記し、本名や member_id をフォールバック表示 SHALL NOT
+- nickname (`get_event_participant_nicknames.nickname`)。NULL または空文字のときは「ニックネーム未設定」とグレーアウト表記 (本物の nickname と異なる色) で SHALL 描画し、本物の nickname と同色・同ウェイトで紛れる表示 SHALL NOT。本名や member_id をフォールバック表示 SHALL NOT
 - 自分自身の行 (`is_self = true`) には「あなた」相当のマーカーを SHALL 付与し、他参加者と区別可能にする MUST
+- `guest_count >= 1` の行には「＋同伴N名」を SHALL 付与する (同伴者が誰の連れかを行単位で判別可能にする)
 
 行内で MUST NOT 表示する項目:
 - 本名 / メールアドレス / 電話番号 / 生年月日 / 経験レベル / アバター画像
 
-並び順は UI 側で SHALL 並び替えしない (RPC 戻り値を素直に描画)。
-
-各行末尾の同伴者数表示は本要件では扱わず、後続の「同伴者サマリ」要件で集約表示する MUST。
+並び順は UI 側で SHALL 並び替えしない (RPC 戻り値を素直に描画)。長い nickname (DB 上限 15 文字) は省略せず折り返して SHALL 全文描画する。
 
 #### Scenario: nickname 未設定者のマスク表記
 - **WHEN** RPC 戻り値に `nickname = NULL` の行が含まれる
-- **THEN** その行は「参加メンバー」と描画され、本名や member_id は描画されない
+- **THEN** その行は「ニックネーム未設定」と本物の nickname と異なる色 (グレーアウト) で描画され、本名や member_id は描画されない
 
 #### Scenario: 自分の行のマーカー
 - **WHEN** RPC 戻り値の `is_self = true` の行を確認
@@ -50,23 +49,47 @@ ReservationDetailPage は「予約状況」セクションの **下** かつ Can
 - **WHEN** RPC 戻り値が `[A, B, C]` の順で返ったとき
 - **THEN** UI 上も A → B → C の順で描画される (UI 側並び替えなし)
 
-### Requirement: 同伴者サマリの集約表示
+### Requirement: 同伴者の行内表示
 
-参加者セクションは参加者リストの末尾に同伴者サマリを SHALL 表示する。サマリは RPC 戻り値の全行 `guest_count` 合算が 1 以上のとき「同伴者 +N 名」と SHALL 描画する。0 のときはサマリ行を描画 SHALL NOT。
+参加者セクションは同伴者を予約者本人の行に「＋同伴N名」として SHALL 表示する。`guest_count = 0` の行には同伴表記を描画 SHALL NOT。リスト末尾への集約サマリ (「同伴者 +N 名」) は、Meta テーブルの「同伴者」(自分の予約の同伴者数) と同一語が別意味で二重登場し混乱を招くため SHALL NOT 採用する。
 
 同伴者個別の nickname は表示 SHALL NOT (data model 的に同伴者の nickname を持たないため)。
 
-#### Scenario: 同伴者 1 名以上のサマリ表示
-- **WHEN** RPC 戻り値の `guest_count` 合算が 3
-- **THEN** リスト末尾に「同伴者 +3 名」が描画される
+#### Scenario: 同伴者ありの行内表示
+- **WHEN** RPC 戻り値に `guest_count = 2` の行が含まれる
+- **THEN** 当該行に「＋同伴2名」が描画され、リスト末尾の集約サマリは描画されない
 
-#### Scenario: 同伴者 0 名のサマリ非表示
-- **WHEN** RPC 戻り値の `guest_count` 合算が 0
-- **THEN** 同伴者サマリ行は描画されない
+#### Scenario: 同伴者 0 名の行は同伴表記なし
+- **WHEN** RPC 戻り値の行の `guest_count` が 0
+- **THEN** 当該行に同伴表記は描画されない
 
 #### Scenario: 同伴者の個別 nickname は出さない
 - **WHEN** 参加者セクションの DOM を確認
-- **THEN** 同伴者個別の nickname / 名前は描画されず、合算 N 名のサマリのみが描画される
+- **THEN** 同伴者個別の nickname / 名前は描画されず、予約者行の「＋同伴N名」のみが描画される
+
+### Requirement: 見出しの合計人数と人数整合性
+
+参加者セクションの見出しは「参加者 N名」と SHALL 表示し、N は描画対象の参加者配列から算出 (行数 + `guest_count` 合算) する MUST。予約状況セクションの数値と独立に算出した値を見出しに表示 SHALL NOT (描画リストとの不一致を構造的に排除するため)。Loading / Error 状態では人数を表示 SHALL NOT。
+
+#### Scenario: 見出しの合計人数
+- **WHEN** RPC 戻り値が 6 行・`guest_count` 合算 2
+- **THEN** 見出しに「参加者 8名」と描画される
+
+### Requirement: 大人数時の折りたたみと 1 人参加時の補足
+
+参加者リストは 10 行を超えるとき先頭 10 行のみ SHALL 表示し、「すべて表示（あとN名）」操作で全件展開できる MUST。折りたたみ中も見出しの合計人数は全件分を SHALL 表示する。
+
+展開操作の要素は「ニックネーム未設定」のグレーアウト表記と区別できる本文色 + 操作可能と分かる視覚手がかり (シェブロンアイコン等) で SHALL 描画し、タップ領域は 44px 以上を MUST 確保する。
+
+参加者が自分 1 人だけ (`is_self = true` の 1 行のみ) のときは「ほかの参加者はまだいません」相当の補足文を SHALL 表示する。
+
+#### Scenario: 10 名超の折りたたみ
+- **WHEN** RPC 戻り値が 12 行
+- **THEN** 先頭 10 行と「すべて表示（あと2名）」が描画され、操作後に 12 行すべてが描画される
+
+#### Scenario: 自分 1 人だけの表示
+- **WHEN** RPC 戻り値が自分の 1 行のみ
+- **THEN** 自分の行 (「あなた」マーカー付き) と「ほかの参加者はまだいません」相当の補足文が描画される
 
 ### Requirement: 参加者セクションのエラー状態
 
@@ -88,9 +111,13 @@ Meta テーブル / 予約状況セクション / Cancel Policy ボックス / C
 
 検証対象シナリオ (各 1〜2 件まで):
 - 参加者複数名 + 自分含む の通常描画
-- nickname 未設定者のマスク表記
+- nickname 未設定者のマスク表記 (グレーアウト + 本物 nickname とのスタイル区別)
 - 自分の行マーカーの存在
-- 同伴者サマリの 0 / 1 以上 切替
+- 行内同伴表記の 0 / 1 以上 切替
+- 見出し合計人数 (行数 + 同伴合算) の一致
+- 長い nickname (15 文字) の折り返し全文描画
+- 10 名超の折りたたみと展開
+- 自分 1 人だけのときの補足文
 - RPC エラー時のセクション内エラーメッセージ表示
 - 本名 / メール / 電話番号 等の個人情報が DOM に出ないこと
 
