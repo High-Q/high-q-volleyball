@@ -86,4 +86,4 @@
 - [x] 13.2 `pnpm --filter @high-q/admin build` が pass (型エラー / boundaries / dependency-cruiser / stylelint 0 件)
 - [x] 13.3 `scripts/static-checks/migrations/check-rls.sh` / `check-rollback-comment.sh` / `check-my-number.sh` が pass
 - [ ] 13.4 dev DB に対し動作確認: `/` 着地で 4 ブロック表示、再試行 CTA、行クリック遷移、Empty 状態 (任意で reservations を 0 件にして検証)
-- [ ] 13.5 `verify-locally` Skill で動作確認手順を生成して翔太郎くんに提示
+- [x] 13.5 `verify-locally` Skill で動作確認手順を生成して翔太郎くんに提示
