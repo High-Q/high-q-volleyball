@@ -16,6 +16,7 @@
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test --grep @smoke",
     "test:e2e:ui": "playwright test --ui",
+    "dev:login": "node scripts/dev/dev-login.mjs",
     "db:push": "supabase db push",
     "db:diff": "supabase db diff",
     "db:status": "supabase db status",
