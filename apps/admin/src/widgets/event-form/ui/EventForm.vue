@@ -9,6 +9,7 @@ import FormSection from "./FormSection.vue";
 import SectionBasic from "./SectionBasic.vue";
 import { useEventForm, type EventFormMode } from "../composables/useEventForm";
 import { useVolumeSuggest } from "../composables/useVolumeSuggest";
+import type { EventFormState } from "../model/eventFormSchema";
 
 /**
  * イベントの作成 / 編集を共有するフォーム widget。`mode` props で挙動分岐。
@@ -16,6 +17,7 @@ import { useVolumeSuggest } from "../composables/useVolumeSuggest";
  * 関連:
  *   openspec/changes/admin-events-crud-screen/specs/admin-events-crud/spec.md
  *   openspec/changes/admin-events-crud-screen/design.md (D1)
+ *   openspec/changes/admin-event-duplicate/design.md (D2, D5)
  *
  * NOTE: 削除ボタンは widget 内部で feature を直接 import せず、`headerActions`
  *       slot で受け取る。Edit 画面は EventDeleteDialog をそこに差し込む。
@@ -26,8 +28,17 @@ const props = withDefaults(
     mode: EventFormMode;
     initialEvent?: Event | null;
     eventId?: string;
+    /** Create mode で複製元を下敷きにするときのシード初期 state。 */
+    seedEvent?: EventFormState | null;
+    /** 複製元イベント名。指定時は「複製して作成中」の手がかりを表示する。 */
+    duplicateSourceName?: string | null;
   }>(),
-  { initialEvent: null, eventId: undefined },
+  {
+    initialEvent: null,
+    eventId: undefined,
+    seedEvent: null,
+    duplicateSourceName: null,
+  },
 );
 
 const router = useRouter();
@@ -38,6 +49,7 @@ const f = useEventForm({
   mode: props.mode,
   initialEvent: props.initialEvent ?? undefined,
   eventId: props.eventId,
+  seedState: props.seedEvent ?? undefined,
 });
 
 const headerTitle = computed(() =>
@@ -95,6 +107,14 @@ async function handleCancel() {
         </Button>
       </div>
     </header>
+
+    <!-- 複製して作成中の手がかり -->
+    <div
+      v-if="mode === 'create' && duplicateSourceName"
+      class="mx-hq-6 mt-hq-4 rounded-hq-sm border border-accent/40 bg-accent-soft px-hq-4 py-hq-3 font-jp text-sm text-accent"
+    >
+      「{{ duplicateSourceName }}」を複製して作成中です。開催日を選び直してください。
+    </div>
 
     <!-- 保存失敗時の Banner -->
     <div

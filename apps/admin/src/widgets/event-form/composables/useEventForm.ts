@@ -14,6 +14,7 @@ import {
   type EventFormState,
   type ValidationErrors,
 } from "../model/eventFormSchema";
+import { eventToState, toIsoJst } from "../model/eventStateMapper";
 
 /**
  * EventForm の state + 送信ロジック composable。Create / Edit 共通。
@@ -50,45 +51,14 @@ interface Options {
   initialEvent?: Event | null;
   /** Edit 時の対象 id。 */
   eventId?: string;
+  /**
+   * Create mode で複製元を下敷きにするときのシード初期 state。
+   * 指定時は createDefaults の代わりにこれを初期 state とする
+   * （会場・時間・参加費を引き継ぎ、開催日は空でシード済み）。
+   */
+  seedState?: EventFormState | null;
   /** 保存成功時に router 操作を行うかどうか。テストでは false にする手も。 */
   navigate?: boolean;
-}
-
-function eventToState(e: Event): EventFormState {
-  // start_at / end_at の ISO8601 文字列を JST 起点で date / time に分解
-  // （admin は当面日本のみ運用 — events.start_at は timestamptz、入力は JST）
-  const TZ_OFFSET_MIN = 9 * 60;
-  function jstParts(iso: string): {
-    date: string;
-    time: string;
-  } {
-    const utc = new Date(iso);
-    const jst = new Date(utc.getTime() + TZ_OFFSET_MIN * 60_000);
-    const yyyy = jst.getUTCFullYear();
-    const mm = String(jst.getUTCMonth() + 1).padStart(2, "0");
-    const dd = String(jst.getUTCDate()).padStart(2, "0");
-    const hh = String(jst.getUTCHours()).padStart(2, "0");
-    const mi = String(jst.getUTCMinutes()).padStart(2, "0");
-    return { date: `${yyyy}-${mm}-${dd}`, time: `${hh}:${mi}` };
-  }
-  const s = jstParts(e.start_at);
-  const en = jstParts(e.end_at);
-  return {
-    name: e.name,
-    date: s.date,
-    startTime: s.time,
-    endTime: en.time,
-    venueId: e.venue_id as unknown as string,
-    fee: e.fee == null ? "" : String(e.fee),
-  };
-}
-
-/**
- * date "YYYY-MM-DD" + time "HH:mm" を JST 起点で ISO8601 timestamptz 文字列に。
- * 例: "2026-05-12" + "19:30" → "2026-05-12T19:30:00+09:00"
- */
-function toIsoJst(date: string, time: string): string {
-  return `${date}T${time}:00+09:00`;
 }
 
 export function useEventForm(options: Options): UseEventForm {
@@ -104,9 +74,12 @@ export function useEventForm(options: Options): UseEventForm {
     endTime: "20:00",
   };
 
+  // Edit は対象 event から、Create は複製シード（あれば）→ なければ既定値。
+  // dirty 判定の基準スナップショットも下の initialSnapshot で initial に揃うため、
+  // 複製シード直後は dirty=false（開催日を埋めた時点で dirty になる）。
   const initial: EventFormState = options.initialEvent
     ? eventToState(options.initialEvent)
-    : createDefaults;
+    : (options.seedState ?? createDefaults);
 
   const state = reactive<EventFormState>({ ...initial });
   const initialSnapshot = JSON.stringify(initial);

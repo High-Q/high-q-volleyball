@@ -35,6 +35,11 @@ async function renderTable(props: {
     routes: [
       { path: "/events", name: "events", component: { template: "<div />" } },
       {
+        path: "/events/new",
+        name: "events-new",
+        component: { template: "<div />" },
+      },
+      {
         path: "/events/:id/edit",
         name: "edit",
         component: { template: "<div />" },
@@ -203,11 +208,42 @@ describe("EventsTable", () => {
     expect(detailLink?.text()).toBe(row.name);
   });
 
-  it("詳細遷移リンクは a11y のため行ごとに 1 つに抑制する（編集リンクと合わせて行内 2 リンク）", async () => {
+  it("詳細遷移リンクは a11y のため行ごとに 1 つに抑制する（詳細 + 編集 + 複製で行内 3 リンク）", async () => {
     const row = baseRow();
     const wrapper = await renderTable({ rows: [row] });
     const rowEl = wrapper.findAll("tbody tr").at(0);
-    expect(rowEl?.findAll("a").length).toBe(2);
+    expect(rowEl?.findAll("a").length).toBe(3);
+  });
+
+  it("操作列に複製リンクがあり /events/new?from=:id を指す", async () => {
+    const row = baseRow();
+    const wrapper = await renderTable({ rows: [row] });
+    const dupLink = wrapper
+      .findAll("a")
+      .find((a) => a.attributes("href")?.includes(`/events/new?from=${row.id}`));
+    expect(dupLink).toBeDefined();
+    expect(dupLink?.text()).toBe("複製");
+  });
+
+  it("複製リンクは対象イベント名を含む aria-label を持つ", async () => {
+    const row = baseRow();
+    const wrapper = await renderTable({ rows: [row] });
+    const dupLink = wrapper
+      .findAll("a")
+      .find((a) => a.attributes("href")?.includes(`/events/new?from=${row.id}`));
+    expect(dupLink?.attributes("aria-label")).toBe(
+      `${row.name} を複製して新規作成`,
+    );
+  });
+
+  it("複製リンクは relative z-10 で詳細リンクの ::before より上層にある", async () => {
+    const row = baseRow();
+    const wrapper = await renderTable({ rows: [row] });
+    const dupLink = wrapper
+      .findAll("a")
+      .find((a) => a.attributes("href")?.includes(`/events/new?from=${row.id}`));
+    expect(dupLink?.classes()).toContain("relative");
+    expect(dupLink?.classes()).toContain("z-10");
   });
 
   it("行全体クリック可能化のための positioning context が <tr> に設定されている", async () => {

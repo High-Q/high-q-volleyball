@@ -173,12 +173,21 @@ function onHeaderKeyDown(col: SortKey, event: KeyboardEvent): void {
           </Badge>
         </TableCell>
         <TableCell class="relative text-right whitespace-nowrap">
-          <router-link
-            :to="`/events/${row.id}/edit`"
-            class="relative z-10 font-jp text-sm text-accent underline-offset-4 hover:underline"
-          >
-            編集
-          </router-link>
+          <span class="inline-flex items-center gap-hq-3">
+            <router-link
+              :to="`/events/${row.id}/edit`"
+              class="relative z-10 font-jp text-sm text-accent underline-offset-4 hover:underline"
+            >
+              編集
+            </router-link>
+            <router-link
+              :to="`/events/new?from=${row.id}`"
+              class="relative z-10 font-jp text-sm text-accent underline-offset-4 hover:underline"
+              :aria-label="`${row.name} を複製して新規作成`"
+            >
+              複製
+            </router-link>
+          </span>
         </TableCell>
       </TableRow>
     </TableBody>

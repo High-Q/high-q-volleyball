@@ -14,3 +14,5 @@ export {
   type ValidationErrors,
   type ValidationResult,
 } from "./model/eventFormSchema";
+export { seedFromEvent, resolveDuplicateName } from "./model/duplicateSeed";
+export { suggestNextVolume } from "./composables/useVolumeSuggest";
