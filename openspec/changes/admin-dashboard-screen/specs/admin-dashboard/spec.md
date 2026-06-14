@@ -204,8 +204,8 @@ Dashboard 画面は MUST 以下のテストを持つ:
 - **Component test (Vitest + @vue/test-utils)**: `DashboardPage` / 4 widget 各々の 4 状態出し分け / StatCard の値表示 / 「再試行」の局所動作
 - **Composable unit test (Vitest + MSW)**: `useDashboardStats` の null delta 取り扱い / 経過時間表記の境界 (0 分 / 60 分 / 24 時間 / 7 日)
 - **SQL view 単体テスト**: `admin_dashboard_view` の集計ロジックを fixture 投入で検証 (今月 attended / 先月対比 / 充足率 / 満員件数)
-- **E2E (Playwright)**: 認証済み admin で `/` にアクセス → Dashboard が描画され、4 ブロックすべてが表示される happy path 1 件
+- **E2E (Playwright)**: auth guard が `/` (dashboard) を保護していることを 1 件で確認する。認証済み AAL2 admin セッションの再現は localStorage 仕込み等で E2E が肥大するため、4 ブロックの描画と 4 状態の出し分けは component test (DashboardPage / 4 widget / router の各 spec) に押し下げる (CLAUDE.md「E2E は機能あたり 1〜2 件、肥大化したら component test に押し下げ」/ events-list.e2e.ts と同方針)
 
-#### Scenario: E2E の通過
-- **WHEN** `pnpm --filter @high-q/e2e test` を実行 (admin プロジェクト)
-- **THEN** Dashboard happy path 1 件が pass する
+#### Scenario: E2E の通過 (guard 保護)
+- **WHEN** 未認証ユーザーが `/` にアクセスする E2E を `pnpm --filter @high-q/e2e test` (admin プロジェクト) で実行
+- **THEN** `/login` にリダイレクトされる 1 件が pass する

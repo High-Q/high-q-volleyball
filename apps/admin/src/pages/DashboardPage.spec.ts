@@ -3,9 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 
-const { signOutMock, replaceSpy } = vi.hoisted(() => ({
+const { signOutMock } = vi.hoisted(() => ({
   signOutMock: vi.fn().mockResolvedValue(undefined),
-  replaceSpy: vi.fn(),
 }));
 
 vi.mock("@/features/auth", () => ({

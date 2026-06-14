@@ -15,13 +15,13 @@
 --   - 0 除算回避は分母 = 0 のときに CASE で NULL を返す
 --   - admin 専用契約のため anon は明示 REVOKE、authenticated / service_role に SELECT GRANT
 --
--- ROLLBACK 手順 (緊急時):
---   revoke all on public.admin_dashboard_view from service_role;
---   revoke all on public.admin_dashboard_view from authenticated;
---   drop view if exists public.admin_dashboard_view;
---   revoke all on public.admin_dashboard_recent_bookings_view from service_role;
---   revoke all on public.admin_dashboard_recent_bookings_view from authenticated;
---   drop view if exists public.admin_dashboard_recent_bookings_view;
+-- ROLLBACK 手順 (緊急時, 末尾の -- ROLLBACK: 行を手動実行):
+-- ROLLBACK: revoke all on public.admin_dashboard_view from service_role;
+-- ROLLBACK: revoke all on public.admin_dashboard_view from authenticated;
+-- ROLLBACK: drop view if exists public.admin_dashboard_view;
+-- ROLLBACK: revoke all on public.admin_dashboard_recent_bookings_view from service_role;
+-- ROLLBACK: revoke all on public.admin_dashboard_recent_bookings_view from authenticated;
+-- ROLLBACK: drop view if exists public.admin_dashboard_recent_bookings_view;
 -- =============================================================================
 
 

@@ -78,12 +78,12 @@
 
 ## 12. E2E
 
-- [ ] 12.1 Playwright admin プロジェクトに dashboard happy path を 1 件追加: 認証済み admin で `/` 着地 → StatCard 4 / 直近イベント / 通知 / 最近の予約の 4 ブロックが存在することを assert
+- [x] 12.1 Playwright admin プロジェクトに dashboard E2E を 1 件追加 (`e2e/admin/dashboard.e2e.ts`): 未認証で `/` → `/login` redirect で auth guard 保護を確認。4 ブロック描画は component test に押し下げ (events-list.e2e.ts と同方針、spec の E2E 記述も合わせて更新)
 
 ## 13. 最終確認
 
-- [ ] 13.1 `pnpm exec vitest run` をルートで実行し、すべてのテストが pass
-- [ ] 13.2 `pnpm --filter @high-q/admin build` が pass (型エラー / boundaries / dependency-cruiser / stylelint 0 件)
-- [ ] 13.3 `scripts/static-checks/migrations/check-rls.sh` / `check-rollback-comment.sh` / `check-my-number.sh` が pass
+- [x] 13.1 `pnpm exec vitest run` をルートで実行し、すべてのテストが pass
+- [x] 13.2 `pnpm --filter @high-q/admin build` が pass (型エラー / boundaries / dependency-cruiser / stylelint 0 件)
+- [x] 13.3 `scripts/static-checks/migrations/check-rls.sh` / `check-rollback-comment.sh` / `check-my-number.sh` が pass
 - [ ] 13.4 dev DB に対し動作確認: `/` 着地で 4 ブロック表示、再試行 CTA、行クリック遷移、Empty 状態 (任意で reservations を 0 件にして検証)
 - [ ] 13.5 `verify-locally` Skill で動作確認手順を生成して翔太郎くんに提示
