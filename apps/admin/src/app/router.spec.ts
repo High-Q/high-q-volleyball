@@ -70,7 +70,7 @@ describe("router auth guard", () => {
     expect(router.currentRoute.value.path).toBe("/mfa");
   });
 
-  it("AAL2 admin で / にアクセスすると /events にリダイレクトされる", async () => {
+  it("AAL2 admin で / にアクセスすると dashboard に着地する (#149)", async () => {
     session.status.value = "authenticated";
     session.aal.value = "aal2";
     session.isAdmin.value = true;
@@ -78,7 +78,8 @@ describe("router auth guard", () => {
     const router = await createTestRouter();
     await router.push("/");
     await router.isReady();
-    expect(router.currentRoute.value.path).toBe("/events");
+    expect(router.currentRoute.value.path).toBe("/");
+    expect(router.currentRoute.value.name).toBe("dashboard");
   });
 
   it("AAL2 非 admin で / にアクセスすると signOut + /login?reason=not-admin", async () => {
@@ -95,7 +96,7 @@ describe("router auth guard", () => {
     expect(router.currentRoute.value.query.reason).toBe("not-admin");
   });
 
-  it("AAL2 admin が /login にアクセスすると /events にリダイレクトされる", async () => {
+  it("AAL2 admin が /login にアクセスすると dashboard にリダイレクトされる (#149)", async () => {
     session.status.value = "authenticated";
     session.aal.value = "aal2";
     session.isAdmin.value = true;
@@ -103,7 +104,8 @@ describe("router auth guard", () => {
     const router = await createTestRouter();
     await router.push("/login");
     await router.isReady();
-    expect(router.currentRoute.value.path).toBe("/events");
+    expect(router.currentRoute.value.path).toBe("/");
+    expect(router.currentRoute.value.name).toBe("dashboard");
   });
 
   it("/auth/callback は AAL や状態にかかわらず通過する (公開ルート)", async () => {
@@ -125,7 +127,7 @@ describe("router auth guard", () => {
     expect(router.currentRoute.value.path).toBe("/mfa");
   });
 
-  it("AAL2 admin が /mfa にアクセスすると /events にリダイレクトされる", async () => {
+  it("AAL2 admin が /mfa にアクセスすると dashboard にリダイレクトされる (#149)", async () => {
     session.status.value = "authenticated";
     session.aal.value = "aal2";
     session.isAdmin.value = true;
@@ -133,7 +135,8 @@ describe("router auth guard", () => {
     const router = await createTestRouter();
     await router.push("/mfa");
     await router.isReady();
-    expect(router.currentRoute.value.path).toBe("/events");
+    expect(router.currentRoute.value.path).toBe("/");
+    expect(router.currentRoute.value.name).toBe("dashboard");
   });
 
   it("未認証で /events にアクセスすると /login にリダイレクトされる", async () => {
@@ -193,10 +196,12 @@ describe("router routes", () => {
     ]);
   });
 
-  it("/ ルートは /events への redirect", async () => {
+  it("/ ルートは dashboard 画面 (redirect ではなく component)", async () => {
     const { routes } = await import("./router");
     const root = routes.find((r) => r.path === "/");
-    expect(root?.redirect).toBeDefined();
+    expect(root?.redirect).toBeUndefined();
+    expect(root?.name).toBe("dashboard");
+    expect(root?.component).toBeDefined();
   });
 
   it("/login と /auth/callback は meta.public=true", async () => {

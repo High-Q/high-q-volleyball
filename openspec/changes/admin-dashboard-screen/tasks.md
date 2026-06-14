@@ -58,23 +58,23 @@
 
 ## 9. pages/DashboardPage
 
-- [ ] 9.1 `apps/admin/src/pages/DashboardPage.vue` を新規作成。header (PageBreadcrumb + 横遷移リンク群 + 主 CTA + ログアウト) + 4 widget を縦に並べる
-- [ ] 9.2 ヘッダの横遷移リンク群 (会員 / 本人確認書類 + PendingCountBadge / ログアウト) は EventsListPage と同じ動線で配置
-- [ ] 9.3 主 CTA「新しいイベントを作る」を header 右側に配置、押下で `/events/new`
-- [ ] 9.4 widget 群がそれぞれ独立に Error 状態を持っても header (ログアウト含む) が機能する構造を担保
-- [ ] 9.5 DashboardPage component test: 4 widget mount + ヘッダの横遷移 + 主 CTA 遷移
+- [x] 9.1 `apps/admin/src/pages/DashboardPage.vue` を新規作成。header (PageBreadcrumb + 横遷移リンク群 + 主 CTA + ログアウト) + 4 widget を縦に並べる
+- [x] 9.2 ヘッダの横遷移リンク群 (会員 / 本人確認書類 + PendingCountBadge / ログアウト) は EventsListPage と同じ動線で配置
+- [x] 9.3 主 CTA「新しいイベントを作る」を header 右側に配置、押下で `/events/new`
+- [x] 9.4 widget 群がそれぞれ独立に Error 状態を持っても header (ログアウト含む) が機能する構造を担保
+- [x] 9.5 DashboardPage component test: 4 widget mount + ヘッダの横遷移 + 主 CTA 遷移
 
 ## 10. router 差し替え
 
-- [ ] 10.1 `apps/admin/src/app/router.ts` の `{ path: "/", redirect: { name: "events" } }` を `{ path: "/", name: "dashboard", component: DashboardPage }` に変更
-- [ ] 10.2 auth guard 内の `{ name: "events" }` redirect 先 (login → `/`、mfa → `/` 等) のうち、「ログイン直後に着地する画面」を `{ name: "dashboard" }` に切替。`/events` / `/mfa` 等の元動線は維持
-- [ ] 10.3 router.spec.ts を更新: `/` で DashboardPage がマウント、未認証は `/login` redirect、AAL2 + admin は `/login` から `/` へ
-- [ ] 10.4 EventsListPage の header コメント「admin の既定トップ画面のためダッシュボード相当のサマリ機能を兼ねる」記述を削除
+- [x] 10.1 `apps/admin/src/app/router.ts` の `{ path: "/", redirect: { name: "events" } }` を `{ path: "/", name: "dashboard", component: DashboardPage }` に変更
+- [x] 10.2 auth guard 内の `{ name: "events" }` redirect 先 (login → `/`、mfa → `/` 等) のうち、「ログイン直後に着地する画面」を `{ name: "dashboard" }` に切替。`/events` / `/mfa` 等の元動線は維持
+- [x] 10.3 router.spec.ts を更新: `/` で DashboardPage がマウント、未認証は `/login` redirect、AAL2 + admin は `/login` から `/` へ
+- [x] 10.4 EventsListPage の header コメント「admin の既定トップ画面のためダッシュボード相当のサマリ機能を兼ねる」記述を削除
 
 ## 11. クリーンアップ
 
-- [ ] 11.1 `apps/admin/src/pages/HomePlaceholder.vue` と `apps/admin/src/pages/HomePlaceholder.spec.ts` を削除
-- [ ] 11.2 import 残骸が無いことを `pnpm exec tsc --noEmit` で確認
+- [x] 11.1 `apps/admin/src/pages/HomePlaceholder.vue` と `apps/admin/src/pages/HomePlaceholder.spec.ts` を削除
+- [x] 11.2 import 残骸が無いことを `pnpm exec tsc --noEmit` で確認
 
 ## 12. E2E
 
