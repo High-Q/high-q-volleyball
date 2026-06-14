@@ -29,32 +29,32 @@
 
 ## 5. widgets/dashboard-stat-cards
 
-- [ ] 5.1 `apps/admin/src/widgets/dashboard-stat-cards/` を新規作成。4 枚の StatCard をグリッド配置 (PC 4 列 / モバイル 1 列)
-- [ ] 5.2 4 状態 (Loading skeleton 4 / Empty 表示 / Error `role="alert"` + 再試行 / Success) の出し分け
-- [ ] 5.3 widget component test: 4 状態 + 再試行押下で局所 refetch
+- [x] 5.1 `apps/admin/src/widgets/dashboard-stat-cards/` を新規作成。4 枚の StatCard をグリッド配置 (PC 4 列 / モバイル 1 列)
+- [x] 5.2 4 状態 (Loading skeleton 4 / Empty 表示 / Error `role="alert"` + 再試行 / Success) の出し分け
+- [x] 5.3 widget component test: 4 状態 + 再試行押下で局所 refetch
 
 ## 6. widgets/dashboard-upcoming-events
 
-- [ ] 6.1 `apps/admin/src/widgets/dashboard-upcoming-events/` を新規作成。3 件表示、行クリックで `/events/:id` 遷移
-- [ ] 6.2 `RemainBar` (capacity NULL は「N 件」テキスト fallback)
-- [ ] 6.3 「全件を見る ›」リンクで `/events` へ
-- [ ] 6.4 4 状態の出し分け (Empty は「予定されたイベントはありません」+ 新しいイベント CTA)
-- [ ] 6.5 widget component test: 4 状態 + 行クリック遷移 + 「全件を見る」遷移
+- [x] 6.1 `apps/admin/src/widgets/dashboard-upcoming-events/` を新規作成。3 件表示、行クリックで `/events/:id` 遷移
+- [x] 6.2 `RemainBar` (capacity NULL は「N 件」テキスト fallback)
+- [x] 6.3 「全件を見る ›」リンクで `/events` へ
+- [x] 6.4 4 状態の出し分け (Empty は「予定されたイベントはありません」+ 新しいイベント CTA)
+- [x] 6.5 widget component test: 4 状態 + 行クリック遷移 + 「全件を見る」遷移
 
 ## 7. widgets/dashboard-notifications
 
-- [ ] 7.1 `apps/admin/src/widgets/dashboard-notifications/` を新規作成。「満員直前」「最近のキャンセル」の 2 セクションを縦並び
-- [ ] 7.2 満員直前: トーン (残席 1 = danger / 残席 2 = warn)、「<event_name> 残 X 席」フォーマット
-- [ ] 7.3 最近のキャンセル: 「<氏名> 様（<event_name>）」+ 相対経過時間 (`<time datetime>` 付き)
-- [ ] 7.4 4 状態 (合計 0 件は「いまのところ何もありません」Empty)
-- [ ] 7.5 widget component test: 4 状態 + 7 日以前のキャンセル除外 + danger/warn トーンの境界 (残席 0 は対象外 / 残席 3 は対象外)
+- [x] 7.1 `apps/admin/src/widgets/dashboard-notifications/` を新規作成。「満員直前」「最近のキャンセル」の 2 セクションを縦並び
+- [x] 7.2 満員直前: トーン (残席 1 = danger / 残席 2 = warn)、「<event_name> 残 X 席」フォーマット
+- [x] 7.3 最近のキャンセル: 「<氏名> 様（<event_name>）」+ 相対経過時間 (`<time datetime>` 付き)
+- [x] 7.4 4 状態 (合計 0 件は「いまのところ何もありません」Empty)
+- [x] 7.5 widget component test: 4 状態 + 7 日以前のキャンセル除外 + danger/warn トーンの境界 (残席 0 は対象外 / 残席 3 は対象外)
 
 ## 8. widgets/dashboard-recent-bookings
 
-- [ ] 8.1 `apps/admin/src/widgets/dashboard-recent-bookings/` を新規作成。4 件表示
-- [ ] 8.2 頭文字円 (HQ デザイントークン)、氏名、event_name、経過時間 (`<time datetime>`)
-- [ ] 8.3 4 状態 (Empty は「予約はまだありません」)
-- [ ] 8.4 widget component test: 4 状態 + 匿名化済み除外確認 + 経過時間表記
+- [x] 8.1 `apps/admin/src/widgets/dashboard-recent-bookings/` を新規作成。4 件表示
+- [x] 8.2 頭文字円 (HQ デザイントークン)、氏名、event_name、経過時間 (`<time datetime>`)
+- [x] 8.3 4 状態 (Empty は「予約はまだありません」)
+- [x] 8.4 widget component test: 4 状態 + 匿名化済み除外確認 + 経過時間表記
 
 ## 9. pages/DashboardPage
 
