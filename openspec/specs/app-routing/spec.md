@@ -31,7 +31,7 @@ TBD - created by archiving change admin-reservation-ui-foundation. Update Purpos
 各アプリは、本基盤整備時点で以下の最低 2 ルートが動作しなければならない（SHALL）:
 
 - ホーム URL (`path: '/'`) の到達先:
-  - `apps/admin`: イベント一覧画面へリダイレクト（既存）
+  - `apps/admin`: **ダッシュボード画面**（`admin-dashboard` capability で実装）。従来の「`/events` へのリダイレクト」は廃止 MUST。auth guard が AAL2 + admin ユーザーを `/login` から元の `/` (= dashboard) へ戻す動作も同様に変更される
   - `apps/reservation`: **イベント一覧画面へリダイレクト**（#90 で導入。従来の「準備中」プレースホルダは廃止 MUST）
   - `apps/lp`: ランディングページ（既存）
 - ログイン URL (`path: '/login'`): `apps/admin` および `apps/reservation` の両方でログイン画面（マジックリンクログイン本実装）
@@ -57,6 +57,14 @@ TBD - created by archiving change admin-reservation-ui-foundation. Update Purpos
 #### Scenario: ログイン画面が apps/reservation で本実装されている
 - **WHEN** `apps/reservation` でブラウザがログイン URL にアクセスする
 - **THEN** ログイン画面が描画され、メール入力フォームと「ログインリンクを送る」CTA が表示される
+
+#### Scenario: admin の `/` がダッシュボードに到達する
+- **WHEN** AAL2 + admin ユーザーが `apps/admin` の `/` にアクセスする
+- **THEN** `/events` への redirect は発生せず、Dashboard 画面 (`admin-dashboard` capability) が描画される
+
+#### Scenario: admin ログイン直後の到達先
+- **WHEN** AAL2 + admin ユーザーがログイン完了 (`/login` 経由) 直後に auth guard で再評価される
+- **THEN** redirect 先は Dashboard (`{ name: 'dashboard' }` 相当の `/`) になる。従来の「`/events`」ではない
 
 ### Requirement: navigation guard 拡張点が用意されている
 
@@ -199,20 +207,6 @@ guard は以下の判定を行う:
 
 - **WHEN** `apps/admin/src/app/router.ts` の `routes` 配列を確認する
 - **THEN** `path: '/events/new'` のルートエントリが存在する
-
-### Requirement: ルート `/` から `/events` への redirect（apps/admin のみ）
-
-`apps/admin` のトップルート `/` は、`redirect: { name: 'events' }` を SHALL 持つ。これにより認証済 admin は自動的に実機能（イベント一覧）に到達し、未認証なら `/events` 経由で auth guard により `/login` に到達する。`HomePlaceholder.vue` を `/` に紐付ける旧仕様（admin-reservation-ui-foundation 由来）は本変更で置き換えられる。
-
-#### Scenario: 認証済 admin の / アクセス
-
-- **WHEN** AAL2 + admin role のユーザーが `/` にアクセス
-- **THEN** auth guard 通過後、router が `/events` に redirect する
-
-#### Scenario: 未認証の / アクセス
-
-- **WHEN** 未認証ユーザーが `/` にアクセス
-- **THEN** `/` → `/events` の redirect 後、auth guard により `/login` に到達する
 
 ### Requirement: `/signup/profile` ルート（apps/reservation のみ）
 

@@ -54,7 +54,7 @@ function onMemberClicked(memberId: MemberId): void {
       <div>
         <PageBreadcrumb
           :items="[
-            { label: 'Workspace', to: { name: 'events' } },
+            { label: 'Workspace', to: { name: 'dashboard' } },
             { label: 'Events', to: { name: 'events' } },
             { label: '詳細' },
           ]"

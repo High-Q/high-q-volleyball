@@ -57,6 +57,9 @@ function buildRouter(): Router {
   return createRouter({
     history: createMemoryHistory(),
     routes: [
+      // EventForm のパンくず Workspace リンクが { name: 'dashboard' } を指すため
+      // (#149 でログイン着地先が dashboard に統一) ルートを用意する。
+      { path: "/", name: "dashboard", component: { template: "<div />" } },
       { path: "/events", name: "events", component: { template: "<div />" } },
       {
         path: "/events/new",
