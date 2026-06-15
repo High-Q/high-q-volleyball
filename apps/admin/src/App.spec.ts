@@ -1,9 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
-import { ref } from "vue";
+import { defineComponent, ref } from "vue";
 import App from "./App.vue";
-import HomePlaceholder from "./pages/HomePlaceholder.vue";
 import LoginPage from "./pages/LoginPage.vue";
 import { mountWithRouter } from "./test/mountWithRouter";
+
+// '/' 着地のスモーク用 stub (実際の DashboardPage は重い widget チェーンを持つため、
+// ルーティング疎通の確認にはトリビアルな stub で十分)。
+const HomeStub = defineComponent({
+  name: "HomeStub",
+  template: "<div data-test='home-stub' />",
+});
 
 vi.mock("@/features/auth", () => ({
   useAuthSession: () => ({
@@ -30,7 +36,7 @@ const routes = [
   {
     path: "/",
     name: "home",
-    component: HomePlaceholder,
+    component: HomeStub,
   },
   {
     path: "/login",
@@ -41,9 +47,9 @@ const routes = [
 ];
 
 describe("App routing smoke", () => {
-  it("'/' で HomePlaceholder が描画される", async () => {
+  it("'/' でホームコンポーネントが描画される", async () => {
     const wrapper = await mountWithRouter(App, routes, "/");
-    expect(wrapper.findComponent(HomePlaceholder).exists()).toBe(true);
+    expect(wrapper.find("[data-test='home-stub']").exists()).toBe(true);
   });
 
   it("'/login' で LoginPage が描画される", async () => {

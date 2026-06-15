@@ -6,6 +6,7 @@ import {
   type RouteRecordRaw,
   type Router,
 } from "vue-router";
+import DashboardPage from "@/pages/DashboardPage.vue";
 import EventsListPage from "@/pages/EventsListPage.vue";
 import EventCreatePage from "@/pages/EventCreatePage.vue";
 import EventEditPage from "@/pages/EventEditPage.vue";
@@ -29,7 +30,8 @@ import { useAuthSession } from "@/features/auth";
  *   openspec/changes/admin-events-list-screen/specs/app-routing/spec.md
  */
 const routes: RouteRecordRaw[] = [
-  { path: "/", redirect: { name: "events" } },
+  // #149 admin の `/` は dashboard 画面 (従来の /events redirect を廃止)
+  { path: "/", name: "dashboard", component: DashboardPage },
   { path: "/events", name: "events", component: EventsListPage },
   { path: "/events/new", name: "events-new", component: EventCreatePage },
   {
@@ -93,7 +95,8 @@ export function registerAuthGuard(router: Router): void {
           aal === "aal2" &&
           admin === true
         ) {
-          return { name: "events" };
+          // #149 ログイン済み admin の着地先は dashboard
+          return { name: "dashboard" };
         }
         return true;
       }
@@ -117,9 +120,9 @@ export function registerAuthGuard(router: Router): void {
         return { name: "login", query: { reason: "not-admin" } };
       }
 
-      // AAL2 + admin が /mfa, /mfa/setup へ来たら /
+      // AAL2 + admin が /mfa, /mfa/setup へ来たら dashboard (#149)
       if (to.name === "mfa" || to.name === "mfa-setup") {
-        return { name: "events" };
+        return { name: "dashboard" };
       }
 
       return true;

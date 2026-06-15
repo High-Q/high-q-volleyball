@@ -11,8 +11,9 @@ import {
 /**
  * /events のルートエントリページ。
  *
- * #171 で本人確認書類リンク + pending 件数 Badge を header に追加 (admin の
- * 既定トップ画面のためダッシュボード相当のサマリ機能を兼ねる)。
+ * #171 で本人確認書類リンク + pending 件数 Badge を header に追加。
+ * (#149 で admin の既定トップ画面はダッシュボード `/` に移譲。本画面は
+ *  イベント一覧専用となり、サマリ機能は DashboardPage が担う。)
  *
  * 関連:
  *   openspec/changes/admin-events-list-screen/specs/admin-events-list/spec.md
@@ -37,7 +38,7 @@ async function onSignOut(): Promise<void> {
       <div>
         <PageBreadcrumb
           :items="[
-            { label: 'Workspace', to: { name: 'events' } },
+            { label: 'Workspace', to: { name: 'dashboard' } },
             { label: 'Events' },
           ]"
         />

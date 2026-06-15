@@ -37,7 +37,7 @@ beforeEach(() => {
   router = createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: "/", name: "home", component: { template: "<div/>" } },
+      { path: "/", name: "dashboard", component: { template: "<div/>" } },
       { path: "/events", name: "events", component: { template: "<div/>" } },
       {
         path: "/mfa/setup",
@@ -95,10 +95,10 @@ describe("MfaChallengePage", () => {
     expect(wrapper.find("button[type=submit]").attributes("disabled")).toBeDefined();
   });
 
-  it("Success 状態で /events に遷移", async () => {
+  it("Success 状態で / (dashboard) に遷移", async () => {
     challenge.status.value = "success";
     await mountAt();
-    expect(router.currentRoute.value.path).toBe("/events");
+    expect(router.currentRoute.value.path).toBe("/");
   });
 
   it("Error (invalid-code) でバナー表示 + 再入力可", async () => {
