@@ -60,6 +60,7 @@ function buildRouter() {
         name: "login",
         component: { template: "<div>login</div>" },
       },
+      { path: "/", name: "dashboard", component: { template: "<div />" } },
       { path: "/events", name: "events", component: { template: "<div />" } },
       {
         path: "/events/:id/edit",

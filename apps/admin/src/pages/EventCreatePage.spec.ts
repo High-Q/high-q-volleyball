@@ -32,6 +32,7 @@ describe("EventCreatePage", () => {
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
+        { path: "/", name: "dashboard", component: { template: "<div />" } },
         { path: "/events", name: "events", component: { template: "<div />" } },
         { path: "/events/new", name: "events-new", component: { template: "<div />" } },
       ],

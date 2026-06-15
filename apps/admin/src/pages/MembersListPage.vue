@@ -63,7 +63,7 @@ function onMemberWithdrawn(): void {
       <div>
         <PageBreadcrumb
           :items="[
-            { label: 'Workspace', to: { name: 'events' } },
+            { label: 'Workspace', to: { name: 'dashboard' } },
             { label: '会員' },
           ]"
         />
