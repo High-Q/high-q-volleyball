@@ -14,7 +14,7 @@ admin アプリの `/events` 画面の責務を規定する: DataTable 列構成
 4. **時間** — `events.start_at` 〜 `events.end_at` を `HH:mm-HH:mm` 形式で表示
 5. **予約・残席バー** — `@high-q/ui` の `RemainBar`。`taken = reserved_count`、`capacity = events.capacity`。capacity が NULL の場合は `N 件` のテキスト表示にフォールバック
 6. **ステータス** — `events.visibility` を `公開中`（published）/ `下書き`（draft）/ `限定公開`（private）に翻訳した Badge。さらに `events.status = 'cancelled'` の場合は `中止`、`status = 'closed'` または `end_at < now()` の場合は `終了` を上書き優先で表示
-7. **操作** — 行ごとの「編集」リンク。クリックで `/events/:id/edit`（admin-events-crud capability で実装）に遷移する
+7. **操作** — 行ごとの「編集」リンクと「複製」リンクを並べて表示する。「編集」はクリックで `/events/:id/edit`（admin-events-crud capability で実装）に遷移する。「複製」はクリックで `/events/new?from=:id`（admin-event-duplicate capability で実装）に遷移し、当該行を複製元とした新規作成を開始する。両リンクは行タイトルのストレッチリンク（行クリックで詳細へ遷移）より上に乗せる SHALL（行クリックと取り違えないようにする）。「複製」リンクには対象が分かる `aria-label`（例: 「<イベント名> を複製して新規作成」）を付与する SHALL。両リンクの色・余白は HQ デザイントークン経由のみで着色し、リテラル色 / リテラル spacing を用いない SHALL
 
 「定員」列は MVP1 で削除（フォームからも capacity フィールドを外したため、表示の必要性が無い。capacity 自体は DB 列としては残るが、UI の責務外）。
 
@@ -39,6 +39,10 @@ admin アプリの `/events` 画面の責務を規定する: DataTable 列構成
 #### Scenario: 編集リンクからの遷移
 - **WHEN** ユーザーが行の「編集」リンクを押下
 - **THEN** router が `/events/:id/edit` に push され、admin-events-crud capability が実装する Edit 画面が表示される
+
+#### Scenario: 複製リンクからの遷移
+- **WHEN** ユーザーが行の「複製」リンクを押下
+- **THEN** router が `/events/new?from=:id` に push され、admin-event-duplicate capability が実装する複製シード付きの新規作成画面が表示される
 
 ### Requirement: フィルタ・検索・ソート
 
