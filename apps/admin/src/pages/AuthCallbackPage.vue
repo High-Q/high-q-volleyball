@@ -28,7 +28,7 @@ onMounted(async () => {
 
   if (session.aal.value === "aal2") {
     if (session.isAdmin.value === true) {
-      void router.replace({ name: "events" });
+      void router.replace({ name: "dashboard" });
     } else {
       await session.signOut();
       void router.replace({

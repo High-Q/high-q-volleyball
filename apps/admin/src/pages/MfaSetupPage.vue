@@ -64,7 +64,7 @@ async function regenerateQr(): Promise<void> {
 onMounted(async () => {
   await regenerateQr();
   if (status.value === "success") {
-    void router.replace({ name: "events" });
+    void router.replace({ name: "dashboard" });
   }
   if (status.value === "idle") {
     void enroll();
@@ -77,7 +77,7 @@ watch(uri, () => {
 
 watch(status, (next) => {
   if (next === "success") {
-    void router.replace({ name: "events" });
+    void router.replace({ name: "dashboard" });
   }
   if (next === "awaiting-code") {
     code.value = "";
