@@ -12,6 +12,7 @@ import EventCreatePage from "@/pages/EventCreatePage.vue";
 import EventEditPage from "@/pages/EventEditPage.vue";
 import EventDetailPage from "@/pages/EventDetailPage.vue";
 import MembersListPage from "@/pages/MembersListPage.vue";
+import VenuesPage from "@/pages/VenuesPage.vue";
 // IdentityDocuments 系は重い widget チェーン (Dialog プリミティブ + 詳細 widget の
 // 多数 sub-component) を持つため lazy import で起動コストを下げる。これにより
 // router.spec.ts の guard timeout (CI 弱 runner で 5s 超え) も回避する。
@@ -46,6 +47,8 @@ const routes: RouteRecordRaw[] = [
   },
   // #150 admin members list screen
   { path: "/members", name: "members", component: MembersListPage },
+  // #151 admin venues master-detail screen（単一画面で一覧・編集・新規・削除を完結）
+  { path: "/venues", name: "venues", component: VenuesPage },
   // #171 admin-identity-document-review (lazy import で起動コスト最小化)
   {
     path: "/identity-documents",
