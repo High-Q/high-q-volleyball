@@ -88,6 +88,7 @@ async function renderPage() {
         name: "identity-documents",
         component: { template: "<div />" },
       },
+      { path: "/venues", name: "venues", component: { template: "<div />" } },
       { path: "/members", name: "members", component: { template: "<div />" } },
       { path: "/login", name: "login", component: { template: "<div />" } },
     ],

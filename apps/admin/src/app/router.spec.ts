@@ -177,7 +177,7 @@ describe("router auth guard", () => {
 });
 
 describe("router routes", () => {
-  it("12 つのルートが定義されている (events 5 + members 1 + identity-documents 2 + auth 4)", async () => {
+  it("13 つのルートが定義されている (events 5 + members 1 + venues 1 + identity-documents 2 + auth 4)", async () => {
     const { routes } = await import("./router");
     const paths = routes.map((r) => r.path).sort();
     expect(paths).toEqual([
@@ -193,6 +193,7 @@ describe("router routes", () => {
       "/members",
       "/mfa",
       "/mfa/setup",
+      "/venues",
     ]);
   });
 
@@ -283,6 +284,50 @@ describe("router auth guard — /identity-documents (#171)", () => {
 
     const router = await createTestRouter();
     await router.push("/identity-documents");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/login");
+    expect(router.currentRoute.value.query.reason).toBe("not-admin");
+  });
+});
+
+describe("router auth guard — /venues (#151)", () => {
+  it("未認証で /venues にアクセスすると /login にリダイレクト", async () => {
+    const router = await createTestRouter();
+    await router.push("/venues");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/login");
+  });
+
+  it("AAL1 で /venues にアクセスすると /mfa", async () => {
+    session.status.value = "authenticated";
+    session.aal.value = "aal1";
+    session.hasMfaFactor.value = true;
+
+    const router = await createTestRouter();
+    await router.push("/venues");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/mfa");
+  });
+
+  it("AAL2 admin で /venues が描画される", async () => {
+    session.status.value = "authenticated";
+    session.aal.value = "aal2";
+    session.isAdmin.value = true;
+
+    const router = await createTestRouter();
+    await router.push("/venues");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/venues");
+    expect(router.currentRoute.value.name).toBe("venues");
+  });
+
+  it("AAL2 + 非 admin で /venues → /login?reason=not-admin", async () => {
+    session.status.value = "authenticated";
+    session.aal.value = "aal2";
+    session.isAdmin.value = false;
+
+    const router = await createTestRouter();
+    await router.push("/venues");
     await router.isReady();
     expect(router.currentRoute.value.path).toBe("/login");
     expect(router.currentRoute.value.query.reason).toBe("not-admin");

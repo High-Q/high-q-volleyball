@@ -38,6 +38,7 @@ const router = createRouter({
     { path: "/", name: "dashboard", component: DashboardPage },
     { path: "/events", name: "events", component: { template: "<div />" } },
     { path: "/events/new", name: "events-new", component: { template: "<div />" } },
+    { path: "/venues", name: "venues", component: { template: "<div />" } },
     { path: "/members", name: "members", component: { template: "<div />" } },
     {
       path: "/identity-documents",
