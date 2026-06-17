@@ -59,6 +59,12 @@ interface Options {
   seedState?: EventFormState | null;
   /** 保存成功時に router 操作を行うかどうか。テストでは false にする手も。 */
   navigate?: boolean;
+  /**
+   * 編集時の現在の有効予約人数（本人 + 同伴）を返す getter。定員下限バリデーション
+   * に使う。非同期取得のため reactive に読めるよう getter で受け取る。
+   * 未指定 / undefined / null を返す場合は下限チェックをスキップする（縮退）。
+   */
+  reservedCount?: () => number | null | undefined;
 }
 
 export function useEventForm(options: Options): UseEventForm {
@@ -92,7 +98,11 @@ export function useEventForm(options: Options): UseEventForm {
   // late validation: submit が押されるまで UI にはエラーを出さない
   const showErrors = ref<boolean>(false);
 
-  const validation = computed(() => validateEventForm(state));
+  const validation = computed(() =>
+    validateEventForm(state, {
+      reservedCount: options.reservedCount?.() ?? null,
+    }),
+  );
   const errors = computed<ValidationErrors>(() => validation.value.errors);
   const displayErrors = computed<ValidationErrors>(() =>
     showErrors.value ? validation.value.errors : {},
@@ -133,6 +143,8 @@ export function useEventForm(options: Options): UseEventForm {
           end_at: toIsoJst(state.date, state.endTime),
           venue_id: state.venueId as VenueId,
           fee: state.fee.trim().length === 0 ? null : Number(state.fee),
+          capacity:
+            state.capacity.trim().length === 0 ? null : Number(state.capacity),
         };
         const result = await createEvent(insert);
         if (!result.ok) {
@@ -168,6 +180,8 @@ export function useEventForm(options: Options): UseEventForm {
           end_at: toIsoJst(state.date, state.endTime),
           venue_id: state.venueId as VenueId,
           fee: state.fee.trim().length === 0 ? null : Number(state.fee),
+          capacity:
+            state.capacity.trim().length === 0 ? null : Number(state.capacity),
         });
         if (!result.ok) {
           submitError.value = result.error;

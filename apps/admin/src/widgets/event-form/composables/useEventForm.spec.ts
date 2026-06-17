@@ -192,6 +192,30 @@ describe("useEventForm — Create mode", () => {
     expect(replaceSpy).toHaveBeenCalledWith("/events");
   });
 
+  it("定員入力ありなら payload.capacity に数値が入る / 空欄なら null (#343)", async () => {
+    createEventMock.mockResolvedValue({ ok: true, value: SAMPLE_EVENT });
+    const router = buildRouter();
+    await router.push("/events/new");
+    let api: ReturnType<typeof useEventForm>;
+    const C = makeHarness(() => {
+      api = useEventForm({ mode: "create" });
+    });
+    mount(C, { global: { plugins: [router] } });
+    api!.state.name = "x";
+    api!.state.date = "2026-05-12";
+    api!.state.startTime = "19:30";
+    api!.state.endTime = "21:30";
+    api!.state.venueId = VENUE_ID;
+    api!.state.capacity = "18";
+    await api!.submit();
+    expect(createEventMock.mock.calls[0]![0].capacity).toBe(18);
+
+    createEventMock.mockClear();
+    api!.state.capacity = "";
+    await api!.submit();
+    expect(createEventMock.mock.calls[0]![0].capacity).toBeNull();
+  });
+
   it("fee 空欄なら payload.fee = null になる", async () => {
     createEventMock.mockResolvedValue({ ok: true, value: SAMPLE_EVENT });
     const router = buildRouter();
@@ -279,7 +303,7 @@ describe("useEventForm — Edit mode", () => {
     expect(api!.isDirty.value).toBe(true);
   });
 
-  it("Update ペイロードに visibility / capacity / description / cancel_deadline / status は含まれない", async () => {
+  it("Update ペイロードに visibility / description / cancel_deadline / status は含まれず、capacity は含まれる (#343)", async () => {
     updateEventMock.mockResolvedValue({ ok: true, value: SAMPLE_EVENT });
     const router = buildRouter();
     await router.push(`/events/${EVENT_ID}/edit`);
@@ -294,6 +318,7 @@ describe("useEventForm — Edit mode", () => {
     mount(C, { global: { plugins: [router] } });
     api!.state.name = "改題後";
     api!.state.fee = "1500";
+    api!.state.capacity = "18";
     await nextTick();
     await api!.submit();
     expect(updateEventMock).toHaveBeenCalledTimes(1);
@@ -301,11 +326,55 @@ describe("useEventForm — Edit mode", () => {
     expect(id).toBe(EVENT_ID);
     expect(patch.name).toBe("改題後");
     expect(patch.fee).toBe(1500);
+    expect(patch.capacity).toBe(18);
     expect("visibility" in patch).toBe(false);
-    expect("capacity" in patch).toBe(false);
     expect("description" in patch).toBe(false);
     expect("cancel_deadline" in patch).toBe(false);
     expect("status" in patch).toBe(false);
+  });
+
+  it("定員空欄なら Update ペイロードに capacity:null が送られる (上限なしへ戻す, #343)", async () => {
+    updateEventMock.mockResolvedValue({ ok: true, value: SAMPLE_EVENT });
+    const router = buildRouter();
+    await router.push(`/events/${EVENT_ID}/edit`);
+    let api: ReturnType<typeof useEventForm>;
+    const C = makeHarness(() => {
+      api = useEventForm({
+        mode: "edit",
+        initialEvent: SAMPLE_EVENT,
+        eventId: EVENT_ID,
+      });
+    });
+    mount(C, { global: { plugins: [router] } });
+    api!.state.name = "改題後";
+    api!.state.capacity = "";
+    await nextTick();
+    await api!.submit();
+    const [, patch] = updateEventMock.mock.calls[0]!;
+    expect(patch.capacity).toBeNull();
+  });
+
+  it("reservedCount を下回る定員は submit がブロックされ updateEvent は呼ばれない (#343)", async () => {
+    updateEventMock.mockResolvedValue({ ok: true, value: SAMPLE_EVENT });
+    const router = buildRouter();
+    await router.push(`/events/${EVENT_ID}/edit`);
+    let api: ReturnType<typeof useEventForm>;
+    const C = makeHarness(() => {
+      api = useEventForm({
+        mode: "edit",
+        initialEvent: SAMPLE_EVENT,
+        eventId: EVENT_ID,
+        reservedCount: () => 12,
+      });
+    });
+    mount(C, { global: { plugins: [router] } });
+    api!.state.capacity = "10";
+    await nextTick();
+    await api!.submit();
+    expect(updateEventMock).not.toHaveBeenCalled();
+    expect(api!.displayErrors.value.capacity).toBe(
+      "現在 12 名の予約があります。定員はこれ以上にしてください",
+    );
   });
 
   it("Update 成功で isDirty が false に戻る", async () => {

@@ -37,6 +37,7 @@ export function eventToState(e: Event): EventFormState {
     endTime: en.time,
     venueId: e.venue_id as unknown as string,
     fee: e.fee == null ? "" : String(e.fee),
+    capacity: e.capacity == null ? "" : String(e.capacity),
   };
 }
 

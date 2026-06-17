@@ -21,6 +21,7 @@ function emptyState(): EventFormState {
     endTime: "",
     venueId: "",
     fee: "",
+    capacity: "",
   };
 }
 
@@ -144,6 +145,49 @@ describe("SectionBasic", () => {
       props: { modelValue: emptyState(), errors: {}, venues },
     });
     expect(wrapper.text()).toContain("会場の標準参加費が継承");
+  });
+
+  it("modelValue.capacity が定員 input に反映される (#343)", () => {
+    const state = emptyState();
+    state.capacity = "18";
+    const wrapper = mount(SectionBasic, {
+      props: { modelValue: state, errors: {}, venues },
+    });
+    const capInput = wrapper.find('input[placeholder="上限なし（名）"]');
+    expect(capInput.exists()).toBe(true);
+    expect((capInput.element as HTMLInputElement).value).toBe("18");
+  });
+
+  it("定員変更で update:modelValue が emit される (#343)", async () => {
+    const wrapper = mount(SectionBasic, {
+      props: { modelValue: emptyState(), errors: {}, venues },
+    });
+    const capInput = wrapper.find('input[placeholder="上限なし（名）"]');
+    await capInput.setValue("20");
+    const emitted = wrapper.emitted("update:modelValue") ?? [];
+    const last = emitted[emitted.length - 1]![0] as EventFormState;
+    expect(last.capacity).toBe("20");
+  });
+
+  it("capacity エラーで aria-invalid='true' + role=alert メッセージ (#343)", () => {
+    const wrapper = mount(SectionBasic, {
+      props: {
+        modelValue: emptyState(),
+        errors: { capacity: "定員は 1 以上の整数で入力してください" },
+        venues,
+      },
+    });
+    const capInput = wrapper.find('input[placeholder="上限なし（名）"]');
+    expect(capInput.attributes("aria-invalid")).toBe("true");
+    const texts = wrapper.findAll('[role="alert"]').map((a) => a.text());
+    expect(texts).toContain("定員は 1 以上の整数で入力してください");
+  });
+
+  it("capacity 空欄で error なし → hint「上限なし」が出る (任意性, #343)", () => {
+    const wrapper = mount(SectionBasic, {
+      props: { modelValue: emptyState(), errors: {}, venues },
+    });
+    expect(wrapper.text()).toContain("空欄なら上限なし");
   });
 
   it("disabled を true にすると input / select が disabled になる", () => {

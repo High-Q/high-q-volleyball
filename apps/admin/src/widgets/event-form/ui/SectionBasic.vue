@@ -306,5 +306,28 @@ const timeSelectClass =
         />
       </template>
     </FormField>
+
+    <!-- 定員 -->
+    <FormField
+      :error="errors.capacity"
+      :hint="errors.capacity ? undefined : '空欄なら上限なし（先着の締切なし）で募集します'"
+    >
+      <template #default="{ fieldId, messageId, ariaInvalid }">
+        <Label :html-for="fieldId">定員</Label>
+        <Input
+          :id="fieldId"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          step="1"
+          :model-value="modelValue.capacity"
+          :aria-invalid="ariaInvalid"
+          :aria-describedby="messageId"
+          :disabled="disabled"
+          placeholder="上限なし（名）"
+          @update:model-value="(v: string | number) => update('capacity', String(v))"
+        />
+      </template>
+    </FormField>
   </div>
 </template>

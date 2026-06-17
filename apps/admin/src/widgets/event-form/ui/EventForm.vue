@@ -32,12 +32,18 @@ const props = withDefaults(
     seedEvent?: EventFormState | null;
     /** 複製元イベント名。指定時は「複製して作成中」の手がかりを表示する。 */
     duplicateSourceName?: string | null;
+    /**
+     * 編集時の現在の有効予約人数（本人 + 同伴）。定員下限バリデーションに使う。
+     * 非同期取得のため null も許容（取得中 / 取得失敗時は下限チェックをスキップ）。
+     */
+    reservedCount?: number | null;
   }>(),
   {
     initialEvent: null,
     eventId: undefined,
     seedEvent: null,
     duplicateSourceName: null,
+    reservedCount: null,
   },
 );
 
@@ -50,6 +56,7 @@ const f = useEventForm({
   initialEvent: props.initialEvent ?? undefined,
   eventId: props.eventId,
   seedState: props.seedEvent ?? undefined,
+  reservedCount: () => props.reservedCount,
 });
 
 const headerTitle = computed(() =>

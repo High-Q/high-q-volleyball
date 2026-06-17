@@ -48,9 +48,13 @@ describe("EventUpdate 型契約", () => {
     expectTypeOf<HasVisibility>().toEqualTypeOf<false>();
   });
 
-  it("capacity は EventUpdate に含まれない（MVP1 押し下げ）", () => {
+  it("capacity は EventUpdate に含まれる（#343 定員入力 UI 復活、null も許容）", () => {
     type HasCapacity = "capacity" extends keyof EventUpdate ? true : false;
-    expectTypeOf<HasCapacity>().toEqualTypeOf<false>();
+    expectTypeOf<HasCapacity>().toEqualTypeOf<true>();
+    const patch: EventUpdate = { capacity: 18 };
+    expectTypeOf(patch).toMatchTypeOf<EventUpdate>();
+    const cleared: EventUpdate = { capacity: null };
+    expectTypeOf(cleared).toMatchTypeOf<EventUpdate>();
   });
 
   it("description は EventUpdate に含まれない（MVP1 押し下げ）", () => {

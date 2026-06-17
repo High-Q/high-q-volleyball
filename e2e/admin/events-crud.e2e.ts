@@ -14,7 +14,7 @@ import { installSupabaseGuard } from "./_helpers/supabaseGuard";
  *   - happy path（新規作成 → 保存 → 公開中表示）と削除フローは、useEventForm /
  *     useEventDelete / EventForm / EventDeleteDialog / EventCreatePage /
  *     EventEditPage のいずれも component test (vitest) で網羅済み:
- *       - useEventForm.spec.ts: Create/Edit submit ペイロード検証 (visibility 固定 / capacity 除外)
+ *       - useEventForm.spec.ts: Create/Edit submit ペイロード検証 (visibility 固定 / capacity 入出力・下限バリデーション #343)
  *       - useEventDelete.spec.ts: confirm → deleteEvent → router.push('/events')
  *       - EventForm.spec.ts: mode 別アクション構成 / Banner / 削除 slot 反映
  *       - EventDeleteDialog.spec.ts: Open / Cancel / Confirm / Error

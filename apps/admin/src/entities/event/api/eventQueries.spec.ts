@@ -370,7 +370,7 @@ describe("getEventById", () => {
 });
 
 describe("createEvent", () => {
-  it("INSERT ペイロードに visibility:'published' / capacity:null / description:null / cancel_deadline:null を固定投入する (D3, 即時公開ポリシー)", async () => {
+  it("INSERT ペイロードに visibility:'published' / description:null / cancel_deadline:null を固定投入し、capacity は入力値を通す (#343)", async () => {
     builderResult.data = SAMPLE_EVENT;
     const { createEvent } = await import("./eventQueries");
     const result = await createEvent({
@@ -379,19 +379,34 @@ describe("createEvent", () => {
       end_at: "2026-05-12T21:30:00+09:00",
       venue_id: SAMPLE_VENUE_ID as never,
       fee: 1000,
+      capacity: 18,
     });
     expect(fromMock).toHaveBeenCalledWith("events");
     expect(currentBuilder.insert).toHaveBeenCalledTimes(1);
     const payload = (currentBuilder.insert as ReturnType<typeof vi.fn>).mock
       .calls[0]![0];
     expect(payload.visibility).toBe("published");
-    expect(payload.capacity).toBeNull();
+    expect(payload.capacity).toBe(18);
     expect(payload.description).toBeNull();
     expect(payload.cancel_deadline).toBeNull();
     expect(payload.name).toBe("ゆる練 vol.43");
     expect(payload.fee).toBe(1000);
     expect(currentBuilder.single).toHaveBeenCalled();
     expect(result.ok).toBe(true);
+  });
+
+  it("capacity 未指定（空欄）のときは capacity:null を投入する (上限なし運用)", async () => {
+    builderResult.data = SAMPLE_EVENT;
+    const { createEvent } = await import("./eventQueries");
+    await createEvent({
+      name: "上限なしイベント",
+      start_at: "2026-05-12T19:30:00+09:00",
+      end_at: "2026-05-12T21:30:00+09:00",
+      venue_id: SAMPLE_VENUE_ID as never,
+    });
+    const payload = (currentBuilder.insert as ReturnType<typeof vi.fn>).mock
+      .calls[0]![0];
+    expect(payload.capacity).toBeNull();
   });
 
   it("呼び出し側が visibility を指定しても 'published' で上書きされる", async () => {
@@ -430,38 +445,49 @@ describe("createEvent", () => {
 });
 
 describe("updateEvent", () => {
-  it("UPDATE ペイロードに visibility / capacity / description / cancel_deadline / status は含めない (既存値保護)", async () => {
+  it("UPDATE ペイロードに visibility / description / cancel_deadline / status は含めず、capacity は通す (#343)", async () => {
     builderResult.data = SAMPLE_EVENT;
     const { updateEvent } = await import("./eventQueries");
     await updateEvent(SAMPLE_EVENT_ID as never, {
       name: "改題後",
       fee: 1500,
+      capacity: 18,
     });
     expect(currentBuilder.update).toHaveBeenCalledTimes(1);
     const payload = (currentBuilder.update as ReturnType<typeof vi.fn>).mock
       .calls[0]![0];
     expect(payload.name).toBe("改題後");
     expect(payload.fee).toBe(1500);
+    expect(payload.capacity).toBe(18);
     expect("visibility" in payload).toBe(false);
-    expect("capacity" in payload).toBe(false);
     expect("description" in payload).toBe(false);
     expect("cancel_deadline" in payload).toBe(false);
     expect("status" in payload).toBe(false);
     expect(currentBuilder.eq).toHaveBeenCalledWith("id", SAMPLE_EVENT_ID);
   });
 
-  it("呼び出し側が unknown キーで visibility を渡しても落とす", async () => {
+  it("capacity を null で渡すと UPDATE ペイロードに capacity:null が含まれる (上限なしへ戻す)", async () => {
+    builderResult.data = SAMPLE_EVENT;
+    const { updateEvent } = await import("./eventQueries");
+    await updateEvent(SAMPLE_EVENT_ID as never, { capacity: null });
+    const payload = (currentBuilder.update as ReturnType<typeof vi.fn>).mock
+      .calls[0]![0];
+    expect("capacity" in payload).toBe(true);
+    expect(payload.capacity).toBeNull();
+  });
+
+  it("呼び出し側が unknown キーで visibility を渡しても落とす（capacity は許可列なので残す）", async () => {
     builderResult.data = SAMPLE_EVENT;
     const { updateEvent } = await import("./eventQueries");
     await updateEvent(
       SAMPLE_EVENT_ID as never,
-      // @ts-expect-error 攻撃的呼び出しシミュレーション
+      // @ts-expect-error visibility は EventUpdate に無い列（攻撃的呼び出し）
       { name: "改題", visibility: "draft", capacity: 30 },
     );
     const payload = (currentBuilder.update as ReturnType<typeof vi.fn>).mock
       .calls[0]![0];
     expect("visibility" in payload).toBe(false);
-    expect("capacity" in payload).toBe(false);
+    expect(payload.capacity).toBe(30);
   });
 });
 
