@@ -206,19 +206,20 @@ export async function getEventById(
  * 新規 event を INSERT する。
  *
  * **D3 即時公開ポリシー**: 呼び出し側が `visibility` を渡しても `'published'` で
- * 上書きする。`capacity` / `description` / `cancel_deadline` は MVP1 で UI に
- * 出さないため `NULL` を投入する。
+ * 上書きする。`description` / `cancel_deadline` は MVP1 で UI に出さないため
+ * `NULL` を投入する。`capacity` は #343 で定員入力 UI を復活させたため入力値を
+ * 通す（未指定=空欄は NULL=上限なし）。
  *
  * 関連:
  *   openspec/changes/admin-events-crud-screen/design.md (D3, §3.2, §5)
- *   openspec/changes/admin-events-crud-screen/specs/admin-events-crud/spec.md
+ *   openspec/changes/admin-event-capacity-input/design.md (D4)
  */
 export async function createEvent(
   input: EventInsert,
 ): Promise<Result<Event, FetchError>> {
   const supabase = getSupabase();
-  // visibility / capacity / description / cancel_deadline は意図的に固定する
-  // （呼び出し側の値は無視）
+  // visibility / description / cancel_deadline は意図的に固定する（呼び出し側の
+  // 値は無視）。capacity は入力値を通す（空欄=null=上限なし）。
   const payload = {
     name: input.name,
     start_at: input.start_at,
@@ -226,7 +227,7 @@ export async function createEvent(
     venue_id: input.venue_id,
     fee: input.fee ?? null,
     visibility: "published" as EventVisibility,
-    capacity: null,
+    capacity: input.capacity ?? null,
     description: null,
     cancel_deadline: null,
     ...(input.created_by !== undefined ? { created_by: input.created_by } : {}),
@@ -256,13 +257,14 @@ export async function createEvent(
 /**
  * 既存 event を UPDATE する。
  *
- * 既存値保護のため `visibility` / `capacity` / `description` / `cancel_deadline`
- * / `status` は **ペイロードに含めない**（D3, MVP1 押し下げ列）。`EventUpdate` 型
- * には元々これらが含まれないが、攻撃的呼び出しに備えて allowlist で再フィルタ
- * する。
+ * 既存値保護のため `visibility` / `description` / `cancel_deadline` / `status`
+ * は **ペイロードに含めない**（D3, MVP1 押し下げ列）。攻撃的呼び出しに備えて
+ * allowlist で再フィルタする。`capacity` は #343 で定員入力 UI を復活させたため
+ * allowlist に含める（空欄=null=上限なしへ戻すケースも通す）。
  *
  * 関連:
  *   openspec/changes/admin-events-crud-screen/design.md (D3, §3.3)
+ *   openspec/changes/admin-event-capacity-input/design.md (D4)
  */
 export async function updateEvent(
   id: EventId,
@@ -277,6 +279,7 @@ export async function updateEvent(
   if ("end_at" in p) safe.end_at = p.end_at;
   if ("venue_id" in p) safe.venue_id = p.venue_id;
   if ("fee" in p) safe.fee = p.fee;
+  if ("capacity" in p) safe.capacity = p.capacity;
   try {
     const { data, error } = await supabase
       .from("events")

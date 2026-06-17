@@ -15,6 +15,7 @@ function valid(overrides: Partial<EventFormState> = {}): EventFormState {
     endTime: "21:30",
     venueId: VENUE_ID,
     fee: "1000",
+    capacity: "",
     ...overrides,
   };
 }
@@ -117,6 +118,88 @@ describe("validateEventForm — fee 任意", () => {
   });
 });
 
+describe("validateEventForm — capacity 任意 (#343)", () => {
+  it("capacity 空欄 → OK（上限なし）", () => {
+    const r = validateEventForm(valid({ capacity: "" }));
+    expect(r.isValid).toBe(true);
+    expect(r.errors.capacity).toBeUndefined();
+  });
+
+  it("capacity = '18' → OK", () => {
+    const r = validateEventForm(valid({ capacity: "18" }));
+    expect(r.errors.capacity).toBeUndefined();
+  });
+
+  it("capacity = '1' → OK（下限）", () => {
+    const r = validateEventForm(valid({ capacity: "1" }));
+    expect(r.errors.capacity).toBeUndefined();
+  });
+
+  it("capacity = '0' → error（1 以上）", () => {
+    const r = validateEventForm(valid({ capacity: "0" }));
+    expect(r.errors.capacity).toBe("定員は 1 以上の整数で入力してください");
+  });
+
+  it("capacity 負数 → error", () => {
+    const r = validateEventForm(valid({ capacity: "-5" }));
+    expect(r.errors.capacity).toBe("定員は 1 以上の整数で入力してください");
+  });
+
+  it("capacity 非整数 → error", () => {
+    const r = validateEventForm(valid({ capacity: "18.5" }));
+    expect(r.errors.capacity).toBe("定員は 1 以上の整数で入力してください");
+  });
+
+  it("capacity 非数値文字列 → error", () => {
+    const r = validateEventForm(valid({ capacity: "abc" }));
+    expect(r.errors.capacity).toBe("定員は 1 以上の整数で入力してください");
+  });
+});
+
+describe("validateEventForm — capacity 下限 (編集時の予約数, #343)", () => {
+  it("reservedCount 未指定なら下限チェックをスキップ（1 以上のみ）", () => {
+    const r = validateEventForm(valid({ capacity: "5" }));
+    expect(r.errors.capacity).toBeUndefined();
+  });
+
+  it("reservedCount=12 で capacity=10 → error（予約数未満）", () => {
+    const r = validateEventForm(valid({ capacity: "10" }), {
+      reservedCount: 12,
+    });
+    expect(r.errors.capacity).toBe(
+      "現在 12 名の予約があります。定員はこれ以上にしてください",
+    );
+  });
+
+  it("reservedCount=12 で capacity=12 → OK（ちょうど）", () => {
+    const r = validateEventForm(valid({ capacity: "12" }), {
+      reservedCount: 12,
+    });
+    expect(r.errors.capacity).toBeUndefined();
+  });
+
+  it("reservedCount=12 で capacity=18 → OK（上回る）", () => {
+    const r = validateEventForm(valid({ capacity: "18" }), {
+      reservedCount: 12,
+    });
+    expect(r.errors.capacity).toBeUndefined();
+  });
+
+  it("reservedCount 指定でも capacity 空欄なら下限チェック対象外（上限なし）", () => {
+    const r = validateEventForm(valid({ capacity: "" }), {
+      reservedCount: 12,
+    });
+    expect(r.errors.capacity).toBeUndefined();
+  });
+
+  it("reservedCount=null なら下限チェックをスキップ（取得失敗の縮退）", () => {
+    const r = validateEventForm(valid({ capacity: "5" }), {
+      reservedCount: null,
+    });
+    expect(r.errors.capacity).toBeUndefined();
+  });
+});
+
 describe("emptyEventForm", () => {
   it("初期値は全フィールド空文字", () => {
     const f = emptyEventForm();
@@ -126,6 +209,7 @@ describe("emptyEventForm", () => {
     expect(f.endTime).toBe("");
     expect(f.venueId).toBe("");
     expect(f.fee).toBe("");
+    expect(f.capacity).toBe("");
   });
 
   it("emptyEventForm() は invalid（必須項目欠如）", () => {

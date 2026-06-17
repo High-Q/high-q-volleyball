@@ -21,6 +21,8 @@ export interface EventFormState {
   endTime: string;
   venueId: string;
   fee: string;
+  /** 定員。空文字＝上限なし（capacity NULL）。値ありは 1 以上の整数文字列。 */
+  capacity: string;
 }
 
 export type EventFormErrorKey = keyof EventFormState;
@@ -30,6 +32,18 @@ export type ValidationErrors = Partial<Record<EventFormErrorKey, string>>;
 export interface ValidationResult {
   isValid: boolean;
   errors: ValidationErrors;
+}
+
+/**
+ * バリデーションのオプション。
+ *
+ * `reservedCount`: 編集時の現在の有効予約人数（本人 + 同伴、`event_detail_view`
+ * の `reserved_count`）。指定時、定員はこの値以上でなければならない（残席が負に
+ * ならないようにする）。`undefined` / `null` のときは下限チェックをスキップする
+ * （新規作成 / view 取得失敗時の縮退）。
+ */
+export interface ValidationOptions {
+  reservedCount?: number | null;
 }
 
 const NAME_MAX = 100;
@@ -50,10 +64,14 @@ export function emptyEventForm(): EventFormState {
     endTime: "",
     venueId: "",
     fee: "",
+    capacity: "",
   };
 }
 
-export function validateEventForm(state: EventFormState): ValidationResult {
+export function validateEventForm(
+  state: EventFormState,
+  options: ValidationOptions = {},
+): ValidationResult {
   const errors: ValidationErrors = {};
 
   // V1 / V2: name 必須・1-100 文字
@@ -101,6 +119,20 @@ export function validateEventForm(state: EventFormState): ValidationResult {
     const v = state.fee.trim();
     if (!isIntString(v) || Number(v) < 0) {
       errors.fee = "参加費は 0 以上の整数で入力してください";
+    }
+  }
+
+  // V9: capacity は任意（空欄＝上限なし）。値ありの場合のみ検証
+  if (state.capacity.trim().length > 0) {
+    const v = state.capacity.trim();
+    if (!isIntString(v) || Number(v) < 1) {
+      errors.capacity = "定員は 1 以上の整数で入力してください";
+    } else if (
+      typeof options.reservedCount === "number" &&
+      Number(v) < options.reservedCount
+    ) {
+      // 編集時の下限: 残席が負にならないよう現在の予約数以上を要求する
+      errors.capacity = `現在 ${options.reservedCount} 名の予約があります。定員はこれ以上にしてください`;
     }
   }
 

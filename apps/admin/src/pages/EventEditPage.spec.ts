@@ -5,11 +5,13 @@ import { createMemoryHistory, createRouter } from "vue-router";
 
 const {
   getEventByIdMock,
+  getEventDetailMock,
   useVenuesMock,
   useVolumeSuggestMock,
   toastMock,
 } = vi.hoisted(() => ({
   getEventByIdMock: vi.fn(),
+  getEventDetailMock: vi.fn(),
   useVenuesMock: vi.fn(),
   useVolumeSuggestMock: vi.fn(),
   toastMock: vi.fn(),
@@ -24,6 +26,10 @@ vi.mock("@/entities/event", async () => {
     getEventById: getEventByIdMock,
   };
 });
+
+vi.mock("@/entities/event-detail", () => ({
+  getEventDetail: getEventDetailMock,
+}));
 
 vi.mock("@/entities/venue", () => ({
   useVenues: useVenuesMock,
@@ -85,6 +91,11 @@ beforeEach(() => {
     reload: vi.fn(),
   });
   useVolumeSuggestMock.mockReturnValue({ suggestion: ref(undefined) });
+  // 定員下限バリデーション用の予約数取得。デフォルトは reserved_count=0。
+  getEventDetailMock.mockResolvedValue({
+    ok: true,
+    value: { reserved_count: 0 },
+  });
 });
 
 afterEach(() => {

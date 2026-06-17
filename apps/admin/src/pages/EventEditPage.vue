@@ -7,6 +7,7 @@ import {
   getEventById,
   type FetchError,
 } from "@/entities/event";
+import { getEventDetail } from "@/entities/event-detail";
 import Skeleton from "@/shared/ui/Skeleton.vue";
 import { EventForm } from "@/widgets/event-form";
 import { EventDeleteDialog } from "@/features/event-delete";
@@ -28,10 +29,15 @@ const route = useRoute();
 const status = ref<"loading" | "success" | "error">("loading");
 const event = ref<Event | null>(null);
 const fetchError = ref<FetchError | null>(null);
+// 定員下限バリデーション用の現在の有効予約人数（本人 + 同伴）。取得失敗時は
+// null のままにし、下限チェックをスキップさせる（縮退）。フォーム本体の取得を
+// 妨げないよう event 取得とは独立に解決する。
+const reservedCount = ref<number | null>(null);
 
 async function load(id: string) {
   status.value = "loading";
   fetchError.value = null;
+  reservedCount.value = null;
   const result = await getEventById(id as never);
   if (!result.ok) {
     fetchError.value = result.error;
@@ -45,6 +51,11 @@ async function load(id: string) {
   }
   event.value = result.value;
   status.value = "success";
+  // 予約数は補助情報。失敗してもフォームを Error にせず下限チェックを諦める。
+  const detail = await getEventDetail(id as never);
+  if (detail.ok && detail.value) {
+    reservedCount.value = detail.value.reserved_count;
+  }
 }
 
 onMounted(() => {
@@ -104,6 +115,7 @@ const eventId = computed(() =>
       mode="edit"
       :initial-event="event"
       :event-id="eventId"
+      :reserved-count="reservedCount"
     >
       <template #headerActions>
         <EventDeleteDialog
