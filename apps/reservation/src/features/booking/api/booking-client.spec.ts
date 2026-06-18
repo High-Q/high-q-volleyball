@@ -44,7 +44,10 @@ function buildChain() {
       kind = "edit";
     } else if (payload.status === "cancelled") {
       kind = "cancel";
-    } else if (payload.status === "reserved" && "cancelled_at" in payload) {
+    } else if (
+      (payload.status === "reserved" || payload.status === "waitlist") &&
+      "cancelled_at" in payload
+    ) {
       kind = "reactivate";
     }
     updateCalls.push({ type: kind, payload });
@@ -201,6 +204,84 @@ describe("insertReservation - その他のエラー", () => {
     const { insertReservation } = await import("./booking-client");
     await expect(insertReservation(sampleInput)).rejects.toMatchObject({
       kind: "network",
+    });
+  });
+});
+
+describe("insertWaitlist - キャンセル待ち登録", () => {
+  const waitlistRow = { ...sampleRow, status: "waitlist" };
+
+  it("INSERT 成功で status='waitlist' の Reservation を返す", async () => {
+    insertSpec.current = { data: waitlistRow, error: null };
+    const { insertWaitlist } = await import("./booking-client");
+    const r = await insertWaitlist(sampleInput);
+    expect(r.id).toBe("rs-1");
+    expect(r.status).toBe("waitlist");
+  });
+
+  it("既存行が cancelled なら UPDATE で 'waitlist' に再活性化して返す", async () => {
+    insertSpec.current = {
+      data: null,
+      error: { code: "23505", message: "duplicate key" },
+    };
+    fetchSpec.current = {
+      data: { id: "rs-existing", status: "cancelled" },
+      error: null,
+    };
+    reactivateUpdateSpec.current = {
+      data: { ...waitlistRow, id: "rs-existing" },
+      error: null,
+    };
+    const { insertWaitlist } = await import("./booking-client");
+    const r = await insertWaitlist(sampleInput);
+    expect(r.id).toBe("rs-existing");
+    expect(r.status).toBe("waitlist");
+
+    const reactivateCall = updateCalls.find((c) => c.type === "reactivate");
+    expect(reactivateCall?.payload).toMatchObject({
+      status: "waitlist",
+      cancelled_at: null,
+    });
+  });
+
+  it("既存行が reserved なら 'duplicate' を投げる", async () => {
+    insertSpec.current = {
+      data: null,
+      error: { code: "23505", message: "duplicate key" },
+    };
+    fetchSpec.current = {
+      data: { id: "rs-existing", status: "reserved" },
+      error: null,
+    };
+    const { insertWaitlist } = await import("./booking-client");
+    await expect(insertWaitlist(sampleInput)).rejects.toMatchObject({
+      kind: "duplicate",
+    });
+  });
+
+  it("既存行が waitlist なら 'duplicate' を投げる (二重登録防止)", async () => {
+    insertSpec.current = {
+      data: null,
+      error: { code: "23505", message: "duplicate key" },
+    };
+    fetchSpec.current = {
+      data: { id: "rs-existing", status: "waitlist" },
+      error: null,
+    };
+    const { insertWaitlist } = await import("./booking-client");
+    await expect(insertWaitlist(sampleInput)).rejects.toMatchObject({
+      kind: "duplicate",
+    });
+  });
+
+  it("RLS 違反 (42501) を 'rls' で投げる", async () => {
+    insertSpec.current = {
+      data: null,
+      error: { code: "42501", message: "rls violation" },
+    };
+    const { insertWaitlist } = await import("./booking-client");
+    await expect(insertWaitlist(sampleInput)).rejects.toMatchObject({
+      kind: "rls",
     });
   });
 });

@@ -5,9 +5,9 @@
 
 ## 2. booking API: キャンセル待ち作成と再活性化（TDD）
 
-- [ ] 2.1 `apps/reservation/src/features/booking/api/booking-client.spec.ts` に `insertWaitlist` のテストを先に追加: (a) 未登録で `status='waitlist'` 行作成、(b) UNIQUE 違反(23505) + 既存 `cancelled` 行 → `waitlist` へ再活性化（guest_count/note/phone 上書き・cancelled_at=null）、(c) 既存 `reserved`/`waitlist` 行 → `duplicate` エラー。
-- [ ] 2.2 `booking-client.ts` に `insertWaitlist(input)` を実装（既存 `insertReservation` と対称。INSERT 時に `status: 'waitlist'` を明示。23505 捕捉時の再活性化は既存 `reactivateCancelledReservation` を waitlist 対応に一般化、既存 `reserved` 行は `duplicate`、既存 `waitlist` 行も `duplicate` として扱う）。
-- [ ] 2.3 `apps/reservation/src/features/booking/composables/useCreateWaitlist.ts` + spec を追加（`useCreateBooking` と対称。`triggerReservationNotification` は呼ばない。`submitting`/`error`/`reservation`/`create`/`reset` を返す）。`features/booking/index.ts` で公開。
+- [x] 2.1 `apps/reservation/src/features/booking/api/booking-client.spec.ts` に `insertWaitlist` のテストを先に追加: (a) 未登録で `status='waitlist'` 行作成、(b) UNIQUE 違反(23505) + 既存 `cancelled` 行 → `waitlist` へ再活性化（guest_count/note/phone 上書き・cancelled_at=null）、(c) 既存 `reserved`/`waitlist` 行 → `duplicate` エラー。
+- [x] 2.2 `booking-client.ts` に `insertWaitlist(input)` を実装（既存 `insertReservation` と対称。INSERT 時に `status: 'waitlist'` を明示。23505 捕捉時の再活性化は既存 `reactivateCancelledReservation` を waitlist 対応に一般化、既存 `reserved` 行は `duplicate`、既存 `waitlist` 行も `duplicate` として扱う）。
+- [x] 2.3 `apps/reservation/src/features/booking/composables/useCreateWaitlist.ts` + spec を追加（`useCreateBooking` と対称。`triggerReservationNotification` は呼ばない。`submitting`/`error`/`reservation`/`create`/`reset` を返す）。`features/booking/index.ts` で公開。
 
 ## 3. 自己予約状態の取得（TDD）
 

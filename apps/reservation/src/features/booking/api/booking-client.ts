@@ -133,6 +133,108 @@ async function reactivateCancelledReservation(
 }
 
 /**
+ * reservations への `status='waitlist'` INSERT (キャンセル待ち登録)。
+ *
+ * `insertReservation` と対称。`(event_id, member_id)` の UNIQUE 制約により既存行と
+ * 衝突 (23505) した場合は既存行の状態で分岐する:
+ *   - 既存行が 'cancelled': 'waitlist' へ再活性化 (guest_count / note / phone を上書き、
+ *     cancelled_at を NULL クリア)
+ *   - それ以外 ('reserved' / 'waitlist' / 'attended' / 'no_show'): 二重登録として
+ *     `duplicate` を投げる (再活性化は cancelled 行のみ)
+ *
+ * 会員の `status='waitlist'` INSERT / `cancelled → waitlist` UPDATE は reservations の
+ * RLS (rls-policies capability) で会員に許可されている。
+ */
+export async function insertWaitlist(
+  input: CreateBookingInput,
+): Promise<Reservation> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("reservations")
+    .insert({
+      event_id: input.eventId as string,
+      member_id: input.memberId as string,
+      status: "waitlist",
+      guest_count: input.guestCount,
+      note: input.note.length === 0 ? null : input.note,
+      phone_at_booking:
+        input.phoneAtBooking.length === 0 ? null : input.phoneAtBooking,
+    })
+    .select(
+      "id, event_id, member_id, status, guest_count, phone_at_booking, note, checked_in_at, cancelled_at, created_at, updated_at",
+    )
+    .single();
+
+  if (error !== null) {
+    if (error.code === POSTGRES_UNIQUE_VIOLATION) {
+      return await reactivateCancelledAsWaitlist(input);
+    }
+    throw mapPostgrestError(error);
+  }
+  if (data === null) {
+    throw new BookingApiError("network", null, "Empty insert response");
+  }
+  return rowToReservation(data as unknown as ReservationRow);
+}
+
+/**
+ * 既存のキャンセル済行を 'waitlist' に再活性化する。`cancelled` 以外の行
+ * (reserved / waitlist / attended / no_show) が見つかった場合は二重登録として
+ * `duplicate` エラーを返す。
+ */
+async function reactivateCancelledAsWaitlist(
+  input: CreateBookingInput,
+): Promise<Reservation> {
+  const supabase = getSupabase();
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("reservations")
+    .select("id, status")
+    .eq("event_id", input.eventId as string)
+    .eq("member_id", input.memberId as string)
+    .maybeSingle();
+
+  if (fetchError !== null) {
+    throw mapPostgrestError(fetchError);
+  }
+  if (existing === null) {
+    throw new BookingApiError(
+      "network",
+      null,
+      "Unique violation but no existing row",
+    );
+  }
+  if (existing.status !== "cancelled") {
+    // reserved / waitlist は当然、attended / no_show も再活性化対象外 (二重登録扱い)
+    throw new BookingApiError("duplicate");
+  }
+
+  const { data, error } = await supabase
+    .from("reservations")
+    .update({
+      status: "waitlist",
+      guest_count: input.guestCount,
+      note: input.note.length === 0 ? null : input.note,
+      phone_at_booking:
+        input.phoneAtBooking.length === 0 ? null : input.phoneAtBooking,
+      cancelled_at: null,
+    })
+    .eq("id", existing.id)
+    .select(
+      "id, event_id, member_id, status, guest_count, phone_at_booking, note, checked_in_at, cancelled_at, created_at, updated_at",
+    )
+    .single();
+
+  if (error !== null) {
+    throw mapPostgrestError(error);
+  }
+  if (data === null) {
+    throw new BookingApiError("network", null, "Empty update response");
+  }
+  return rowToReservation(data as unknown as ReservationRow);
+}
+
+/**
  * 自分の予約 (status='reserved') の `guest_count` / `note` を UPDATE する。
  *
  * - WHERE 句に `id = reservationId` AND `member_id = uid` AND `status = 'reserved'` を明示し、
