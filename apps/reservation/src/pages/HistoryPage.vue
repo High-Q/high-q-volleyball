@@ -85,9 +85,15 @@ async function onConfirmCancel(): Promise<void> {
     ? await cancelWaitlist(target.id)
     : await cancel(target.id);
   if (ok) {
-    reservations.value = reservations.value.map((r) =>
-      r.id === target.id ? { ...r, status: "cancelled" } : r,
-    );
+    if (isWaitlist) {
+      // キャンセル待ちの撤回 = 行削除。履歴から消す (cancelled として残さない)。
+      reservations.value = reservations.value.filter((r) => r.id !== target.id);
+    } else {
+      // 通常予約のキャンセルは cancelled として過去グループに残す。
+      reservations.value = reservations.value.map((r) =>
+        r.id === target.id ? { ...r, status: "cancelled" } : r,
+      );
+    }
     cancelDialogOpen.value = false;
     cancelTarget.value = null;
     showSuccess(

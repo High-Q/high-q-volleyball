@@ -290,9 +290,15 @@ export async function cancelReservation(id: ReservationId): Promise<void> {
 }
 
 /**
- * キャンセル待ちの取り消し。status を `'waitlist' → 'cancelled'` に UPDATE する。
- * 会員の `waitlist → cancelled` UPDATE は RLS で許可済み (rls-policies capability)。
- * 0 行更新は RLS 違反 (他人の id) または既に waitlist ではない等のため `rls` として扱う。
+ * キャンセル待ちの取り消し。waitlist 行を **DELETE** する。
+ *
+ * キャンセル待ちは確定予約ではなく意思表明のため、撤回は行削除で表現する。これにより
+ * 履歴に `cancelled` 行として残らず (キャンセルした通常予約との混同を防ぐ)、再登録時の
+ * UNIQUE 衝突も起きない。会員の「自分の status='waitlist' 行の DELETE」は RLS で
+ * 許可済み (rls-policies capability)。
+ *
+ * アプリ層でも `.eq("status","waitlist")` を明示し、reserved 等を誤って消さない二重防衛
+ * とする。0 行削除は RLS 違反 (他人の id) または既に waitlist ではない等のため `rls`。
  */
 export async function cancelWaitlistReservation(
   id: ReservationId,
@@ -300,7 +306,7 @@ export async function cancelWaitlistReservation(
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("reservations")
-    .update({ status: "cancelled" })
+    .delete()
     .eq("id", id as string)
     .eq("status", "waitlist")
     .select("id");
@@ -309,7 +315,7 @@ export async function cancelWaitlistReservation(
     throw mapPostgrestError(error);
   }
   if (data === null || data.length === 0) {
-    throw new BookingApiError("rls", null, "No row updated");
+    throw new BookingApiError("rls", null, "No row deleted");
   }
 }
 

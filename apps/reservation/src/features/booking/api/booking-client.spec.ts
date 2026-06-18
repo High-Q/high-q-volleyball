@@ -33,6 +33,9 @@ const editUpdateSpec: { current: Spec } = {
 const cancelUpdateSpec: { current: Spec } = {
   current: { data: null, error: null },
 };
+const deleteSpec: { current: Spec } = {
+  current: { data: null, error: null },
+};
 
 const updateCalls: { type: "edit" | "reactivate" | "cancel" | "unknown"; payload: unknown }[] = [];
 
@@ -86,6 +89,14 @@ function buildChain() {
       })),
     })),
     update,
+    delete: vi.fn(() => {
+      const chain: Record<string, unknown> = {};
+      chain.eq = vi.fn(() => chain);
+      chain.select = vi.fn(() => ({
+        then: (resolve: (v: Spec) => void) => resolve(deleteSpec.current),
+      }));
+      return chain;
+    }),
   };
 }
 
@@ -123,6 +134,7 @@ beforeEach(() => {
   reactivateUpdateSpec.current = { data: null, error: null };
   editUpdateSpec.current = { data: null, error: null };
   cancelUpdateSpec.current = { data: null, error: null };
+  deleteSpec.current = { data: null, error: null };
   updateCalls.length = 0;
 });
 
@@ -372,19 +384,17 @@ describe("updateReservation - 同伴者数 / 連絡事項の編集", () => {
   });
 });
 
-describe("cancelWaitlistReservation - キャンセル待ちの取り消し", () => {
+describe("cancelWaitlistReservation - キャンセル待ちの取り消し (DELETE)", () => {
   const wlId = unsafeReservationId("rs-wl-1");
 
-  it("waitlist 行を cancelled に更新成功 (1 行) で解決する", async () => {
-    cancelUpdateSpec.current = { data: [{ id: "rs-wl-1" }], error: null };
+  it("waitlist 行を DELETE 成功 (1 行) で解決する", async () => {
+    deleteSpec.current = { data: [{ id: "rs-wl-1" }], error: null };
     const { cancelWaitlistReservation } = await import("./booking-client");
     await expect(cancelWaitlistReservation(wlId)).resolves.toBeUndefined();
-    const cancelCall = updateCalls.find((c) => c.type === "cancel");
-    expect(cancelCall?.payload).toEqual({ status: "cancelled" });
   });
 
-  it("0 行更新 (他人の id / 既に waitlist でない) は 'rls' で投げる", async () => {
-    cancelUpdateSpec.current = { data: [], error: null };
+  it("0 行削除 (他人の id / 既に waitlist でない) は 'rls' で投げる", async () => {
+    deleteSpec.current = { data: [], error: null };
     const { cancelWaitlistReservation } = await import("./booking-client");
     await expect(cancelWaitlistReservation(wlId)).rejects.toMatchObject({
       kind: "rls",
@@ -392,7 +402,7 @@ describe("cancelWaitlistReservation - キャンセル待ちの取り消し", () 
   });
 
   it("RLS 違反 (42501) を 'rls' で投げる", async () => {
-    cancelUpdateSpec.current = {
+    deleteSpec.current = {
       data: null,
       error: { code: "42501", message: "rls" },
     };
