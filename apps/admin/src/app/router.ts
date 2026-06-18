@@ -32,33 +32,63 @@ import { useAuthSession } from "@/features/auth";
  */
 const routes: RouteRecordRaw[] = [
   // #149 admin の `/` は dashboard 画面 (従来の /events redirect を廃止)
-  { path: "/", name: "dashboard", component: DashboardPage },
-  { path: "/events", name: "events", component: EventsListPage },
-  { path: "/events/new", name: "events-new", component: EventCreatePage },
+  // #155 meta.title はモバイル AppBar の画面タイトルに使用される (admin-shell)
+  {
+    path: "/",
+    name: "dashboard",
+    component: DashboardPage,
+    meta: { title: "ダッシュボード" },
+  },
+  {
+    path: "/events",
+    name: "events",
+    component: EventsListPage,
+    meta: { title: "イベント" },
+  },
+  {
+    path: "/events/new",
+    name: "events-new",
+    component: EventCreatePage,
+    meta: { title: "イベント作成" },
+  },
   {
     path: "/events/:id/edit",
     name: "events-edit",
     component: EventEditPage,
+    meta: { title: "イベント編集" },
   },
   {
     path: "/events/:id",
     name: "events-detail",
     component: EventDetailPage,
+    meta: { title: "イベント詳細" },
   },
   // #150 admin members list screen
-  { path: "/members", name: "members", component: MembersListPage },
+  {
+    path: "/members",
+    name: "members",
+    component: MembersListPage,
+    meta: { title: "会員" },
+  },
   // #151 admin venues master-detail screen（単一画面で一覧・編集・新規・削除を完結）
-  { path: "/venues", name: "venues", component: VenuesPage },
+  {
+    path: "/venues",
+    name: "venues",
+    component: VenuesPage,
+    meta: { title: "会場" },
+  },
   // #171 admin-identity-document-review (lazy import で起動コスト最小化)
   {
     path: "/identity-documents",
     name: "identity-documents",
     component: () => import("@/pages/IdentityDocumentsListPage.vue"),
+    meta: { title: "本人確認書類" },
   },
   {
     path: "/identity-documents/:id",
     name: "identity-document-detail",
     component: () => import("@/pages/IdentityDocumentDetailPage.vue"),
+    meta: { title: "本人確認書類" },
   },
   {
     path: "/login",

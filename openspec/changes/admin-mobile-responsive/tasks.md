@@ -1,11 +1,11 @@
 ## 1. 共通シェル基盤（プリミティブ・widget・TDD）
 
 - [x] 1.1 shadcn-vue `Sheet`（ドロワー）プリミティブを `apps/admin/src/shared/ui/` に取り込む（a11y: フォーカストラップ / Esc / スクリム / スクロールロックは radix-vue に委譲）
-- [ ] 1.2 `shared/ui/DataCardList`（モバイル時 `md:hidden` のカード枠・余白・リスト a11y セマンティクス）を追加し、Component テスト（< `md` で表示 / ≥ `md` で非表示）を TDD で先に書く
-- [ ] 1.3 `widgets/admin-shell` のデスクトップ `SidebarNav`（240px・ブランド・実在ルート 5 項目・現在ルートのアクティブ強調・最下部にユーザー表示 + ログアウト・本人確認書類 pending Badge）を実装（HQ トークン経由のみ）
-- [ ] 1.4 `widgets/admin-shell` のモバイル AppBar（ハンバーガー + `route.meta.title` 由来タイトル + 主要アクション Teleport 領域）+ Drawer（`Sheet` で同一ナビ）を実装
-- [ ] 1.5 `admin-shell` の Component テストを TDD で追加（ドロワー開閉 / Esc・スクリムで閉じる / 閉じた時ハンバーガーへフォーカス返却 / ナビ項目遷移で閉じる / pending Badge 表示）
-- [ ] 1.6 各ルートに `meta.title` を付与し、`admin-shell` の Public API（`index.ts`）を整備（`eslint-plugin-boundaries` 違反が無いこと）
+- [x] 1.2 `shared/ui/DataCardList`（モバイル時 `md:hidden` のカード枠・余白・リスト a11y セマンティクス）を追加し、Component テスト（< `md` で表示 / ≥ `md` で非表示）を TDD で先に書く
+- [x] 1.3 `widgets/admin-shell` のデスクトップ `SidebarNav`（240px・ブランド・実在ルート 5 項目・現在ルートのアクティブ強調・最下部にユーザー表示 + ログアウト・本人確認書類 pending Badge）を実装（HQ トークン経由のみ）
+- [x] 1.4 `widgets/admin-shell` のモバイル AppBar（ハンバーガー + `route.meta.title` 由来タイトル + 主要アクション Teleport 領域）+ Drawer（`Sheet` で同一ナビ）を実装
+- [x] 1.5 `admin-shell` の Component テストを TDD で追加（ドロワー開閉 / Esc・スクリムで閉じる / 閉じた時ハンバーガーへフォーカス返却 / ナビ項目遷移で閉じる / pending Badge 表示）
+- [x] 1.6 各ルートに `meta.title` を付与し、`admin-shell` の Public API（`index.ts`）を整備（`eslint-plugin-boundaries` 違反が無いこと）
 
 ## 2. App 配線とグローバルナビ移設
 
