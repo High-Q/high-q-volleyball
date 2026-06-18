@@ -16,8 +16,8 @@
 
 ## 4. キャンセル待ち登録 UI（Sheet 再利用）
 
-- [ ] 4.1 `BookingSheet.vue` に `mode='waitlist'` を追加。waitlist 時: kicker「— Waitlist」/ 見出し・説明文をキャンセル待ち向け文言に / `BookingTotalCard` を非表示 / 確定 CTA「キャンセル待ちに登録する」（処理中「登録中...」）/ `useBookingDraft`（localStorage）非連動 / `BookingForm` の同伴者数 stepper は表示（連絡事項は予約と同様）。
-- [ ] 4.2 `onSubmit` の waitlist 分岐で `useCreateWaitlist.create()` を呼び、成功時は完了画面へ遷移せず `saved` 相当イベントで親に通知して閉じる。電話は `members.phone` をスナップショット。エラー文言は既存 `submissionErrorMessage`（duplicate/rls/network）を流用しつつ duplicate を「既にキャンセル待ち登録済みです。」相当に。
+- [x] 4.1 `BookingSheet.vue` に `mode='waitlist'` を追加。waitlist 時: kicker「— Waitlist」/ 見出し・説明文をキャンセル待ち向け文言に / `BookingTotalCard` を非表示 / 確定 CTA「キャンセル待ちに登録する」（処理中「登録中...」）/ `useBookingDraft`（localStorage）非連動 / `BookingForm` の同伴者数 stepper は表示（連絡事項は予約と同様）。
+- [x] 4.2 `onSubmit` の waitlist 分岐で `useCreateWaitlist.create()` を呼び、成功時は完了画面へ遷移せず `saved` 相当イベントで親に通知して閉じる。電話は `members.phone` をスナップショット。エラー文言は既存 `submissionErrorMessage`（duplicate/rls/network）を流用しつつ duplicate を「既にキャンセル待ち登録済みです。」相当に。
 
 ## 5. イベント詳細 CTA 分岐 + フィードバック
 

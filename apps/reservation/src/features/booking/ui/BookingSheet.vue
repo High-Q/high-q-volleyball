@@ -21,6 +21,7 @@ import BookingForm from "./BookingForm.vue";
 import BookingTotalCard from "./BookingTotalCard.vue";
 import { useBookingDraft } from "../composables/useBookingDraft";
 import { useCreateBooking } from "../composables/useCreateBooking";
+import { useCreateWaitlist } from "../composables/useCreateWaitlist";
 import { useUpdateBooking } from "../composables/useUpdateBooking";
 import { isCancellable } from "../composables/useCancelBooking";
 import {
@@ -35,12 +36,16 @@ import {
  *   イベント詳細画面の「予約に進む」CTA で開き、確定 = 完了画面へ router.push。
  * - `mode='edit'`: 既存予約の同伴者数 / 連絡事項の編集 (UPDATE)。localStorage は使わない。
  *   予約詳細画面の「予約内容を変更する」CTA で開き、確定 = sheet を閉じて saved を emit。
+ * - `mode='waitlist'`: 満員イベントへのキャンセル待ち登録 (status='waitlist' INSERT)。
+ *   localStorage 非連動。合計金額カードは出さない (支払い確約ではないため)。確定 =
+ *   sheet を閉じて saved を emit。完了画面へは遷移しない。
  *
  * 関連:
  *   openspec/changes/reservation-detail-edit/specs/reservation-booking-flow/spec.md
+ *   openspec/changes/reservation-waitlist-registration/specs/reservation-waitlist-registration/spec.md
  */
 
-type Mode = "create" | "edit";
+type Mode = "create" | "edit" | "waitlist";
 
 type EditPayload = {
   reservationId: ReservationId;
@@ -80,9 +85,18 @@ const editDraft = reactive<BookingDraft>({
   phone: undefined,
 });
 
-const draft = computed(() =>
-  props.mode === "edit" ? editDraft : createDraftCtl.draft,
-);
+// waitlist モード専用 draft (localStorage 非連動)。open 時に空で初期化。
+const waitlistDraft = reactive<BookingDraft>({
+  guestCount: 0,
+  note: "",
+  phone: undefined,
+});
+
+const draft = computed(() => {
+  if (props.mode === "edit") return editDraft;
+  if (props.mode === "waitlist") return waitlistDraft;
+  return createDraftCtl.draft;
+});
 
 watch(
   () => [
@@ -102,6 +116,7 @@ watch(
 
 const createBooking = useCreateBooking();
 const updateBooking = useUpdateBooking();
+const createWaitlist = useCreateWaitlist();
 
 const formErrors = ref<BookingFormErrors>({});
 
@@ -119,11 +134,11 @@ const isDirty = computed(() => {
   );
 });
 
-const submitting = computed(() =>
-  props.mode === "edit"
-    ? updateBooking.submitting.value
-    : createBooking.submitting.value,
-);
+const submitting = computed(() => {
+  if (props.mode === "edit") return updateBooking.submitting.value;
+  if (props.mode === "waitlist") return createWaitlist.submitting.value;
+  return createBooking.submitting.value;
+});
 
 const submitDisabled = computed(() => {
   if (submitting.value) return true;
@@ -134,17 +149,20 @@ const submitDisabled = computed(() => {
 });
 
 const submissionErrorMessage = computed(() => {
-  const e =
-    props.mode === "edit"
-      ? updateBooking.error.value
-      : createBooking.error.value;
+  let e;
+  if (props.mode === "edit") e = updateBooking.error.value;
+  else if (props.mode === "waitlist") e = createWaitlist.error.value;
+  else e = createBooking.error.value;
   switch (e) {
     case "duplicate":
-      return "このイベントには既に予約済みです。";
+      return props.mode === "waitlist"
+        ? "既にこのイベントに予約またはキャンセル待ち登録済みです。"
+        : "このイベントには既に予約済みです。";
     case "rls":
-      return props.mode === "edit"
-        ? "この予約は変更できません。"
-        : "予約に失敗しました。お手数ですが再度お試しください。";
+      if (props.mode === "edit") return "この予約は変更できません。";
+      if (props.mode === "waitlist")
+        return "キャンセル待ち登録に失敗しました。お手数ですが再度お試しください。";
+      return "予約に失敗しました。お手数ですが再度お試しください。";
     case "not_editable":
       // 期限切れ案内は別ブロックで表示するため、エラーバナーには出さない
       return null;
@@ -166,27 +184,42 @@ watch(
       formErrors.value = {};
       createBooking.reset();
       updateBooking.reset();
+      createWaitlist.reset();
+      if (props.mode === "waitlist") {
+        waitlistDraft.guestCount = 0;
+        waitlistDraft.note = "";
+      }
     }
   },
 );
 
-const titleText = computed(() =>
-  props.mode === "edit"
-    ? "変更したい箇所を\n編集してください。"
-    : "内容に間違いがないか\nご確認ください。",
-);
-const descriptionText = computed(() =>
-  props.mode === "edit"
-    ? "下記を編集のうえ、「変更を保存する」を押してください。"
-    : "下記を確認のうえ、「予約を確定する」を押してください。",
-);
+const titleText = computed(() => {
+  if (props.mode === "edit") return "変更したい箇所を\n編集してください。";
+  if (props.mode === "waitlist")
+    return "キャンセル待ちに\n登録します。";
+  return "内容に間違いがないか\nご確認ください。";
+});
+const descriptionText = computed(() => {
+  if (props.mode === "edit")
+    return "下記を編集のうえ、「変更を保存する」を押してください。";
+  if (props.mode === "waitlist")
+    return "空きが出た場合に繰り上げのご連絡をします。同伴者数をご確認のうえ「キャンセル待ちに登録する」を押してください。";
+  return "下記を確認のうえ、「予約を確定する」を押してください。";
+});
 const submitLabel = computed(() => {
   if (props.mode === "edit") {
     return submitting.value ? "保存中..." : "変更を保存する";
   }
+  if (props.mode === "waitlist") {
+    return submitting.value ? "登録中..." : "キャンセル待ちに登録する";
+  }
   return submitting.value ? "確定中..." : "予約を確定する";
 });
-const kickerText = computed(() => (props.mode === "edit" ? "— Edit" : "— Review"));
+const kickerText = computed(() => {
+  if (props.mode === "edit") return "— Edit";
+  if (props.mode === "waitlist") return "— Waitlist";
+  return "— Review";
+});
 
 function validate(): boolean {
   const next: BookingFormErrors = {};
@@ -218,6 +251,23 @@ async function onSubmit(): Promise<void> {
       props.event.startAt,
     );
     if (result !== null) {
+      emit("saved", result);
+      emit("update:open", false);
+    }
+    return;
+  }
+
+  if (props.mode === "waitlist") {
+    const result = await createWaitlist.create({
+      eventId: props.event.id,
+      memberId: unsafeMemberId(m.id as unknown as string),
+      guestCount: waitlistDraft.guestCount,
+      note: waitlistDraft.note,
+      // members.phone をそのままスナップショット (画面表示はしない)
+      phoneAtBooking: m.phone ?? "",
+    });
+    if (result !== null) {
+      // 完了画面へは遷移せず、起動元 (イベント詳細) に saved を通知して閉じる
       emit("saved", result);
       emit("update:open", false);
     }
@@ -269,7 +319,11 @@ async function onSubmit(): Promise<void> {
 
       <BookingForm :draft="draft" :errors="formErrors" />
 
-      <BookingTotalCard :fee="event.fee" :guest-count="draft.guestCount" />
+      <BookingTotalCard
+        v-if="props.mode !== 'waitlist'"
+        :fee="event.fee"
+        :guest-count="draft.guestCount"
+      />
 
       <p
         v-if="editLocked"
