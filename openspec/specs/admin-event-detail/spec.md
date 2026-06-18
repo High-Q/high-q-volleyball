@@ -125,7 +125,7 @@ MVP1 では実質 RemainBar は描画されない（#86 の admin-events-crud �
 6. **チェックイン**: Switch (Toggle) UI（`role="switch"` + `aria-checked="true|false"` + 隣接テキストラベル「済」「未」併記）。`checked_in_at IS NOT NULL` なら ON 状態（slider が右、`var(--hq-success)` 緑、テキスト「済」）、NULL なら OFF 状態（slider が左、グレー、テキスト「未」）
 7. **操作**: キャンセル代行アイコンボタン（押下で AlertDialog）
 
-全テーブルセルは `whitespace-nowrap` で改行抑止し、画面幅を超えた場合は横スクロールにフォールバック SHALL。氏名 + ニックネーム併記でも同様に `whitespace-nowrap` を維持し、画面幅を超える場合は table 全体の横スクロールに乗せる MUST（行内での折返しはしない）。
+デスクトップ（≥ `md`）は DataTable で表示し、各セルは `whitespace-nowrap` で改行抑止する。**モバイル（< `md`）は MUST 横スクロールではなくカード縦積みで表示し、上記 1〜7 の全項目をカード内に保持する**。チェックイン済の参加者カードは MUST 背景色（`var(--hq-success)` 系のソフト背景）でハイライトし、状態を色で表現する。氏名 + ニックネーム併記はカード内でも全角括弧併記を維持する MUST（行内での折返しによる意味の崩れはしない）。チェックイン Switch / キャンセル代行ボタン等の操作要素は MUST 44px 以上のタップ領域を確保する。横スクロールは使わない（`admin-responsive-shell` capability のレスポンシブ表示規約に従う）。
 
 #### Scenario: 列順序が仕様どおり
 - **WHEN** Success 状態で参加者 1 名以上ある event を描画
@@ -159,9 +159,10 @@ MVP1 では実質 RemainBar は描画されない（#86 の admin-events-crud �
 - **WHEN** 退会済み会員の予約行（`member_id IS NULL`、`display_name = '退会済み会員'`）
 - **THEN** 名前列は `退会済み会員` のみが表示され、ニックネーム併記は行われない（`nickname` は常に NULL として扱う）
 
-#### Scenario: モバイル幅でのレイアウト破綻なし
-- **WHEN** 画面幅 375px で `display_name + nickname` の合計文字数が表示領域を超える参加者行を描画
-- **THEN** 名前列のセルは `whitespace-nowrap` のまま維持され、table 全体の横スクロールで参照できる。行内での折返しや、ニックネーム単独の省略表示は発生しない
+#### Scenario: モバイル幅ではカード縦積みで表示される
+- **WHEN** 画面幅 375px で参加者一覧を Success 状態で描画
+- **THEN** DataTable ではなくカード縦積みで表示され、横スクロールは発生せず、名前（ニックネーム併記含む）/ 経験 / 同伴 / 予約日時 / メール / チェックイン / 操作の全項目が各カード内で確認できる
+- **AND** チェックイン済の参加者カードは背景色でハイライトされる
 
 ### Requirement: 検索・フィルタ・URL クエリ同期
 
@@ -296,14 +297,14 @@ MVP1 では実質 RemainBar は描画されない（#86 の admin-events-crud �
 
 ### Requirement: 参加者一覧の内側スクロール
 
-イベント詳細画面（`/events/:id`）は、参加者数が画面高を超えた場合に、**参加者一覧テーブル領域の内側のみ**で縦スクロールを発生させること SHALL。ページ全体（ブラウザの外側スクロールバー）でのスクロール解決は禁止する。
+イベント詳細画面（`/events/:id`）は、参加者数が画面高を超えた場合に、**参加者一覧領域（デスクトップは DataTable / モバイルはカードリスト）の内側のみ**で縦スクロールを発生させること SHALL。ページ全体（ブラウザの外側スクロールバー）でのスクロール解決は禁止する。
 
-TopBar / StatCards / RemainBar / Tabs / 参加者一覧 Toolbar は MUST 画面上部に固定され、参加者テーブルのスクロール操作によって位置が変化してはならない。
+TopBar / StatCards / RemainBar / Tabs / 参加者一覧 Toolbar は MUST 画面上部に固定され、参加者一覧のスクロール操作によって位置が変化してはならない。
 
-#### Scenario: 参加者多数イベントでテーブル領域のみがスクロールする
+#### Scenario: 参加者多数イベントで一覧領域のみがスクロールする
 
-- **WHEN** 参加者が縦スクロールを必要とする数（例: viewport 高に対しテーブル行数が超過する状態）だけ存在するイベントの詳細画面を開く
-- **THEN** 参加者テーブル領域の内側にのみスクロールバーが表示される
+- **WHEN** 参加者が縦スクロールを必要とする数（例: viewport 高に対し行数 / カード数が超過する状態）だけ存在するイベントの詳細画面を開く
+- **THEN** 参加者一覧領域の内側にのみスクロールバーが表示される
 - **AND** ページ全体のスクロールバーは発生しない
 - **AND** TopBar / StatCards / RemainBar / Tabs / Toolbar は固定位置に留まる
 
@@ -316,7 +317,7 @@ TopBar / StatCards / RemainBar / Tabs / 参加者一覧 Toolbar は MUST 画面�
 #### Scenario: モバイル幅でも内側スクロールが機能する
 
 - **WHEN** 画面幅 375px で参加者多数イベントの詳細画面を開く
-- **THEN** 参加者テーブル領域の内側のみで縦スクロールが機能する
+- **THEN** 参加者一覧（カードリスト）領域の内側のみで縦スクロールが機能する
 - **AND** 上部の固定要素群（TopBar / StatCards / RemainBar / Tabs / Toolbar）は画面外にスクロールしない
 
 ### Requirement: FSD レイヤー配置

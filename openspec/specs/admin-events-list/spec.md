@@ -18,11 +18,15 @@ admin アプリの `/events` 画面の責務を規定する: DataTable 列構成
 
 「定員」列は MVP1 で削除（フォームからも capacity フィールドを外したため、表示の必要性が無い。capacity 自体は DB 列としては残るが、UI の責務外）。
 
-全テーブルセルは `whitespace-nowrap` で改行抑止し、画面幅を超えた場合は `<Table>` の `overflow-auto` で横スクロールに自動対応する SHALL（モバイルで縦長改行で UI が崩れる現象の抑止）。
+デスクトップ（≥ `md`）は DataTable で表示する。**モバイル（< `md`）は MUST 横スクロールではなくカード縦積みで表示し、上記 1〜7 の全項目をカード内に保持する**（日付・タイトル・ステータスを上段、会場・時間・予約/残席バー・操作を下段に「ラベル: 値」相当で配置）。各テーブルセルは `whitespace-nowrap` で改行抑止する。横スクロールは使わない（`admin-responsive-shell` capability のレスポンシブ表示規約に従う）。
 
 #### Scenario: 列順序が仕様どおり
 - **WHEN** `/events` を Success 状態で描画
 - **THEN** 上記 1〜7 の列が左から順に表示される（「定員」列は存在しない）
+
+#### Scenario: モバイル幅ではカード縦積みで表示される
+- **WHEN** 画面幅 375px で `/events` を Success 状態で描画
+- **THEN** DataTable ではなくカード縦積みで表示され、横スクロールは発生せず、日付 / タイトル / 会場 / 時間 / 予約・残席 / ステータス / 操作の全項目が各カード内で確認できる
 
 #### Scenario: 残席バーが capacity 未設定で fallback する
 - **WHEN** capacity が NULL の event 行を描画
