@@ -235,6 +235,21 @@ function close(): void {
   emit("update:open", false);
 }
 
+/**
+ * Sheet オープン時のフォーカス制御。
+ *
+ * 既定の auto-focus (先頭の同伴者数 stepper への移動) は抑止しつつ、フォーカスを
+ * sheet 本体 (role="dialog" の content) へ移す。これを行わないと、シートを開いた
+ * トリガーボタンにフォーカスが残ったまま radix が背後の `#app` に aria-hidden を
+ * 付けるため、「focused 要素の祖先に aria-hidden」という a11y 警告が出る。
+ */
+function onSheetOpenAutoFocus(e: Event): void {
+  e.preventDefault();
+  const el = e.target as HTMLElement | null;
+  const dialog = (el?.closest?.('[role="dialog"]') ?? el) as HTMLElement | null;
+  dialog?.focus?.();
+}
+
 async function onSubmit(): Promise<void> {
   if (!validate()) return;
   const m = session.member.value;
@@ -300,7 +315,7 @@ async function onSubmit(): Promise<void> {
   <Sheet :open="props.open" @update:open="emit('update:open', $event)">
     <SheetContent
       class="gap-hq-5"
-      @open-auto-focus="(e) => e.preventDefault()"
+      @open-auto-focus="onSheetOpenAutoFocus"
     >
       <div class="flex flex-col gap-hq-2">
         <Kicker>{{ kickerText }}</Kicker>
