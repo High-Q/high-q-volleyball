@@ -8,6 +8,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  DataCardList,
 } from "@/shared/ui";
 import type { ExperienceLevel, MemberId } from "@high-q/shared";
 import type { ParticipantRow } from "@/entities/reservation";
@@ -161,7 +162,8 @@ async function onGuestChange(
       - コントロール (Stepper / Switch) → 中央寄せ
       - Action (キャンセルボタン) → 右寄せ (慣習)
   -->
-  <Table>
+  <!-- デスクトップ: DataTable (#155 モバイルはカード縦積みに切替) -->
+  <Table class="hidden md:block">
     <TableHeader>
       <TableRow>
         <TableHead>名前</TableHead>
@@ -237,4 +239,84 @@ async function onGuestChange(
       </TableRow>
     </TableBody>
   </Table>
+
+  <!--
+    モバイル: カード縦積み (#155)。チェックイン済は success-soft 背景でハイライト。
+    操作要素 (チェックイン / キャンセル) は 44px 以上のタップ領域を確保。全項目を保持。
+  -->
+  <DataCardList class="p-hq-4">
+    <li
+      v-for="row in displayedRows"
+      :key="row.reservation_id"
+      class="rounded-hq-md border p-hq-4"
+      :class="
+        row.__isChecked
+          ? 'border-success bg-success-soft'
+          : 'border-hairline bg-surface'
+      "
+    >
+      <div class="flex items-start justify-between gap-hq-2">
+        <span class="inline-flex flex-wrap items-center gap-hq-2">
+          <span
+            class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-hairline bg-paper-warm font-jp text-xs text-ink-soft"
+            aria-hidden="true"
+            >{{ row.__initial }}</span
+          >
+          <button
+            v-if="!row.__isWithdrawn"
+            type="button"
+            :aria-label="`${row.display_name} の詳細を開く`"
+            class="rounded-hq-sm font-jp text-base font-medium text-ink hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            @click="onMemberClick(row)"
+            >{{ row.display_name
+            }}<template v-if="row.nickname">（{{ row.nickname }}）</template></button
+          >
+          <span v-else class="font-jp text-base font-medium text-ink">{{
+            row.display_name
+          }}</span>
+          <Badge v-if="row.is_first_time" tone="accent">初回</Badge>
+        </span>
+        <Badge :tone="EXP_TONE[row.experience_level]">{{
+          EXP_LABEL[row.experience_level]
+        }}</Badge>
+      </div>
+
+      <dl
+        class="mt-hq-3 grid grid-cols-[5rem_1fr] items-center gap-x-hq-3 gap-y-hq-2 font-jp text-sm"
+      >
+        <dt class="text-muted">同伴</dt>
+        <dd>
+          <GuestCountStepper
+            :count="row.guest_count"
+            :member-name="row.display_name"
+            :in-flight="guest.isInFlight(row.reservation_id)"
+            @change="(next) => onGuestChange(row, next)"
+          />
+        </dd>
+        <dt class="text-muted">予約日時</dt>
+        <dd class="font-mono text-xs text-muted">{{ row.__whenLabel }}</dd>
+        <dt class="text-muted">メール</dt>
+        <dd class="min-w-0 truncate font-mono text-xs text-muted">
+          {{ row.email }}
+        </dd>
+      </dl>
+
+      <div
+        class="mt-hq-3 flex min-h-[44px] items-center justify-between gap-hq-3 border-t border-hairline-soft pt-hq-3"
+      >
+        <CheckinToggle
+          :checked="row.__isChecked"
+          :member-name="row.display_name"
+          :in-flight="checkin.isInFlight(row.reservation_id)"
+          @toggle="onToggle(row)"
+        />
+        <ReservationCancelDialog
+          :reservation-id="row.reservation_id"
+          :member-name="row.display_name"
+          @cancelled="onCancelled(row.reservation_id as unknown as string)"
+        />
+      </div>
+    </li>
+  </DataCardList>
 </template>
+

@@ -8,6 +8,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  DataCardList,
 } from "@/shared/ui";
 import {
   EXPERIENCE_LABEL,
@@ -118,7 +119,8 @@ function onRowKeyDown(memberId: string, event: KeyboardEvent): void {
 </script>
 
 <template>
-  <Table>
+  <!-- デスクトップ: DataTable (#155 モバイルはカード縦積みに切替) -->
+  <Table class="hidden md:block">
     <TableHeader>
       <TableRow>
         <TableHead
@@ -229,4 +231,68 @@ function onRowKeyDown(memberId: string, event: KeyboardEvent): void {
       </TableRow>
     </TableBody>
   </Table>
+
+  <!-- モバイル: カード縦積み (#155)。タップで詳細 sheet を開く。全項目を保持 -->
+  <DataCardList class="p-hq-4">
+    <li
+      v-for="row in displayedRows"
+      :key="row.id"
+      tabindex="0"
+      role="button"
+      :aria-label="`${row.display_name} の詳細`"
+      class="cursor-pointer rounded-hq-md border border-hairline bg-surface p-hq-4 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+      @click="onRowClick(row.id as unknown as string)"
+      @keydown="onRowKeyDown(row.id as unknown as string, $event)"
+    >
+      <div class="flex flex-wrap items-center gap-hq-2">
+        <span
+          class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-hairline bg-paper-warm font-jp text-xs text-muted"
+          aria-hidden="true"
+          >{{ row.__initial }}</span
+        >
+        <span class="font-jp text-base font-medium text-ink">{{
+          row.display_name
+        }}</span>
+        <Badge v-if="row.correction_request_count > 0" tone="warn"
+          >修正依頼 {{ row.correction_request_count }}</Badge
+        >
+        <Badge
+          v-if="!row.has_identity_document"
+          tone="neutral"
+          aria-label="本人確認書類が未提出"
+          >書類未提出</Badge
+        >
+      </div>
+      <dl
+        class="mt-hq-3 grid grid-cols-[5rem_1fr] gap-x-hq-3 gap-y-hq-2 font-jp text-sm"
+      >
+        <dt class="text-muted">メール</dt>
+        <dd class="min-w-0 truncate font-mono text-xs text-muted">
+          {{ row.email }}
+        </dd>
+        <dt class="text-muted">経験</dt>
+        <dd>
+          <Badge :tone="EXPERIENCE_TONE[row.experience_level]">{{
+            EXPERIENCE_LABEL[row.experience_level]
+          }}</Badge>
+        </dd>
+        <dt class="text-muted">初回参加</dt>
+        <dd class="font-mono text-xs text-muted">{{ row.__firstLabel }}</dd>
+        <dt class="text-muted">累計</dt>
+        <dd
+          class="font-mono text-xs"
+          :class="row.__highlightCount ? 'font-medium text-accent' : 'text-muted'"
+        >
+          {{ row.attended_count }} 回
+        </dd>
+        <dt class="text-muted">最終参加</dt>
+        <dd class="font-mono text-xs text-muted">{{ row.__lastLabel }}</dd>
+        <dt class="text-muted">メモ</dt>
+        <dd class="text-xs text-muted" :title="row.admin_note ?? undefined">
+          {{ row.__notePreview }}
+        </dd>
+      </dl>
+    </li>
+  </DataCardList>
 </template>
+

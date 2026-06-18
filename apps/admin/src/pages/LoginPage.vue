@@ -116,6 +116,16 @@ function onReset() {
       class="flex flex-1 items-center justify-center px-hq-6 py-hq-12"
     >
       <div class="w-full max-w-md flex flex-col gap-hq-5">
+        <!-- #155 モバイル限定のブランド帯 (デスクトップは左ペインに表示) -->
+        <div class="flex items-baseline gap-hq-2 md:hidden">
+          <span class="font-jp-display text-2xl font-semibold text-ink"
+            >High Q</span
+          >
+          <span
+            class="font-mono text-[10px] uppercase tracking-[0.24em] text-muted"
+            >ADMIN</span
+          >
+        </div>
         <Kicker>— Sign in</Kicker>
         <h1 class="font-jp text-xl font-semibold text-ink">ログイン</h1>
         <p class="font-jp text-sm text-muted">

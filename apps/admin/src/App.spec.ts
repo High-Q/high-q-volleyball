@@ -11,6 +11,15 @@ const HomeStub = defineComponent({
   template: "<div data-test='home-stub' />",
 });
 
+// admin-shell は auth / pending / 全ルート RouterLink を引き込むため、routing
+// スモークでは passthrough stub にしてシェルの有無のみ検証する。
+vi.mock("@/widgets/admin-shell", () => ({
+  AdminShell: {
+    name: "AdminShell",
+    template: "<div data-test='admin-shell'><slot /></div>",
+  },
+}));
+
 vi.mock("@/features/auth", () => ({
   useAuthSession: () => ({
     status: ref<"loading" | "authenticated" | "unauthenticated">(
@@ -56,5 +65,15 @@ describe("App routing smoke", () => {
     const wrapper = await mountWithRouter(App, routes, "/login");
     expect(wrapper.findComponent(LoginPage).exists()).toBe(true);
     expect(wrapper.text()).toContain("ログイン");
+  });
+
+  it("認証配下ルートはシェルで包む", async () => {
+    const wrapper = await mountWithRouter(App, routes, "/");
+    expect(wrapper.find("[data-test='admin-shell']").exists()).toBe(true);
+  });
+
+  it("公開ルート (login) はシェル無し", async () => {
+    const wrapper = await mountWithRouter(App, routes, "/login");
+    expect(wrapper.find("[data-test='admin-shell']").exists()).toBe(false);
   });
 });

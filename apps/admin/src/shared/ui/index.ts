@@ -26,6 +26,9 @@ export { default as SelectItem } from "./SelectItem.vue";
 
 export { default as Skeleton } from "./Skeleton.vue";
 
+// DataCardList (admin-mobile-responsive, #155) — モバイル時のテーブル→カード縦積み枠
+export { default as DataCardList } from "./DataCardList.vue";
+
 // AlertDialog group (admin-events-crud-screen, #86)
 export { default as AlertDialog } from "./AlertDialog.vue";
 export { default as AlertDialogTrigger } from "./AlertDialogTrigger.vue";
@@ -46,6 +49,14 @@ export { default as DialogFooter } from "./DialogFooter.vue";
 export { default as DialogTitle } from "./DialogTitle.vue";
 export { default as DialogDescription } from "./DialogDescription.vue";
 export { default as DialogClose } from "./DialogClose.vue";
+
+// Sheet group (admin-mobile-responsive, #155) — admin-shell モバイルナビ用ドロワー
+export { default as Sheet } from "./Sheet.vue";
+export { default as SheetTrigger } from "./SheetTrigger.vue";
+export { default as SheetContent } from "./SheetContent.vue";
+export { default as SheetClose } from "./SheetClose.vue";
+export { default as SheetTitle } from "./SheetTitle.vue";
+export { default as SheetDescription } from "./SheetDescription.vue";
 
 // Toast group (admin-events-crud-screen, #86)
 export { default as Toast } from "./Toast.vue";

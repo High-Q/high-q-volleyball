@@ -15,13 +15,17 @@ TBD - created by archiving change admin-members-list-screen. Update Purpose afte
 6. **最終参加** — `member_list_view.last_attended_at` を `YYYY/MM/DD` 形式で表示。NULL の場合は `—`
 7. **メモ** — `members.admin_note` を 1 行プレビュー（最大 40 文字、超過は ellipsis）。NULL / 空文字は `—`
 
-全テーブルセルは `whitespace-nowrap` で改行抑止し、画面幅を超えた場合は `<Table>` の `overflow-auto` で横スクロールに自動対応する SHALL。
+デスクトップ（≥ `md`）は DataTable で表示し、各セルは `whitespace-nowrap` で改行抑止する。**モバイル（< `md`）は MUST 横スクロールではなくカード縦積みで表示し、上記 1〜7 の全項目をカード内に保持する**（名前 + 各バッジを上段、メール / 経験 / 初回参加 / 累計 / 最終参加 / メモを下段に「ラベル: 値」相当で配置）。横スクロールは使わない（`admin-responsive-shell` capability のレスポンシブ表示規約に従う）。
 
 「書類未提出」バッジは neutral tone（薄いグレー背景 + muted テキスト）の小 chip で、HQ デザイントークン（`@high-q/tailwind-preset` の utility または `var(--hq-*)` CSS 変数）経由でのみ着色 SHALL する。マジックナンバー（リテラル色）禁止。バッジは tooltip / クリック動線を MUST 持たない（MVP1 では表示のみ）。スクリーンリーダー対応のため、バッジ要素には `aria-label="本人確認書類が未提出"` を SHALL 付与する。
 
 #### Scenario: 列順序が仕様どおり
 - **WHEN** `/members` を Success 状態で描画
 - **THEN** 上記 1〜7 の列が左から順に表示される
+
+#### Scenario: モバイル幅ではカード縦積みで表示される
+- **WHEN** 画面幅 375px で `/members` を Success 状態で描画
+- **THEN** DataTable ではなくカード縦積みで表示され、横スクロールは発生せず、名前（各バッジ含む）/ メール / 経験 / 初回参加 / 累計 / 最終参加 / メモの全項目が各カード内で確認できる
 
 #### Scenario: 累計 10 回以上の強調表示
 - **WHEN** ある会員の `attended_count = 11` の行を描画

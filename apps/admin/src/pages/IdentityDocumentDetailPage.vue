@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { useRouter } from "vue-router";
 import type { MemberId } from "@high-q/shared";
 import { IdentityDocumentDetailWidget } from "@/widgets/identity-document-detail";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
@@ -12,50 +11,36 @@ import { useAuthSession } from "@/features/auth";
  * adminMemberId は session.user.id (auth.uid()) から取得し、widget に渡す。
  * 各 mutation (approve / reject / mask-delete) で reviewed_by として記録される。
  *
+ * #155 ログアウト等のグローバルナビは共通シェル (admin-shell) へ移設したため、
+ * ページ header はパンくず + タイトルのみに縮約。
+ *
  * 関連:
  *   openspec/changes/admin-identity-document-review/specs/admin-identity-document-review/spec.md
- *     (Requirement: `/identity-documents/:id` 画面のルートと配置)
+ *   openspec/changes/admin-mobile-responsive/specs/admin-identity-document-review/spec.md
  */
 
-const router = useRouter();
 const session = useAuthSession();
 
 const adminMemberId = computed<MemberId | null>(() => {
   const uid = session.session.value?.user.id;
   return uid ? (uid as MemberId) : null;
 });
-
-async function onSignOut(): Promise<void> {
-  await session.signOut();
-  await router.replace({ name: "login" });
-}
 </script>
 
 <template>
-  <main class="flex h-screen flex-col bg-paper text-ink font-jp">
-    <header
-      class="flex items-center justify-between border-b border-hairline bg-paper px-hq-8 py-hq-3"
-    >
-      <div>
-        <PageBreadcrumb
-          :items="[
-            { label: 'Workspace', to: { name: 'dashboard' } },
-            {
-              label: 'Identity Documents',
-              to: { name: 'identity-documents' },
-            },
-            { label: '詳細' },
-          ]"
-        />
-        <h1 class="font-jp-display text-lg text-ink">書類詳細</h1>
-      </div>
-      <button
-        type="button"
-        class="font-jp text-sm text-muted hover:text-ink"
-        @click="onSignOut"
-      >
-        ログアウト
-      </button>
+  <div class="flex h-screen flex-col bg-paper text-ink font-jp">
+    <header class="border-b border-hairline bg-paper px-hq-6 py-hq-3 md:px-hq-8">
+      <PageBreadcrumb
+        :items="[
+          { label: 'Workspace', to: { name: 'dashboard' } },
+          {
+            label: 'Identity Documents',
+            to: { name: 'identity-documents' },
+          },
+          { label: '詳細' },
+        ]"
+      />
+      <h1 class="font-jp-display text-lg text-ink">書類詳細</h1>
     </header>
 
     <div class="flex-1 overflow-hidden">
@@ -73,5 +58,5 @@ async function onSignOut(): Promise<void> {
         </p>
       </div>
     </div>
-  </main>
+  </div>
 </template>
