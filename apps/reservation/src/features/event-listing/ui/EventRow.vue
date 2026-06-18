@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { EventListItem } from "@/entities/event";
+import { formatAvailability, type EventListItem } from "@/entities/event";
 import type { ReservationId } from "@/entities/reservation";
 import { formatFee, formatTimeRange } from "@/shared/lib/format-date";
 import {
@@ -59,6 +59,19 @@ const hasMyWaitlist = computed(
     !hasMyReservation.value &&
     props.waitlistReservationId !== null &&
     props.waitlistReservationId !== undefined,
+);
+
+const isFull = computed(
+  () => formatAvailability(props.event.availability).isFull,
+);
+
+/**
+ * 満員かつ自分が未登録（予約済み / キャンセル待ち登録済みのいずれでもない）の行に、
+ * 「キャンセル待ち受付中」のヒントを出す。タップで詳細のキャンセル待ち導線に進める
+ * ことを一覧上で示唆する。
+ */
+const showWaitlistHint = computed(
+  () => isFull.value && !hasMyReservation.value && !hasMyWaitlist.value,
 );
 
 const linkTo = computed(() => {
@@ -124,6 +137,12 @@ const linkTo = computed(() => {
           data-testid="event-row-waitlist-badge"
           aria-label="キャンセル待ち登録済み"
         >キャンセル待ち</span>
+        <span
+          v-else-if="showWaitlistHint"
+          class="inline-flex items-center font-jp text-xs font-medium leading-none px-hq-2 py-hq-1 rounded-hq-pill bg-accent-soft text-accent"
+          data-testid="event-row-waitlist-hint"
+          aria-label="キャンセル待ち受付中"
+        >キャンセル待ち受付中</span>
       </div>
     </div>
   </router-link>
