@@ -371,3 +371,34 @@ describe("updateReservation - 同伴者数 / 連絡事項の編集", () => {
     });
   });
 });
+
+describe("cancelWaitlistReservation - キャンセル待ちの取り消し", () => {
+  const wlId = unsafeReservationId("rs-wl-1");
+
+  it("waitlist 行を cancelled に更新成功 (1 行) で解決する", async () => {
+    cancelUpdateSpec.current = { data: [{ id: "rs-wl-1" }], error: null };
+    const { cancelWaitlistReservation } = await import("./booking-client");
+    await expect(cancelWaitlistReservation(wlId)).resolves.toBeUndefined();
+    const cancelCall = updateCalls.find((c) => c.type === "cancel");
+    expect(cancelCall?.payload).toEqual({ status: "cancelled" });
+  });
+
+  it("0 行更新 (他人の id / 既に waitlist でない) は 'rls' で投げる", async () => {
+    cancelUpdateSpec.current = { data: [], error: null };
+    const { cancelWaitlistReservation } = await import("./booking-client");
+    await expect(cancelWaitlistReservation(wlId)).rejects.toMatchObject({
+      kind: "rls",
+    });
+  });
+
+  it("RLS 違反 (42501) を 'rls' で投げる", async () => {
+    cancelUpdateSpec.current = {
+      data: null,
+      error: { code: "42501", message: "rls" },
+    };
+    const { cancelWaitlistReservation } = await import("./booking-client");
+    await expect(cancelWaitlistReservation(wlId)).rejects.toMatchObject({
+      kind: "rls",
+    });
+  });
+});

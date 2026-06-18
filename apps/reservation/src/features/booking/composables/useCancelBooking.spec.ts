@@ -4,6 +4,7 @@ import { unsafeReservationId } from "@high-q/shared";
 const apiMock = {
   insertReservation: vi.fn(),
   cancelReservation: vi.fn(),
+  cancelWaitlistReservation: vi.fn(),
 };
 
 vi.mock("../api/booking-client", async () => {
@@ -14,6 +15,8 @@ vi.mock("../api/booking-client", async () => {
     ...actual,
     insertReservation: (...args: unknown[]) => apiMock.insertReservation(...args),
     cancelReservation: (...args: unknown[]) => apiMock.cancelReservation(...args),
+    cancelWaitlistReservation: (...args: unknown[]) =>
+      apiMock.cancelWaitlistReservation(...args),
   };
 });
 
@@ -190,5 +193,37 @@ describe("useCancelBooking - 二重送信防止", () => {
 
     deferred.resolve();
     await first;
+  });
+});
+
+describe("useCancelBooking - cancelWaitlist (キャンセル待ち取り消し)", () => {
+  const id = unsafeReservationId("rs-wl-1");
+
+  it("成功で true を返し、通知メールは送らない", async () => {
+    apiMock.cancelWaitlistReservation.mockResolvedValueOnce(undefined);
+    const { useCancelBooking } = await import("./useCancelBooking");
+    const c = useCancelBooking();
+
+    const ok = await c.cancelWaitlist(id);
+
+    expect(ok).toBe(true);
+    expect(apiMock.cancelWaitlistReservation).toHaveBeenCalledWith(id);
+    expect(
+      notificationMock.triggerReservationNotification,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("RLS エラーで false を返し error='rls'", async () => {
+    const { BookingApiError } = await import("../api/booking-client");
+    apiMock.cancelWaitlistReservation.mockRejectedValueOnce(
+      new BookingApiError("rls"),
+    );
+    const { useCancelBooking } = await import("./useCancelBooking");
+    const c = useCancelBooking();
+
+    const ok = await c.cancelWaitlist(id);
+
+    expect(ok).toBe(false);
+    expect(c.error.value).toBe("rls");
   });
 });

@@ -17,11 +17,12 @@
 
 ### New Capabilities
 
-- `reservation-waitlist-registration`: 満員イベントに対する会員からのキャンセル待ち登録の振る舞いを規定する。CTA 分岐（未登録 / 予約済み / 登録済み）、予約確認 Bottom Sheet のシェルを再利用したキャンセル待ち登録 UI、waitlist 行の作成と再活性化、二重登録の防止、登録後フィードバック、当該会員の自己予約状態取得、4 状態 UI とテストカバレッジを含む。
+- `reservation-waitlist-registration`: 満員イベントに対する会員からのキャンセル待ち登録の振る舞いを規定する。CTA 分岐（未登録 / 予約済み / 登録済み）、予約確認 Bottom Sheet のシェルを再利用したキャンセル待ち登録 UI、waitlist 行の作成と再活性化、二重登録の防止、登録後フィードバック、当該会員の自己予約状態取得、**ホーム一覧でのキャンセル待ち登録済み表示**、**キャンセル待ちの取り消し**、4 状態 UI とテストカバレッジを含む。
 
 ### Modified Capabilities
 
 - `reservation-events-and-booking`: 満員時のイベント詳細 CTA の要件を、無条件に無効化された「予約締切」から、当該会員が未登録のときキャンセル待ち登録導線を提示する形へ変更する（具体的な登録の振る舞いは新 capability `reservation-waitlist-registration` が規定）。
+- `reservation-history-page`: 未来のキャンセル待ち（`status='waitlist'` かつ未来）を「過去」グループから分離し、独立した「キャンセル待ち」グループとして表示する。各行から取り消し動線を提供する。
 - `rls-policies`: `reservations` の INSERT / UPDATE ポリシーを、会員が自己の行に設定可能なステータス集合をキャンセル待ちまで含めて明示限定する形へ変更する。
 
 > キャンセル待ち登録 UI は予約確認 Bottom Sheet（`reservation-booking-flow` capability）のシェルを再利用するが、キャンセル待ちは「予約」（支払い確約）とは別概念のため、`reservation-booking-flow` の create / edit 2 モード兼用要件自体は変更しない。シェル再利用と waitlist 用の表示差分は新 capability 側で規定する。

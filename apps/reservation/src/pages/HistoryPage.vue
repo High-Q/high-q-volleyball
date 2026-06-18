@@ -32,8 +32,16 @@ const fetchError = ref<string | null>(null);
 
 const cancelTarget = ref<MyReservationItem | null>(null);
 const cancelDialogOpen = ref<boolean>(false);
-const { submitting: cancelSubmitting, error: cancelError, cancel } =
-  useCancelBooking();
+const {
+  submitting: cancelSubmitting,
+  error: cancelError,
+  cancel,
+  cancelWaitlist,
+} = useCancelBooking();
+
+const cancelTargetIsWaitlist = computed(
+  () => cancelTarget.value?.status === "waitlist",
+);
 
 const successNotice = ref<string | null>(null);
 let successTimer: ReturnType<typeof setTimeout> | null = null;
@@ -72,14 +80,21 @@ function onRequestCancel(item: MyReservationItem): void {
 async function onConfirmCancel(): Promise<void> {
   const target = cancelTarget.value;
   if (target === null) return;
-  const ok = await cancel(target.id);
+  const isWaitlist = target.status === "waitlist";
+  const ok = isWaitlist
+    ? await cancelWaitlist(target.id)
+    : await cancel(target.id);
   if (ok) {
     reservations.value = reservations.value.map((r) =>
       r.id === target.id ? { ...r, status: "cancelled" } : r,
     );
     cancelDialogOpen.value = false;
     cancelTarget.value = null;
-    showSuccess("予約をキャンセルしました。");
+    showSuccess(
+      isWaitlist
+        ? "キャンセル待ちを取り消しました。"
+        : "予約をキャンセルしました。",
+    );
   }
 }
 
@@ -200,6 +215,16 @@ function goEvents(): void {
           @request-cancel="onRequestCancel"
         />
 
+        <!-- Waitlist group (満員イベントへの待機。未来分のみ) -->
+        <HistoryGroup
+          v-if="groups.waitlist.length > 0"
+          label="キャンセル待ち"
+          :items="groups.waitlist"
+          :show-cancel="true"
+          cancel-label="キャンセル待ちを取り消す"
+          @request-cancel="onRequestCancel"
+        />
+
         <!-- Past group -->
         <HistoryGroup
           v-if="groups.past.length > 0"
@@ -213,6 +238,7 @@ function goEvents(): void {
       v-if="cancelTarget !== null"
       :open="cancelDialogOpen"
       :event-start-at="cancelTarget.event.startAt"
+      :kind="cancelTargetIsWaitlist ? 'waitlist' : 'reservation'"
       :submitting="cancelSubmitting"
       :error-message="cancelErrorMessage"
       @update:open="cancelDialogOpen = $event"

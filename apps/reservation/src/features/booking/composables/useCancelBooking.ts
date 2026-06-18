@@ -2,12 +2,18 @@ import { ref, type Ref } from "vue";
 import type { BookingError, ReservationId } from "@/entities/reservation";
 import { jstStartOfDay } from "@/shared/lib/jst-calendar";
 import { triggerReservationNotification } from "@/shared/api/reservation-notification";
-import { BookingApiError, cancelReservation } from "../api/booking-client";
+import {
+  BookingApiError,
+  cancelReservation,
+  cancelWaitlistReservation,
+} from "../api/booking-client";
 
 export type UseCancelBookingReturn = {
   submitting: Ref<boolean>;
   error: Ref<BookingError | null>;
   cancel: (id: ReservationId) => Promise<boolean>;
+  /** キャンセル待ちの取り消し (waitlist→cancelled)。通知メールは送らない */
+  cancelWaitlist: (id: ReservationId) => Promise<boolean>;
   reset: () => void;
 };
 
@@ -50,11 +56,29 @@ export function useCancelBooking(): UseCancelBookingReturn {
     }
   }
 
+  async function cancelWaitlist(id: ReservationId): Promise<boolean> {
+    if (submitting.value) {
+      return false;
+    }
+    submitting.value = true;
+    error.value = null;
+    try {
+      await cancelWaitlistReservation(id);
+      // キャンセル待ちの取り消しは通知メールを送らない (登録時に送っていないため対称)。
+      return true;
+    } catch (cause) {
+      error.value = mapErrorToBookingError(cause);
+      return false;
+    } finally {
+      submitting.value = false;
+    }
+  }
+
   function reset(): void {
     error.value = null;
   }
 
-  return { submitting, error, cancel, reset };
+  return { submitting, error, cancel, cancelWaitlist, reset };
 }
 
 /**

@@ -4,11 +4,13 @@ import type { MyReservationItem } from "@/entities/reservation";
 import HistoryRow from "./HistoryRow.vue";
 
 defineProps<{
-  /** kicker 見出しに使うラベル（例: 「予約中」「過去」） */
+  /** kicker 見出しに使うラベル（例: 「予約中」「キャンセル待ち」「過去」） */
   label: string;
   items: ReadonlyArray<MyReservationItem>;
-  /** 各行にキャンセルボタンを描画するか（予約中グループのみ true） */
+  /** 各行に取り消しボタンを描画するか（予約中 / キャンセル待ちグループのみ true） */
   showCancel?: boolean;
+  /** 取り消しボタンのラベル（HistoryRow に委譲） */
+  cancelLabel?: string;
 }>();
 
 const emit = defineEmits<{
@@ -33,6 +35,7 @@ function onRequestCancel(item: MyReservationItem): void {
         :key="item.id"
         :item="item"
         :show-cancel="showCancel"
+        :cancel-label="cancelLabel"
         @request-cancel="onRequestCancel"
       />
     </div>

@@ -289,6 +289,30 @@ export async function cancelReservation(id: ReservationId): Promise<void> {
   }
 }
 
+/**
+ * キャンセル待ちの取り消し。status を `'waitlist' → 'cancelled'` に UPDATE する。
+ * 会員の `waitlist → cancelled` UPDATE は RLS で許可済み (rls-policies capability)。
+ * 0 行更新は RLS 違反 (他人の id) または既に waitlist ではない等のため `rls` として扱う。
+ */
+export async function cancelWaitlistReservation(
+  id: ReservationId,
+): Promise<void> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("reservations")
+    .update({ status: "cancelled" })
+    .eq("id", id as string)
+    .eq("status", "waitlist")
+    .select("id");
+
+  if (error !== null) {
+    throw mapPostgrestError(error);
+  }
+  if (data === null || data.length === 0) {
+    throw new BookingApiError("rls", null, "No row updated");
+  }
+}
+
 function mapPostgrestError(error: PostgrestError): BookingApiError {
   if (error.code === POSTGRES_UNIQUE_VIOLATION) {
     return new BookingApiError("duplicate", error);

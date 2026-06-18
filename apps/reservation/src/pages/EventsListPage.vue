@@ -34,6 +34,7 @@ const uid = session.session.value?.user.id ?? "";
 const {
   reservation: nextReservation,
   mineByEventId,
+  waitlistByEventId,
   loading: nextLoading,
   error: nextError,
   reload: reloadNext,
@@ -147,6 +148,7 @@ async function reloadAll(): Promise<void> {
               :key="event.id"
               :event="event"
               :reservation-id="mineByEventId.get(event.id) ?? null"
+              :waitlist-reservation-id="waitlistByEventId.get(event.id) ?? null"
             />
           </div>
         </section>

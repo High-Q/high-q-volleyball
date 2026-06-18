@@ -205,4 +205,55 @@ describe("EventRow", () => {
       expect(badge.text()).toContain("予約済");
     });
   });
+
+  describe("キャンセル待ち登録時の挙動 (waitlistReservationId 渡し)", () => {
+    const WL_ID = unsafeReservationId("44444444-4444-4444-4444-444444444444");
+
+    it("waitlistReservationId 指定時: 「キャンセル待ち」 chip が描画される", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent, waitlistReservationId: WL_ID },
+      });
+      const badge = wrapper.get('[data-testid="event-row-waitlist-badge"]');
+      expect(badge.text()).toContain("キャンセル待ち");
+      expect(
+        wrapper.find('[data-testid="event-row-mine-badge"]').exists(),
+      ).toBe(false);
+    });
+
+    it("waitlistReservationId 指定時: router-link は /reservations/:reservationId を指す", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent, waitlistReservationId: WL_ID },
+      });
+      const link = wrapper.findComponent({ name: "RouterLink" });
+      expect(link.props("to")).toEqual({
+        name: "reservation-detail",
+        params: { reservationId: WL_ID },
+      });
+    });
+
+    it("予約済 (reservationId) が waitlist より優先される", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: {
+          event: baseEvent,
+          reservationId: R_ID,
+          waitlistReservationId: WL_ID,
+        },
+      });
+      expect(wrapper.get('[data-testid="event-row-mine-badge"]').text()).toContain(
+        "予約済",
+      );
+      expect(
+        wrapper.find('[data-testid="event-row-waitlist-badge"]').exists(),
+      ).toBe(false);
+    });
+
+    it("waitlistReservationId 未指定: 「キャンセル待ち」 chip は描画されない", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent },
+      });
+      expect(
+        wrapper.find('[data-testid="event-row-waitlist-badge"]').exists(),
+      ).toBe(false);
+    });
+  });
 });

@@ -42,6 +42,7 @@ const upcomingState = {
 const nextState = {
   reservation: ref<MyReservationItem | null>(null),
   mineByEventId: ref<ReadonlyMap<EventId, ReservationId>>(new Map()),
+  waitlistByEventId: ref<ReadonlyMap<EventId, ReservationId>>(new Map()),
   loading: ref<boolean>(false),
   error: ref<Error | null>(null),
   reload: vi.fn(),
@@ -123,6 +124,7 @@ beforeEach(() => {
   upcomingState.error.value = null;
   nextState.reservation.value = null;
   nextState.mineByEventId.value = new Map();
+  nextState.waitlistByEventId.value = new Map();
   nextState.loading.value = false;
   nextState.error.value = null;
 });

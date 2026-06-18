@@ -28,3 +28,13 @@
 
 - [x] 6.1 不足分の component / unit テストを追加（新 capability spec の「主要シナリオ」: CTA 3 分岐 / 合計金額カード非表示 / waitlist 作成・再活性化 / 二重登録拒否 / 完了フィードバック / 自己予約状態が自分の行限定）。既存予約フロー（新規予約・再予約・キャンセル・編集）の回帰を確認。
 - [x] 6.2 `pnpm --filter @high-q/reservation test` と `pnpm build`（該当アプリ）をまとめて 1 回実行し、緑を確認。lint / 型エラーがないことを確認。
+
+## 7. UI フィードバック対応: キャンセル待ちの可視化と解除 (#344 追加)
+
+- [x] 7.1 booking-client に `cancelWaitlistReservation(id)` (waitlist→cancelled UPDATE、`.eq("status","waitlist")`) を TDD で追加。
+- [x] 7.2 useCancelBooking に `cancelWaitlist(id)` を追加 (通知メールは送らない)。TDD。
+- [x] 7.3 splitReservations に `waitlist` グループ (status='waitlist' AND 未来、ASC) を追加し past から除外。TDD。
+- [x] 7.4 CancelBookingDialog に `kind?: 'reservation'|'waitlist'` を追加 (waitlist は日付ゲート無しで常に解除可、文言差し替え)。HistoryRow に `cancelLabel?` prop 追加し HistoryGroup から pass-through。
+- [x] 7.5 EventRow に waitlist バッジ追加。useNextReservation に `waitlistByEventId` map (status='waitlist'+未来) を追加し EventsListPage から配線。
+- [x] 7.6 HistoryPage にキャンセル待ちグループ描画 + 解除ダイアログ (kind=waitlist) 配線。ReservationDetailPage に status='waitlist' 時の「キャンセル待ちを取り消す」CTA を追加。
+- [x] 7.7 specs 更新 (history-page MODIFIED / waitlist-registration ADDED / events-and-booking MODIFIED) + component テスト追加 + 全スイート/typecheck/build。
