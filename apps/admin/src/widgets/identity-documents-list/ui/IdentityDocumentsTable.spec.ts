@@ -50,7 +50,9 @@ describe("IdentityDocumentsTable モバイルカード (#155)", () => {
     const text = card.text();
     expect(text).toContain("山田 太郎");
     expect(text).toContain("taro@example.com");
-    expect(text).toContain("05/01 10:30");
+    // 提出日時は formatUploadedAt が local time 依存のため時刻は assert しない
+    // (CI=UTC / 開発機=JST で時刻がずれる)。TZ 非依存の日付のみ確認する。
+    expect(text).toContain("05/01");
     expect(text).toContain("確認中"); // status pending ラベル
     const detail = card
       .findAll("a")
