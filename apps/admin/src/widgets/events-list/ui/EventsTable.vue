@@ -166,7 +166,7 @@ function onHeaderKeyDown(col: SortKey, event: KeyboardEvent): void {
             :taken="row.reserved_count"
           />
           <span v-else class="font-mono text-xs text-muted">
-            {{ row.reserved_count }} 件
+            {{ row.reserved_count }} 名
           </span>
         </TableCell>
         <TableCell class="whitespace-nowrap">
@@ -227,7 +227,7 @@ function onHeaderKeyDown(col: SortKey, event: KeyboardEvent): void {
           :taken="row.reserved_count"
         />
         <span v-else class="font-mono text-xs text-muted"
-          >{{ row.reserved_count }} 件</span
+          >{{ row.reserved_count }} 名</span
         >
       </div>
       <div

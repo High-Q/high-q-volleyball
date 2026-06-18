@@ -126,11 +126,11 @@ describe("EventsTable", () => {
     expect(wrapper.emitted("update:sort")?.[0]).toEqual(["date", "desc"]);
   });
 
-  it("capacity が null の行は RemainBar の代わりに「N 件」を表示（『予約』プレフィックスは冗長なので省略）", async () => {
+  it("capacity が null の行は RemainBar の代わりに「N 名」を表示（『予約』プレフィックスは冗長なので省略）", async () => {
     const row = baseRow({ capacity: null, reserved_count: 12 });
     const wrapper = await renderTable({ rows: [row] });
-    expect(wrapper.text()).toContain("12 件");
-    expect(wrapper.text()).not.toContain("予約 12 件");
+    expect(wrapper.text()).toContain("12 名");
+    expect(wrapper.text()).not.toContain("予約 12 名");
   });
 
   it("会場名は施設種別末尾を削った主要部のみ表示する（モバイル改行抑止）", async () => {
@@ -321,12 +321,12 @@ describe("EventsTable", () => {
       ).toBe(true);
     });
 
-    it("capacity null のカードは「N 件」を表示する", async () => {
+    it("capacity null のカードは「N 名」を表示する", async () => {
       const wrapper = await renderTable({
         rows: [baseRow({ capacity: null, reserved_count: 9 })],
       });
       const card = wrapper.find("ul[role='list'] > li");
-      expect(card.text()).toContain("9 件");
+      expect(card.text()).toContain("9 名");
     });
   });
 });
