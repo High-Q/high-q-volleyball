@@ -21,8 +21,8 @@
 
 ## 5. イベント詳細 CTA 分岐 + フィードバック
 
-- [ ] 5.1 `EventStickyCta.vue` を拡張: props に自己予約状態を受け、満員時を分岐 — 未登録→「キャンセル待ちに登録」(押下可・`@waitlist` emit) / `waitlist` 登録済み→「キャンセル待ち登録済み」(無効) / `reserved`→ キャンセル待ち CTA 非描画。capacity NULL は従来の「予約に進む」。自己予約状態 fetch 失敗時は満員で従来の無効「予約締切」。
-- [ ] 5.2 `EventDetailPage.vue` で自己予約状態を `EventStickyCta` と `BookingSheet`(waitlist) に配線。`@waitlist` で waitlist シート起動。登録成功(`saved`)で完了トースト（既存 Toast 系を流用）を表示し、自己予約状態を楽観的に `waitlist` へ更新して CTA を「登録済み」に即時切替。
+- [x] 5.1 `EventStickyCta.vue` を拡張: props に自己予約状態を受け、満員時を分岐 — 未登録→「キャンセル待ちに登録」(押下可・`@waitlist` emit) / `waitlist` 登録済み→「キャンセル待ち登録済み」(無効) / `reserved`→ キャンセル待ち CTA 非描画。capacity NULL は従来の「予約に進む」。自己予約状態 fetch 失敗時は満員で従来の無効「予約締切」。
+- [x] 5.2 `EventDetailPage.vue` で自己予約状態を `EventStickyCta` と `BookingSheet`(waitlist) に配線。`@waitlist` で waitlist シート起動。登録成功(`saved`)で完了トースト（既存 Toast 系を流用）を表示し、自己予約状態を楽観的に `waitlist` へ更新して CTA を「登録済み」に即時切替。
 
 ## 6. 最終確認（UI 変更まとめてテスト・ビルド）
 
