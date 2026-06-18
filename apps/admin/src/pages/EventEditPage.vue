@@ -76,7 +76,8 @@ const eventId = computed(() =>
 </script>
 
 <template>
-  <main class="min-h-screen bg-paper text-ink font-jp">
+  <!-- #155 シェルが <main> を所有するため root は <div>。min-h-full でシェル内に収める -->
+  <div class="min-h-full bg-paper text-ink font-jp">
     <!-- Loading -->
     <div v-if="status === 'loading'" class="px-hq-6 py-hq-8">
       <Kicker color="muted">— Workspace · Events / Edit</Kicker>
@@ -124,5 +125,5 @@ const eventId = computed(() =>
         />
       </template>
     </EventForm>
-  </main>
+  </div>
 </template>

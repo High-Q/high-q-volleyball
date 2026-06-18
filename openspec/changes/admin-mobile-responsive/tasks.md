@@ -23,8 +23,8 @@
 
 ## 4. フォーム / master-detail（モバイル縦積み）
 
-- [ ] 4.1 `events-crud`（create / edit）をシェル配下に置き、既存モバイルファースト要件（1 カラム縦積み・44px・AlertDialog full-width）の回帰が無いことを確認
-- [ ] 4.2 `VenuesPage` の master-detail をモバイルでビュー切替（リスト⇄フォーム）にし、詳細フォームを 1 カラム縦積みに。切替の Component テスト
+- [x] 4.1 `events-crud`（create / edit）をシェル配下に置き、既存モバイルファースト要件（1 カラム縦積み・44px・AlertDialog full-width）の回帰が無いことを確認
+- [x] 4.2 `VenuesPage` の master-detail をモバイルでビュー切替（リスト⇄フォーム）にし、詳細フォームを 1 カラム縦積みに。切替の Component テスト
 
 ## 5. ログイン / 認証 / エラー
 
