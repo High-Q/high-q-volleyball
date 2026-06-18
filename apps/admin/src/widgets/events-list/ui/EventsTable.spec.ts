@@ -287,4 +287,46 @@ describe("EventsTable", () => {
     await wrapper.findAll("th").at(0)!.trigger("keydown", { key: "Enter" });
     expect(wrapper.emitted("update:sort")?.[0]).toEqual(["date", "desc"]);
   });
+
+  // #155 モバイル: テーブル→カード縦積み切替
+  describe("モバイルカード (#155)", () => {
+    it("デスクトップ Table は hidden md:block、カードリストは md:hidden で出し分ける", async () => {
+      const wrapper = await renderTable({ rows: [baseRow()] });
+      const tableWrapper = wrapper.find(".hq-table-wrapper");
+      expect(tableWrapper.classes()).toContain("hidden");
+      expect(tableWrapper.classes()).toContain("md:block");
+      const cardList = wrapper.find("ul[role='list']");
+      expect(cardList.exists()).toBe(true);
+      expect(cardList.classes()).toContain("md:hidden");
+    });
+
+    it("カードに全項目 (日付/タイトル/会場/時間/予約/ステータス/操作) を保持する", async () => {
+      const wrapper = await renderTable({ rows: [baseRow()] });
+      const card = wrapper.find("ul[role='list'] > li");
+      expect(card.exists()).toBe(true);
+      const text = card.text();
+      expect(text).toContain("ゆる練 vol.43"); // タイトル
+      expect(text).toContain("亀戸"); // 会場 (短縮)
+      expect(text).toContain("公開中"); // ステータス
+      // 詳細 / 編集 / 複製 の 3 リンク
+      const links = card.findAll("a");
+      expect(links.length).toBe(3);
+      expect(
+        links.some((a) => a.attributes("href")?.endsWith("/edit")),
+      ).toBe(true);
+      expect(
+        links.some((a) =>
+          a.attributes("href")?.includes("/events/new?from="),
+        ),
+      ).toBe(true);
+    });
+
+    it("capacity null のカードは「N 件」を表示する", async () => {
+      const wrapper = await renderTable({
+        rows: [baseRow({ capacity: null, reserved_count: 9 })],
+      });
+      const card = wrapper.find("ul[role='list'] > li");
+      expect(card.text()).toContain("9 件");
+    });
+  });
 });

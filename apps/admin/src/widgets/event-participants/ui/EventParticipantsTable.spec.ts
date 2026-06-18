@@ -225,3 +225,46 @@ describe("EventParticipantsTable - 氏名ボタン (member-clicked)", () => {
     expect(wrapper.text()).toContain("退会済み会員");
   });
 });
+
+describe("EventParticipantsTable - モバイルカード (#155)", () => {
+  it("Table は hidden md:block、カードリストは md:hidden で出し分ける", () => {
+    wrapper = mount(EventParticipantsTable, { props: { rows: [makeRow()] } });
+    expect(wrapper.find(".hq-table-wrapper").classes()).toContain("hidden");
+    expect(wrapper.find(".hq-table-wrapper").classes()).toContain("md:block");
+    expect(wrapper.find("ul[role='list']").classes()).toContain("md:hidden");
+  });
+
+  it("チェックイン済のカードは success-soft 背景でハイライトする", () => {
+    wrapper = mount(EventParticipantsTable, {
+      props: { rows: [makeRow({ checked_in_at: "2026-04-28T10:30:00Z" })] },
+    });
+    const card = wrapper.find("ul[role='list'] > li");
+    expect(card.classes()).toContain("bg-success-soft");
+  });
+
+  it("未チェックインのカードはハイライトしない", () => {
+    wrapper = mount(EventParticipantsTable, {
+      props: { rows: [makeRow({ checked_in_at: null })] },
+    });
+    const card = wrapper.find("ul[role='list'] > li");
+    expect(card.classes()).not.toContain("bg-success-soft");
+  });
+
+  it("カードに全項目 + 操作 (チェックイン / キャンセル / 同伴) を保持する", () => {
+    wrapper = mount(EventParticipantsTable, {
+      props: { rows: [makeRow()] },
+    });
+    const card = wrapper.find("ul[role='list'] > li");
+    expect(card.text()).toContain("山田 太郎");
+    expect(card.text()).toContain("yamada@example.com");
+    expect(card.find(".stub-checkin").exists()).toBe(true);
+    expect(card.find(".stub-cancel").exists()).toBe(true);
+    expect(card.find(".stub-guest").exists()).toBe(true);
+  });
+
+  it("カードの操作行は 44px 以上のタップ領域を確保する", () => {
+    wrapper = mount(EventParticipantsTable, { props: { rows: [makeRow()] } });
+    const card = wrapper.find("ul[role='list'] > li");
+    expect(card.find(".min-h-\\[44px\\]").exists()).toBe(true);
+  });
+});

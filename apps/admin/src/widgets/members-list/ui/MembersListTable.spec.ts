@@ -121,3 +121,55 @@ describe("MembersListTable incomplete signup badge (#293)", () => {
     expect(incompleteBadge.text()).toContain("書類未提出");
   });
 });
+
+describe("MembersListTable モバイルカード (#155)", () => {
+  it("Table は hidden md:block、カードリストは md:hidden で出し分ける", () => {
+    const wrapper = mount(MembersListTable, {
+      props: {
+        rows: [{ ...BASE_ROW, correction_request_count: 0 }],
+        sort: "last_attended_at",
+        dir: "desc",
+      },
+    });
+    expect(wrapper.find(".hq-table-wrapper").classes()).toContain("hidden");
+    expect(wrapper.find(".hq-table-wrapper").classes()).toContain("md:block");
+    expect(wrapper.find("ul[role='list']").classes()).toContain("md:hidden");
+  });
+
+  it("カードに全項目を保持する (名前/メール/経験/初回/累計/最終/メモ)", () => {
+    const wrapper = mount(MembersListTable, {
+      props: {
+        rows: [
+          {
+            ...BASE_ROW,
+            correction_request_count: 0,
+            email: "misaki@example.com",
+            attended_count: 5,
+          },
+        ],
+        sort: "last_attended_at",
+        dir: "desc",
+      },
+    });
+    const card = wrapper.find("ul[role='list'] > li");
+    expect(card.exists()).toBe(true);
+    const text = card.text();
+    expect(text).toContain("田中 美咲");
+    expect(text).toContain("misaki@example.com");
+    expect(text).toContain("5 回");
+  });
+
+  it("カードのタップで click-row を emit する", async () => {
+    const wrapper = mount(MembersListTable, {
+      props: {
+        rows: [{ ...BASE_ROW, correction_request_count: 0 }],
+        sort: "last_attended_at",
+        dir: "desc",
+      },
+    });
+    await wrapper.find("ul[role='list'] > li").trigger("click");
+    const emitted = wrapper.emitted("click-row");
+    expect(emitted).toBeTruthy();
+    expect(emitted?.[0]?.[0]).toBe(BASE_ROW.id);
+  });
+});

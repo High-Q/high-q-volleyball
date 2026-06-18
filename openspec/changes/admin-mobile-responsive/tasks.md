@@ -16,10 +16,10 @@
 
 ## 3. 一覧のテーブル→カード（モバイル）
 
-- [ ] 3.1 `widgets/events-list`: デスクトップ Table 維持 + モバイル `DataCardList` カード（全 7 項目保持・横スクロール無し）。切替の Component テストを TDD で追加
-- [ ] 3.2 `widgets/members-list`: 同様にモバイルカード化（各バッジ保持）。Component テスト
-- [ ] 3.3 `widgets/identity-documents-list`: 同様にモバイルカード化（6 項目保持）。Component テスト
-- [ ] 3.4 `widgets/event-participants`: モバイルカード化（チェックイン済を背景色でハイライト・操作要素 44px 以上・全項目保持）+ 参加者一覧の内側スクロールをカードリストでも維持。Component テスト
+- [x] 3.1 `widgets/events-list`: デスクトップ Table 維持 + モバイル `DataCardList` カード（全 7 項目保持・横スクロール無し）。切替の Component テストを TDD で追加
+- [x] 3.2 `widgets/members-list`: 同様にモバイルカード化（各バッジ保持）。Component テスト
+- [x] 3.3 `widgets/identity-documents-list`: 同様にモバイルカード化（6 項目保持）。Component テスト
+- [x] 3.4 `widgets/event-participants`: モバイルカード化（チェックイン済を背景色でハイライト・操作要素 44px 以上・全項目保持）+ 参加者一覧の内側スクロールをカードリストでも維持。Component テスト
 
 ## 4. フォーム / master-detail（モバイル縦積み）
 
