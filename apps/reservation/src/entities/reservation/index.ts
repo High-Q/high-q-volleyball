@@ -17,4 +17,8 @@ export {
   type MyReservationItem,
 } from "./api/myReservations";
 export { fetchMyReservation } from "./api/myReservation";
+export {
+  fetchMyEventReservation,
+  type MyEventReservation,
+} from "./api/myEventReservation";
 export { default as ReservationStatusBadge } from "./ui/ReservationStatusBadge.vue";

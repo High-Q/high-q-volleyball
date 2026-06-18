@@ -11,8 +11,8 @@
 
 ## 3. 自己予約状態の取得（TDD）
 
-- [ ] 3.1 `apps/reservation/src/entities/reservation/api/myEventReservation.ts` + spec を追加: `(reservationId 不明前提で) event_id + member_id` で当該会員の当該イベント行（`id`/`status`/`guest_count`/`note`）を取得。`.eq('event_id', ...).eq('member_id', uid)` を明示し RLS と二重防衛。0 行は `null`（未登録）。`entities/reservation/index.ts` で公開。
-- [ ] 3.2 `features/event-detail/composables/useMyEventReservation.ts`（または `useEventDetail` を拡張）で自己予約状態 ref を提供。イベント本体と並行取得し、取得失敗時は `null` を返して CTA を安全側に倒す。
+- [x] 3.1 `apps/reservation/src/entities/reservation/api/myEventReservation.ts` + spec を追加: `(reservationId 不明前提で) event_id + member_id` で当該会員の当該イベント行（`id`/`status`/`guest_count`/`note`）を取得。`.eq('event_id', ...).eq('member_id', uid)` を明示し RLS と二重防衛。0 行は `null`（未登録）。`entities/reservation/index.ts` で公開。
+- [x] 3.2 `features/event-detail/composables/useMyEventReservation.ts`（または `useEventDetail` を拡張）で自己予約状態 ref を提供。イベント本体と並行取得し、取得失敗時は `null` を返して CTA を安全側に倒す。
 
 ## 4. キャンセル待ち登録 UI（Sheet 再利用）
 
