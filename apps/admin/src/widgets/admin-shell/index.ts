@@ -8,5 +8,6 @@
  *   openspec/changes/admin-mobile-responsive/specs/admin-responsive-shell/spec.md
  */
 export { default as AdminShell } from "./ui/AdminShell.vue";
+export { default as AppBarAction } from "./ui/AppBarAction.vue";
 export { ADMIN_NAV_ITEMS, isNavItemActive } from "./model/navItems";
 export type { AdminNavItem } from "./model/navItems";

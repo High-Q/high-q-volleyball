@@ -70,7 +70,7 @@ const drawerOpen = ref(false);
         <div id="admin-appbar-action" class="ml-auto flex items-center" />
       </header>
 
-      <main class="min-w-0 flex-1">
+      <main class="flex min-w-0 flex-1 flex-col">
         <slot />
       </main>
     </div>

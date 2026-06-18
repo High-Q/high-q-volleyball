@@ -3,18 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 
-const {
-  useEventsListDataMock,
-  useVenuesMock,
-  useAuthSessionMock,
-  signOutMock,
-  usePendingCountMock,
-} = vi.hoisted(() => ({
+const { useEventsListDataMock, useVenuesMock } = vi.hoisted(() => ({
   useEventsListDataMock: vi.fn(),
   useVenuesMock: vi.fn(),
-  useAuthSessionMock: vi.fn(),
-  signOutMock: vi.fn(),
-  usePendingCountMock: vi.fn(),
 }));
 
 vi.mock("@/widgets/events-list/composables/useEventsListData", () => ({
@@ -24,19 +15,6 @@ vi.mock("@/widgets/events-list/composables/useEventsListData", () => ({
 vi.mock("@/entities/venue", () => ({
   useVenues: useVenuesMock,
   shortenVenueName: (name: string) => name,
-}));
-
-vi.mock("@/features/auth", () => ({
-  useAuthSession: useAuthSessionMock,
-}));
-
-vi.mock("@/features/identity-document-pending-badge", () => ({
-  usePendingCount: () => usePendingCountMock(),
-  PendingCountBadge: {
-    name: "PendingCountBadge",
-    props: ["count"],
-    template: '<span data-testid="pending-badge">{{ count }}</span>',
-  },
 }));
 
 import EventsListPage from "./EventsListPage.vue";
@@ -54,17 +32,6 @@ beforeEach(() => {
     venues: ref([]),
     reload: vi.fn(),
   });
-  useAuthSessionMock.mockReturnValue({
-    signOut: signOutMock,
-  });
-  signOutMock.mockReset();
-  signOutMock.mockResolvedValue(undefined);
-  usePendingCountMock.mockReturnValue({
-    count: ref(0),
-    loading: ref(false),
-    error: ref(null),
-    refresh: vi.fn(),
-  });
 });
 
 afterEach(() => {
@@ -77,19 +44,16 @@ async function renderPage() {
     routes: [
       { path: "/", name: "dashboard", component: { template: "<div />" } },
       { path: "/events", name: "events", component: { template: "<div />" } },
-      { path: "/events/new", name: "events-new", component: { template: "<div />" } },
+      {
+        path: "/events/new",
+        name: "events-new",
+        component: { template: "<div />" },
+      },
       {
         path: "/events/:id/edit",
         name: "edit",
         component: { template: "<div />" },
       },
-      {
-        path: "/identity-documents",
-        name: "identity-documents",
-        component: { template: "<div />" },
-      },
-      { path: "/venues", name: "venues", component: { template: "<div />" } },
-      { path: "/members", name: "members", component: { template: "<div />" } },
       { path: "/login", name: "login", component: { template: "<div />" } },
     ],
   });
@@ -106,26 +70,15 @@ describe("EventsListPage", () => {
     expect(wrapper.text()).toContain("イベント");
   });
 
-  it("ログアウトボタンが見える", async () => {
+  // #155 グローバルナビ (会員 / 本人確認書類 / 会場 / ログアウト) は共通シェル
+  // (admin-shell) へ移設したため、Page header からは撤去された。
+  it("グローバルナビ / ログアウトを header に持たない", async () => {
     const { wrapper } = await renderPage();
-    expect(wrapper.text()).toContain("ログアウト");
-  });
-
-  it("「会員」リンクが /members へ遷移する", async () => {
-    const { wrapper } = await renderPage();
-    const link = wrapper.find('[aria-label="会員の一覧"]');
-    expect(link.exists()).toBe(true);
-    expect(link.attributes("href")).toBe("/members");
-  });
-
-  it("ログアウトボタン押下で signOut → /login に遷移", async () => {
-    const { wrapper, router } = await renderPage();
-    const btn = wrapper
+    expect(wrapper.find('[aria-label="会員の一覧"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/identity-documents"]').exists()).toBe(false);
+    const logout = wrapper
       .findAll("button")
       .find((b) => b.text() === "ログアウト");
-    await btn!.trigger("click");
-    await flushPromises();
-    expect(signOutMock).toHaveBeenCalledTimes(1);
-    expect(router.currentRoute.value.name).toBe("login");
+    expect(logout).toBeUndefined();
   });
 });

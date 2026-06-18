@@ -9,10 +9,10 @@
 
 ## 2. App 配線とグローバルナビ移設
 
-- [ ] 2.1 `App.vue` を、認証配下ルートはシェル経由・公開ルート（login / mfa / mfa-setup / auth-callback）はシェル無しで描画する構成に変更
-- [ ] 2.2 `DashboardPage` の header からグローバルナビ（会員 / 本人確認書類 / ログアウト）を削除して TopBar（パンくず + タイトル + 主 CTA）に縮約し、主 CTA をモバイルでアプリバーへ Teleport。本文 2 カラムの `md` 縦積みを確認
-- [ ] 2.3 `EventsListPage` / `EventDetailPage` / `MembersListPage` / `VenuesPage` / `IdentityDocumentsListPage` / `IdentityDocumentDetailPage` の header グローバルナビ行を削除して TopBar へ縮約（ページ固有アクションのみ残す）
-- [ ] 2.4 ナビ移設に伴う既存 page / router の spec（`*.spec.ts`）の期待値を更新（グローバルナビをシェルに移したことの反映）
+- [x] 2.1 `App.vue` を、認証配下ルートはシェル経由・公開ルート（login / mfa / mfa-setup / auth-callback）はシェル無しで描画する構成に変更
+- [x] 2.2 `DashboardPage` の header からグローバルナビ（会員 / 本人確認書類 / ログアウト）を削除して TopBar（パンくず + タイトル + 主 CTA）に縮約し、主 CTA をモバイルでアプリバーへ Teleport。本文 2 カラムの `md` 縦積みを確認
+- [x] 2.3 `EventsListPage` / `EventDetailPage` / `MembersListPage` / `VenuesPage` / `IdentityDocumentsListPage` / `IdentityDocumentDetailPage` の header グローバルナビ行を削除して TopBar へ縮約（ページ固有アクションのみ残す）
+- [x] 2.4 ナビ移設に伴う既存 page / router の spec（`*.spec.ts`）の期待値を更新（グローバルナビをシェルに移したことの反映）
 
 ## 3. 一覧のテーブル→カード（モバイル）
 
