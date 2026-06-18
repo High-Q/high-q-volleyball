@@ -1,7 +1,7 @@
 ## 1. RLS ポリシー migration（root-cause）
 
 - [x] 1.1 `supabase/migrations/<ts>_reservations_member_status_boundary.sql` を追加。`reservations_insert_self` を差し替え、会員の WITH CHECK を `member_id is not null and member_id = auth.uid() and status in ('reserved','waitlist')`（admin は従来どおり全 status）へ厳格化。`reservations_update_self_cancel` を差し替え、会員の WITH CHECK を `member_id = auth.uid() and status in ('reserved','cancelled','waitlist')` へ拡張（USING は不変）。両ポリシーとも `drop policy if exists` → `create policy` の冪等パターン + 末尾に `-- ROLLBACK:`（旧定義の再 create SQL）コメントを記す。
-- [ ] 1.2 dev DB へ `supabase db push`（レム実行）。`supabase db query --linked` でステータス境界を検証: 会員ロールで `waitlist` INSERT 可 / `attended` INSERT 不可 / `cancelled→waitlist` UPDATE 可 / `attended` UPDATE 不可、admin は全 status 可。結果を提示。
+- [x] 1.2 dev DB へ `supabase db push`（レム実行）。`supabase db query --linked` でステータス境界を検証: 会員ロールで `waitlist` INSERT 可 / `attended` INSERT 不可 / `cancelled→waitlist` UPDATE 可 / `attended` UPDATE 不可、admin は全 status 可。結果を提示。
 
 ## 2. booking API: キャンセル待ち作成と再活性化（TDD）
 
