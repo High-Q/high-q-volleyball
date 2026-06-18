@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises } from "@vue/test-utils";
 import { effectScope, ref, type EffectScope } from "vue";
+import { unsafeReservationId } from "@high-q/shared";
 
 const fetchMock = vi.fn();
 // memberRef はテストごとに作り直し、前テストの watcher が反応しないよう隔離する。
@@ -96,7 +97,12 @@ describe("useMyEventReservation", () => {
     const c = inScope(() => useMyEventReservation(ref("ev-1")));
     await flushPromises();
 
-    c.setLocal({ id: "rs-9", status: "waitlist", guestCount: 0, note: "" });
+    c.setLocal({
+      id: unsafeReservationId("rs-9"),
+      status: "waitlist",
+      guestCount: 0,
+      note: "",
+    });
     expect(c.resolved.value).toBe(true);
     expect(c.myReservation.value?.id).toBe("rs-9");
   });

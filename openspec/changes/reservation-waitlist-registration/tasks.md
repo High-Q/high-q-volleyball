@@ -26,5 +26,5 @@
 
 ## 6. 最終確認（UI 変更まとめてテスト・ビルド）
 
-- [ ] 6.1 不足分の component / unit テストを追加（新 capability spec の「主要シナリオ」: CTA 3 分岐 / 合計金額カード非表示 / waitlist 作成・再活性化 / 二重登録拒否 / 完了フィードバック / 自己予約状態が自分の行限定）。既存予約フロー（新規予約・再予約・キャンセル・編集）の回帰を確認。
-- [ ] 6.2 `pnpm --filter @high-q/reservation test` と `pnpm build`（該当アプリ）をまとめて 1 回実行し、緑を確認。lint / 型エラーがないことを確認。
+- [x] 6.1 不足分の component / unit テストを追加（新 capability spec の「主要シナリオ」: CTA 3 分岐 / 合計金額カード非表示 / waitlist 作成・再活性化 / 二重登録拒否 / 完了フィードバック / 自己予約状態が自分の行限定）。既存予約フロー（新規予約・再予約・キャンセル・編集）の回帰を確認。
+- [x] 6.2 `pnpm --filter @high-q/reservation test` と `pnpm build`（該当アプリ）をまとめて 1 回実行し、緑を確認。lint / 型エラーがないことを確認。

@@ -50,6 +50,22 @@ vi.mock("../composables/useUpdateBooking", () => ({
   }),
 }));
 
+const waitlistMock = vi.fn();
+const waitlistSubmitting = ref(false);
+const waitlistError = ref<string | null>(null);
+const waitlistReservationRef = ref<Reservation | null>(null);
+const waitlistReset = vi.fn();
+
+vi.mock("../composables/useCreateWaitlist", () => ({
+  useCreateWaitlist: () => ({
+    submitting: waitlistSubmitting,
+    error: waitlistError,
+    reservation: waitlistReservationRef,
+    create: waitlistMock,
+    reset: waitlistReset,
+  }),
+}));
+
 // ---------- fixtures ----------
 const sampleEvent: EventDetail = {
   id: unsafeEventId("ev-1"),
@@ -107,6 +123,9 @@ beforeEach(() => {
   updateSubmitting.value = false;
   updateError.value = null;
   updateReservationRef.value = null;
+  waitlistSubmitting.value = false;
+  waitlistError.value = null;
+  waitlistReservationRef.value = null;
   window.localStorage.clear();
 });
 
@@ -528,5 +547,76 @@ describe("BookingSheet - edit モードの期限切れ案内", () => {
       | HTMLButtonElement
       | undefined;
     expect(submit?.hasAttribute("disabled")).toBe(true);
+  });
+});
+
+async function mountWaitlistSheet(open = true) {
+  const BookingSheet = (await import("./BookingSheet.vue")).default;
+  const router = createRouter({ history: createMemoryHistory(), routes });
+  await router.push("/events/ev-1");
+  await router.isReady();
+
+  const saved: Reservation[] = [];
+  const Host = defineComponent({
+    components: { BookingSheet },
+    props: { initialOpen: { type: Boolean, default: true } },
+    setup(props) {
+      const isOpen = ref<boolean>(props.initialOpen);
+      return () =>
+        h(BookingSheet, {
+          open: isOpen.value,
+          event: sampleEvent,
+          mode: "waitlist",
+          "onUpdate:open": (v: boolean) => {
+            isOpen.value = v;
+          },
+          onSaved: (r: Reservation) => {
+            saved.push(r);
+          },
+        });
+    },
+  });
+
+  const wrapper = mount(Host, {
+    props: { initialOpen: open },
+    global: { plugins: [router] },
+    attachTo: document.body,
+  });
+  await flushPromises();
+  return { wrapper, saved };
+}
+
+describe("BookingSheet - waitlist モード", () => {
+  it("kicker / CTA 文言を出し、合計金額カードは描画しない", async () => {
+    await mountWaitlistSheet();
+    const body = document.body.textContent ?? "";
+    expect(body).toContain("Waitlist");
+    expect(
+      Array.from(document.body.querySelectorAll("button")).some((b) =>
+        b.textContent?.includes("キャンセル待ちに登録する"),
+      ),
+    ).toBe(true);
+    // BookingTotalCard は aria-label="合計金額" を持つ。waitlist では描画されない
+    expect(document.body.querySelector('[aria-label="合計金額"]')).toBeNull();
+  });
+
+  it("確定で createWaitlist.create を呼び phone をスナップショット、成功で saved を emit", async () => {
+    waitlistMock.mockResolvedValueOnce({
+      ...sampleReservation,
+      status: "waitlist",
+    });
+    const { saved } = await mountWaitlistSheet();
+    const submit = Array.from(document.body.querySelectorAll("button")).find(
+      (b) => b.textContent?.includes("キャンセル待ちに登録する"),
+    ) as HTMLButtonElement | undefined;
+    submit?.click();
+    await flushPromises();
+
+    expect(waitlistMock).toHaveBeenCalledTimes(1);
+    expect(waitlistMock.mock.calls[0]?.[0]).toMatchObject({
+      phoneAtBooking: "090-1234-5678",
+    });
+    expect(saved).toHaveLength(1);
+    expect(saved[0]?.status).toBe("waitlist");
   });
 });
