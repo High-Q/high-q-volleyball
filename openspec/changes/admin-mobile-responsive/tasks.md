@@ -34,7 +34,7 @@
 
 ## 6. E2E と最終確認（まとめて実行）
 
-- [ ] 6.1 モバイルビューポートの E2E を 1 本追加（ログイン → イベント詳細 → 参加者チェックイン の happy path）
+- [x] 6.1 モバイルビューポートの E2E を 1 本追加（ログイン → イベント詳細 → 参加者チェックイン の happy path）
 - [ ] 6.2 375 / 768 / 1280px で対象全画面が横スクロール無し・デスクトップ視覚回帰無しを目視確認
-- [ ] 6.3 まとめて実行: `pnpm exec vitest run` / ESLint（boundaries・no-restricted-imports）/ `stylelint` / 型チェック / `pnpm build:admin`
-- [ ] 6.4 デザイントークン準拠の grep（`apps/admin/src/{pages,widgets,features}/**/*.vue` で生 hex `#[0-9a-f]{3,6}` / `\[\d+px\]` のマッチ 0 件）
+- [x] 6.3 まとめて実行: `pnpm exec vitest run` / ESLint（boundaries・no-restricted-imports）/ `stylelint` / 型チェック / `pnpm build:admin`
+- [x] 6.4 デザイントークン準拠の grep（`apps/admin/src/{pages,widgets,features}/**/*.vue` で生 hex `#[0-9a-f]{3,6}` / `\[\d+px\]` のマッチ 0 件）

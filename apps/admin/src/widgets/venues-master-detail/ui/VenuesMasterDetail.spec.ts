@@ -1,6 +1,5 @@
 import { mount, flushPromises } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ref } from "vue";
 
 /**
  * #155 モバイル master-detail のビュー切替を検証する。
