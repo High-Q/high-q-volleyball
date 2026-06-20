@@ -11,8 +11,8 @@
 
 ## 3. キャンセル経路からの起動（fire-and-forget）
 
-- [ ] 3.1 `apps/reservation/src/shared/api/` に `triggerWaitlistPromotion(eventId)` を追加（`functions.invoke('promote-waitlist', { body: { eventId } })` を try/catch で握りつぶす、既存 `triggerReservationNotification` と同型）。`useCancelBooking.cancel` の成功後に当該予約の event_id で fire-and-forget 起動（撤回 `cancelWaitlist` では起動しない）。event_id は cancel 対象から解決する。
-- [ ] 3.2 管理画面のキャンセル代行成功後にも `promote-waitlist` を fire-and-forget 起動（`apps/admin` の該当キャンセル composable / mutation）。admin 側の起動 helper を `apps/admin/src/shared/api/` に追加。
+- [x] 3.1 `apps/reservation/src/shared/api/` に `triggerWaitlistPromotion(eventId)` を追加（`functions.invoke('promote-waitlist', { body: { eventId } })` を try/catch で握りつぶす、既存 `triggerReservationNotification` と同型）。`useCancelBooking.cancel` の成功後に当該予約の event_id で fire-and-forget 起動（撤回 `cancelWaitlist` では起動しない）。event_id は cancel 対象から解決する。
+- [x] 3.2 管理画面のキャンセル代行成功後にも `promote-waitlist` を fire-and-forget 起動（`apps/admin` の該当キャンセル composable / mutation）。admin 側の起動 helper を `apps/admin/src/shared/api/` に追加。
 
 ## 4. dev 動作確認
 

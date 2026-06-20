@@ -2,6 +2,7 @@ import { ref, type Ref } from "vue";
 import type { BookingError, ReservationId } from "@/entities/reservation";
 import { jstStartOfDay } from "@/shared/lib/jst-calendar";
 import { triggerReservationNotification } from "@/shared/api/reservation-notification";
+import { triggerWaitlistPromotion } from "@/shared/api/waitlist-promotion";
 import {
   BookingApiError,
   cancelReservation,
@@ -36,7 +37,7 @@ export function useCancelBooking(): UseCancelBookingReturn {
     submitting.value = true;
     error.value = null;
     try {
-      await cancelReservation(id);
+      const { eventId } = await cancelReservation(id);
       // キャンセル完了メール送信は fire-and-forget。helper 側で例外を握りつぶしているが、
       // 同期 throw / Promise rejection のどちらもキャンセル成立を妨げないよう二重防衛する。
       try {
@@ -45,6 +46,15 @@ export function useCancelBooking(): UseCancelBookingReturn {
         console.warn(
           "[useCancelBooking] notification trigger threw (ignored)",
           notifyErr,
+        );
+      }
+      // 枠が空くため、当該イベントのキャンセル待ち繰り上げを fire-and-forget で起動する。
+      try {
+        void triggerWaitlistPromotion(eventId);
+      } catch (promoteErr) {
+        console.warn(
+          "[useCancelBooking] promotion trigger threw (ignored)",
+          promoteErr,
         );
       }
       return true;

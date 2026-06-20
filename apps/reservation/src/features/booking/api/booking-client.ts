@@ -271,15 +271,20 @@ export async function updateReservation(
 /**
  * reservations の status を `'reserved' → 'cancelled'` に UPDATE。
  * 0 行更新は RLS 違反 (他人の id) または既にキャンセル済み等のため `rls` として扱う。
+ *
+ * キャンセルで枠が空くため、呼び出し側 (useCancelBooking) が当該 event_id で繰り上げを
+ * 起動できるよう、更新行の `event_id` を返す。
  */
-export async function cancelReservation(id: ReservationId): Promise<void> {
+export async function cancelReservation(
+  id: ReservationId,
+): Promise<{ eventId: string }> {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("reservations")
     .update({ status: "cancelled" })
     .eq("id", id as string)
     .eq("status", "reserved")
-    .select("id");
+    .select("id, event_id");
 
   if (error !== null) {
     throw mapPostgrestError(error);
@@ -287,6 +292,7 @@ export async function cancelReservation(id: ReservationId): Promise<void> {
   if (data === null || data.length === 0) {
     throw new BookingApiError("rls", null, "No row updated");
   }
+  return { eventId: (data[0] as { event_id: string }).event_id };
 }
 
 /**

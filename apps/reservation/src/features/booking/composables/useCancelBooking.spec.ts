@@ -29,9 +29,19 @@ vi.mock("@/shared/api/reservation-notification", () => ({
     notificationMock.triggerReservationNotification(...args),
 }));
 
+const promotionMock = {
+  triggerWaitlistPromotion: vi.fn(),
+};
+
+vi.mock("@/shared/api/waitlist-promotion", () => ({
+  triggerWaitlistPromotion: (...args: unknown[]) =>
+    promotionMock.triggerWaitlistPromotion(...args),
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
   notificationMock.triggerReservationNotification.mockResolvedValue(undefined);
+  promotionMock.triggerWaitlistPromotion.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -94,7 +104,7 @@ describe("isCancellable (JST 前日中まで)", () => {
 
 describe("useCancelBooking - 成功", () => {
   it("UPDATE 成功で true を返す", async () => {
-    apiMock.cancelReservation.mockResolvedValueOnce(undefined);
+    apiMock.cancelReservation.mockResolvedValueOnce({ eventId: "ev-1" });
     const { useCancelBooking } = await import("./useCancelBooking");
     const c = useCancelBooking();
 
@@ -135,7 +145,7 @@ describe("useCancelBooking - エラーマッピング", () => {
 
 describe("useCancelBooking - キャンセル完了メール送信トリガ", () => {
   it("UPDATE 成功時に triggerReservationNotification('cancelled') が発火される", async () => {
-    apiMock.cancelReservation.mockResolvedValueOnce(undefined);
+    apiMock.cancelReservation.mockResolvedValueOnce({ eventId: "ev-1" });
     const { useCancelBooking } = await import("./useCancelBooking");
     const c = useCancelBooking();
 
@@ -148,8 +158,33 @@ describe("useCancelBooking - キャンセル完了メール送信トリガ", () 
     );
   });
 
+  it("UPDATE 成功時に当該 event_id で繰り上げが起動される", async () => {
+    apiMock.cancelReservation.mockResolvedValueOnce({ eventId: "ev-42" });
+    const { useCancelBooking } = await import("./useCancelBooking");
+    const c = useCancelBooking();
+
+    await c.cancel(unsafeReservationId("rs-1"));
+
+    expect(promotionMock.triggerWaitlistPromotion).toHaveBeenCalledTimes(1);
+    expect(promotionMock.triggerWaitlistPromotion).toHaveBeenCalledWith("ev-42");
+  });
+
+  it("繰り上げ起動が例外を投げても cancel() は成功扱い", async () => {
+    apiMock.cancelReservation.mockResolvedValueOnce({ eventId: "ev-1" });
+    promotionMock.triggerWaitlistPromotion.mockImplementationOnce(() => {
+      throw new Error("promotion boom");
+    });
+    const { useCancelBooking } = await import("./useCancelBooking");
+    const c = useCancelBooking();
+
+    const ok = await c.cancel(unsafeReservationId("rs-1"));
+
+    expect(ok).toBe(true);
+    expect(c.error.value).toBeNull();
+  });
+
   it("メール送信トリガ自体が例外を投げても cancel() は成功扱い", async () => {
-    apiMock.cancelReservation.mockResolvedValueOnce(undefined);
+    apiMock.cancelReservation.mockResolvedValueOnce({ eventId: "ev-1" });
     notificationMock.triggerReservationNotification.mockImplementationOnce(() => {
       throw new Error("notification boom");
     });
@@ -179,8 +214,8 @@ describe("useCancelBooking - 二重送信防止", () => {
     const deferred: { resolve: () => void } = { resolve: () => undefined };
     apiMock.cancelReservation.mockImplementationOnce(
       () =>
-        new Promise<void>((resolve) => {
-          deferred.resolve = () => resolve();
+        new Promise<{ eventId: string }>((resolve) => {
+          deferred.resolve = () => resolve({ eventId: "ev-1" });
         }),
     );
     const { useCancelBooking } = await import("./useCancelBooking");
@@ -199,7 +234,7 @@ describe("useCancelBooking - 二重送信防止", () => {
 describe("useCancelBooking - cancelWaitlist (キャンセル待ち取り消し)", () => {
   const id = unsafeReservationId("rs-wl-1");
 
-  it("成功で true を返し、通知メールは送らない", async () => {
+  it("成功で true を返し、通知メール・繰り上げ起動は呼ばない", async () => {
     apiMock.cancelWaitlistReservation.mockResolvedValueOnce(undefined);
     const { useCancelBooking } = await import("./useCancelBooking");
     const c = useCancelBooking();
@@ -211,6 +246,8 @@ describe("useCancelBooking - cancelWaitlist (キャンセル待ち取り消し)"
     expect(
       notificationMock.triggerReservationNotification,
     ).not.toHaveBeenCalled();
+    // 撤回は枠を空けないため繰り上げを起動しない
+    expect(promotionMock.triggerWaitlistPromotion).not.toHaveBeenCalled();
   });
 
   it("RLS エラーで false を返し error='rls'", async () => {

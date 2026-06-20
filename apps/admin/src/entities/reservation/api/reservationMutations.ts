@@ -1,6 +1,7 @@
 import { type Result, ok, err } from "@high-q/shared";
 import type { ReservationId } from "@high-q/shared";
 import { getSupabase } from "@/shared/api/supabase";
+import { triggerWaitlistPromotion } from "@/shared/api/waitlist-promotion";
 
 /**
  * reservations への mutation API layer。
@@ -144,16 +145,27 @@ export async function cancelByAdmin(
   const idStr = reservationId as unknown as string;
 
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("reservations")
       .update({ status: "cancelled" })
-      .eq("id", idStr);
+      .eq("id", idStr)
+      .select("event_id");
 
     if (error) {
       return err({
         code: classifyError(error),
         message: error.message,
       });
+    }
+
+    // 枠が空くため、当該イベントのキャンセル待ち繰り上げを fire-and-forget で起動する。
+    const eventId = (data?.[0] as { event_id?: string } | undefined)?.event_id;
+    if (eventId) {
+      try {
+        void triggerWaitlistPromotion(eventId);
+      } catch {
+        // 起動失敗はキャンセル成立を妨げない
+      }
     }
 
     return ok(undefined);
