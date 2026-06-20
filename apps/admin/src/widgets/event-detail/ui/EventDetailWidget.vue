@@ -62,6 +62,8 @@ const TAB_ITEMS = computed(() => [
     id: "wait" as const,
     label: "キャンセル待ち",
     count: detail.data.value?.waitlist_count ?? 0,
+    // 待機者が 1 名以上いるときだけ件数を強調する
+    emphasizeCount: (detail.data.value?.waitlist_count ?? 0) > 0,
   },
   {
     id: "checkin" as const,

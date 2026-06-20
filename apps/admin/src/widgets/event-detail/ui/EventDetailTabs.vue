@@ -15,6 +15,8 @@ interface TabItem {
   label: string;
   count?: number;
   disabled?: boolean;
+  /** count を accent pill で強調する (例: キャンセル待ちが 1 名以上いるとき) */
+  emphasizeCount?: boolean;
   /** disabled タブの hover ツールチップ */
   comingSoon?: string;
 }
@@ -59,7 +61,14 @@ function onClick(item: TabItem): void {
       {{ item.label }}
       <span
         v-if="item.count !== undefined"
-        class="font-mono text-[10px] text-muted"
+        class="font-mono text-[10px] leading-none"
+        :class="
+          item.emphasizeCount
+            ? 'bg-accent text-paper font-medium rounded-hq-pill px-hq-2 py-px'
+            : 'text-muted'
+        "
+        :data-emphasized="item.emphasizeCount === true ? 'true' : undefined"
+        data-testid="tab-count"
       >
         {{ item.count }}
       </span>
