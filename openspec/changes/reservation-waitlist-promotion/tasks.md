@@ -28,3 +28,4 @@
 - [x] 6.1 `EventWaitlistPanel.vue` を追加。`getEventParticipants` を流用し `status='waitlist'` を created_at ASC で抽出、read-only リスト (登録順 / 表示名 / 同伴者数 / 計人数 / 登録日時) を 4 状態 (loading/empty/error/success) で描画。
 - [x] 6.2 `EventDetailWidget.vue` にタブ切替 (activeTab) を追加し「キャンセル待ち」タブを有効化 (disabled 解除)。「当日チェックイン」タブは disabled 維持。タブ panel を出し分け。
 - [x] 6.3 `EventWaitlistPanel.spec` 追加 (waitlist 抽出・順序・empty・error)。admin 全スイート (984) + build 回帰なし。
+- [x] 6.4 参加者一覧タブから waitlist を除外 (useEventParticipantsData で status!='waitlist' フィルタ)。待機者は予約済みと混ざらず、キャンセル待ちタブに集約。spec scenario 追加。
