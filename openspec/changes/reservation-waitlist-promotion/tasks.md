@@ -22,3 +22,9 @@
 
 - [x] 5.1 選定ロジックの unit test green。reservation / admin の既存スイート回帰なし。`pnpm --filter @high-q/reservation test` ほか + 関連 build + typecheck をまとめて実行。
 - [x] 5.2 #344 と同一ブランチ（stack）で 1 PR を出せる状態を確認（両 change の openspec strict valid / migration 連番整合）。
+
+## 6. 管理画面: キャンセル待ちタブの有効化 (read-only)
+
+- [x] 6.1 `EventWaitlistPanel.vue` を追加。`getEventParticipants` を流用し `status='waitlist'` を created_at ASC で抽出、read-only リスト (登録順 / 表示名 / 同伴者数 / 計人数 / 登録日時) を 4 状態 (loading/empty/error/success) で描画。
+- [x] 6.2 `EventDetailWidget.vue` にタブ切替 (activeTab) を追加し「キャンセル待ち」タブを有効化 (disabled 解除)。「当日チェックイン」タブは disabled 維持。タブ panel を出し分け。
+- [x] 6.3 `EventWaitlistPanel.spec` 追加 (waitlist 抽出・順序・empty・error)。admin 全スイート (984) + build 回帰なし。
