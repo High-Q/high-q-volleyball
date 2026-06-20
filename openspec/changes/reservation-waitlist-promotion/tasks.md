@@ -1,7 +1,7 @@
 ## 1. 繰り上げ選定ロジック（純関数・TDD）
 
-- [ ] 1.1 `supabase/functions/_shared/waitlist-promotion.ts` に純関数 `selectPromotions({ capacity, booked, waitlist })` を追加。`waitlist` は `{ reservationId, memberId, guestCount, createdAt }[]`（created_at ASC 前提）。`available = capacity - booked` から、最古から **全件を走査** し `1 + guestCount <= available` の待機者を順に選定（`available` を減算）、収まらない待機者は **スキップ** して次へ。`capacity` NULL は空配列を返す。返り値は昇格対象の配列。
-- [ ] 1.2 `_shared/waitlist-promotion.spec`（または対応する Deno/vitest テスト）を TDD で追加: 空きに収まる最古を選定 / 収まらない先頭をスキップして次を繰り上げ / 残り空きに大人数が入らずスキップして埋め切る / まとまった空きで複数名 / capacity NULL → 空 / 空き 0 → 空。
+- [x] 1.1 `supabase/functions/_shared/waitlist-promotion.ts` に純関数 `selectPromotions({ capacity, booked, waitlist })` を追加。`waitlist` は `{ reservationId, memberId, guestCount, createdAt }[]`（created_at ASC 前提）。`available = capacity - booked` から、最古から **全件を走査** し `1 + guestCount <= available` の待機者を順に選定（`available` を減算）、収まらない待機者は **スキップ** して次へ。`capacity` NULL は空配列を返す。返り値は昇格対象の配列。
+- [x] 1.2 `_shared/waitlist-promotion.spec`（または対応する Deno/vitest テスト）を TDD で追加: 空きに収まる最古を選定 / 収まらない先頭をスキップして次を繰り上げ / 残り空きに大人数が入らずスキップして埋め切る / まとまった空きで複数名 / capacity NULL → 空 / 空き 0 → 空。
 
 ## 2. promote-waitlist Edge Function
 
