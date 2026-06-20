@@ -16,9 +16,9 @@
 
 ## 4. dev 動作確認
 
-- [ ] 4.1 `promote-waitlist` Edge Function を dev に deploy（レム実行）。満員テストイベントで「待機者あり → 予約をキャンセル → 待機者が reserved に昇格 + 繰り上げメール受信」を確認。同伴者数フィッティング（半端な空きでは昇格しない / まとまった空きで複数昇格）も dev データで確認し結果を提示。
+- [x] 4.1 `promote-waitlist` Edge Function を dev に deploy（レム実行）。満員テストイベントで「待機者あり → 予約をキャンセル → 待機者が reserved に昇格 + 繰り上げメール受信」を確認。同伴者数フィッティング（半端な空きでは昇格しない / まとまった空きで複数昇格）も dev データで確認し結果を提示。
 
 ## 5. 最終確認（#344 と stack）
 
-- [ ] 5.1 選定ロジックの unit test green。reservation / admin の既存スイート回帰なし。`pnpm --filter @high-q/reservation test` ほか + 関連 build + typecheck をまとめて実行。
-- [ ] 5.2 #344 と同一ブランチ（stack）で 1 PR を出せる状態を確認（両 change の openspec strict valid / migration 連番整合）。
+- [x] 5.1 選定ロジックの unit test green。reservation / admin の既存スイート回帰なし。`pnpm --filter @high-q/reservation test` ほか + 関連 build + typecheck をまとめて実行。
+- [x] 5.2 #344 と同一ブランチ（stack）で 1 PR を出せる状態を確認（両 change の openspec strict valid / migration 連番整合）。
