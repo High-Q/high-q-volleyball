@@ -5,9 +5,9 @@
 
 ## 2. promote-waitlist Edge Function
 
-- [ ] 2.1 `supabase/functions/promote-waitlist/index.ts` を追加。POST `{ eventId }`、authenticated 限定（Authorization JWT 検証）。service_role client で: (a) event の capacity 取得、(b) 現在 booked（`event_availability_view` の reserved_count）取得、(c) `status='waitlist'` を `created_at ASC` で取得、(d) `selectPromotions` で対象決定、(e) 対象を `status='reserved'` に UPDATE（guest_count/note/phone は保持＝当該列を触らない）。
-- [ ] 2.2 昇格した各会員へ繰り上げ通知メール送信。`_shared/reservation-mail-inputs` / `_shared/mailer-templates` に `promoted` 入力ビルダ + `renderReservationPromotedMail`（繰り上げ確定・イベント情報・LINE 導線）を追加。`members.email` を service_role で引き、`_shared/mailer` の `sendMail` で送信。送信失敗・1 件失敗は握りつぶしてログに残し、他の昇格/送信を継続。
-- [ ] 2.3 関数のレスポンスは `{ ok, promotedCount }`（失敗時も 200 + 構造化 body、既存通知関数の方針に準拠）。CORS / preflight は `_shared/cors` を流用。
+- [x] 2.1 `supabase/functions/promote-waitlist/index.ts` を追加。POST `{ eventId }`、authenticated 限定（Authorization JWT 検証）。service_role client で: (a) event の capacity 取得、(b) 現在 booked（`event_availability_view` の reserved_count）取得、(c) `status='waitlist'` を `created_at ASC` で取得、(d) `selectPromotions` で対象決定、(e) 対象を `status='reserved'` に UPDATE（guest_count/note/phone は保持＝当該列を触らない）。
+- [x] 2.2 昇格した各会員へ繰り上げ通知メール送信。`_shared/reservation-mail-inputs` / `_shared/mailer-templates` に `promoted` 入力ビルダ + `renderReservationPromotedMail`（繰り上げ確定・イベント情報・LINE 導線）を追加。`members.email` を service_role で引き、`_shared/mailer` の `sendMail` で送信。送信失敗・1 件失敗は握りつぶしてログに残し、他の昇格/送信を継続。
+- [x] 2.3 関数のレスポンスは `{ ok, promotedCount }`（失敗時も 200 + 構造化 body、既存通知関数の方針に準拠）。CORS / preflight は `_shared/cors` を流用。
 
 ## 3. キャンセル経路からの起動（fire-and-forget）
 

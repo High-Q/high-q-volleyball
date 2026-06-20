@@ -151,6 +151,62 @@ export function renderReservationUpdatedMail(
   };
 }
 
+export function renderReservationPromotedMail(
+  input: ReservationConfirmedInput,
+): { subject: string; body: string } {
+  const totalPeople = 1 + input.guestCount;
+  const totalFee = input.feePerPerson * totalPeople;
+
+  const lines: string[] = [
+    "High Q バレーボールサークルです。",
+    "キャンセルにより空きが出たため、キャンセル待ちから繰り上がり、ご予約が確定しました。",
+    "下記の内容でご予約を承りました。",
+    "",
+    `予約番号: ${input.reservationDisplayId}`,
+    `イベント: ${input.eventName}`,
+    `開催日時: ${input.startAtJst}`,
+    `会場: ${input.venueName}`,
+    `住所: ${input.venueAddress}`,
+  ];
+
+  if (input.venueMeetingPoint && input.venueMeetingPoint.trim().length > 0) {
+    lines.push(`集合地点: ${input.venueMeetingPoint}`);
+  }
+
+  if (input.venueMapUrl) {
+    lines.push(`会場マップ: ${input.venueMapUrl}`);
+  }
+
+  lines.push(
+    "",
+    `参加人数: ${totalPeople} 名 (ご本人 + 同伴 ${input.guestCount} 名)`,
+    `参加費: ${formatYen(input.feePerPerson)} × ${totalPeople} = ${formatYen(totalFee)} (当日現金でお支払いください)`,
+  );
+
+  if (input.note && input.note.trim().length > 0) {
+    lines.push("", "連絡事項:", input.note);
+  }
+
+  lines.push(
+    "",
+    "------",
+    "ご都合が合わない場合は、お早めにマイページからキャンセルをお願いします（次の方の繰り上げに回ります）。",
+    `予約詳細・キャンセルはマイページから操作できます: ${input.reservationDetailUrl}`,
+    "",
+    "当日の連絡 / やむを得ない当日キャンセルは LINE オープンチャットへお願いします。",
+    `LINE オープンチャット: ${input.lineOpenChatUrl}`,
+    "",
+    input.supportNote,
+    "",
+    ...SIGNATURE,
+  );
+
+  return {
+    subject: `【High Q】キャンセル待ち繰り上げのお知らせ・ご予約確定 (${input.reservationDisplayId})`,
+    body: lines.join("\n"),
+  };
+}
+
 // renderEventCancellationMail / EventCancellationMailInput は admin アプリの
 // 削除確認 Dialog でも本文プレビュー描画に再利用するため、SSOT として
 // `packages/shared/src/mail-templates/event-cancellation.ts` に移管済。
