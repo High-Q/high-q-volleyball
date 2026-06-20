@@ -110,6 +110,14 @@ const cancelErrorMessage = computed(() => {
 function goEvents(): void {
   void router.push({ name: "events-list" });
 }
+
+function onRequestRebook(item: MyReservationItem): void {
+  void router.push({
+    name: "event-detail",
+    params: { id: item.event.id },
+    query: { book: "1" },
+  });
+}
 </script>
 
 <template>
@@ -198,6 +206,14 @@ function goEvents(): void {
           :items="groups.upcoming"
           :show-cancel="true"
           @request-cancel="onRequestCancel"
+        />
+
+        <!-- Cancelled group (受付可能な行に再予約 CTA) -->
+        <HistoryGroup
+          v-if="groups.cancelled.length > 0"
+          label="キャンセル済み"
+          :items="groups.cancelled"
+          @request-rebook="onRequestRebook"
         />
 
         <!-- Past group -->
