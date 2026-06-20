@@ -53,6 +53,7 @@ function makeItem(
 async function mountRow(props: {
   item: MyReservationItem;
   showCancel?: boolean;
+  now?: Date;
 }) {
   const router = buildRouter();
   await router.push("/history");
@@ -62,6 +63,18 @@ async function mountRow(props: {
     global: { plugins: [router] },
   });
   return { wrapper, router };
+}
+
+const NOW = new Date("2026-05-07T09:00:00+09:00");
+const FUTURE = "2026-05-20T19:00:00+09:00";
+const PAST = "2026-05-01T19:00:00+09:00";
+
+function availability(capacity: number | null, reservedCount: number) {
+  return {
+    eventId: unsafeEventId("00000000-0000-0000-0000-eeeeeeeeeeee"),
+    capacity,
+    reservedCount,
+  };
 }
 
 describe("HistoryRow", () => {
@@ -117,6 +130,44 @@ describe("HistoryRow", () => {
   it("showCancel 未指定 (false) でキャンセルボタンが描画されない", async () => {
     const { wrapper } = await mountRow({ item: makeItem("reserved") });
     expect(wrapper.find('[data-testid="history-row-cancel"]').exists()).toBe(
+      false,
+    );
+  });
+
+  it("cancelled × 未開催 × 非満席 で「再予約する」CTA が描画され、押下で request-rebook emit (router-link への伝播は抑制)", async () => {
+    const item = makeItem("cancelled", { startAt: FUTURE, endAt: FUTURE });
+    const { wrapper, router } = await mountRow({ item, now: NOW });
+    const btn = wrapper.get('[data-testid="history-row-rebook"]');
+    await btn.trigger("click");
+    expect(wrapper.emitted("request-rebook")).toEqual([[item]]);
+    // 親 router-link への伝播抑制 → URL は /history のまま
+    expect(router.currentRoute.value.name).toBe("history");
+  });
+
+  it("cancelled × 開催済（受付終了）では「再予約する」CTA が描画されない", async () => {
+    const item = makeItem("cancelled", { startAt: PAST, endAt: PAST });
+    const { wrapper } = await mountRow({ item, now: NOW });
+    expect(wrapper.find('[data-testid="history-row-rebook"]').exists()).toBe(
+      false,
+    );
+  });
+
+  it("cancelled × 未開催 × 満席 では「再予約する」CTA が描画されない", async () => {
+    const item = makeItem("cancelled", {
+      startAt: FUTURE,
+      endAt: FUTURE,
+      availability: availability(10, 10),
+    });
+    const { wrapper } = await mountRow({ item, now: NOW });
+    expect(wrapper.find('[data-testid="history-row-rebook"]').exists()).toBe(
+      false,
+    );
+  });
+
+  it("非 cancelled 行には「再予約する」CTA が描画されない", async () => {
+    const item = makeItem("attended", { startAt: FUTURE, endAt: FUTURE });
+    const { wrapper } = await mountRow({ item, now: NOW });
+    expect(wrapper.find('[data-testid="history-row-rebook"]').exists()).toBe(
       false,
     );
   });

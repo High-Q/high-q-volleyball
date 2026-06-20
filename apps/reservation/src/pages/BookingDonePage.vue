@@ -10,6 +10,7 @@ import {
 } from "@/features/booking";
 import { useEventDetail } from "@/features/event-detail";
 import { useAuthSession } from "@/features/auth";
+import { formatAvailability } from "@/entities/event";
 import type { Reservation } from "@/entities/reservation";
 
 const route = useRoute();
@@ -32,6 +33,17 @@ const reservation = ref<Reservation | null>(null);
 
 const cancel = useCancelBooking();
 const dialogOpen = ref<boolean>(false);
+
+/** キャンセル成功後、対象イベントが受付可能なときに再予約導線を出すための状態 */
+const cancelledRebookable = ref<boolean>(false);
+
+/** 対象イベントが受付可能（未開催 × 非満席）か。新規予約と同一基準 */
+const eventBookable = computed<boolean>(
+  () =>
+    event.value !== null &&
+    Date.parse(event.value.startAt) > Date.now() &&
+    !formatAvailability(event.value.availability).isFull,
+);
 
 const cancelErrorMessage = computed(() => {
   switch (cancel.error.value) {
@@ -73,8 +85,21 @@ async function onConfirmCancel(): Promise<void> {
   const ok = await cancel.cancel(r.id);
   if (ok) {
     dialogOpen.value = false;
-    void router.replace({ name: "events-list", query: { cancelled: "1" } });
+    if (eventBookable.value) {
+      // 受付可能なら一覧へ飛ばさず、再予約導線を含む結果表示に切り替える
+      cancelledRebookable.value = true;
+    } else {
+      void router.replace({ name: "events-list", query: { cancelled: "1" } });
+    }
   }
+}
+
+function onRebook(): void {
+  void router.push({
+    name: "event-detail",
+    params: { id: idRef.value },
+    query: { book: "1" },
+  });
 }
 
 function goToList(): void {
@@ -129,6 +154,27 @@ function goToList(): void {
         </p>
         <Button variant="outline" size="sm" @click="goToList">
           イベント一覧へ戻る
+        </Button>
+      </div>
+
+      <div
+        v-else-if="cancelledRebookable"
+        class="bg-surface border border-hairline rounded-hq-lg p-hq-5 flex flex-col gap-hq-4"
+        data-testid="booking-cancelled-rebook"
+      >
+        <p class="font-jp-display text-lg text-ink m-0">
+          予約をキャンセルしました。
+        </p>
+        <p class="font-jp text-sm text-muted m-0">
+          やっぱり参加したい場合は、もう一度予約できます。
+        </p>
+        <Button
+          variant="primary"
+          size="md"
+          data-testid="booking-rebook"
+          @click="onRebook"
+        >
+          やっぱり予約する
         </Button>
       </div>
 

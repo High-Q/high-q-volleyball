@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Button, Kicker } from "@high-q/ui";
 import {
@@ -8,6 +8,7 @@ import {
   useEventDetail,
 } from "@/features/event-detail";
 import { BookingSheet } from "@/features/booking";
+import { formatAvailability } from "@/entities/event";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 import { formatJaDate } from "@/shared/lib/format-date";
 
@@ -22,6 +23,32 @@ const dateLabel = computed(() =>
 );
 
 const bookingSheetOpen = ref<boolean>(false);
+
+/**
+ * 再予約導線（履歴の「再予約する」/ 完了画面の「やっぱり予約する」）の共通着地点。
+ * `?book=1` 付きで到達し、対象イベントが受付可能（未開催 × 非満席）なときのみ
+ * create モードの予約 Sheet を自動オープンする。受付不可なら開かず通常詳細を見せる。
+ * 再オープン（ブラウザ戻る等）を防ぐため、判定後は book クエリを履歴から除去する。
+ */
+let deepLinkHandled = false;
+watch(
+  event,
+  (loaded) => {
+    if (deepLinkHandled || loaded === null) return;
+    deepLinkHandled = true;
+    if (route.query.book !== "1") return;
+    const bookable =
+      Date.parse(loaded.startAt) > Date.now() &&
+      !formatAvailability(loaded.availability).isFull;
+    if (bookable) {
+      bookingSheetOpen.value = true;
+    }
+    const nextQuery = { ...route.query };
+    delete nextQuery.book;
+    void router.replace({ query: nextQuery });
+  },
+  { immediate: true },
+);
 
 function goToList(): void {
   void router.push({ name: "events-list" });
