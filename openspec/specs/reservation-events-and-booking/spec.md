@@ -137,7 +137,7 @@ NEXT カードの直上に、ログイン会員の表示名を含む挨拶 kicke
 
 「予約に進む」ボタンは押下時に予約確認 **Bottom Sheet** を開く MUST。独立した予約確認ルートには遷移しない MUST NOT (詳細画面 URL を維持し、Sheet 内で同伴者数 / 連絡事項 / 合計金額 / 確定 CTA を完結させる)。本ボタンは予約導線 (`reservation-booking-flow` capability) の入口として機能する。
 
-満員時（capacity あり、かつ 予約埋まり具合 >= capacity）は「予約に進む」ボタンを disabled に切り替え、ラベルを「予約締切」と表示する SHALL。capacity NULL の場合は満員概念が成立しないため通常挙動を維持する MUST。
+満員時（capacity あり、かつ 予約埋まり具合 >= capacity）の下部 CTA は、当該会員の自己予約状態に応じて分岐する SHALL。当該会員が当該イベントへ未登録（予約もキャンセル待ちも持たない）の場合は、無効化された「予約締切」ではなく、押下可能なキャンセル待ち登録導線を提示する MUST。当該会員が既にキャンセル待ち登録済みの場合は登録済みの無効状態を表示する MUST。具体的な CTA 分岐・キャンセル待ち登録の振る舞いは `reservation-waitlist-registration` capability が規定する。capacity NULL の場合は満員概念が成立しないため通常挙動を維持する MUST。
 
 紹介文・写真・キャンセルポリシー欄・会場住所そのものは本画面に **含まない** MUST（MVP1 スコープアウト + UX 観点での廃止）。
 
@@ -161,9 +161,9 @@ NEXT カードの直上に、ログイン会員の表示名を含む挨拶 kicke
 - **WHEN** ユーザーが「予約に進む」ボタンを押下する
 - **THEN** 予約確認 Bottom Sheet が画面下部から立ち上がる（独立ルートには遷移せず、URL は詳細画面のまま。「準備中」案内表示も描画されない）
 
-#### Scenario: 満員時の CTA disabled
-- **WHEN** capacity あり・予約埋まり具合 >= capacity の状態で詳細画面に到達
-- **THEN** 「予約に進む」ボタンは disabled 状態となり、ラベルは「予約締切」と表示される。押下しても Bottom Sheet は開かない
+#### Scenario: 満員 + 未登録時はキャンセル待ち導線
+- **WHEN** capacity あり・予約埋まり具合 >= capacity の状態で、当該イベントへ予約もキャンセル待ちも持たない会員が詳細画面に到達
+- **THEN** 下部 CTA は無効化された「予約締切」ではなく、押下可能なキャンセル待ち登録導線として描画される（詳細は `reservation-waitlist-registration` capability に従う）
 
 #### Scenario: 紹介文・写真・キャンセルポリシー・会場住所の非表示
 - **WHEN** 詳細画面の DOM を確認
@@ -343,7 +343,9 @@ NEXT カードの直上に、ログイン会員の表示名を含む挨拶 kicke
 |---|---|---|---|---|
 | `capacity = NULL` | 「N 名 予約中」 | ラベル「予約状況」/ 値「N 名 予約中」 | 通常表示 | 「N 名 予約中」 + `UNCAPPED` モノラベル |
 | `capacity` あり、`booked < capacity` | 「あと N 名 募集」（N = `capacity - booked`） | ラベル「残り」/ 値「あと N 名 募集」 | 通常表示 | 「あと N 名 募集」 + 黒地用 progress bar |
-| 満員（`booked >= capacity`） | 「満員」 | ラベル「予約状況」/ 値「満員」 | disabled + ラベル「予約締切」 | 「満員」 + 黒地用 progress bar |
+| 満員（`booked >= capacity`） | 「満員」 | ラベル「予約状況」/ 値「満員」 | 自己予約状態で分岐（未登録時はキャンセル待ち登録導線） | 「満員」 + 黒地用 progress bar |
+
+満員時の詳細「予約に進む」CTA は、当該会員が未登録のときキャンセル待ち登録導線を提示し、キャンセル待ち登録済みのとき登録済みの無効状態を表示する MUST。その分岐・振る舞いの詳細は `reservation-waitlist-registration` capability が規定する。
 
 「席」という語は使用 SHALL NOT する（物理席との混同回避）。一覧チップ / 詳細 facts 行ともにプログレスバーは描画 MUST NOT する（当面 `capacity = NULL` 一辺倒のため意味を持たない。`capacity` 入力 UI 復活時に追加検討）。
 
@@ -365,9 +367,9 @@ NEXT カードでは availability strip を黒地ヒーローカードの下端�
 - **WHEN** イベント詳細画面が描画される
 - **THEN** Date / Time / Venue / Fee に加えて、予約埋まり具合の行が facts grid に表示される
 
-#### Scenario: 満員時の詳細 CTA disabled
-- **WHEN** capacity = 18、予約埋まり具合の集計値が 18 名以上の状態で詳細画面に到達
-- **THEN** 「予約に進む」CTA は disabled となり、ラベルは「予約締切」と表示される
+#### Scenario: 満員 + 未登録時の詳細 CTA はキャンセル待ち導線
+- **WHEN** capacity = 18、予約埋まり具合の集計値が 18 名以上の状態で、当該イベントへ未登録の会員が詳細画面に到達
+- **THEN** 「予約に進む」CTA は無効化された「予約締切」ではなく、押下可能なキャンセル待ち登録導線として描画される
 
 #### Scenario: NEXT カードに予約埋まり具合 strip が描画される (capacity NULL)
 - **WHEN** capacity NULL のイベントを NEXT カードとして表示し、予約埋まり具合の集計値が 9 名

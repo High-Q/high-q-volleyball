@@ -40,31 +40,30 @@ HistoryPage は予約中グループの下、過去グループの上に「キ�
 
 ### Requirement: 過去グループ
 
-HistoryPage は予約中グループ・キャンセル待ちグループの下に「過去」グループを SHALL 表示する。`status` が `'attended'` / `'cancelled'` / `'no_show'`、または `status='waitlist'` だが `event.startAt <= now()`（開催済みの待機）、または `status='reserved'` だが `event.startAt <= now()`（不整合）の予約を `events.start_at DESC`（最新が先頭）で並べる MUST。**未来の `status='waitlist'`（`event.startAt > now()`）は過去グループに含めず、キャンセル待ちグループへ振り分ける** MUST。
+HistoryPage は「キャンセル済み」グループの下に「過去」グループを SHALL 表示する。`status` が `'attended'` / `'no_show'`、または `status='waitlist'` だが `event.startAt <= now()`（開催済みの待機）、または `status='reserved'` だが `event.startAt <= now()`（不整合）の予約を `events.start_at DESC`（最新が先頭）で並べる MUST。**未来の `status='waitlist'`（`event.startAt > now()`）は過去グループに含めず、キャンセル待ちグループへ振り分ける** MUST。
+
+`status === 'cancelled'` の予約は受付可否を問わず「キャンセル済み」グループに集約するため、過去グループには **含めない** MUST NOT。
 
 グループ見出しは「— 過去 · {N}」のモノスペース kicker。
 
 行のバッジは状態によって以下を表示する MUST:
 
 - `'attended'` → 「参加済」（success + dot）
-- `'cancelled'` → 「キャンセル」（neutral）
 - `'no_show'` → 「未参加」（neutral）
 - `'waitlist'`（過去・開催済み）→ 「キャンセル待ち」（neutral）
 - `'reserved'`（過去・不整合）→ 「予約中」（accent + dot）+ 注記不要（描画はするが数は少ない想定）
-
-`'cancelled'` の行はイベント名を取消線（`line-through`）+ muted 色で描画する MUST。
 
 #### Scenario: 過去グループの並び順
 - **WHEN** 過去グループに該当する予約が複数ある
 - **THEN** `events.start_at` の降順に並ぶ
 
-#### Scenario: キャンセル済の取消線表示
-- **WHEN** `status='cancelled'` の行を確認する
-- **THEN** イベント名が `line-through` + muted 色で描画される
-
 #### Scenario: 状態バッジ
 - **WHEN** 各 status の行を確認する
-- **THEN** `attended`→「参加済」, `cancelled`→「キャンセル」, `no_show`→「未参加」, 過去 `waitlist`→「キャンセル待ち」のバッジが表示される
+- **THEN** `attended`→「参加済」, `no_show`→「未参加」, 過去 `waitlist`→「キャンセル待ち」 のバッジが表示される
+
+#### Scenario: キャンセル済は過去グループに含まれない
+- **WHEN** `status='cancelled'` の予約（受付可能・受付終了いずれも）がある
+- **THEN** 当該行は過去グループには描画されず、「キャンセル済み」グループに描画される
 
 #### Scenario: 未来のキャンセル待ちは過去グループに含まれない
 - **WHEN** `status='waitlist'` AND `event.startAt > now()` の予約が存在する
