@@ -18,8 +18,6 @@ const baseConfirmed: ReservationConfirmedInput = {
   startAtJst: "2026年5月22日 (金) 19:30〜21:30",
   venueName: "新宿スポーツセンター 第 2 体育館",
   venueAddress: "東京都新宿区大久保 3-1-2",
-  venueMeetingPoint: "正面玄関ロビーの High Q プラカード前",
-  venueMapUrl: "https://maps.example.com/shinjuku-sports",
   feePerPerson: 1500,
   guestCount: 0,
   note: null,
@@ -63,6 +61,22 @@ describe("renderReservationConfirmedMail", () => {
     expect(body).toContain(baseConfirmed.lineOpenChatUrl);
     expect(body).toContain(baseConfirmed.reservationDetailUrl);
     expect(body).toContain(baseConfirmed.supportNote);
+  });
+
+  it("LINE オープンチャット参加を必須として案内する", () => {
+    const { body } = renderReservationConfirmedMail(baseConfirmed);
+    expect(body).toContain("必ずご参加ください");
+    expect(body).toContain(baseConfirmed.lineOpenChatUrl);
+  });
+
+  it("予約番号 / 会場 / 参加人数 / 参加費は予約内容ブロック (連絡事項より前) にまとまる", () => {
+    const { body } = renderReservationConfirmedMail({
+      ...baseConfirmed,
+      note: "初参加です。",
+    });
+    // 予約内容 (番号〜参加費) は会員の連絡事項より前に置く
+    expect(body.indexOf("予約番号:")).toBeLessThan(body.indexOf("参加人数:"));
+    expect(body.indexOf("参加費:")).toBeLessThan(body.indexOf("連絡事項:"));
   });
 
   it("本文に「席」表現を含まない (バレーボールサークルにふさわしくない用語の禁止)", () => {
@@ -113,14 +127,6 @@ describe("renderReservationConfirmedMail", () => {
     expect(body).toContain("¥4,500");
   });
 
-  it("会場 map URL が null のとき本文に会場マップ行を出さない", () => {
-    const { body } = renderReservationConfirmedMail({
-      ...baseConfirmed,
-      venueMapUrl: null,
-    });
-    expect(body).not.toContain("会場マップ:");
-  });
-
   it("会場住所は常に本文に含まれる (秘匿会場の実住所開示)", () => {
     const { body } = renderReservationConfirmedMail({
       ...baseConfirmed,
@@ -129,28 +135,77 @@ describe("renderReservationConfirmedMail", () => {
     expect(body).toContain("住所: 東京都江東区有明 1-3-15 都立有明西学園");
   });
 
-  it("集合地点が登録されているとき本文に含まれる", () => {
+  it("会場メールテンプレートが値ありのとき『注意事項』が改行を保持して含まれる", () => {
     const { body } = renderReservationConfirmedMail({
       ...baseConfirmed,
-      venueMeetingPoint: "南門前 19:00 集合",
+      venueAccessNote: "飲み物は近くで買えません。\n駅で購入してお越しください。",
     });
-    expect(body).toContain("集合地点: 南門前 19:00 集合");
+    expect(body).toContain("注意事項:");
+    expect(body).toContain("飲み物は近くで買えません。\n駅で購入してお越しください。");
   });
 
-  it("集合地点が null のとき本文に集合地点行を出さない", () => {
-    const { body } = renderReservationConfirmedMail({
-      ...baseConfirmed,
-      venueMeetingPoint: null,
-    });
-    expect(body).not.toContain("集合地点:");
+  it("会場メールテンプレートが undefined / null / 空文字のとき『注意事項』を出さない", () => {
+    for (const v of [undefined, null, "   "]) {
+      const { body } = renderReservationConfirmedMail({
+        ...baseConfirmed,
+        venueAccessNote: v,
+      });
+      expect(body).not.toContain("注意事項:");
+    }
   });
 
-  it("集合地点が空文字のとき本文に集合地点行を出さない", () => {
+  it("イベント追記メッセージが値ありのとき『ご案内』が改行を保持して含まれる", () => {
     const { body } = renderReservationConfirmedMail({
       ...baseConfirmed,
-      venueMeetingPoint: "   ",
+      eventEmailNote: "19:00〜近くの居酒屋で懇親会あります。\n参加自由です！",
     });
-    expect(body).not.toContain("集合地点:");
+    expect(body).toContain("ご案内:");
+    expect(body).toContain("19:00〜近くの居酒屋で懇親会あります。\n参加自由です！");
+  });
+
+  it("イベント追記メッセージが undefined / null / 空文字のとき『ご案内』を出さない", () => {
+    for (const v of [undefined, null, "   "]) {
+      const { body } = renderReservationConfirmedMail({
+        ...baseConfirmed,
+        eventEmailNote: v,
+      });
+      expect(body).not.toContain("ご案内:");
+    }
+  });
+
+  it("会場メールテンプレートとイベント追記メッセージが両方値ありのとき両セクションが含まれる", () => {
+    const { body } = renderReservationConfirmedMail({
+      ...baseConfirmed,
+      venueAccessNote: "駅で飲み物を買ってきてください。",
+      eventEmailNote: "懇親会あります。",
+    });
+    expect(body).toContain("注意事項:");
+    expect(body).toContain("駅で飲み物を買ってきてください。");
+    expect(body).toContain("ご案内:");
+    expect(body).toContain("懇親会あります。");
+    // 主催側の案内は「注意事項」(会場) →「ご案内」(イベント) の順で隣接して並ぶ
+    expect(body.indexOf("注意事項:")).toBeLessThan(
+      body.indexOf("ご案内:"),
+    );
+  });
+
+  it("会員の連絡事項 → 主催の案内 (注意事項・ご案内) の順に並び、案内の間に挟まらない", () => {
+    const { body } = renderReservationConfirmedMail({
+      ...baseConfirmed,
+      venueAccessNote: "駅で飲み物を買ってきてください。",
+      eventEmailNote: "懇親会あります。",
+      note: "初参加です。よろしくお願いします。",
+    });
+    // 会員の連絡事項を会場情報の直後に出し、その後に主催の案内を隣接させる:
+    // 連絡事項 < 注意事項(会場) < ご案内(イベント) の順序を保証する (会員記載が主催案内の間に挟まらない)
+    expect(body.indexOf("連絡事項:")).toBeLessThan(body.indexOf("注意事項:"));
+    expect(body.indexOf("注意事項:")).toBeLessThan(body.indexOf("ご案内:"));
+  });
+
+  it("base (両方未設定) では従来どおり両セクションが出ない", () => {
+    const { body } = renderReservationConfirmedMail(baseConfirmed);
+    expect(body).not.toContain("注意事項:");
+    expect(body).not.toContain("ご案内:");
   });
 });
 
@@ -238,20 +293,26 @@ describe("renderReservationUpdatedMail", () => {
     expect(body).toContain("¥6,000");
   });
 
-  it("集合地点が登録されているとき本文に含まれる", () => {
+  it("会場メールテンプレート / イベント追記メッセージが値ありのとき両セクションが含まれる", () => {
     const { body } = renderReservationUpdatedMail({
       ...baseConfirmed,
-      venueMeetingPoint: "南門前 19:00 集合",
+      venueAccessNote: "駅で飲み物を買ってきてください。",
+      eventEmailNote: "懇親会あります。",
     });
-    expect(body).toContain("集合地点: 南門前 19:00 集合");
+    expect(body).toContain("注意事項:");
+    expect(body).toContain("駅で飲み物を買ってきてください。");
+    expect(body).toContain("ご案内:");
+    expect(body).toContain("懇親会あります。");
   });
 
-  it("集合地点が null のとき本文に集合地点行を出さない", () => {
+  it("会場メールテンプレート / イベント追記メッセージが空のとき両セクションを出さない", () => {
     const { body } = renderReservationUpdatedMail({
       ...baseConfirmed,
-      venueMeetingPoint: null,
+      venueAccessNote: "   ",
+      eventEmailNote: null,
     });
-    expect(body).not.toContain("集合地点:");
+    expect(body).not.toContain("注意事項:");
+    expect(body).not.toContain("ご案内:");
   });
 });
 
@@ -282,6 +343,12 @@ describe("renderReservationCancelledMail", () => {
     const { subject, body } = renderReservationCancelledMail(baseCancelled);
     expect(subject).not.toMatch(UUID_RE);
     expect(body).not.toMatch(UUID_RE);
+  });
+
+  it("キャンセルメールには『注意事項』『ご案内』を掲載しない", () => {
+    const { body } = renderReservationCancelledMail(baseCancelled);
+    expect(body).not.toContain("注意事項:");
+    expect(body).not.toContain("ご案内:");
   });
 });
 
@@ -474,5 +541,23 @@ describe("renderReservationPromotedMail", () => {
     });
     expect(body).toContain("3 名");
     expect(body).toContain("¥4,500");
+  });
+
+  it("会場メールテンプレート / イベント追記メッセージが値ありのとき両セクションが含まれる", () => {
+    const { body } = renderReservationPromotedMail({
+      ...baseConfirmed,
+      venueAccessNote: "駅で飲み物を買ってきてください。",
+      eventEmailNote: "懇親会あります。",
+    });
+    expect(body).toContain("注意事項:");
+    expect(body).toContain("駅で飲み物を買ってきてください。");
+    expect(body).toContain("ご案内:");
+    expect(body).toContain("懇親会あります。");
+  });
+
+  it("base (両方未設定) では両セクションが出ない", () => {
+    const { body } = renderReservationPromotedMail(baseConfirmed);
+    expect(body).not.toContain("注意事項:");
+    expect(body).not.toContain("ご案内:");
   });
 });

@@ -145,6 +145,8 @@ export function useEventForm(options: Options): UseEventForm {
           fee: state.fee.trim().length === 0 ? null : Number(state.fee),
           capacity:
             state.capacity.trim().length === 0 ? null : Number(state.capacity),
+          email_note:
+            state.emailNote.trim().length === 0 ? null : state.emailNote.trim(),
         };
         const result = await createEvent(insert);
         if (!result.ok) {
@@ -182,6 +184,8 @@ export function useEventForm(options: Options): UseEventForm {
           fee: state.fee.trim().length === 0 ? null : Number(state.fee),
           capacity:
             state.capacity.trim().length === 0 ? null : Number(state.capacity),
+          email_note:
+            state.emailNote.trim().length === 0 ? null : state.emailNote.trim(),
         });
         if (!result.ok) {
           submitError.value = result.error;

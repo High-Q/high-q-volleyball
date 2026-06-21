@@ -2,6 +2,7 @@
 import { ref, watch } from "vue";
 import FormField from "@/shared/ui/FormField.vue";
 import Input from "@/shared/ui/Input.vue";
+import Textarea from "@/shared/ui/Textarea.vue";
 import Label from "@/shared/ui/Label.vue";
 import Select from "@/shared/ui/Select.vue";
 import SelectTrigger from "@/shared/ui/SelectTrigger.vue";
@@ -326,6 +327,26 @@ const timeSelectClass =
           :disabled="disabled"
           placeholder="上限なし（名）"
           @update:model-value="(v: string | number) => update('capacity', String(v))"
+        />
+      </template>
+    </FormField>
+
+    <!-- メール追記メッセージ -->
+    <FormField
+      :error="errors.emailNote"
+      :hint="errors.emailNote ? undefined : '予約完了・変更メールの末尾に会員へそのまま掲載されます。懇親会の案内や当日の集合補足などに使ってください。会場周辺の注意事項（飲み物が買えない等）は会場マスタの「会場メールテンプレート」に書くと全イベントに自動掲載されます。'"
+    >
+      <template #default="{ fieldId, messageId, ariaInvalid }">
+        <Label :html-for="fieldId">メール追記メッセージ</Label>
+        <Textarea
+          :id="fieldId"
+          :model-value="modelValue.emailNote"
+          :rows="4"
+          :aria-invalid="ariaInvalid"
+          :aria-describedby="messageId"
+          :disabled="disabled"
+          placeholder="例）19:00〜近くの居酒屋で懇親会あります。参加自由です！ 集合は開始10分前にお願いします。"
+          @update:model-value="(v: string) => update('emailNote', v)"
         />
       </template>
     </FormField>

@@ -108,6 +108,12 @@ export type Event = {
   fee: number | null;
   /** smallint。NULL は無制限を意味する。 */
   capacity: number | null;
+  /**
+   * 予約完了/変更メールに掲載するイベント固有の任意追記メッセージ。
+   * NULL / 空文字はメールに当該セクションを描画しない。会場固有の注意事項は
+   * venues.access_note を使う。
+   */
+  email_note: string | null;
   visibility: EventVisibility;
   status: EventStatus;
   /** キャンセル期限 (任意)。NULL はキャンセル期限なし。 */
@@ -131,6 +137,7 @@ export type EventInsert = {
   description?: string | null;
   fee?: number | null;
   capacity?: number | null;
+  email_note?: string | null;
   visibility?: EventVisibility;
   status?: EventStatus;
   cancel_deadline?: string | null;
@@ -151,6 +158,8 @@ export type EventInsert = {
  *
  * `capacity` は #343 で定員入力 UI を復活させたため UPDATE 対象に含める
  * （空欄=NULL=上限なし / 値あり=上限あり）。
+ * `email_note` は予約完了/変更メールに掲載する任意追記メッセージとして UPDATE
+ * 対象に含める（空欄=NULL=非掲載 / 値あり=掲載）。
  */
 export type EventUpdate = {
   name?: string;
@@ -159,6 +168,7 @@ export type EventUpdate = {
   venue_id?: VenueId;
   fee?: number | null;
   capacity?: number | null;
+  email_note?: string | null;
 };
 
 // =============================================================================

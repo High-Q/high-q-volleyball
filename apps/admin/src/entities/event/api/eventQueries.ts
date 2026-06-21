@@ -219,7 +219,8 @@ export async function createEvent(
 ): Promise<Result<Event, FetchError>> {
   const supabase = getSupabase();
   // visibility / description / cancel_deadline は意図的に固定する（呼び出し側の
-  // 値は無視）。capacity は入力値を通す（空欄=null=上限なし）。
+  // 値は無視）。capacity / email_note は入力値を通す（capacity 空欄=null=上限なし、
+  // email_note 空欄=null=メール非掲載）。
   const payload = {
     name: input.name,
     start_at: input.start_at,
@@ -228,6 +229,7 @@ export async function createEvent(
     fee: input.fee ?? null,
     visibility: "published" as EventVisibility,
     capacity: input.capacity ?? null,
+    email_note: input.email_note ?? null,
     description: null,
     cancel_deadline: null,
     ...(input.created_by !== undefined ? { created_by: input.created_by } : {}),
@@ -280,6 +282,7 @@ export async function updateEvent(
   if ("venue_id" in p) safe.venue_id = p.venue_id;
   if ("fee" in p) safe.fee = p.fee;
   if ("capacity" in p) safe.capacity = p.capacity;
+  if ("email_note" in p) safe.email_note = p.email_note;
   try {
     const { data, error } = await supabase
       .from("events")

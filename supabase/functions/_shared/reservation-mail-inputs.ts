@@ -27,13 +27,13 @@ export type EventRow = {
   start_at: string; // ISO timestamptz
   end_at: string; // ISO timestamptz
   fee: number | null;
+  email_note: string | null; // イベント固有のメール追記メッセージ (空は非掲載)
 };
 
 export type VenueRow = {
   name: string;
   address: string | null;
-  meeting_point: string | null;
-  map_url: string | null;
+  access_note: string | null; // 会場固有の案内 (集合場所・アクセス・注意事項。空は非掲載)
   default_fee: number | null;
 };
 
@@ -120,11 +120,11 @@ export function buildConfirmedInput(
     startAtJst: formatJstRange(event.start_at, event.end_at),
     venueName: venue.name,
     venueAddress: venue.address ?? "",
-    venueMeetingPoint: venue.meeting_point,
-    venueMapUrl: venue.map_url,
+    venueAccessNote: venue.access_note,
     feePerPerson,
     guestCount: reservation.guest_count,
     note: reservation.note,
+    eventEmailNote: event.email_note,
     lineOpenChatUrl: urls.lineOpenChatUrl,
     reservationDetailUrl: urls.reservationDetailUrl,
     supportNote: DEFAULT_SUPPORT_NOTE,
