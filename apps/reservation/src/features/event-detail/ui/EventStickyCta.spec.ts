@@ -62,4 +62,63 @@ describe("EventStickyCta", () => {
     await cta.trigger("click");
     expect(wrapper.emitted("proceed")).toBeUndefined();
   });
+
+  it("満員 + 未登録 (selfResolved) → 「キャンセル待ちに登録」 enabled、waitlist を emit", async () => {
+    const wrapper = mount(EventStickyCta, {
+      props: {
+        fee: 1000,
+        availability: make(18, 18),
+        selfStatus: null,
+        selfResolved: true,
+      },
+    });
+    const cta = wrapper.get('[data-testid="cta-waitlist"]');
+    expect(cta.text()).toContain("キャンセル待ちに登録");
+    expect(cta.attributes("disabled")).toBeUndefined();
+    await cta.trigger("click");
+    expect(wrapper.emitted("waitlist")).toHaveLength(1);
+    expect(wrapper.emitted("proceed")).toBeUndefined();
+  });
+
+  it("満員 + キャンセル待ち登録済み → 「キャンセル待ち登録済み」 disabled", async () => {
+    const wrapper = mount(EventStickyCta, {
+      props: {
+        fee: 1000,
+        availability: make(18, 18),
+        selfStatus: "waitlist",
+        selfResolved: true,
+      },
+    });
+    const cta = wrapper.get('[data-testid="cta-waitlisted"]');
+    expect(cta.text()).toContain("キャンセル待ち登録済み");
+    expect(cta.attributes("disabled")).toBeDefined();
+    await cta.trigger("click");
+    expect(wrapper.emitted("waitlist")).toBeUndefined();
+  });
+
+  it("満員 + 予約済み (reserved) → キャンセル待ち導線を出さず「予約締切」", () => {
+    const wrapper = mount(EventStickyCta, {
+      props: {
+        fee: 1000,
+        availability: make(18, 18),
+        selfStatus: "reserved",
+        selfResolved: true,
+      },
+    });
+    expect(wrapper.find('[data-testid="cta-waitlist"]').exists()).toBe(false);
+    expect(wrapper.get('[data-testid="cta-full"]').text()).toContain("予約締切");
+  });
+
+  it("満員 + 自己状態未確定 (selfResolved=false) → 安全側「予約締切」", () => {
+    const wrapper = mount(EventStickyCta, {
+      props: {
+        fee: 1000,
+        availability: make(18, 18),
+        selfStatus: null,
+        selfResolved: false,
+      },
+    });
+    expect(wrapper.find('[data-testid="cta-waitlist"]').exists()).toBe(false);
+    expect(wrapper.get('[data-testid="cta-full"]').text()).toContain("予約締切");
+  });
 });

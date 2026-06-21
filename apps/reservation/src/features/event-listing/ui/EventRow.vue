@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { EventListItem } from "@/entities/event";
+import { formatAvailability, type EventListItem } from "@/entities/event";
 import type { ReservationId } from "@/entities/reservation";
 import { formatFee, formatTimeRange } from "@/shared/lib/format-date";
 import {
@@ -23,6 +23,12 @@ const props = defineProps<{
    * 本 props で扱うのは 2 件目以降の自分予約。
    */
   reservationId?: ReservationId | null;
+  /**
+   * 当該行のイベントに対する自分のキャンセル待ち登録 ID。
+   * 渡された場合は遷移先を `/reservations/{reservationId}` に切り替え、「キャンセル待ち」chip を描画する。
+   * `reservationId` (予約済) が優先される。
+   */
+  waitlistReservationId?: ReservationId | null;
 }>();
 
 const startDate = computed(() => new Date(props.event.startAt));
@@ -48,14 +54,41 @@ const hasMyReservation = computed(
   () => props.reservationId !== null && props.reservationId !== undefined,
 );
 
-const linkTo = computed(() =>
-  hasMyReservation.value
-    ? {
-        name: "reservation-detail",
-        params: { reservationId: props.reservationId as ReservationId },
-      }
-    : { name: "event-detail", params: { id: props.event.id } },
+const hasMyWaitlist = computed(
+  () =>
+    !hasMyReservation.value &&
+    props.waitlistReservationId !== null &&
+    props.waitlistReservationId !== undefined,
 );
+
+const isFull = computed(
+  () => formatAvailability(props.event.availability).isFull,
+);
+
+/**
+ * 満員かつ自分が未登録（予約済み / キャンセル待ち登録済みのいずれでもない）の行に、
+ * 「キャンセル待ち受付中」のヒントを出す。タップで詳細のキャンセル待ち導線に進める
+ * ことを一覧上で示唆する。
+ */
+const showWaitlistHint = computed(
+  () => isFull.value && !hasMyReservation.value && !hasMyWaitlist.value,
+);
+
+const linkTo = computed(() => {
+  if (hasMyReservation.value) {
+    return {
+      name: "reservation-detail",
+      params: { reservationId: props.reservationId as ReservationId },
+    };
+  }
+  if (hasMyWaitlist.value) {
+    return {
+      name: "reservation-detail",
+      params: { reservationId: props.waitlistReservationId as ReservationId },
+    };
+  }
+  return { name: "event-detail", params: { id: props.event.id } };
+});
 </script>
 
 <template>
@@ -98,6 +131,18 @@ const linkTo = computed(() =>
           data-testid="event-row-mine-badge"
           aria-label="自分が予約済み"
         >予約済</span>
+        <span
+          v-else-if="hasMyWaitlist"
+          class="inline-flex items-center font-jp text-xs font-medium leading-none px-hq-2 py-hq-1 rounded-hq-pill bg-paper-warm border border-hairline text-muted"
+          data-testid="event-row-waitlist-badge"
+          aria-label="キャンセル待ち登録済み"
+        >キャンセル待ち</span>
+        <span
+          v-else-if="showWaitlistHint"
+          class="inline-flex items-center font-jp text-xs font-medium leading-none px-hq-2 py-hq-1 rounded-hq-pill bg-accent-soft text-accent"
+          data-testid="event-row-waitlist-hint"
+          aria-label="キャンセル待ち受付中"
+        >キャンセル待ち受付中</span>
       </div>
     </div>
   </router-link>

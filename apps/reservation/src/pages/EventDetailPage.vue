@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Button, Kicker } from "@high-q/ui";
 import {
   EventInfoBlock,
   EventStickyCta,
   useEventDetail,
+  useMyEventReservation,
 } from "@/features/event-detail";
 import { BookingSheet } from "@/features/booking";
+import type { Reservation } from "@/entities/reservation";
 import { formatAvailability } from "@/entities/event";
 import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 import { formatJaDate } from "@/shared/lib/format-date";
@@ -18,11 +20,57 @@ const router = useRouter();
 const idRef = computed(() => String(route.params.id ?? ""));
 const { event, loading, error, notFound, reload } = useEventDetail(idRef);
 
+// 当該会員の当該イベントに対する予約状態 (満員時の CTA 分岐を駆動)
+const {
+  myReservation,
+  resolved: selfResolved,
+  setLocal: setMyReservation,
+} = useMyEventReservation(idRef);
+
 const dateLabel = computed(() =>
   event.value === null ? "" : formatJaDate(event.value.startAt),
 );
 
 const bookingSheetOpen = ref<boolean>(false);
+const bookingSheetMode = ref<"create" | "waitlist">("create");
+
+// 登録完了フィードバック (role="status" のインライン通知。Toast 基盤は未導入)
+const successNotice = ref<string | null>(null);
+let successTimer: ReturnType<typeof setTimeout> | null = null;
+
+function showSuccess(message: string): void {
+  successNotice.value = message;
+  if (successTimer !== null) clearTimeout(successTimer);
+  successTimer = setTimeout(() => {
+    successNotice.value = null;
+  }, 4000);
+}
+
+onUnmounted(() => {
+  if (successTimer !== null) clearTimeout(successTimer);
+});
+
+function openBooking(): void {
+  bookingSheetMode.value = "create";
+  bookingSheetOpen.value = true;
+}
+
+function openWaitlist(): void {
+  bookingSheetMode.value = "waitlist";
+  bookingSheetOpen.value = true;
+}
+
+function onSheetSaved(reservation: Reservation): void {
+  if (bookingSheetMode.value !== "waitlist") return;
+  // 楽観的に自己予約状態を waitlist へ更新し、CTA を「登録済み」に即時切替
+  setMyReservation({
+    id: reservation.id,
+    status: reservation.status,
+    guestCount: reservation.guestCount,
+    note: reservation.note ?? "",
+  });
+  showSuccess("キャンセル待ちに登録しました。空きが出た場合にご連絡します。");
+}
 
 /**
  * 再予約導線（履歴の「再予約する」/ 完了画面の「やっぱり予約する」）の共通着地点。
@@ -119,6 +167,13 @@ function goToList(): void {
         </div>
 
         <EventInfoBlock :event="event" />
+
+        <p
+          v-if="successNotice !== null"
+          role="status"
+          class="bg-accent-soft text-accent border border-accent rounded-hq-md px-hq-4 py-hq-3 font-jp text-sm m-0"
+          data-testid="waitlist-success-notice"
+        >{{ successNotice }}</p>
       </template>
     </section>
 
@@ -126,14 +181,19 @@ function goToList(): void {
       v-if="event !== null"
       :fee="event.fee"
       :availability="event.availability"
-      @proceed="bookingSheetOpen = true"
+      :self-status="myReservation?.status ?? null"
+      :self-resolved="selfResolved"
+      @proceed="openBooking"
+      @waitlist="openWaitlist"
     />
 
     <BookingSheet
       v-if="event !== null"
       :open="bookingSheetOpen"
       :event="event"
+      :mode="bookingSheetMode"
       @update:open="bookingSheetOpen = $event"
+      @saved="onSheetSaved"
     />
   </main>
 </template>

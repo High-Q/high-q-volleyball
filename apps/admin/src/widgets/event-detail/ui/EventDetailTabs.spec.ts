@@ -72,6 +72,42 @@ describe("EventDetailTabs — 描画", () => {
     const tabs = w.findAll('[role="tab"]');
     expect(tabs[0]!.text()).toContain("16");
   });
+
+  it("emphasizeCount=true の count は強調表示 (data-emphasized=true)", () => {
+    const items = [
+      { id: "participants" as const, label: "参加者一覧", count: 16 },
+      {
+        id: "wait" as const,
+        label: "キャンセル待ち",
+        count: 3,
+        emphasizeCount: true,
+      },
+    ];
+    const w = mount(EventDetailTabs, {
+      props: { active: "participants", items },
+    });
+    const counts = w.findAll('[data-testid="tab-count"]');
+    // 参加者一覧は通常、キャンセル待ちは強調
+    expect(counts[0]!.attributes("data-emphasized")).toBeUndefined();
+    expect(counts[1]!.attributes("data-emphasized")).toBe("true");
+    expect(counts[1]!.text()).toContain("3");
+  });
+
+  it("emphasizeCount 未指定の count は通常表示 (待機 0 名)", () => {
+    const items = [
+      {
+        id: "wait" as const,
+        label: "キャンセル待ち",
+        count: 0,
+        emphasizeCount: false,
+      },
+    ];
+    const w = mount(EventDetailTabs, {
+      props: { active: "participants", items },
+    });
+    const count = w.find('[data-testid="tab-count"]');
+    expect(count.attributes("data-emphasized")).toBeUndefined();
+  });
 });
 
 describe("EventDetailTabs — クリック挙動", () => {

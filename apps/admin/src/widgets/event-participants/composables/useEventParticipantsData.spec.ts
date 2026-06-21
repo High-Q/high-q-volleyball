@@ -109,6 +109,24 @@ describe("useEventParticipantsData — 取得", () => {
     expect(composable.rawData.value).toHaveLength(2);
   });
 
+  it("キャンセル待ち (status='waitlist') は rawData から除外される", async () => {
+    const waitlistRow = {
+      ...makeRow({ reservation_id: "w1", display_name: "待機 太郎" }),
+      status: "waitlist",
+    } as unknown as ReturnType<typeof makeRow>;
+    const { composable } = await setup([
+      makeRow({ reservation_id: "r1" }),
+      waitlistRow,
+      makeRow({ reservation_id: "r2", display_name: "佐藤" }),
+    ]);
+    expect(composable.rawData.value).toHaveLength(2);
+    expect(
+      composable.rawData.value.some(
+        (r) => (r.reservation_id as unknown as string) === "w1",
+      ),
+    ).toBe(false);
+  });
+
   it("isEmpty: 0 件で true", async () => {
     const { composable } = await setup([]);
     expect(composable.isEmpty.value).toBe(true);

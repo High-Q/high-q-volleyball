@@ -2,12 +2,19 @@ import { ref, type Ref } from "vue";
 import type { BookingError, ReservationId } from "@/entities/reservation";
 import { jstStartOfDay } from "@/shared/lib/jst-calendar";
 import { triggerReservationNotification } from "@/shared/api/reservation-notification";
-import { BookingApiError, cancelReservation } from "../api/booking-client";
+import { triggerWaitlistPromotion } from "@/shared/api/waitlist-promotion";
+import {
+  BookingApiError,
+  cancelReservation,
+  cancelWaitlistReservation,
+} from "../api/booking-client";
 
 export type UseCancelBookingReturn = {
   submitting: Ref<boolean>;
   error: Ref<BookingError | null>;
   cancel: (id: ReservationId) => Promise<boolean>;
+  /** キャンセル待ちの取り消し (waitlist→cancelled)。通知メールは送らない */
+  cancelWaitlist: (id: ReservationId) => Promise<boolean>;
   reset: () => void;
 };
 
@@ -30,7 +37,7 @@ export function useCancelBooking(): UseCancelBookingReturn {
     submitting.value = true;
     error.value = null;
     try {
-      await cancelReservation(id);
+      const { eventId } = await cancelReservation(id);
       // キャンセル完了メール送信は fire-and-forget。helper 側で例外を握りつぶしているが、
       // 同期 throw / Promise rejection のどちらもキャンセル成立を妨げないよう二重防衛する。
       try {
@@ -41,6 +48,33 @@ export function useCancelBooking(): UseCancelBookingReturn {
           notifyErr,
         );
       }
+      // 枠が空くため、当該イベントのキャンセル待ち繰り上げを fire-and-forget で起動する。
+      try {
+        void triggerWaitlistPromotion(eventId);
+      } catch (promoteErr) {
+        console.warn(
+          "[useCancelBooking] promotion trigger threw (ignored)",
+          promoteErr,
+        );
+      }
+      return true;
+    } catch (cause) {
+      error.value = mapErrorToBookingError(cause);
+      return false;
+    } finally {
+      submitting.value = false;
+    }
+  }
+
+  async function cancelWaitlist(id: ReservationId): Promise<boolean> {
+    if (submitting.value) {
+      return false;
+    }
+    submitting.value = true;
+    error.value = null;
+    try {
+      await cancelWaitlistReservation(id);
+      // キャンセル待ちの取り消しは通知メールを送らない (登録時に送っていないため対称)。
       return true;
     } catch (cause) {
       error.value = mapErrorToBookingError(cause);
@@ -54,7 +88,7 @@ export function useCancelBooking(): UseCancelBookingReturn {
     error.value = null;
   }
 
-  return { submitting, error, cancel, reset };
+  return { submitting, error, cancel, cancelWaitlist, reset };
 }
 
 /**

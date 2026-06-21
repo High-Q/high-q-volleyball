@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRef } from "vue";
+import { computed, ref, toRef } from "vue";
 import { useRouter } from "vue-router";
 import { RemainBar } from "@high-q/ui";
 import type { EventId, MemberId } from "@high-q/shared";
@@ -8,6 +8,7 @@ import { useEventDetailData } from "../composables/useEventDetailData";
 import EventDetailTopBar from "./EventDetailTopBar.vue";
 import EventStatCards from "./EventStatCards.vue";
 import EventDetailTabs from "./EventDetailTabs.vue";
+import EventWaitlistPanel from "./EventWaitlistPanel.vue";
 import EventDetailSkeleton from "./EventDetailSkeleton.vue";
 import EventDetailErrorState from "./EventDetailErrorState.vue";
 
@@ -38,6 +39,12 @@ const eventIdRef = toRef(props, "eventId");
 
 const detail = useEventDetailData(eventIdRef);
 
+type TabId = "participants" | "wait" | "checkin";
+const activeTab = ref<TabId>("participants");
+function onTabChange(id: TabId): void {
+  activeTab.value = id;
+}
+
 const view = computed<"loading" | "error" | "success">(() => {
   if (detail.isError.value) return "error";
   if (detail.isPending.value && detail.data.value === null) return "loading";
@@ -55,8 +62,8 @@ const TAB_ITEMS = computed(() => [
     id: "wait" as const,
     label: "キャンセル待ち",
     count: detail.data.value?.waitlist_count ?? 0,
-    disabled: true,
-    comingSoon: "Coming soon (MVP2)",
+    // 待機者が 1 名以上いるときだけ件数を強調する
+    emphasizeCount: (detail.data.value?.waitlist_count ?? 0) > 0,
   },
   {
     id: "checkin" as const,
@@ -142,11 +149,16 @@ function onMutationSettled(): void {
       </div>
 
       <div class="mt-hq-5">
-        <EventDetailTabs active="participants" :items="TAB_ITEMS" />
+        <EventDetailTabs
+          :active="activeTab"
+          :items="TAB_ITEMS"
+          @change="onTabChange"
+        />
       </div>
 
       <div
-        :id="`tabpanel-participants`"
+        v-show="activeTab === 'participants'"
+        id="tabpanel-participants"
         role="tabpanel"
         class="flex-1 overflow-hidden flex flex-col"
       >
@@ -158,6 +170,15 @@ function onMutationSettled(): void {
           @mutation-settled="onMutationSettled"
           @member-clicked="(id) => emit('member-clicked', id)"
         />
+      </div>
+
+      <div
+        v-if="activeTab === 'wait'"
+        id="tabpanel-wait"
+        role="tabpanel"
+        class="flex-1 overflow-hidden flex flex-col"
+      >
+        <EventWaitlistPanel :event-id="eventId" />
       </div>
     </template>
   </div>

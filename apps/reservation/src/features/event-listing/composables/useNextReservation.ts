@@ -14,6 +14,12 @@ export type NextReservationState = {
    * NEXT に昇格した最早 1 件も含む (Map 操作の素直さ優先)。
    */
   mineByEventId: Ref<ReadonlyMap<EventId, ReservationId>>;
+  /**
+   * event_id → reservation_id の対応 Map (キャンセル待ち用)。
+   * status='waitlist' かつ event.startAt > now の予約のみが含まれる。
+   * 「他のイベント」行に「キャンセル待ち」バッジを出す判定に使う。
+   */
+  waitlistByEventId: Ref<ReadonlyMap<EventId, ReservationId>>;
   loading: Ref<boolean>;
   error: Ref<Error | null>;
   reload: () => Promise<void>;
@@ -38,6 +44,9 @@ export function useNextReservation(uid: string): NextReservationState {
   const mineByEventId = shallowRef<ReadonlyMap<EventId, ReservationId>>(
     new Map(),
   );
+  const waitlistByEventId = shallowRef<ReadonlyMap<EventId, ReservationId>>(
+    new Map(),
+  );
   const loading = ref<boolean>(true);
   const error = ref<Error | null>(null);
 
@@ -46,13 +55,18 @@ export function useNextReservation(uid: string): NextReservationState {
     error.value = null;
     try {
       const items = await fetchMyReservations(uid);
-      const upcoming = filterUpcomingReserved(items, new Date());
+      const now = new Date();
+      const upcoming = filterUpcomingReserved(items, now);
       reservation.value = pickEarliest(upcoming);
       mineByEventId.value = toEventIdMap(upcoming);
+      waitlistByEventId.value = toEventIdMap(
+        filterUpcomingByStatus(items, "waitlist", now),
+      );
     } catch (cause) {
       error.value = cause instanceof Error ? cause : new Error(String(cause));
       reservation.value = null;
       mineByEventId.value = new Map();
+      waitlistByEventId.value = new Map();
     } finally {
       loading.value = false;
     }
@@ -60,20 +74,35 @@ export function useNextReservation(uid: string): NextReservationState {
 
   void reload();
 
-  return { reservation, mineByEventId, loading, error, reload };
+  return {
+    reservation,
+    mineByEventId,
+    waitlistByEventId,
+    loading,
+    error,
+    reload,
+  };
+}
+
+function filterUpcomingByStatus(
+  items: readonly MyReservationItem[],
+  status: MyReservationItem["status"],
+  now: Date,
+): MyReservationItem[] {
+  const nowMs = now.getTime();
+  return items.filter((item) => {
+    if (item.status !== status) return false;
+    const startMs = new Date(item.event.startAt).getTime();
+    if (Number.isNaN(startMs)) return false;
+    return startMs > nowMs;
+  });
 }
 
 function filterUpcomingReserved(
   items: readonly MyReservationItem[],
   now: Date,
 ): MyReservationItem[] {
-  const nowMs = now.getTime();
-  return items.filter((item) => {
-    if (item.status !== "reserved") return false;
-    const startMs = new Date(item.event.startAt).getTime();
-    if (Number.isNaN(startMs)) return false;
-    return startMs > nowMs;
-  });
+  return filterUpcomingByStatus(items, "reserved", now);
 }
 
 function pickEarliest(

@@ -100,12 +100,47 @@ describe("splitReservations", () => {
       makeItem(
         "00000000-0000-0000-0000-000000000a04",
         "waitlist",
-        "2026-06-01T19:00:00+09:00",
+        "2026-04-20T19:00:00+09:00",
       ),
     ];
     const result = splitReservations(items, NOW);
+    expect(result.upcoming).toHaveLength(0);
+    expect(result.waitlist).toHaveLength(0);
     expect(result.cancelled).toHaveLength(0);
     expect(result.past).toHaveLength(3);
+  });
+
+  it("未来 waitlist は waitlist グループに振り分けられる (past ではない)", () => {
+    const future = makeItem(
+      "00000000-0000-0000-0000-000000000a05",
+      "waitlist",
+      "2026-06-01T19:00:00+09:00",
+    );
+    const result = splitReservations([future], NOW);
+    expect(result.waitlist).toHaveLength(1);
+    expect(result.waitlist[0]?.id).toBe(future.id);
+    expect(result.past).toHaveLength(0);
+    expect(result.upcoming).toHaveLength(0);
+  });
+
+  it("waitlist は start_at ASC（直近予定が先頭）", () => {
+    const items = [
+      makeItem(
+        "00000000-0000-0000-0000-000000000c91",
+        "waitlist",
+        "2026-06-10T19:00:00+09:00",
+      ),
+      makeItem(
+        "00000000-0000-0000-0000-000000000c92",
+        "waitlist",
+        "2026-05-20T19:00:00+09:00",
+      ),
+    ];
+    const result = splitReservations(items, NOW);
+    expect(result.waitlist.map((r) => r.event.startAt)).toEqual([
+      "2026-05-20T19:00:00+09:00",
+      "2026-06-10T19:00:00+09:00",
+    ]);
   });
 
   it("upcoming は start_at ASC（直近予定が先頭）", () => {
@@ -199,9 +234,10 @@ describe("splitReservations", () => {
     ]);
   });
 
-  it("空配列 → 空 upcoming + 空 cancelled + 空 past", () => {
+  it("空配列 → 空 upcoming + 空 waitlist + 空 cancelled + 空 past", () => {
     const result = splitReservations([], NOW);
     expect(result.upcoming).toHaveLength(0);
+    expect(result.waitlist).toHaveLength(0);
     expect(result.cancelled).toHaveLength(0);
     expect(result.past).toHaveLength(0);
   });

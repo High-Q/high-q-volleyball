@@ -133,6 +133,108 @@ async function reactivateCancelledReservation(
 }
 
 /**
+ * reservations への `status='waitlist'` INSERT (キャンセル待ち登録)。
+ *
+ * `insertReservation` と対称。`(event_id, member_id)` の UNIQUE 制約により既存行と
+ * 衝突 (23505) した場合は既存行の状態で分岐する:
+ *   - 既存行が 'cancelled': 'waitlist' へ再活性化 (guest_count / note / phone を上書き、
+ *     cancelled_at を NULL クリア)
+ *   - それ以外 ('reserved' / 'waitlist' / 'attended' / 'no_show'): 二重登録として
+ *     `duplicate` を投げる (再活性化は cancelled 行のみ)
+ *
+ * 会員の `status='waitlist'` INSERT / `cancelled → waitlist` UPDATE は reservations の
+ * RLS (rls-policies capability) で会員に許可されている。
+ */
+export async function insertWaitlist(
+  input: CreateBookingInput,
+): Promise<Reservation> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("reservations")
+    .insert({
+      event_id: input.eventId as string,
+      member_id: input.memberId as string,
+      status: "waitlist",
+      guest_count: input.guestCount,
+      note: input.note.length === 0 ? null : input.note,
+      phone_at_booking:
+        input.phoneAtBooking.length === 0 ? null : input.phoneAtBooking,
+    })
+    .select(
+      "id, event_id, member_id, status, guest_count, phone_at_booking, note, checked_in_at, cancelled_at, created_at, updated_at",
+    )
+    .single();
+
+  if (error !== null) {
+    if (error.code === POSTGRES_UNIQUE_VIOLATION) {
+      return await reactivateCancelledAsWaitlist(input);
+    }
+    throw mapPostgrestError(error);
+  }
+  if (data === null) {
+    throw new BookingApiError("network", null, "Empty insert response");
+  }
+  return rowToReservation(data as unknown as ReservationRow);
+}
+
+/**
+ * 既存のキャンセル済行を 'waitlist' に再活性化する。`cancelled` 以外の行
+ * (reserved / waitlist / attended / no_show) が見つかった場合は二重登録として
+ * `duplicate` エラーを返す。
+ */
+async function reactivateCancelledAsWaitlist(
+  input: CreateBookingInput,
+): Promise<Reservation> {
+  const supabase = getSupabase();
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("reservations")
+    .select("id, status")
+    .eq("event_id", input.eventId as string)
+    .eq("member_id", input.memberId as string)
+    .maybeSingle();
+
+  if (fetchError !== null) {
+    throw mapPostgrestError(fetchError);
+  }
+  if (existing === null) {
+    throw new BookingApiError(
+      "network",
+      null,
+      "Unique violation but no existing row",
+    );
+  }
+  if (existing.status !== "cancelled") {
+    // reserved / waitlist は当然、attended / no_show も再活性化対象外 (二重登録扱い)
+    throw new BookingApiError("duplicate");
+  }
+
+  const { data, error } = await supabase
+    .from("reservations")
+    .update({
+      status: "waitlist",
+      guest_count: input.guestCount,
+      note: input.note.length === 0 ? null : input.note,
+      phone_at_booking:
+        input.phoneAtBooking.length === 0 ? null : input.phoneAtBooking,
+      cancelled_at: null,
+    })
+    .eq("id", existing.id)
+    .select(
+      "id, event_id, member_id, status, guest_count, phone_at_booking, note, checked_in_at, cancelled_at, created_at, updated_at",
+    )
+    .single();
+
+  if (error !== null) {
+    throw mapPostgrestError(error);
+  }
+  if (data === null) {
+    throw new BookingApiError("network", null, "Empty update response");
+  }
+  return rowToReservation(data as unknown as ReservationRow);
+}
+
+/**
  * 自分の予約 (status='reserved') の `guest_count` / `note` を UPDATE する。
  *
  * - WHERE 句に `id = reservationId` AND `member_id = uid` AND `status = 'reserved'` を明示し、
@@ -169,21 +271,57 @@ export async function updateReservation(
 /**
  * reservations の status を `'reserved' → 'cancelled'` に UPDATE。
  * 0 行更新は RLS 違反 (他人の id) または既にキャンセル済み等のため `rls` として扱う。
+ *
+ * キャンセルで枠が空くため、呼び出し側 (useCancelBooking) が当該 event_id で繰り上げを
+ * 起動できるよう、更新行の `event_id` を返す。
  */
-export async function cancelReservation(id: ReservationId): Promise<void> {
+export async function cancelReservation(
+  id: ReservationId,
+): Promise<{ eventId: string }> {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("reservations")
     .update({ status: "cancelled" })
     .eq("id", id as string)
     .eq("status", "reserved")
-    .select("id");
+    .select("id, event_id");
 
   if (error !== null) {
     throw mapPostgrestError(error);
   }
   if (data === null || data.length === 0) {
     throw new BookingApiError("rls", null, "No row updated");
+  }
+  return { eventId: (data[0] as { event_id: string }).event_id };
+}
+
+/**
+ * キャンセル待ちの取り消し。waitlist 行を **DELETE** する。
+ *
+ * キャンセル待ちは確定予約ではなく意思表明のため、撤回は行削除で表現する。これにより
+ * 履歴に `cancelled` 行として残らず (キャンセルした通常予約との混同を防ぐ)、再登録時の
+ * UNIQUE 衝突も起きない。会員の「自分の status='waitlist' 行の DELETE」は RLS で
+ * 許可済み (rls-policies capability)。
+ *
+ * アプリ層でも `.eq("status","waitlist")` を明示し、reserved 等を誤って消さない二重防衛
+ * とする。0 行削除は RLS 違反 (他人の id) または既に waitlist ではない等のため `rls`。
+ */
+export async function cancelWaitlistReservation(
+  id: ReservationId,
+): Promise<void> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("reservations")
+    .delete()
+    .eq("id", id as string)
+    .eq("status", "waitlist")
+    .select("id");
+
+  if (error !== null) {
+    throw mapPostgrestError(error);
+  }
+  if (data === null || data.length === 0) {
+    throw new BookingApiError("rls", null, "No row deleted");
   }
 }
 

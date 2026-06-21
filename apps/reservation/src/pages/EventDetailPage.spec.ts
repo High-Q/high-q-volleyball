@@ -10,6 +10,8 @@ const eventRef: Ref<EventDetail | null> = ref(null);
 const eventLoading = ref(false);
 const eventError: Ref<Error | null> = ref(null);
 const eventNotFound = ref(false);
+const myReservationRef = ref<unknown>(null);
+const selfResolvedRef = ref(false);
 
 const Stub = defineComponent({ template: "<div />" });
 
@@ -20,6 +22,13 @@ vi.mock("@/features/event-detail", () => ({
     error: eventError,
     notFound: eventNotFound,
     reload: vi.fn(),
+  }),
+  useMyEventReservation: () => ({
+    myReservation: myReservationRef,
+    resolved: selfResolvedRef,
+    loading: ref(false),
+    reload: vi.fn(),
+    setLocal: vi.fn(),
   }),
   EventInfoBlock: Stub,
   EventStickyCta: Stub,

@@ -68,11 +68,11 @@ High Q の Supabase PostgreSQL 全テーブルに対する Row Level Security �
 
 システムは MUST `reservations` テーブルに以下のポリシーを適用する:
 - SELECT: 自分の予約のみ可。管理者は全件可
-- INSERT: 自分の `member_id` を指定する場合のみ可
-- UPDATE: 自分の予約のうち `status` が `'reserved'` または `'cancelled'` の範囲に収まる行に対して、本人が編集可能な列 (`status` の `'reserved' ↔ 'cancelled'` 切替 / `guest_count` / `note`) の UPDATE を可とする。`status` を `'attended'` / `'no_show'` / `'waitlist'` 等の管理者専用ステータスへ遷移させることは不可。管理者は全件・全列・全 status へ変更可
-- DELETE: 管理者のみ可
+- INSERT: 自分の `member_id` を指定し、かつ新規行の `status` が会員設定可能ステータス `'reserved'` または `'waitlist'` のいずれかである場合のみ可。`status` を `'attended'` / `'no_show'` 等の管理者専用ステータス、または新規行としては無意味な `'cancelled'` で INSERT することは不可。管理者は全 status で INSERT 可（`member_id IS NOT NULL` の強制は「退会済み会員の予約行のアクセス制御」要件に従う）
+- UPDATE: 自分の予約に対して、本人が編集可能な列 (`status` の会員設定可能ステータス間の切替 / `guest_count` / `note`) の UPDATE を可とする。会員設定可能ステータスは `'reserved'` / `'cancelled'` / `'waitlist'` の 3 値であり、これらの間の遷移（`'reserved' ↔ 'cancelled'` の予約キャンセル / 再予約、`'cancelled' → 'waitlist'` のキャンセル待ち再活性化を含む）を可とする。`status` を `'attended'` / `'no_show'` 等の管理者専用ステータスへ遷移させることは不可。管理者は全件・全列・全 status へ変更可
+- DELETE: 管理者は全件可。会員は自分の `status='waitlist'` 行のみ DELETE 可（キャンセル待ちの撤回を行削除で表現するため）。会員から `'reserved'` / `'attended'` / `'no_show'` / `'cancelled'` 行の DELETE は不可
 
-`guest_count` / `note` の本人編集を許容するのは、予約詳細画面からの後追い編集動線 (同伴者数・連絡事項の修正) を提供するため。`status` 切替を `'reserved' ↔ 'cancelled'` の範囲に閉じる制約は WITH CHECK 句で担保される MUST。
+`guest_count` / `note` の本人編集を許容するのは、予約詳細画面からの後追い編集動線 (同伴者数・連絡事項の修正) を提供するため。INSERT 時の `status` を `'reserved'` / `'waitlist'` に閉じる制約、および UPDATE 時の遷移先 `status` を会員設定可能ステータス 3 値に閉じる制約は、いずれも WITH CHECK 句で担保される MUST。これにより会員による参加実績（`'attended'`）の自己設定を構造的に遮断しつつ、キャンセル待ち登録 (`reservation-waitlist-registration` capability) を会員権限の範囲で成立させる。
 
 #### Scenario: 自分の予約を一覧
 - **WHEN** ログイン中の member が `select * from reservations where member_id = auth.uid()`
@@ -105,6 +105,30 @@ High Q の Supabase PostgreSQL 全テーブルに対する Row Level Security �
 #### Scenario: 管理者が attended に更新
 - **WHEN** admin が任意の予約の status を `'attended'` に UPDATE
 - **THEN** 行が更新される
+
+#### Scenario: 本人によるキャンセル待ち登録の INSERT
+- **WHEN** member が `insert into reservations(event_id, member_id, status) values (?, auth.uid(), 'waitlist')`
+- **THEN** WITH CHECK 句を満たし 1 行 INSERT される（`'waitlist'` は会員設定可能ステータス）
+
+#### Scenario: 本人による attended の INSERT 試行
+- **WHEN** member が `insert into reservations(event_id, member_id, status) values (?, auth.uid(), 'attended')`
+- **THEN** WITH CHECK 句により拒否される（参加実績の自己設定は不可）
+
+#### Scenario: 本人によるキャンセル済み行のキャンセル待ち再活性化
+- **WHEN** member が自分の `status='cancelled'` 行に対して `update reservations set status = 'waitlist', cancelled_at = null where id = ? and member_id = auth.uid()`
+- **THEN** WITH CHECK 句を満たし 1 行更新される（`'cancelled' → 'waitlist'` は会員設定可能ステータス間の遷移）
+
+#### Scenario: 本人によるキャンセル待ちの撤回 (DELETE)
+- **WHEN** member が自分の `status='waitlist'` 行に対して `delete from reservations where id = ? and member_id = auth.uid() and status = 'waitlist'`
+- **THEN** DELETE ポリシーにより 1 行削除される（キャンセル待ちの撤回。`cancelled` 行として残さない）
+
+#### Scenario: 本人による reserved 行の DELETE は不可
+- **WHEN** member が自分の `status='reserved'` 行に対して DELETE を試みる
+- **THEN** DELETE ポリシーの USING 句（`status='waitlist'` 限定）にマッチせず 0 行削除となる（確定予約は会員から削除不可）
+
+#### Scenario: 他人の waitlist 行の DELETE は不可
+- **WHEN** member A が member B の `status='waitlist'` 行に対して DELETE を試みる
+- **THEN** `member_id = auth.uid()` を満たさず 0 行削除となる
 
 ### Requirement: 管理者判定ヘルパー関数
 
@@ -404,8 +428,6 @@ view が返す列は集計 (`event_id`, `capacity`, `reserved_count`) のみで�
 - **WHEN** `apps/lp` 配下のソースで `event_availability_view` を SELECT する import / SQL が含まれていないか grep する
 - **THEN** ヒット 0 件
 
-
-
 ### Requirement: 参加者ニックネーム取得 RPC の権限境界
 
 `public.get_event_participant_nicknames(p_event_id uuid)` 関数は `SECURITY DEFINER` モードで定義され、`search_path` を `public` に固定する MUST。本関数は呼び出し元の `auth.uid()` が `p_event_id` に対して `reservations.status IN ('reserved', 'attended')` の有効な予約を 1 行以上持つときのみ非空の集合を SHALL 返し、それ以外は空集合を SHALL 返す (例外を投げない)。
@@ -450,3 +472,4 @@ view が返す列は集計 (`event_id`, `capacity`, `reserved_count`) のみで�
 #### Scenario: 退会済み参加者の除外
 - **WHEN** 同じイベントに `status='reserved'` の予約 3 件があり、うち 1 件は退会フローで `member_id IS NULL` になっている状態で本関数を呼ぶ
 - **THEN** 戻り値は `member_id IS NOT NULL` の 2 件のみで、退会済み参加者の行は含まれない
+

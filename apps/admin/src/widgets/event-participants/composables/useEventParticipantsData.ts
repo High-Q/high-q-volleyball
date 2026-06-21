@@ -106,7 +106,10 @@ export function useEventParticipantsData(
     if (seq !== requestSeq) return;
 
     if (result.ok) {
-      rawData.value = result.value;
+      // キャンセル待ち (status='waitlist') は参加者一覧から除外する。
+      // 待機者はイベント詳細の「キャンセル待ち」タブ (read-only) に集約され、
+      // 参加者一覧は実参加者 (reserved / attended / no_show) のみを扱う。
+      rawData.value = result.value.filter((r) => r.status !== "waitlist");
     } else {
       isError.value = true;
       errorCode.value = result.error.code;

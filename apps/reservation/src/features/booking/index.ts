@@ -21,6 +21,10 @@ export {
 } from "./composables/useCreateBooking";
 export type { UseCreateBookingReturn } from "./composables/useCreateBooking";
 export {
+  useCreateWaitlist,
+} from "./composables/useCreateWaitlist";
+export type { UseCreateWaitlistReturn } from "./composables/useCreateWaitlist";
+export {
   useUpdateBooking,
 } from "./composables/useUpdateBooking";
 export type { UseUpdateBookingReturn } from "./composables/useUpdateBooking";

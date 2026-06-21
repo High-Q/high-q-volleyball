@@ -206,4 +206,40 @@ describe("useNextReservation", () => {
       expect(c.mineByEventId.value.size).toBe(0);
     });
   });
+
+  describe("waitlistByEventId Map", () => {
+    it("waitlist かつ未来の予約のみ Map に入り、reserved とは混ざらない", async () => {
+      const reserved = makeReservation("r1", "reserved", "2026-05-12T10:30:00Z");
+      const waitlist = makeReservation("r2", "waitlist", "2026-05-20T10:30:00Z");
+      apiMock.fetchMyReservations.mockResolvedValueOnce([reserved, waitlist]);
+      const { useNextReservation } = await import("./useNextReservation");
+      const c = useNextReservation("uid-1");
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(c.waitlistByEventId.value.size).toBe(1);
+      expect(c.waitlistByEventId.value.get(waitlist.event.id)).toBe(waitlist.id);
+      // reserved は mine 側にのみ入る
+      expect(c.mineByEventId.value.get(reserved.event.id)).toBe(reserved.id);
+      expect(c.waitlistByEventId.value.get(reserved.event.id)).toBeUndefined();
+    });
+
+    it("過去開始の waitlist は除外", async () => {
+      const past = makeReservation("r1", "waitlist", "2026-04-01T10:00:00Z");
+      apiMock.fetchMyReservations.mockResolvedValueOnce([past]);
+      const { useNextReservation } = await import("./useNextReservation");
+      const c = useNextReservation("uid-1");
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(c.waitlistByEventId.value.size).toBe(0);
+    });
+
+    it("API エラー時: 空 Map", async () => {
+      apiMock.fetchMyReservations.mockRejectedValueOnce(new Error("boom"));
+      const { useNextReservation } = await import("./useNextReservation");
+      const c = useNextReservation("uid-1");
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(c.waitlistByEventId.value.size).toBe(0);
+    });
+  });
 });

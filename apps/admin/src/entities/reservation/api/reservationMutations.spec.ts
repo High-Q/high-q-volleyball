@@ -41,6 +41,12 @@ vi.mock("@/shared/api/supabase", () => ({
   getSupabase: () => supabaseClient,
 }));
 
+const promotionMock = { triggerWaitlistPromotion: vi.fn() };
+vi.mock("@/shared/api/waitlist-promotion", () => ({
+  triggerWaitlistPromotion: (...args: unknown[]) =>
+    promotionMock.triggerWaitlistPromotion(...args),
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
   currentBuilder = makeBuilder();
@@ -230,22 +236,23 @@ describe("cancelByAdmin", () => {
     expect(eqCalls).toContainEqual(["id", RID]);
   });
 
-  it("成功時に ok を返す", async () => {
-    // cancelByAdmin は select() / count を見ないので update.eq 後の結果を制御
-    // currentBuilder の eq() の結果は thenable ではないが、awaitable な挙動が必要
-    // → mutation の eq の戻り値は builder で、await は最終 chain で発生する
-    // 本実装は select を呼ばないため、eq() の戻り値が thenable である必要がある
-    const eqMock = vi.fn().mockImplementation(async () => ({
+  it("成功時に ok を返し、当該 event_id で繰り上げを起動する", async () => {
+    // 実装は .update().eq().select("event_id") の chain。select が終端 (await)。
+    const selectMock = vi.fn().mockImplementation(async () => ({
       error: null,
+      data: [{ event_id: "ev-1" }],
     }));
     fromMock.mockReturnValueOnce({
-      update: vi.fn().mockReturnValue({ eq: eqMock }),
+      update: vi
+        .fn()
+        .mockReturnValue({ eq: vi.fn().mockReturnValue({ select: selectMock }) }),
     });
     const { cancelByAdmin } = await import("./reservationMutations");
 
     const result = await cancelByAdmin(RID);
 
     expect(result.ok).toBe(true);
+    expect(promotionMock.triggerWaitlistPromotion).toHaveBeenCalledWith("ev-1");
   });
 
   it("network error で NETWORK_ERROR を返す", async () => {
@@ -263,11 +270,14 @@ describe("cancelByAdmin", () => {
   });
 
   it("RLS 拒否で PERMISSION_DENIED を返す", async () => {
-    const eqMock = vi.fn().mockImplementation(async () => ({
+    const selectMock = vi.fn().mockImplementation(async () => ({
       error: { code: "42501", message: "permission denied" },
+      data: null,
     }));
     fromMock.mockReturnValueOnce({
-      update: vi.fn().mockReturnValue({ eq: eqMock }),
+      update: vi
+        .fn()
+        .mockReturnValue({ eq: vi.fn().mockReturnValue({ select: selectMock }) }),
     });
     const { cancelByAdmin } = await import("./reservationMutations");
 

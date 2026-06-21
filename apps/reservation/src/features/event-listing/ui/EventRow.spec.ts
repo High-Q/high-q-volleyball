@@ -205,4 +205,113 @@ describe("EventRow", () => {
       expect(badge.text()).toContain("予約済");
     });
   });
+
+  describe("キャンセル待ち登録時の挙動 (waitlistReservationId 渡し)", () => {
+    const WL_ID = unsafeReservationId("44444444-4444-4444-4444-444444444444");
+
+    it("waitlistReservationId 指定時: 「キャンセル待ち」 chip が描画される", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent, waitlistReservationId: WL_ID },
+      });
+      const badge = wrapper.get('[data-testid="event-row-waitlist-badge"]');
+      expect(badge.text()).toContain("キャンセル待ち");
+      expect(
+        wrapper.find('[data-testid="event-row-mine-badge"]').exists(),
+      ).toBe(false);
+    });
+
+    it("waitlistReservationId 指定時: router-link は /reservations/:reservationId を指す", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent, waitlistReservationId: WL_ID },
+      });
+      const link = wrapper.findComponent({ name: "RouterLink" });
+      expect(link.props("to")).toEqual({
+        name: "reservation-detail",
+        params: { reservationId: WL_ID },
+      });
+    });
+
+    it("予約済 (reservationId) が waitlist より優先される", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: {
+          event: baseEvent,
+          reservationId: R_ID,
+          waitlistReservationId: WL_ID,
+        },
+      });
+      expect(wrapper.get('[data-testid="event-row-mine-badge"]').text()).toContain(
+        "予約済",
+      );
+      expect(
+        wrapper.find('[data-testid="event-row-waitlist-badge"]').exists(),
+      ).toBe(false);
+    });
+
+    it("waitlistReservationId 未指定: 「キャンセル待ち」 chip は描画されない", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: baseEvent },
+      });
+      expect(
+        wrapper.find('[data-testid="event-row-waitlist-badge"]').exists(),
+      ).toBe(false);
+    });
+  });
+
+  describe("満員時のキャンセル待ち受付ヒント", () => {
+    const fullEvent: EventListItem = {
+      ...baseEvent,
+      availability: makeAvailability(18, 18),
+    };
+    const WL_ID = unsafeReservationId("55555555-5555-5555-5555-555555555555");
+
+    it("満員 + 未登録: 「キャンセル待ち受付中」ヒントが描画される", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: fullEvent },
+      });
+      const hint = wrapper.get('[data-testid="event-row-waitlist-hint"]');
+      expect(hint.text()).toContain("キャンセル待ち受付中");
+    });
+
+    it("満員でない (残あり): ヒントは描画されない", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: { ...baseEvent, availability: makeAvailability(18, 11) } },
+      });
+      expect(
+        wrapper.find('[data-testid="event-row-waitlist-hint"]').exists(),
+      ).toBe(false);
+    });
+
+    it("capacity NULL: ヒントは描画されない", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: { ...baseEvent, availability: makeAvailability(null, 30) } },
+      });
+      expect(
+        wrapper.find('[data-testid="event-row-waitlist-hint"]').exists(),
+      ).toBe(false);
+    });
+
+    it("満員 + キャンセル待ち登録済み: ヒントは出ず「キャンセル待ち」バッジが出る", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: fullEvent, waitlistReservationId: WL_ID },
+      });
+      expect(
+        wrapper.find('[data-testid="event-row-waitlist-hint"]').exists(),
+      ).toBe(false);
+      expect(
+        wrapper.find('[data-testid="event-row-waitlist-badge"]').exists(),
+      ).toBe(true);
+    });
+
+    it("満員 + 予約済み: ヒントは出ず「予約済」バッジが出る", async () => {
+      const wrapper = await mountWithRouter(EventRow, routes, "/", {
+        props: { event: fullEvent, reservationId: R_ID },
+      });
+      expect(
+        wrapper.find('[data-testid="event-row-waitlist-hint"]').exists(),
+      ).toBe(false);
+      expect(
+        wrapper.find('[data-testid="event-row-mine-badge"]').exists(),
+      ).toBe(true);
+    });
+  });
 });

@@ -122,8 +122,13 @@ const {
   submitting: cancelSubmitting,
   error: cancelError,
   cancel,
+  cancelWaitlist,
   reset: resetCancel,
 } = useCancelBooking();
+
+const isWaitlistReservation = computed(
+  () => reservation.value?.status === "waitlist",
+);
 
 const cancelErrorMessage = computed(() => {
   switch (cancelError.value) {
@@ -144,8 +149,14 @@ const cancelErrorMessage = computed(() => {
 const isCancelButtonVisible = computed(() => {
   const r = reservation.value;
   if (r === null) return false;
-  return r.status === "reserved";
+  return r.status === "reserved" || r.status === "waitlist";
 });
+
+const cancelButtonLabel = computed(() =>
+  isWaitlistReservation.value
+    ? "キャンセル待ちを取り消す"
+    : "予約をキャンセルする",
+);
 
 function openCancelDialog(): void {
   resetCancel();
@@ -155,10 +166,15 @@ function openCancelDialog(): void {
 async function onConfirmCancel(): Promise<void> {
   const r = reservation.value;
   if (r === null) return;
-  const ok = await cancel(r.id);
+  const isWaitlist = r.status === "waitlist";
+  const ok = isWaitlist ? await cancelWaitlist(r.id) : await cancel(r.id);
   if (ok) {
     cancelDialogOpen.value = false;
-    showSuccess("予約をキャンセルしました。");
+    showSuccess(
+      isWaitlist
+        ? "キャンセル待ちを取り消しました。"
+        : "予約をキャンセルしました。",
+    );
     void router.replace({ name: "history" });
   }
 }
@@ -392,7 +408,7 @@ function goHistory(): void {
           data-testid="detail-cancel-button"
           @click="openCancelDialog"
         >
-          予約をキャンセルする
+          {{ cancelButtonLabel }}
         </Button>
       </template>
     </section>
@@ -401,6 +417,7 @@ function goHistory(): void {
       v-if="reservation !== null"
       :open="cancelDialogOpen"
       :event-start-at="reservation.event.startAt"
+      :kind="isWaitlistReservation ? 'waitlist' : 'reservation'"
       :submitting="cancelSubmitting"
       :error-message="cancelErrorMessage"
       @update:open="cancelDialogOpen = $event"

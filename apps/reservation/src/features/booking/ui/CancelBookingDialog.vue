@@ -28,20 +28,31 @@ import {
  *   openspec/changes/reservation-booking-flow/specs/reservation-booking-flow/spec.md
  */
 
-const props = defineProps<{
-  open: boolean;
-  /** 対象イベントの開催開始時刻 (ISO 8601) */
-  eventStartAt: string;
-  submitting?: boolean;
-  errorMessage?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    /** 対象イベントの開催開始時刻 (ISO 8601) */
+    eventStartAt: string;
+    submitting?: boolean;
+    errorMessage?: string;
+    /**
+     * 'reservation' (既定): 通常予約のキャンセル。開催前日中までの日付ゲートを適用。
+     * 'waitlist': キャンセル待ちの取り消し。意思表明の撤回なので日付ゲートなし (常に可)。
+     */
+    kind?: "reservation" | "waitlist";
+  }>(),
+  { kind: "reservation" },
+);
 
 const emit = defineEmits<{
   (e: "update:open", value: boolean): void;
   (e: "confirm"): void;
 }>();
 
-const cancellable = computed(() => isCancellable(props.eventStartAt));
+const isWaitlist = computed(() => props.kind === "waitlist");
+const cancellable = computed(() =>
+  isWaitlist.value ? true : isCancellable(props.eventStartAt),
+);
 
 function onUpdateOpen(value: boolean): void {
   emit("update:open", value);
@@ -57,11 +68,15 @@ function onConfirm(): void {
     <AlertDialogContent>
       <AlertDialogHeader>
         <AlertDialogTitle>
-          <template v-if="cancellable">予約をキャンセルしますか？</template>
+          <template v-if="isWaitlist">キャンセル待ちを取り消しますか？</template>
+          <template v-else-if="cancellable">予約をキャンセルしますか？</template>
           <template v-else>キャンセル期限を過ぎています</template>
         </AlertDialogTitle>
         <AlertDialogDescription>
-          <template v-if="cancellable">
+          <template v-if="isWaitlist">
+            取り消すと繰り上げの対象から外れます。再度キャンセル待ちに登録し直すこともできます。
+          </template>
+          <template v-else-if="cancellable">
             キャンセル後、同じイベントへ再度予約することができます。
           </template>
           <template v-else>
@@ -95,7 +110,13 @@ function onConfirm(): void {
           data-testid="confirm-cancel"
           @click="onConfirm"
         >
-          {{ props.submitting ? "処理中..." : "キャンセルする" }}
+          {{
+            props.submitting
+              ? "処理中..."
+              : isWaitlist
+                ? "取り消す"
+                : "キャンセルする"
+          }}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

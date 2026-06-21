@@ -4,6 +4,7 @@ import {
   renderIdentityDocumentPendingNotificationMail,
   renderReservationCancelledMail,
   renderReservationConfirmedMail,
+  renderReservationPromotedMail,
   renderReservationUpdatedMail,
   type EventCancellationMailInput,
   type IdentityDocumentPendingNotificationInput,
@@ -446,5 +447,32 @@ describe("renderIdentityDocumentPendingNotificationMail", () => {
       uploadedAtIso: "2026-05-29T23:30:00Z",
     });
     expect(body).toContain("2026/05/30 08:30");
+  });
+});
+
+describe("renderReservationPromotedMail", () => {
+  it("件名に繰り上げ・予約番号を含む", () => {
+    const { subject } = renderReservationPromotedMail(baseConfirmed);
+    expect(subject).toContain("繰り上げ");
+    expect(subject).toContain("#HQ-AB12-CD34");
+  });
+
+  it("本文に繰り上げ確定・イベント情報・参加費・LINE 導線を含む", () => {
+    const { body } = renderReservationPromotedMail(baseConfirmed);
+    expect(body).toContain("繰り上が");
+    expect(body).toContain("ご予約が確定しました");
+    expect(body).toContain("金曜の夜練 (中級〜)");
+    expect(body).toContain("¥1,500");
+    expect(body).toContain("LINE オープンチャット");
+    expect(body).toContain("https://line.me/ti/g2/example");
+  });
+
+  it("同伴者ありのとき合計人数・合計金額を反映する", () => {
+    const { body } = renderReservationPromotedMail({
+      ...baseConfirmed,
+      guestCount: 2,
+    });
+    expect(body).toContain("3 名");
+    expect(body).toContain("¥4,500");
   });
 });
