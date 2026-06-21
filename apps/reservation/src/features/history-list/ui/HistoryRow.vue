@@ -12,6 +12,7 @@ import {
   jstMonth,
   jstWeekday,
 } from "@/shared/lib/jst-calendar";
+import { isRebookable } from "../lib/isRebookable";
 
 const props = withDefaults(
   defineProps<{
@@ -20,12 +21,15 @@ const props = withDefaults(
     showCancel?: boolean;
     /** 取り消しボタンのラベル (予約中は「予約をキャンセル」/ キャンセル待ちは「キャンセル待ちを取り消す」) */
     cancelLabel?: string;
+    /** 再予約可否判定の基準時刻（省略時は現在時刻）。テストで固定するため prop 化 */
+    now?: Date;
   }>(),
   { cancelLabel: "予約をキャンセル" },
 );
 
 const emit = defineEmits<{
   "request-cancel": [item: MyReservationItem];
+  "request-rebook": [item: MyReservationItem];
 }>();
 
 const startDate = computed(() => new Date(props.item.event.startAt));
@@ -61,8 +65,17 @@ const reservationNumber = computed(() =>
 
 const isCancelled = computed(() => props.item.status === "cancelled");
 
+/** キャンセル済みで再び受付可能（未開催 × 非満席）な行のみ「再予約する」CTA を出す */
+const rebookable = computed(() =>
+  isRebookable(props.item, props.now ?? new Date()),
+);
+
 function onCancelClick(): void {
   emit("request-cancel", props.item);
+}
+
+function onRebookClick(): void {
+  emit("request-rebook", props.item);
 }
 </script>
 
@@ -110,6 +123,14 @@ function onCancelClick(): void {
         data-testid="history-row-cancel"
         @click.stop.prevent="onCancelClick"
       >{{ props.cancelLabel }}</button>
+
+      <button
+        v-if="rebookable"
+        type="button"
+        class="self-start font-jp text-xs text-accent border border-accent rounded-full px-hq-3 py-hq-1 hover:bg-accent-soft transition-colors mt-hq-2"
+        data-testid="history-row-rebook"
+        @click.stop.prevent="onRebookClick"
+      >再予約する</button>
     </div>
 
     <div class="flex items-start shrink-0">

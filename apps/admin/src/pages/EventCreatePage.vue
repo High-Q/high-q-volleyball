@@ -59,7 +59,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-paper text-ink font-jp">
+  <!-- #155 シェルが <main> を所有するため root は <div>。min-h-full でシェル内に収める -->
+  <div class="min-h-full bg-paper text-ink font-jp">
     <!-- 複製元の解決中（from 指定時のみ） -->
     <div v-if="resolving" class="px-hq-6 py-hq-8">
       <Kicker color="muted">— Workspace · Events / New</Kicker>
@@ -76,5 +77,5 @@ onMounted(async () => {
       :seed-event="seed"
       :duplicate-source-name="sourceName"
     />
-  </main>
+  </div>
 </template>

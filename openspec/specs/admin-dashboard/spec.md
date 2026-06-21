@@ -3,9 +3,7 @@
 ## Purpose
 
 `apps/admin` の `/` (Dashboard) 画面の責務を定義する。サークル運営の概況 (主要 4 指標の StatCard / 直近イベント / 通知パネル / 最近の予約) を単一画面に集約し、ログイン直後の概況把握コストを下げる (MVP2 第一弾)。本 capability は画面構成・各指標の意味・4 状態網羅・FSD 配置・デザイントークン準拠・アクセシビリティ・テストの各要件を含む。
-
 ## Requirements
-
 ### Requirement: `/` ダッシュボード画面の構成
 
 `apps/admin` の `/` 画面 (Dashboard) は、admin 認証 (AAL2 + admin ロール) 下で MUST 以下の 4 ブロックを縦方向に配置し、サークル運営の概況を一目で把握可能にする:
@@ -15,7 +13,9 @@
 3. **通知パネル** — 「満員直前イベント」「最近のキャンセル」の 2 種類のみを表示 (メール送信失敗は本画面の対象外)
 4. **最近の予約 4 件** — 直近の reservation 4 件を頭文字円 + 氏名 + イベント名 + 経過時間で表示
 
-ヘッダ右側に主 CTA「新しいイベントを作る」を SHALL 配置し、押下で `/events/new` へ遷移する。ヘッダには会員一覧 / 本人確認書類 (pending Badge 付き) / ログアウト の横遷移リンクを SHALL 揃える。これらは EventsListPage と同じ動線で機能する。
+直近イベント (メイン) と 通知 / 最近の予約 (サイド) の 2 カラムは MUST デスクトップで横並び、モバイル (< `md`) で縦積み (メイン → サイドの順) になる。
+
+ページ header 右側に主 CTA「新しいイベントを作る」を SHALL 配置し、押下で `/events/new` へ遷移する (モバイルではシェルのアプリバー右へ Teleport 表示する)。**会員一覧 / 本人確認書類 (pending Badge 付き) / ログアウト 等のグローバルナビはページ header に持たず、`admin-responsive-shell` capability のサイドバー / ドロワーから提供される。**
 
 #### Scenario: 認証済み admin で `/` を開く
 - **WHEN** AAL2 + admin ユーザーが `/` にアクセス
@@ -149,11 +149,11 @@ Dashboard 上の各 widget は MUST 以下 4 状態を出し分ける:
 - **Error** — クエリ失敗。`role="alert"` 付きのコンテナにエラーコード (例: `ERR · supabase / admin_dashboard_view · 503`) と「再試行」CTA を表示。再試行は widget 単位で発火し、ページ全体を再ロードしない
 - **Success** — 通常表示
 
-ヘッダ (横遷移リンク + 主 CTA + ログアウト) は widget の Error 状態の影響を受けず常に機能 MUST する。
+ページ header の主 CTA、およびシェル (`admin-responsive-shell`) が提供するナビ + ログアウトは MUST widget の Error 状態の影響を受けず常に機能する。
 
 #### Scenario: Error の局所化
 - **WHEN** StatCard の集計クエリが失敗、他 widget は成功
-- **THEN** StatCard ブロックのみ Error 表示になり、直近イベント / 通知 / 最近の予約 / ヘッダ (ログアウト含む) は通常表示される
+- **THEN** StatCard ブロックのみ Error 表示になり、直近イベント / 通知 / 最近の予約 / ページ header / シェルのナビ (ログアウト含む) は通常表示される
 
 #### Scenario: 再試行 CTA
 - **WHEN** ユーザーが Error 状態の widget で「再試行」を押下
@@ -215,3 +215,4 @@ Dashboard 画面は MUST 以下のテストを持つ:
 #### Scenario: E2E の通過 (guard 保護)
 - **WHEN** 未認証ユーザーが `/` にアクセスする E2E を `pnpm --filter @high-q/e2e test` (admin プロジェクト) で実行
 - **THEN** `/login` にリダイレクトされる 1 件が pass する
+

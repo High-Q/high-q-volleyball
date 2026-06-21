@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { Button } from "@high-q/ui";
 import { useVenuesMaster } from "../composables/useVenuesMaster";
 import type { FeeType } from "../model/venueDraft";
@@ -17,9 +17,27 @@ import type { FeeType } from "../model/venueDraft";
 
 const m = useVenuesMaster();
 
+// #155 モバイル (< md) は master-detail の横並びが収まらないため、リスト⇄フォームの
+// ビュー切替にする。md+ では両ペインを常時表示 (mobileView は無視される)。
+const mobileView = ref<"list" | "form">("list");
+
 onMounted(() => {
   void m.reload();
 });
+
+function selectVenue(id: string): void {
+  m.select(id);
+  mobileView.value = "form";
+}
+
+function addVenueLocal(): void {
+  m.addVenue();
+  mobileView.value = "form";
+}
+
+function backToList(): void {
+  mobileView.value = "list";
+}
 
 function onFee(value: string): void {
   m.setField("fee", value === "" ? null : Number(value));
@@ -29,8 +47,8 @@ function setFeeType(t: FeeType): void {
   m.setField("feeType", t);
 }
 
-// ページヘッダーの「＋ 新しい会場」CTA から呼ぶ
-defineExpose({ addVenue: m.addVenue, dirty: m.dirty });
+// ページヘッダーの「＋ 新しい会場」CTA から呼ぶ (モバイルはフォームビューへ切替)
+defineExpose({ addVenue: addVenueLocal, dirty: m.dirty });
 </script>
 
 <template>
@@ -39,9 +57,10 @@ defineExpose({ addVenue: m.addVenue, dirty: m.dirty });
     <div
       class="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-2xl border border-hairline bg-surface shadow-hq-sm md:grid-cols-[320px_1fr]"
     >
-      <!-- ===== 左: 一覧ペイン ===== -->
+      <!-- ===== 左: 一覧ペイン (モバイルは list ビュー時のみ表示) ===== -->
       <aside
-        class="flex min-h-0 flex-col border-b border-hairline md:border-b-0 md:border-r"
+        class="min-h-0 flex-col border-b border-hairline md:border-b-0 md:border-r md:flex"
+        :class="mobileView === 'form' ? 'hidden' : 'flex'"
       >
         <div class="border-b border-hairline px-hq-4 pb-hq-3 pt-hq-4">
           <input
@@ -60,19 +79,19 @@ defineExpose({ addVenue: m.addVenue, dirty: m.dirty });
           <span>{{ m.filteredCount.value }} / {{ m.totalCount.value }}</span>
         </div>
 
-        <div class="max-h-64 flex-1 overflow-y-auto md:max-h-none">
+        <div class="flex-1 overflow-y-auto">
           <button
             v-for="it in m.items.value"
             :key="it.id"
             type="button"
-            class="flex w-full items-center gap-hq-2 border-b border-l-[3px] border-b-hairline-soft border-l-transparent px-hq-4 py-hq-2 text-left transition-colors hover:bg-paper-warm"
+            class="flex min-h-[44px] w-full items-center gap-hq-2 border-b border-l-[3px] border-b-hairline-soft border-l-transparent px-hq-4 py-hq-2 text-left transition-colors hover:bg-paper-warm"
             :class="
               it.selected
                 ? 'border-l-accent bg-accent-soft'
                 : ''
             "
             :aria-current="it.selected ? 'true' : undefined"
-            @click="m.select(it.id)"
+            @click="selectVenue(it.id)"
           >
             <span
               class="font-jp text-sm leading-snug"
@@ -105,15 +124,27 @@ defineExpose({ addVenue: m.addVenue, dirty: m.dirty });
 
         <button
           type="button"
-          class="flex items-center gap-hq-2 border-t border-hairline px-hq-4 py-hq-3 text-left font-jp text-sm text-ink-soft transition-colors hover:text-accent"
-          @click="m.addVenue()"
+          class="flex min-h-[44px] items-center gap-hq-2 border-t border-hairline px-hq-4 py-hq-3 text-left font-jp text-sm text-ink-soft transition-colors hover:text-accent"
+          @click="addVenueLocal()"
         >
           ＋ 新しい会場を追加
         </button>
       </aside>
 
-      <!-- ===== 右: 詳細ペイン ===== -->
-      <section class="flex min-h-0 flex-col">
+      <!-- ===== 右: 詳細ペイン (モバイルは form ビュー時のみ表示) ===== -->
+      <section
+        class="min-h-0 flex-col md:flex"
+        :class="mobileView === 'list' ? 'hidden' : 'flex'"
+      >
+        <!-- モバイル: 一覧へ戻る -->
+        <button
+          type="button"
+          class="flex min-h-[44px] items-center gap-hq-2 border-b border-hairline px-hq-4 py-hq-2 text-left font-jp text-sm text-ink-soft transition-colors hover:text-accent md:hidden"
+          @click="backToList()"
+        >
+          ← 会場一覧へ戻る
+        </button>
+
         <!-- Loading -->
         <div
           v-if="m.isLoading.value && !m.draft.value"

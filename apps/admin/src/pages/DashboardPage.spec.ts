@@ -70,27 +70,20 @@ describe("DashboardPage", () => {
     expect(w.find("[data-test='w-recent-bookings']").exists()).toBe(true);
   });
 
-  it("横遷移リンク (会員 / 本人確認書類) を持つ", async () => {
+  // #155 グローバルナビ (会員 / 本人確認書類 / 会場 / ログアウト) は共通シェル
+  // (admin-shell) へ移設したため、Page header からは撤去された。
+  it("グローバルナビ (会員 / 本人確認書類 / ログアウト) は header に持たない", async () => {
     const w = await mountPage();
-    expect(w.find('a[href="/members"]').exists()).toBe(true);
-    expect(w.find('a[href="/identity-documents"]').exists()).toBe(true);
+    expect(w.find('a[href="/members"]').exists()).toBe(false);
+    expect(w.find('a[href="/identity-documents"]').exists()).toBe(false);
+    const logoutBtn = w
+      .findAll("button")
+      .find((b) => b.text().includes("ログアウト"));
+    expect(logoutBtn).toBeUndefined();
   });
 
   it("主 CTA は /events/new へ", async () => {
     const w = await mountPage();
     expect(w.find('a[href="/events/new"]').exists()).toBe(true);
-  });
-
-  it("ログアウトで signOut + /login へ replace", async () => {
-    const replaceSpyLocal = vi.spyOn(router, "replace");
-    const w = await mountPage();
-    const logoutBtn = w
-      .findAll("button")
-      .find((b) => b.text().includes("ログアウト"));
-    expect(logoutBtn).toBeDefined();
-    await logoutBtn!.trigger("click");
-    await flushPromises();
-    expect(signOutMock).toHaveBeenCalledOnce();
-    expect(replaceSpyLocal).toHaveBeenCalledWith({ name: "login" });
   });
 });

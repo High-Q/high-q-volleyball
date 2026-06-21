@@ -126,11 +126,11 @@ describe("EventsTable", () => {
     expect(wrapper.emitted("update:sort")?.[0]).toEqual(["date", "desc"]);
   });
 
-  it("capacity が null の行は RemainBar の代わりに「N 件」を表示（『予約』プレフィックスは冗長なので省略）", async () => {
+  it("capacity が null の行は RemainBar の代わりに「N 名」を表示（『予約』プレフィックスは冗長なので省略）", async () => {
     const row = baseRow({ capacity: null, reserved_count: 12 });
     const wrapper = await renderTable({ rows: [row] });
-    expect(wrapper.text()).toContain("12 件");
-    expect(wrapper.text()).not.toContain("予約 12 件");
+    expect(wrapper.text()).toContain("12 名");
+    expect(wrapper.text()).not.toContain("予約 12 名");
   });
 
   it("会場名は施設種別末尾を削った主要部のみ表示する（モバイル改行抑止）", async () => {
@@ -286,5 +286,47 @@ describe("EventsTable", () => {
     });
     await wrapper.findAll("th").at(0)!.trigger("keydown", { key: "Enter" });
     expect(wrapper.emitted("update:sort")?.[0]).toEqual(["date", "desc"]);
+  });
+
+  // #155 モバイル: テーブル→カード縦積み切替
+  describe("モバイルカード (#155)", () => {
+    it("デスクトップ Table は hidden md:block、カードリストは md:hidden で出し分ける", async () => {
+      const wrapper = await renderTable({ rows: [baseRow()] });
+      const tableWrapper = wrapper.find(".hq-table-wrapper");
+      expect(tableWrapper.classes()).toContain("hidden");
+      expect(tableWrapper.classes()).toContain("md:block");
+      const cardList = wrapper.find("ul[role='list']");
+      expect(cardList.exists()).toBe(true);
+      expect(cardList.classes()).toContain("md:hidden");
+    });
+
+    it("カードに全項目 (日付/タイトル/会場/時間/予約/ステータス/操作) を保持する", async () => {
+      const wrapper = await renderTable({ rows: [baseRow()] });
+      const card = wrapper.find("ul[role='list'] > li");
+      expect(card.exists()).toBe(true);
+      const text = card.text();
+      expect(text).toContain("ゆる練 vol.43"); // タイトル
+      expect(text).toContain("亀戸"); // 会場 (短縮)
+      expect(text).toContain("公開中"); // ステータス
+      // 詳細 / 編集 / 複製 の 3 リンク
+      const links = card.findAll("a");
+      expect(links.length).toBe(3);
+      expect(
+        links.some((a) => a.attributes("href")?.endsWith("/edit")),
+      ).toBe(true);
+      expect(
+        links.some((a) =>
+          a.attributes("href")?.includes("/events/new?from="),
+        ),
+      ).toBe(true);
+    });
+
+    it("capacity null のカードは「N 名」を表示する", async () => {
+      const wrapper = await renderTable({
+        rows: [baseRow({ capacity: null, reserved_count: 9 })],
+      });
+      const card = wrapper.find("ul[role='list'] > li");
+      expect(card.text()).toContain("9 名");
+    });
   });
 });

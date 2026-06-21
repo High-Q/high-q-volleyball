@@ -231,3 +231,21 @@ TBD - created by archiving change admin-login-magic-link. Update Purpose after a
 - **WHEN** `apps/admin` が起動する
 - **THEN** `main.ts` で `useIdleTimeout()` が `start(() => signOut())` 付きで呼ばれており、document level のイベントリスナーが登録されている
 
+### Requirement: ログイン画面のレスポンシブレイアウト
+
+ログイン画面（`/login`）は MUST デスクトップ（≥ `md`）で「左ブランド帯 + 右フォーム」の 2 カラム、モバイル（< `md`）で縦積みになる。モバイルではブランドを上部の細い帯に圧縮し、装飾コピーは非表示にして、フォームを全幅で表示する SHALL。MFA（`/mfa` / `/mfa/setup`）および `/auth/callback` の各画面は MUST モバイル幅でも中央寄せのフォームが横スクロールなしで収まる。
+
+ログイン / MFA / auth-callback は公開ルートのため、`admin-responsive-shell` のサイドバー / ドロワーは MUST 表示しない。着色は HQ デザイントークン経由のみとする SHALL。
+
+#### Scenario: モバイルでログインが縦積みになる
+- **WHEN** 画面幅 375px で `/login` を開く
+- **THEN** ブランド帯とフォームが縦積みで表示され、フォームは全幅、横スクロールは発生しない。装飾コピーは非表示になる
+
+#### Scenario: デスクトップは 2 カラムを維持
+- **WHEN** 画面幅 1280px で `/login` を開く
+- **THEN** 左ブランド帯 + 右フォームの 2 カラムが表示される
+
+#### Scenario: 公開ルートにシェルが出ない
+- **WHEN** 任意の画面幅で `/login` / `/mfa` / `/auth/callback` を開く
+- **THEN** サイドバー / アプリバー / ドロワーは表示されない
+

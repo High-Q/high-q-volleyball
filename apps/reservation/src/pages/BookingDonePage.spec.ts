@@ -72,6 +72,16 @@ const pastEvent: EventDetail = {
   endAt: new Date(Date.now() + 60 * 1000).toISOString(),
 };
 
+// 未来だが満席 → キャンセルは可能（日付基準）だが再予約は不可
+const fullFutureEvent: EventDetail = {
+  ...futureEvent,
+  availability: {
+    eventId: unsafeEventId("ev-1"),
+    capacity: 10,
+    reservedCount: 10,
+  },
+};
+
 // ---------- routing ----------
 const Stub = defineComponent({ template: "<div />" });
 const routes = [
@@ -188,14 +198,9 @@ describe("BookingDonePage - リダイレクト", () => {
 });
 
 describe("BookingDonePage - キャンセル動線", () => {
-  it("開催前ならキャンセル動線が起動 → 確定で events-list へ遷移", async () => {
-    cancelMock.mockResolvedValueOnce(true);
-    const { wrapper, router } = await mountPage();
-
-    const trigger = wrapper.find('[data-testid="cancel-trigger"]');
-    await trigger.trigger("click");
+  async function confirmCancel(wrapper: { find: (s: string) => { trigger: (e: string) => Promise<void> } }) {
+    await wrapper.find('[data-testid="cancel-trigger"]').trigger("click");
     await flushPromises();
-
     // AlertDialog の Content は Portal で document.body 配下に描画される
     const confirm = document.body.querySelector(
       '[data-testid="confirm-cancel"]',
@@ -203,10 +208,45 @@ describe("BookingDonePage - キャンセル動線", () => {
     expect(confirm).not.toBeNull();
     confirm?.click();
     await flushPromises();
+  }
+
+  it("受付可能イベントはキャンセル確定後 events-list へ飛ばず再予約導線を表示する", async () => {
+    cancelMock.mockResolvedValueOnce(true);
+    const { wrapper, router } = await mountPage();
+
+    await confirmCancel(wrapper);
+
+    expect(cancelMock).toHaveBeenCalledTimes(1);
+    expect(router.currentRoute.value.name).toBe("booking-done");
+    expect(
+      wrapper.find('[data-testid="booking-cancelled-rebook"]').exists(),
+    ).toBe(true);
+    expect(wrapper.text()).toContain("やっぱり予約する");
+  });
+
+  it("受付不可（満席）イベントはキャンセル確定後 events-list へ遷移する", async () => {
+    eventRef.value = fullFutureEvent;
+    cancelMock.mockResolvedValueOnce(true);
+    const { wrapper, router } = await mountPage();
+
+    await confirmCancel(wrapper);
 
     expect(cancelMock).toHaveBeenCalledTimes(1);
     expect(router.currentRoute.value.name).toBe("events-list");
     expect(router.currentRoute.value.query.cancelled).toBe("1");
+  });
+
+  it("再予約導線「やっぱり予約する」で event-detail へ ?book=1 付きで遷移する", async () => {
+    cancelMock.mockResolvedValueOnce(true);
+    const { wrapper, router } = await mountPage();
+
+    await confirmCancel(wrapper);
+    await wrapper.find('[data-testid="booking-rebook"]').trigger("click");
+    await flushPromises();
+
+    expect(router.currentRoute.value.name).toBe("event-detail");
+    expect(router.currentRoute.value.params.id).toBe("ev-1");
+    expect(router.currentRoute.value.query.book).toBe("1");
   });
 
   it("開催開始以降は確定 CTA が描画されず、不可案内が出る", async () => {

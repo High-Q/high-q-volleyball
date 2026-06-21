@@ -30,11 +30,15 @@ TBD - created by archiving change admin-identity-document-review. Update Purpose
 5. **ステータス**: `status` を翻訳した Badge — `pending` (neutral / 黄系)「未対応」/ `approved` (success / 緑)「承認済」/ `rejected` (danger / 赤)「差し戻し」
 6. **操作**: 「詳細」`<router-link>` (押下で `/identity-documents/:id` へ遷移)
 
-全テーブルセルは `whitespace-nowrap` で改行抑止し、画面幅を超えた場合は横スクロールにフォールバック SHALL。
+デスクトップ（≥ `md`）は DataTable で表示し、各セルは `whitespace-nowrap` で改行抑止する。**モバイル（< `md`）は MUST 横スクロールではなくカード縦積みで表示し、上記 1〜6 の全項目をカード内に保持する**（ユーザー名・書類種別・ステータスを上段、提出日時・メール・操作を下段に「ラベル: 値」相当で配置）。横スクロールは使わない（`admin-responsive-shell` capability のレスポンシブ表示規約に従う）。
 
 #### Scenario: 列順序が仕様どおり
 - **WHEN** Success 状態で 1 件以上ある状態で描画
 - **THEN** 上記 1〜6 の列が左から順に表示される
+
+#### Scenario: モバイル幅ではカード縦積みで表示される
+- **WHEN** 画面幅 375px で `/identity-documents` を Success 状態で描画
+- **THEN** DataTable ではなくカード縦積みで表示され、横スクロールは発生せず、提出日時 / ユーザー名 / メール / 書類種別 / ステータス / 操作の全項目が各カード内で確認できる
 
 #### Scenario: 書類種別 Badge の警告色
 - **WHEN** マイナンバーカードの行を描画

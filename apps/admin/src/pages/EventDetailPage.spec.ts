@@ -132,7 +132,7 @@ describe("EventDetailPage", () => {
     expect(wrapper.text()).toContain("ゆる練 vol.42");
   });
 
-  it("ヘッダにタイトル「イベント詳細」+ ログアウトボタンが表示される", async () => {
+  it("ヘッダにタイトル「イベント詳細」が表示され、ログアウトは持たない (#155 シェルへ移設)", async () => {
     getEventDetailMock.mockResolvedValue({
       ok: false,
       error: { code: "EVENT_NOT_FOUND", message: "" },
@@ -146,7 +146,10 @@ describe("EventDetailPage", () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain("イベント詳細");
-    expect(wrapper.text()).toContain("ログアウト");
+    const logout = Array.from(
+      (wrapper.element as HTMLElement).querySelectorAll("button"),
+    ).find((b) => b.textContent?.includes("ログアウト"));
+    expect(logout).toBeUndefined();
   });
 
   it("EventDetailWidget からの `member-clicked` で URL に `?detail=<id>` が push される", async () => {
@@ -214,29 +217,4 @@ describe("EventDetailPage", () => {
     expect(router.currentRoute.value.query.detail).toBeUndefined();
   });
 
-  it("ログアウトボタンで signOut + /login へ遷移", async () => {
-    getEventDetailMock.mockResolvedValue({
-      ok: false,
-      error: { code: "EVENT_NOT_FOUND", message: "" },
-    });
-    getEventParticipantsMock.mockResolvedValue({ ok: true, value: [] });
-    const router = buildRouter();
-    await router.push(`/events/${EVENT_ID}`);
-    wrapper = mount(EventDetailPage, {
-      global: { plugins: [router] },
-    });
-    await flushPromises();
-
-    const logoutBtn = Array.from(
-      (wrapper.element as HTMLElement).querySelectorAll("button"),
-    ).find((b) => b.textContent?.includes("ログアウト"));
-    expect(logoutBtn).toBeDefined();
-
-    const replaceSpy = vi.spyOn(router, "replace");
-    logoutBtn!.click();
-    await flushPromises();
-
-    expect(signOutMock).toHaveBeenCalled();
-    expect(replaceSpy).toHaveBeenCalledWith({ name: "login" });
-  });
 });

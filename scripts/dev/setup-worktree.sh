@@ -20,6 +20,7 @@ REPO_NAME="$(basename "$REPO_ROOT")"
 
 BASE_PORT_ADMIN=5173
 BASE_PORT_RESERVATION=5174
+BASE_PORT_LP=5175
 PORT_STEP=100
 
 usage() {
@@ -160,6 +161,7 @@ WT_COUNT="$(git worktree list --porcelain | grep -cE '^worktree ')"
 WT_INDEX="$((WT_COUNT - 1))"  # メインを除いた index (新規分が N 番目)
 ADMIN_PORT="$((BASE_PORT_ADMIN + PORT_STEP * WT_INDEX))"
 RESERVATION_PORT="$((BASE_PORT_RESERVATION + PORT_STEP * WT_INDEX))"
+LP_PORT="$((BASE_PORT_LP + PORT_STEP * WT_INDEX))"
 
 # ---- VS Code 起動 (任意) -----------------------------------------------------
 VSCODE_OPENED=0
@@ -195,13 +197,16 @@ branch:       ${BRANCH_NAME}
 issue:        #${ISSUE_NUMBER}
 worktree #:   ${WT_INDEX}
 
-▼ 起動コマンド (cd ${WT_PATH} 後)
+▼ 起動コマンド (cd ${WT_PATH} 後 / lp も必ず --port を付ける)
   pnpm --filter @high-q/admin dev --port ${ADMIN_PORT}
   pnpm --filter @high-q/reservation dev --port ${RESERVATION_PORT}
+  pnpm --filter @high-q/lp dev --port ${LP_PORT}
 
 ▼ アクセス先
   admin:        http://localhost:${ADMIN_PORT}
   reservation:  http://localhost:${RESERVATION_PORT}
+  lp:           http://localhost:${LP_PORT}
+  (admin/reservation は dev ログインの登録ポート。lp は認証なしで登録不要)
 
 ▼ 次のステップ
   1. cd ${WT_PATH}
