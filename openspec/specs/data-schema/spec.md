@@ -6,11 +6,13 @@ High Q の MVP1 で必要な 5 テーブル (events / members / reservations / v
 ## Requirements
 ### Requirement: events テーブル
 
-システムは `events` テーブルを以下の列で定義 MUST する: `id` (UUID PK)、`name` (text NOT NULL)、`description` (text)、`start_at` (timestamptz NOT NULL)、`end_at` (timestamptz NOT NULL)、`venue_id` (uuid NOT NULL references venues(id) ON DELETE RESTRICT)、`fee` (integer NULL — NULL は会場 default_fee を継承)、`capacity` (smallint NULL)、`visibility` (text CHECK in `'draft'`,`'published'`,`'private'`、default `'draft'`)、`status` (text CHECK in `'scheduled'`,`'cancelled'`,`'closed'`、default `'scheduled'`)、`cancel_deadline` (timestamptz NULL)、`created_at` (timestamptz default now)、`updated_at` (timestamptz default now)、`created_by` (uuid references auth.users(id) ON DELETE SET NULL)。
+システムは `events` テーブルを以下の列で定義 MUST する: `id` (UUID PK)、`name` (text NOT NULL)、`description` (text)、`start_at` (timestamptz NOT NULL)、`end_at` (timestamptz NOT NULL)、`venue_id` (uuid NOT NULL references venues(id) ON DELETE RESTRICT)、`fee` (integer NULL — NULL は会場 default_fee を継承)、`capacity` (smallint NULL)、`email_note` (text NULL — 会員向け予約完了/変更メールに掲載する任意の追記メッセージ。NULL / 空文字はメール非掲載)、`visibility` (text CHECK in `'draft'`,`'published'`,`'private'`、default `'draft'`)、`status` (text CHECK in `'scheduled'`,`'cancelled'`,`'closed'`、default `'scheduled'`)、`cancel_deadline` (timestamptz NULL)、`created_at` (timestamptz default now)、`updated_at` (timestamptz default now)、`created_by` (uuid references auth.users(id) ON DELETE SET NULL)。
 
 既存の `location` 列 (free text) は本 change で DROP MUST する (本番 DB は空のため互換維持不要、venue_id への一本化を強制する)。
 
 `visibility` と `status` を分離 MUST: `visibility` は admin の公開ステータス、`status` は実施ステータス (中止 / 終了等)。
+
+`email_note` は会員向けメールにそのまま掲載される自由文であり、`description` (AWS Legacy ID マーカー埋め込み用途) とは独立した列とする MUST。
 
 #### Scenario: 基本的な作成と取得
 - **WHEN** 管理者が name / start_at / end_at を指定して events に行を INSERT
@@ -35,6 +37,10 @@ High Q の MVP1 で必要な 5 テーブル (events / members / reservations / v
 #### Scenario: visibility と status の独立性
 - **WHEN** `visibility = 'published'` かつ `status = 'cancelled'` の行を作成
 - **THEN** 行は正常に作成される (公開済みだが中止になったイベントを表現)
+
+#### Scenario: email_note 未設定時のデフォルト
+- **WHEN** email_note を指定せずに events を INSERT
+- **THEN** email_note は NULL で作成され、予約完了/変更メールにイベント追記メッセージのセクションは描画されない
 
 ### Requirement: members テーブル
 
@@ -791,8 +797,6 @@ view は admin 用 `event_list_view` / `event_detail_view` とは独立に運用
 - **WHEN** 本変更の migration 適用後に `event_list_view` / `event_detail_view` の列を SELECT
 - **THEN** いずれの view も変更前と同じ列セット・同じ SECURITY モード（INVOKER）を維持する
 
-
-
 ### Requirement: 参加者ニックネーム取得 RPC の関数定義と migration
 
 `supabase/migrations/` 配下に `public.get_event_participant_nicknames(p_event_id uuid)` 関数の定義と `EXECUTE` 権限付与を行う SQL マイグレーションを SHALL 追加する。マイグレーション SQL は以下を MUST 含む:
@@ -939,3 +943,4 @@ view は MUST `SECURITY INVOKER` で作成。`reservations.member_id IS NULL` (�
 #### Scenario: 3 ロールの権限が明示される
 - **WHEN** `has_table_privilege` で各ロールの権限を問い合わせ
 - **THEN** `admin_dashboard_recent_bookings_view` に対し anon は SELECT 権限なし (明示 REVOKE)、authenticated / service_role はそれぞれ SELECT 権限ありが確認できる
+
