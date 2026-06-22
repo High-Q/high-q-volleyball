@@ -15,6 +15,15 @@
         <template v-else-if="nextEvent">
           <div class="next-strip__title">{{ formatDateName(nextEvent) }}</div>
           <div class="next-strip__meta">{{ formatTimeLocation(nextEvent) }}</div>
+          <span
+            v-if="availability"
+            class="next-strip__avail"
+            :class="`next-strip__avail--${availability.tone}`"
+            data-testid="next-session-availability"
+          >
+            <span class="next-strip__avail-dot" aria-hidden="true" />
+            {{ availability.text }}
+          </span>
         </template>
         <template v-else>
           <div class="next-strip__title next-strip__title--placeholder">
@@ -29,7 +38,7 @@
         class="next-strip__cta"
         data-testid="next-session-cta"
       >
-        予約する
+        {{ availability?.isFull ? 'キャンセル待ち' : '予約する' }}
         <span aria-hidden="true">›</span>
       </a>
     </div>
@@ -41,7 +50,7 @@ import { computed } from 'vue'
 import { useNextSession } from '../model/useNextSession'
 import { reservationEventUrl } from '@shared/config/reservation'
 
-const { nextEvent, isPending, isError } = useNextSession()
+const { nextEvent, availability, isPending, isError } = useNextSession()
 
 const targetUrl = computed(() => {
   if (!nextEvent.value) return ''
@@ -148,6 +157,47 @@ function formatTimeLocation(event: NextSessionEvent) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.next-strip__avail {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  font-family: var(--hq-font-jp);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.next-strip__avail-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ダーク帯 (--hq-color-ink) 上のため on-dark トークンで着色し AA を確保する。
+   募集中は本文を paper、満員/残りわずかは on-dark のトーン色で強調する。 */
+.next-strip__avail--ok {
+  color: var(--hq-color-paper);
+}
+.next-strip__avail--ok .next-strip__avail-dot {
+  background: var(--hq-color-success-on-dark);
+}
+
+.next-strip__avail--warn {
+  color: var(--hq-color-warn-on-dark);
+}
+.next-strip__avail--warn .next-strip__avail-dot {
+  background: var(--hq-color-warn-on-dark);
+}
+
+.next-strip__avail--full {
+  color: var(--hq-color-danger-on-dark);
+}
+.next-strip__avail--full .next-strip__avail-dot {
+  background: var(--hq-color-danger-on-dark);
 }
 
 .next-strip__cta {
