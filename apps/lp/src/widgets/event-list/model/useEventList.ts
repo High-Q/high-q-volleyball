@@ -1,6 +1,10 @@
 import { computed } from "vue";
 import { useQuery } from "@tanstack/vue-query";
-import { eventQueryOptions } from "@entities/event";
+import {
+  availabilityQueryOptions,
+  eventQueryOptions,
+  formatAvailability,
+} from "@entities/event";
 import type { LpEvent } from "@entities/event/api/eventQueries";
 
 const MONTH_EN = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -25,17 +29,30 @@ function formatRange(start: Date | null, end: Date | null): string {
 export function useEventList() {
   const { data, isPending, isError } = useQuery(eventQueryOptions.list());
 
+  const eventIds = computed(() =>
+    ((data.value ?? []) as LpEvent[]).map((e) => e.id),
+  );
+
+  // 残席集計は別クエリ。取得に失敗してもイベント一覧自体は壊さない
+  // (グレースフル劣化): エラー時は availabilityMap が undefined のままとなり、
+  // 各イベントの availability は null → バッジ非表示になる。
+  const { data: availabilityMap } = useQuery(
+    computed(() => availabilityQueryOptions.byIds(eventIds.value)),
+  );
+
   const events = computed(() =>
     ((data.value ?? []) as LpEvent[]).map((e) => {
       const start = e.start instanceof Date ? e.start : new Date(e.start);
+      const availability = availabilityMap.value?.get(e.id) ?? null;
       return {
-        id:         e.id,
-        title:      e.name,
-        location:   e.location ?? "",
-        time:       formatRange(start, e.end),
-        monthLabel: MONTH_EN[start.getMonth()] ?? "",
-        dayLabel:   pad(start.getDate()),
-        dowLabel:   DOW_EN[start.getDay()] ?? "",
+        id:           e.id,
+        title:        e.name,
+        location:     e.location ?? "",
+        time:         formatRange(start, e.end),
+        monthLabel:   MONTH_EN[start.getMonth()] ?? "",
+        dayLabel:     pad(start.getDate()),
+        dowLabel:     DOW_EN[start.getDay()] ?? "",
+        availability: formatAvailability(availability),
       };
     }),
   );
