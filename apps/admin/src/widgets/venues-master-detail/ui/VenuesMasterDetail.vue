@@ -304,17 +304,20 @@ defineExpose({ addVenue: addVenueLocal, dirty: m.dirty });
                 </p>
               </div>
 
-              <!-- アクセスメモ（全文表示） -->
+              <!-- 会場メールテンプレート（全文表示・予約メールに掲載） -->
               <div class="flex flex-col md:col-span-2">
-                <label for="vf-access" class="mb-hq-2 font-jp text-xs tracking-wide text-muted">
-                  アクセスメモ
+                <label for="vf-access" class="mb-hq-1 font-jp text-xs tracking-wide text-muted">
+                  会場メールテンプレート
                 </label>
+                <p class="mb-hq-2 font-jp text-xs leading-relaxed text-muted">
+                  ここに書いた内容は、この会場のイベントを予約した会員への予約完了・変更メールに「注意事項」として自動で掲載されます。会場が同じなら毎回同じ案内が載るので、アクセス（最寄り駅・徒歩分数）や当日の注意事項（飲み物が近くで買えない等）を会場ごとに 1 回設定すれば OK です。
+                </p>
                 <textarea
                   id="vf-access"
                   :value="m.draft.value.access"
-                  rows="3"
+                  rows="4"
                   class="min-h-[84px] resize-y rounded-hq-lg border border-hairline bg-surface px-hq-4 py-hq-3 font-jp text-base leading-relaxed text-ink focus:border-accent focus:bg-paper focus:outline-none"
-                  placeholder="最寄り駅・徒歩分数・注意事項など"
+                  placeholder="例）最寄りは亀戸駅 徒歩7分。飲み物は近くで買えないので駅でご購入ください。"
                   @input="m.setField('access', ($event.target as HTMLTextAreaElement).value)"
                 ></textarea>
               </div>

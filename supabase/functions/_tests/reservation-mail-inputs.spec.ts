@@ -30,13 +30,13 @@ const baseEvent: EventRow = {
   start_at: "2026-05-22T10:30:00.000Z", // = 2026-05-22 19:30 JST
   end_at: "2026-05-22T12:30:00.000Z", // = 2026-05-22 21:30 JST
   fee: 1500,
+  email_note: null,
 };
 
 const baseVenue: VenueRow = {
   name: "新宿スポーツセンター 第 2 体育館",
   address: "東京都新宿区大久保 3-1-2",
-  meeting_point: "正面玄関ロビーの High Q プラカード前",
-  map_url: "https://maps.example.com/shinjuku-sports",
+  access_note: null,
   default_fee: 1200,
 };
 
@@ -103,8 +103,8 @@ describe("buildConfirmedInput", () => {
     expect(out.startAtJst).toContain("21:30");
     expect(out.venueName).toBe(baseVenue.name);
     expect(out.venueAddress).toBe(baseVenue.address);
-    expect(out.venueMeetingPoint).toBe(baseVenue.meeting_point);
-    expect(out.venueMapUrl).toBe(baseVenue.map_url);
+    expect(out.venueAccessNote).toBe(baseVenue.access_note);
+    expect(out.eventEmailNote).toBe(baseEvent.email_note);
     expect(out.feePerPerson).toBe(1500);
     expect(out.guestCount).toBe(0);
     expect(out.note).toBeNull();
@@ -143,14 +143,16 @@ describe("buildConfirmedInput", () => {
     expect(out.venueAddress).toBe("");
   });
 
-  it("venues.meeting_point が NULL のとき null を保持する (レンダラ側で行が省略される)", () => {
+
+  it("venues.access_note / events.email_note を値ありで透過する", () => {
     const out = buildConfirmedInput(
       baseReservation,
-      baseEvent,
-      { ...baseVenue, meeting_point: null },
+      { ...baseEvent, email_note: "懇親会あります。" },
+      { ...baseVenue, access_note: "駅で飲み物を買ってきてください。" },
       URLS,
     );
-    expect(out.venueMeetingPoint).toBeNull();
+    expect(out.venueAccessNote).toBe("駅で飲み物を買ってきてください。");
+    expect(out.eventEmailNote).toBe("懇親会あります。");
   });
 });
 

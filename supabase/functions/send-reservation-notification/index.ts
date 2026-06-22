@@ -51,8 +51,7 @@ function getBaseUrl(): string {
 type JoinedVenue = {
   name: string;
   address: string | null;
-  meeting_point: string | null;
-  map_url: string | null;
+  access_note: string | null;
   default_fee: number | null;
 };
 
@@ -62,6 +61,7 @@ type JoinedEvent = {
   start_at: string;
   end_at: string;
   fee: number | null;
+  email_note: string | null;
   venues: JoinedVenue | null;
 };
 
@@ -125,8 +125,8 @@ export async function handleSendReservationNotification(
       `
         id, guest_count, note, cancelled_at, member_id,
         events:event_id (
-          id, name, start_at, end_at, fee,
-          venues:venue_id ( name, address, meeting_point, map_url, default_fee )
+          id, name, start_at, end_at, fee, email_note,
+          venues:venue_id ( name, address, access_note, default_fee )
         )
       `,
     )
@@ -202,6 +202,7 @@ export async function handleSendReservationNotification(
           start_at: event.start_at,
           end_at: event.end_at,
           fee: event.fee,
+          email_note: event.email_note,
         },
         venue,
         urls,
@@ -226,6 +227,7 @@ export async function handleSendReservationNotification(
           start_at: event.start_at,
           end_at: event.end_at,
           fee: event.fee,
+          email_note: event.email_note,
         },
         venue,
         urls,

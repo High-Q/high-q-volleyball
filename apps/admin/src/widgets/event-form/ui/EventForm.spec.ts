@@ -56,6 +56,7 @@ const SAMPLE_EVENT: Event = {
   venue_id: VENUE_ID as unknown as Event["venue_id"],
   fee: 1000,
   capacity: null,
+  email_note: null,
   visibility: "published",
   status: "scheduled",
   cancel_deadline: null,

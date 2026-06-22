@@ -22,6 +22,7 @@ function emptyState(): EventFormState {
     venueId: "",
     fee: "",
     capacity: "",
+    emailNote: "",
   };
 }
 

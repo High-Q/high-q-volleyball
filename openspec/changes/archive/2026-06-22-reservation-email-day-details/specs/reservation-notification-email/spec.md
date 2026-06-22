@@ -1,8 +1,5 @@
-# reservation-notification-email Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change reservation-completion-email. Update Purpose after archive.
-## Requirements
 ### Requirement: 予約完了通知メールの送信
 
 会員サイト (`apps/reservation`) は予約成立イベント時に会員へ予約完了メールを SHALL 送信する。送信対象イベントは以下の両方を MUST 含む:
@@ -95,74 +92,6 @@ TBD - created by archiving change reservation-completion-email. Update Purpose a
 - **WHEN** リクエスト改ざんで他会員の reservation_id を指定してメール送信 Edge Function を直接呼び出す
 - **THEN** Edge Function は呼び出し元の認証情報から会員 ID を取得し、reservations.member_id が一致しないリクエストは拒否する
 
-### Requirement: 予約キャンセル通知メールの送信
-
-会員サイトは予約キャンセル成立イベント時に会員へキャンセル完了メールを SHALL 送信する。送信対象イベントは reservations 行の status が `'reserved' → 'cancelled'` に更新されたときに限定する MUST。
-
-送信先・送信経路・件名のエンコード方針は予約完了メールと同一とする MUST。
-
-メール本文に **MUST 含める** 要素:
-
-- 予約番号（表示用フォーマット）
-- キャンセル対象イベント名 / 開催日時 / 会場名
-- キャンセル成立時刻（JST）
-- 再予約案内（イベント詳細画面の URL — 当該イベントがまだ受付可能な場合のみリンクを生かす運用を許容 SHALL、リンク自体は常に含めてよい）
-- 当日連絡用 LINE オープンチャットの URL（やむを得ない事情で当日連絡が必要な場合の窓口として）
-
-#### Scenario: キャンセル成立時の送信
-- **WHEN** 会員がキャンセル ConfirmDialog から確定を押下し、reservations.status が `'cancelled'` に更新成功
-- **THEN** 当該会員のメールアドレス宛にキャンセル完了メールが送信され、本文には予約番号 / イベント名 / キャンセル時刻 / LINE オープンチャット URL が含まれる
-
-#### Scenario: キャンセル成立はメール送信失敗の影響を受けない
-- **WHEN** キャンセルは成立したがメール送信が SMTP エラーで失敗
-- **THEN** キャンセル成功トーストと画面遷移は通常どおり完了し、UI にはメール送信失敗エラーが描画されない
-
-#### Scenario: キャンセル UPDATE が 0 行のときメールは送られない
-- **WHEN** RLS 違反 / 既に cancelled 等で UPDATE の影響行数が 0 行
-- **THEN** キャンセル完了メールは送信されない
-
-### Requirement: 送信失敗のログ記録
-
-メール送信の成功 / 失敗は Edge Function のログに SHALL 記録する。会員 ID と予約 ID と送信種別（完了 / キャンセル）を相関キーとして残し、後追い調査ができる粒度を MUST 保つ。
-
-失敗時はスタックトレースまたはエラーコードと、Gmail SMTP / nodemailer から返ったエラーメッセージを記録する MUST。会員のメールアドレスをログに残す場合は個人情報保護方針（`docs/06-品質・セキュリティ/07-ロギング方針.md`）に沿う形式とする MUST。
-
-#### Scenario: 成功時のログ記録
-- **WHEN** メール送信が成功
-- **THEN** Edge Function のログに「成功」「会員 ID」「予約 ID」「送信種別」が出力される
-
-#### Scenario: 失敗時のログ記録
-- **WHEN** メール送信が SMTP エラーで失敗
-- **THEN** Edge Function のログにエラー内容 / 会員 ID / 予約 ID / 送信種別が出力される
-
-### Requirement: 環境別の送信ガード
-
-dev / preview / 本番のいずれの環境でも同じ Edge Function コードが動くが、dev / preview 環境では会員アドレスへの実送信を抑制する手段を SHALL 提供する。
-
-具体的には、環境変数で「送信抑制モード」または「許可リスト宛のみ送信」を MUST 切り替えられるようにする。本番では当該設定を OFF とし、すべての会員に通常配信される MUST。
-
-#### Scenario: 送信抑制モードのとき実送信されない
-- **WHEN** 送信抑制モードが有効な環境で予約が成立
-- **THEN** Edge Function は送信処理を実行せず、ログに「抑制モードのためスキップ」を残す
-
-#### Scenario: 本番では送信抑制が無効
-- **WHEN** 本番環境で予約が成立
-- **THEN** 通常どおり会員アドレス宛に送信される
-
-### Requirement: 文面レンダラの純粋関数化
-
-予約完了 / キャンセル完了メールの文面生成は、副作用を持たない純粋関数として `_shared` 配下に SHALL 配置する。入力は予約 / イベント / 会場 / 会員の構造化データのみ、出力は `{ subject, body }` 形式の文字列ペアとする MUST。
-
-レンダラは送信本体（SMTP / Edge Function ハンドラ）から独立してテスト可能でなければならない MUST。
-
-#### Scenario: 同一入力で同一出力
-- **WHEN** 同一の予約 / イベント / 会場 / 会員データでレンダラを 2 回呼ぶ
-- **THEN** subject / body が完全一致する
-
-#### Scenario: レンダラのユニットテスト
-- **WHEN** Edge Function のテストスイートでレンダラを直接呼ぶ
-- **THEN** SMTP / DB モックなしで文面が検証できる
-
 ### Requirement: 予約内容変更通知メールの送信
 
 会員サイト (`apps/reservation`) は予約内容変更 (edit) の成立イベント時に会員へ通知メールを SHALL 送信する。送信対象イベントは `reservations` 行の `guest_count` または `note` を `status='reserved'` の状態で UPDATE して成功したときに限定する MUST。
@@ -229,16 +158,3 @@ dev / preview / 本番のいずれの環境でも同じ Edge Function コード�
 #### Scenario: 生 UUID の非露出
 - **WHEN** 送信された変更通知メール本文を確認
 - **THEN** 予約番号は `#HQ-XXXX-XXXX` 形式で記載され、UUID 形式 (8-4-4-4-12 hex) の文字列は本文 / 件名のどこにも存在しない
-
-### Requirement: 変更通知メールの送信成功 / 失敗ログ
-
-予約内容変更通知メールの送信成功 / 失敗は予約完了通知メール / キャンセル通知メールと同一形式で Edge Function のログに SHALL 記録する。会員 ID と予約 ID と送信種別 (`updated` を明示する識別子) を相関キーとして残し、後追い調査ができる粒度を MUST 保つ。
-
-#### Scenario: 成功時のログ記録
-- **WHEN** 変更通知メール送信が成功
-- **THEN** Edge Function のログに「成功」「会員 ID」「予約 ID」「送信種別 (updated と判別可能な値)」が出力される
-
-#### Scenario: 失敗時のログ記録
-- **WHEN** 変更通知メール送信が SMTP エラーで失敗
-- **THEN** Edge Function のログにエラー内容 / 会員 ID / 予約 ID / 送信種別 (updated と判別可能な値) が出力される
-

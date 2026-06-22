@@ -12,12 +12,17 @@ export type ReservationConfirmedInput = {
   // venues.address — 公開ページで秘匿される会場でも、メール本文では実住所をそのまま開示する
   // ('data-schema' spec の「有明会場の実住所はメールで初めて伝達される」運用)
   venueAddress: string;
-  // venues.meeting_point — 集合地点が登録されている会場では必ず本文に含める
-  venueMeetingPoint: string | null;
-  venueMapUrl: string | null;
+  // venues.access_note — 会場固有の案内 (集合場所・アクセス・飲み物が買えない等)。空のときは
+  // 「注意事項」セクションを本文から省く。会場ごとに 1 回設定すれば
+  // その会場の全イベントのメールに自動掲載される。集合地点・地図リンクの構造化行は廃し、
+  // 必要な集合情報はこの自由文 (会場メールテンプレート) に書く運用とする。
+  venueAccessNote?: string | null;
   feePerPerson: number; // 1 人あたり参加費 (円)
   guestCount: number; // 同伴者数 (0 以上)
   note: string | null; // 連絡事項 (空のときは本文から省く)
+  // events.email_note — イベント固有の追記メッセージ (懇親会案内・当日集合補足等)。
+  // 空のときは「ご案内」セクションを本文から省く。
+  eventEmailNote?: string | null;
   lineOpenChatUrl: string;
   reservationDetailUrl: string;
   supportNote: string; // 「届かない場合は迷惑メールフォルダもご確認ください」相当
@@ -43,6 +48,19 @@ function formatYen(n: number): string {
   return `¥${n.toLocaleString("ja-JP")}`;
 }
 
+// 任意の自由文セクション (注意事項 / ご案内) を本文行に
+// 追記する。値が NULL / 空文字 / トリム後空のときは何も追記しない。改行は
+// 入力のまま尊重する (プレーンテキストメールのためエスケープ不要)。
+function pushFreeTextSection(
+  lines: string[],
+  heading: string,
+  text: string | null | undefined,
+): void {
+  if (text && text.trim().length > 0) {
+    lines.push("", `${heading}:`, text);
+  }
+}
+
 export function renderReservationConfirmedMail(
   input: ReservationConfirmedInput,
 ): { subject: string; body: string } {
@@ -58,30 +76,26 @@ export function renderReservationConfirmedMail(
     `開催日時: ${input.startAtJst}`,
     `会場: ${input.venueName}`,
     `住所: ${input.venueAddress}`,
-  ];
-
-  if (input.venueMeetingPoint && input.venueMeetingPoint.trim().length > 0) {
-    lines.push(`集合地点: ${input.venueMeetingPoint}`);
-  }
-
-  if (input.venueMapUrl) {
-    lines.push(`会場マップ: ${input.venueMapUrl}`);
-  }
-
-  lines.push(
-    "",
     `参加人数: ${totalPeople} 名 (ご本人 + 同伴 ${input.guestCount} 名)`,
     `参加費: ${formatYen(input.feePerPerson)} × ${totalPeople} = ${formatYen(totalFee)} (当日現金でお支払いください)`,
-  );
+  ];
 
+  // 会員が予約時に書いた連絡事項 (reservations.note) を会場情報の直後に置く。
+  // 主催側の案内 (ご案内・お知らせ) より前に出し、会員記載と主催案内が混ざらないようにする。
   if (input.note && input.note.trim().length > 0) {
     lines.push("", "連絡事項:", input.note);
   }
 
+  // 主催からの当日案内をまとめて掲載する (会場固有の「注意事項」→ イベント固有の「ご案内」)。
+  // どちらも空なら描画しない。集合場所・アクセス・地図は会場の「注意事項」(会場メールテンプレート) に書く運用。
+  pushFreeTextSection(lines, "注意事項", input.venueAccessNote);
+  pushFreeTextSection(lines, "ご案内", input.eventEmailNote);
+
   lines.push(
     "",
     "------",
-    "当日の連絡 / やむを得ない当日キャンセルは LINE オープンチャットへお願いします。",
+    "【必ずご参加ください】当日の集合・時間変更・緊急のご連絡はすべて LINE オープンチャットで行います。",
+    "ご予約の方は下記オープンチャットに必ずご参加ください。",
     `LINE オープンチャット: ${input.lineOpenChatUrl}`,
     "",
     `予約詳細・キャンセルはマイページから操作できます: ${input.reservationDetailUrl}`,
@@ -112,30 +126,26 @@ export function renderReservationUpdatedMail(
     `開催日時: ${input.startAtJst}`,
     `会場: ${input.venueName}`,
     `住所: ${input.venueAddress}`,
-  ];
-
-  if (input.venueMeetingPoint && input.venueMeetingPoint.trim().length > 0) {
-    lines.push(`集合地点: ${input.venueMeetingPoint}`);
-  }
-
-  if (input.venueMapUrl) {
-    lines.push(`会場マップ: ${input.venueMapUrl}`);
-  }
-
-  lines.push(
-    "",
     `参加人数: ${totalPeople} 名 (ご本人 + 同伴 ${input.guestCount} 名)`,
     `参加費: ${formatYen(input.feePerPerson)} × ${totalPeople} = ${formatYen(totalFee)} (当日現金でお支払いください)`,
-  );
+  ];
 
+  // 会員が予約時に書いた連絡事項 (reservations.note) を会場情報の直後に置く。
+  // 主催側の案内 (ご案内・お知らせ) より前に出し、会員記載と主催案内が混ざらないようにする。
   if (input.note && input.note.trim().length > 0) {
     lines.push("", "連絡事項:", input.note);
   }
 
+  // 主催からの当日案内をまとめて掲載する (会場固有の「注意事項」→ イベント固有の「ご案内」)。
+  // どちらも空なら描画しない。集合場所・アクセス・地図は会場の「注意事項」(会場メールテンプレート) に書く運用。
+  pushFreeTextSection(lines, "注意事項", input.venueAccessNote);
+  pushFreeTextSection(lines, "ご案内", input.eventEmailNote);
+
   lines.push(
     "",
     "------",
-    "当日の連絡 / やむを得ない当日キャンセルは LINE オープンチャットへお願いします。",
+    "【必ずご参加ください】当日の集合・時間変更・緊急のご連絡はすべて LINE オープンチャットで行います。",
+    "ご予約の方は下記オープンチャットに必ずご参加ください。",
     `LINE オープンチャット: ${input.lineOpenChatUrl}`,
     "",
     `予約詳細・キャンセルはマイページから操作できます: ${input.reservationDetailUrl}`,
@@ -167,25 +177,20 @@ export function renderReservationPromotedMail(
     `開催日時: ${input.startAtJst}`,
     `会場: ${input.venueName}`,
     `住所: ${input.venueAddress}`,
-  ];
-
-  if (input.venueMeetingPoint && input.venueMeetingPoint.trim().length > 0) {
-    lines.push(`集合地点: ${input.venueMeetingPoint}`);
-  }
-
-  if (input.venueMapUrl) {
-    lines.push(`会場マップ: ${input.venueMapUrl}`);
-  }
-
-  lines.push(
-    "",
     `参加人数: ${totalPeople} 名 (ご本人 + 同伴 ${input.guestCount} 名)`,
     `参加費: ${formatYen(input.feePerPerson)} × ${totalPeople} = ${formatYen(totalFee)} (当日現金でお支払いください)`,
-  );
+  ];
 
+  // 会員が予約時に書いた連絡事項 (reservations.note) を会場情報の直後に置く。
+  // 主催側の案内 (ご案内・お知らせ) より前に出し、会員記載と主催案内が混ざらないようにする。
   if (input.note && input.note.trim().length > 0) {
     lines.push("", "連絡事項:", input.note);
   }
+
+  // 主催からの当日案内をまとめて掲載する (会場固有の「注意事項」→ イベント固有の「ご案内」)。
+  // どちらも空なら描画しない。集合場所・アクセス・地図は会場の「注意事項」(会場メールテンプレート) に書く運用。
+  pushFreeTextSection(lines, "注意事項", input.venueAccessNote);
+  pushFreeTextSection(lines, "ご案内", input.eventEmailNote);
 
   lines.push(
     "",
@@ -193,7 +198,8 @@ export function renderReservationPromotedMail(
     "ご都合が合わない場合は、お早めにマイページからキャンセルをお願いします（次の方の繰り上げに回ります）。",
     `予約詳細・キャンセルはマイページから操作できます: ${input.reservationDetailUrl}`,
     "",
-    "当日の連絡 / やむを得ない当日キャンセルは LINE オープンチャットへお願いします。",
+    "【必ずご参加ください】当日の集合・時間変更・緊急のご連絡はすべて LINE オープンチャットで行います。",
+    "ご予約の方は下記オープンチャットに必ずご参加ください。",
     `LINE オープンチャット: ${input.lineOpenChatUrl}`,
     "",
     input.supportNote,

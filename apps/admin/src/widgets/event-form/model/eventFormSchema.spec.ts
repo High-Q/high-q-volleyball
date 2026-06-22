@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   validateEventForm,
   emptyEventForm,
+  EMAIL_NOTE_MAX,
   type EventFormState,
 } from "./eventFormSchema";
 
@@ -16,6 +17,7 @@ function valid(overrides: Partial<EventFormState> = {}): EventFormState {
     venueId: VENUE_ID,
     fee: "1000",
     capacity: "",
+    emailNote: "",
     ...overrides,
   };
 }
@@ -200,6 +202,44 @@ describe("validateEventForm — capacity 下限 (編集時の予約数, #343)", 
   });
 });
 
+describe("validateEventForm — emailNote 任意", () => {
+  it("emailNote 空欄 → OK（非掲載）", () => {
+    const r = validateEventForm(valid({ emailNote: "" }));
+    expect(r.isValid).toBe(true);
+    expect(r.errors.emailNote).toBeUndefined();
+  });
+
+  it("emailNote 通常文（改行含む）→ OK", () => {
+    const r = validateEventForm(
+      valid({ emailNote: "19:00〜近くの居酒屋で懇親会あります。\n参加自由です！" }),
+    );
+    expect(r.isValid).toBe(true);
+    expect(r.errors.emailNote).toBeUndefined();
+  });
+
+  it("emailNote 上限ちょうどは OK", () => {
+    const r = validateEventForm(valid({ emailNote: "あ".repeat(EMAIL_NOTE_MAX) }));
+    expect(r.errors.emailNote).toBeUndefined();
+  });
+
+  it("emailNote 上限超過 → error", () => {
+    const r = validateEventForm(
+      valid({ emailNote: "あ".repeat(EMAIL_NOTE_MAX + 1) }),
+    );
+    expect(r.isValid).toBe(false);
+    expect(r.errors.emailNote).toBe(
+      `メール追記メッセージは ${EMAIL_NOTE_MAX} 文字以内で入力してください`,
+    );
+  });
+
+  it("前後空白を除いた長さで判定する（空白パディングは上限超過にしない）", () => {
+    const r = validateEventForm(
+      valid({ emailNote: `  ${"あ".repeat(EMAIL_NOTE_MAX)}  ` }),
+    );
+    expect(r.errors.emailNote).toBeUndefined();
+  });
+});
+
 describe("emptyEventForm", () => {
   it("初期値は全フィールド空文字", () => {
     const f = emptyEventForm();
@@ -210,6 +250,7 @@ describe("emptyEventForm", () => {
     expect(f.venueId).toBe("");
     expect(f.fee).toBe("");
     expect(f.capacity).toBe("");
+    expect(f.emailNote).toBe("");
   });
 
   it("emptyEventForm() は invalid（必須項目欠如）", () => {

@@ -23,6 +23,11 @@ export interface EventFormState {
   fee: string;
   /** 定員。空文字＝上限なし（capacity NULL）。値ありは 1 以上の整数文字列。 */
   capacity: string;
+  /**
+   * 予約完了/変更メールに掲載するイベント固有の任意追記メッセージ（複数行可）。
+   * 空文字＝非掲載（email_note NULL）。値ありは前後トリム後 EMAIL_NOTE_MAX 文字以内。
+   */
+  emailNote: string;
 }
 
 export type EventFormErrorKey = keyof EventFormState;
@@ -48,6 +53,10 @@ export interface ValidationOptions {
 
 const NAME_MAX = 100;
 
+/** メール追記メッセージの最大文字数（前後トリム後）。プレーンテキストメール掲載のため
+ * 長文化を抑える。会場固有の注意事項は venues.access_note 側に書く運用。 */
+export const EMAIL_NOTE_MAX = 1000;
+
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 function isIntString(value: string): boolean {
@@ -65,6 +74,7 @@ export function emptyEventForm(): EventFormState {
     venueId: "",
     fee: "",
     capacity: "",
+    emailNote: "",
   };
 }
 
@@ -134,6 +144,11 @@ export function validateEventForm(
       // 編集時の下限: 残席が負にならないよう現在の予約数以上を要求する
       errors.capacity = `現在 ${options.reservedCount} 名の予約があります。定員はこれ以上にしてください`;
     }
+  }
+
+  // V10: emailNote は任意（空欄＝非掲載）。値ありの場合のみ上限文字数を検証
+  if (state.emailNote.trim().length > EMAIL_NOTE_MAX) {
+    errors.emailNote = `メール追記メッセージは ${EMAIL_NOTE_MAX} 文字以内で入力してください`;
   }
 
   return { isValid: Object.keys(errors).length === 0, errors };
