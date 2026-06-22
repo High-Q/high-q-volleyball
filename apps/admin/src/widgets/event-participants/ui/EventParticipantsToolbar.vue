@@ -63,9 +63,9 @@ function onCkChange(value: string): void {
 
 <template>
   <div
-    class="flex flex-wrap items-center gap-hq-3 border-b border-hairline bg-paper px-hq-8 py-hq-3"
+    class="flex flex-col gap-hq-3 border-b border-hairline bg-paper px-hq-8 py-hq-3 md:flex-row md:flex-wrap md:items-center"
   >
-    <div class="w-60">
+    <div class="w-full md:w-60">
       <Input
         type="search"
         :model-value="filter.q"
@@ -76,7 +76,7 @@ function onCkChange(value: string): void {
     </div>
 
     <Select :model-value="expValue" @update:model-value="onExpChange">
-      <SelectTrigger class="w-32" aria-label="経験フィルタ">
+      <SelectTrigger class="w-full md:w-32" aria-label="経験フィルタ">
         <SelectValue placeholder="経験" />
       </SelectTrigger>
       <SelectContent>
@@ -92,7 +92,7 @@ function onCkChange(value: string): void {
     </Select>
 
     <Select :model-value="ckValue" @update:model-value="onCkChange">
-      <SelectTrigger class="w-40" aria-label="チェックイン状態フィルタ">
+      <SelectTrigger class="w-full md:w-40" aria-label="チェックイン状態フィルタ">
         <SelectValue placeholder="状態" />
       </SelectTrigger>
       <SelectContent>

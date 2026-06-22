@@ -160,7 +160,7 @@ function onMutationSettled(): void {
         v-show="activeTab === 'participants'"
         id="tabpanel-participants"
         role="tabpanel"
-        class="flex-1 overflow-hidden flex flex-col"
+        class="flex-1 md:overflow-hidden flex flex-col"
       >
         <EventParticipantsWidget
           :event-id="eventId"
@@ -176,7 +176,7 @@ function onMutationSettled(): void {
         v-if="activeTab === 'wait'"
         id="tabpanel-wait"
         role="tabpanel"
-        class="flex-1 overflow-hidden flex flex-col"
+        class="flex-1 md:overflow-hidden flex flex-col"
       >
         <EventWaitlistPanel :event-id="eventId" />
       </div>
