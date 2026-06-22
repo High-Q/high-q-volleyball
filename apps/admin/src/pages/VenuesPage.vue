@@ -25,7 +25,7 @@ function onNew(): void {
 </script>
 
 <template>
-  <div class="flex h-screen flex-col bg-paper text-ink font-jp">
+  <div class="flex min-h-screen flex-col bg-paper text-ink font-jp md:h-screen">
     <header
       class="flex items-center justify-between border-b border-hairline bg-paper px-hq-6 py-hq-3 md:px-hq-8"
     >
@@ -54,7 +54,7 @@ function onNew(): void {
       >
     </AppBarAction>
 
-    <div class="flex-1 overflow-hidden px-hq-6 py-hq-6 md:px-hq-8">
+    <div class="flex-1 px-hq-6 py-hq-6 md:overflow-hidden md:px-hq-8">
       <VenuesMasterDetail ref="board" />
     </div>
   </div>

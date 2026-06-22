@@ -55,7 +55,7 @@ defineExpose({ addVenue: addVenueLocal, dirty: m.dirty });
   <div class="flex h-full flex-col">
     <!-- 2ペインカード -->
     <div
-      class="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-2xl border border-hairline bg-surface shadow-hq-sm md:grid-cols-[320px_1fr]"
+      class="grid flex-1 grid-cols-1 rounded-2xl border border-hairline bg-surface shadow-hq-sm md:min-h-0 md:overflow-hidden md:grid-cols-[320px_1fr]"
     >
       <!-- ===== 左: 一覧ペイン (モバイルは list ビュー時のみ表示) ===== -->
       <aside
@@ -79,7 +79,7 @@ defineExpose({ addVenue: addVenueLocal, dirty: m.dirty });
           <span>{{ m.filteredCount.value }} / {{ m.totalCount.value }}</span>
         </div>
 
-        <div class="flex-1 overflow-y-auto">
+        <div class="flex-1 md:overflow-y-auto">
           <button
             v-for="it in m.items.value"
             :key="it.id"
@@ -176,7 +176,7 @@ defineExpose({ addVenue: addVenueLocal, dirty: m.dirty });
 
         <!-- 詳細フォーム -->
         <template v-else>
-          <div class="flex-1 overflow-y-auto px-hq-8 pb-hq-4 pt-hq-6">
+          <div class="flex-1 md:overflow-y-auto px-hq-8 pb-hq-4 pt-hq-6">
             <div class="mb-px flex items-center gap-hq-3">
               <h2 class="font-jp-display text-2xl font-semibold text-ink">
                 <template v-if="m.draft.value.name">{{ m.draft.value.name }}</template>

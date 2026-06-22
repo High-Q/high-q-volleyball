@@ -15,7 +15,7 @@ import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
 </script>
 
 <template>
-  <div class="flex h-screen flex-col bg-paper text-ink font-jp">
+  <div class="flex min-h-screen flex-col bg-paper text-ink font-jp md:h-screen">
     <header class="border-b border-hairline bg-paper px-hq-6 py-hq-3 md:px-hq-8">
       <PageBreadcrumb
         :items="[
@@ -26,7 +26,7 @@ import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
       <h1 class="font-jp-display text-lg text-ink">本人確認書類</h1>
     </header>
 
-    <div class="flex-1 overflow-hidden">
+    <div class="flex-1 md:overflow-hidden">
       <IdentityDocumentsListWidget />
     </div>
   </div>

@@ -139,7 +139,7 @@ defineExpose({
       @update:checkin-state="setCheckinState"
     />
 
-    <div class="flex-1 overflow-auto px-hq-8 pt-hq-3">
+    <div class="flex-1 md:overflow-auto px-hq-8 pt-hq-3">
       <p
         v-if="view === 'empty'"
         class="font-jp text-sm text-muted py-hq-8 text-center"

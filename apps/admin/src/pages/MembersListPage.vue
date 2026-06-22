@@ -44,7 +44,7 @@ function onMemberWithdrawn(): void {
 </script>
 
 <template>
-  <div class="flex h-screen flex-col bg-paper text-ink font-jp">
+  <div class="flex min-h-screen flex-col bg-paper text-ink font-jp md:h-screen">
     <header class="border-b border-hairline bg-paper px-hq-6 py-hq-3 md:px-hq-8">
       <PageBreadcrumb
         :items="[
@@ -61,7 +61,7 @@ function onMemberWithdrawn(): void {
       </p>
     </header>
 
-    <div class="flex-1 overflow-hidden">
+    <div class="flex-1 md:overflow-hidden">
       <MembersListWidget ref="listRef" />
     </div>
 
