@@ -27,6 +27,7 @@ function makeEvent(
     fee: 1000,
     meetingPoint: "1F ロビー",
     mapUrl: null,
+    vol: 43,
     availability,
   };
 }

@@ -63,6 +63,7 @@ const futureEvent: EventDetail = {
   fee: 1000,
   meetingPoint: "正面ロビー",
   mapUrl: "https://maps.example.com/kameido",
+  vol: 43,
   availability: null,
 };
 

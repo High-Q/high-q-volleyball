@@ -6,7 +6,6 @@ import {
   EventForm,
   resolveDuplicateName,
   seedFromEvent,
-  suggestNextVolume,
   type EventFormState,
 } from "@/widgets/event-form";
 import { getEventById } from "@/entities/event";
@@ -41,8 +40,9 @@ async function resolveDuplicate(fromId: string): Promise<void> {
   // 取得失敗 / 該当なし / 権限外 → シードなしの通常作成にフォールバック
   if (!result.ok || !result.value) return;
   const source = result.value;
-  const nextVolume = await suggestNextVolume();
-  seed.value = seedFromEvent(source, resolveDuplicateName(source, nextVolume));
+  // 回号 (vol) は events.vol として保存時に自動採番されるため、複製時に name へ
+  // 回号を付けない。タイトルは複製元のシリーズ名をそのまま引き継ぐ。
+  seed.value = seedFromEvent(source, resolveDuplicateName(source, undefined));
   sourceName.value = source.name;
 }
 

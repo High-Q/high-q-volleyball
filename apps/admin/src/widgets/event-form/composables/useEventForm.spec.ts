@@ -42,6 +42,7 @@ const SAMPLE_EVENT: Event = {
   fee: 1000,
   capacity: null,
   email_note: null,
+  vol: null,
   visibility: "published",
   status: "scheduled",
   cancel_deadline: null,

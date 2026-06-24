@@ -51,7 +51,7 @@ export async function fetchEventDetail(
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, name, start_at, end_at, venue_id, fee, status, visibility, venues(name, meeting_point, default_fee, map_url)",
+      "id, name, start_at, end_at, venue_id, fee, status, visibility, vol, venues(name, meeting_point, default_fee, map_url)",
     )
     .eq("id", id)
     .eq("status", "scheduled")
@@ -143,5 +143,6 @@ function rowToEventDetail(row: EventRow): EventDetail {
     ...rowToEventListItem(row),
     meetingPoint: row.venues?.meeting_point ?? "現地集合",
     mapUrl: row.venues?.map_url ?? null,
+    vol: row.vol ?? null,
   };
 }

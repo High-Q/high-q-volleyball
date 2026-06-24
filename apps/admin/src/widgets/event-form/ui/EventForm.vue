@@ -8,7 +8,6 @@ import { useVenues } from "@/entities/venue";
 import FormSection from "./FormSection.vue";
 import SectionBasic from "./SectionBasic.vue";
 import { useEventForm, type EventFormMode } from "../composables/useEventForm";
-import { useVolumeSuggest } from "../composables/useVolumeSuggest";
 import type { EventFormState } from "../model/eventFormSchema";
 
 /**
@@ -49,7 +48,11 @@ const props = withDefaults(
 
 const router = useRouter();
 const { venues } = useVenues();
-const { suggestion } = useVolumeSuggest();
+
+// 編集時のみ確定済み回号を読み取り専用表示する (create では自動採番前のため非表示)。
+const vol = computed<number | null | undefined>(() =>
+  props.mode === "edit" ? (props.initialEvent?.vol ?? null) : undefined,
+);
 
 const f = useEventForm({
   mode: props.mode,
@@ -144,7 +147,7 @@ async function handleCancel() {
           :model-value="f.state"
           :errors="f.displayErrors.value"
           :venues="venues"
-          :name-placeholder="suggestion ?? undefined"
+          :vol="vol"
           :disabled="f.isSubmitting.value"
           @update:model-value="
             (v) => {

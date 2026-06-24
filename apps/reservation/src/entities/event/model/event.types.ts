@@ -16,6 +16,8 @@ export type EventRow = {
   fee: number | null;
   status: EventStatus;
   visibility: EventVisibility;
+  /** 回号。開催日時順に自動採番。NULL=未採番。詳細クエリでのみ SELECT する */
+  vol: number | null;
   venues: {
     name: string;
     meeting_point: string;
@@ -63,6 +65,8 @@ export type EventListItem = {
 export type EventDetail = EventListItem & {
   meetingPoint: string;
   mapUrl: string | null;
+  /** 回号。editorial 見出しで `vol.NN` を accent 表示する。NULL=未採番（fallback 表示） */
+  vol: number | null;
 };
 
 /**

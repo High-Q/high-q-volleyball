@@ -220,6 +220,7 @@ const editEvent = computed<EventDetail | null>(() => {
     venueName: r.event.venueName,
     meetingPoint: "",
     mapUrl: null,
+    vol: null,
     availability: null,
   };
 });

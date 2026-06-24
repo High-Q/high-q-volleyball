@@ -160,9 +160,17 @@ function goToList(): void {
         <div class="flex flex-col gap-hq-2">
           <Kicker>— {{ dateLabel }}</Kicker>
           <h1
-            class="font-jp-display text-2xl font-medium text-ink leading-snug mt-hq-2 m-0"
+            class="font-jp-display text-4xl font-medium text-ink leading-snug mt-hq-2 m-0"
+            data-testid="event-title"
           >
-            {{ event.name }}
+            {{ event.name
+            }}<template v-if="event.vol !== null"
+              ><br /><span
+                class="font-mono text-accent"
+                data-testid="event-title-volume"
+                >vol.{{ event.vol }}</span
+              ></template
+            >
           </h1>
         </div>
 

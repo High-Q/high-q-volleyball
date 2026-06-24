@@ -7,13 +7,11 @@ const {
   getEventByIdMock,
   getEventDetailMock,
   useVenuesMock,
-  useVolumeSuggestMock,
   toastMock,
 } = vi.hoisted(() => ({
   getEventByIdMock: vi.fn(),
   getEventDetailMock: vi.fn(),
   useVenuesMock: vi.fn(),
-  useVolumeSuggestMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
@@ -33,10 +31,6 @@ vi.mock("@/entities/event-detail", () => ({
 
 vi.mock("@/entities/venue", () => ({
   useVenues: useVenuesMock,
-}));
-
-vi.mock("@/widgets/event-form/composables/useVolumeSuggest", () => ({
-  useVolumeSuggest: useVolumeSuggestMock,
 }));
 
 vi.mock("@/shared/ui/useToast", () => ({
@@ -63,6 +57,7 @@ const SAMPLE_EVENT: Event = {
   fee: 1000,
   capacity: null,
   email_note: null,
+  vol: null,
   visibility: "published",
   status: "scheduled",
   cancel_deadline: null,
@@ -91,7 +86,6 @@ beforeEach(() => {
     venues: ref([{ id: VENUE_ID, name: "亀戸スポーツセンター" }]),
     reload: vi.fn(),
   });
-  useVolumeSuggestMock.mockReturnValue({ suggestion: ref(undefined) });
   // 定員下限バリデーション用の予約数取得。デフォルトは reserved_count=0。
   getEventDetailMock.mockResolvedValue({
     ok: true,
