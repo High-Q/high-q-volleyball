@@ -13,15 +13,17 @@
           </div>
         </template>
         <template v-else-if="nextEvent">
-          <div class="next-strip__title">{{ formatDateName(nextEvent) }}</div>
-          <div class="next-strip__meta">
-            <template v-if="nextEvent.vol !== null"
-              ><span class="next-strip__vol" data-testid="next-session-vol"
-                >vol.{{ nextEvent.vol }}</span
-              >
-              · </template
-            >{{ formatTimeLocation(nextEvent) }}
+          <div class="next-strip__title">
+            {{ formatDatePrefix(nextEvent) }}{{ nextEvent.name
+            }}<span
+              v-if="nextEvent.vol !== null"
+              class="next-strip__vol"
+              data-testid="next-session-vol"
+            >
+              vol.{{ nextEvent.vol }}</span
+            >
           </div>
+          <div class="next-strip__meta">{{ formatTimeLocation(nextEvent) }}</div>
         </template>
         <template v-else>
           <div class="next-strip__title next-strip__title--placeholder">
@@ -65,13 +67,15 @@ interface NextSessionEvent {
   location: string
 }
 
-function formatDateName(event: NextSessionEvent) {
+// 日付プレフィックス（「7/9 (木) · 」）のみ返す。名前と回号 vol はテンプレート側で
+// 別要素として描画し、vol をイベント名の右横に同サイズで並べる。
+function formatDatePrefix(event: NextSessionEvent) {
   const d = event.start
-  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return event.name
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return ''
   const month = d.getMonth() + 1
   const day = d.getDate()
   const dow = WEEKDAYS[d.getDay()]
-  return `${month}/${day} (${dow}) · ${event.name}`
+  return `${month}/${day} (${dow}) · `
 }
 
 function pad(n: number) {
