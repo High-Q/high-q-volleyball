@@ -149,6 +149,11 @@ function onHeaderKeyDown(col: SortKey, event: KeyboardEvent): void {
             class="block truncate max-w-[12rem] sm:max-w-xs hover:underline underline-offset-4 before:absolute before:inset-0 before:content-['']"
             :aria-label="`${row.name} の詳細を見る`"
           >{{ row.name }}</router-link>
+          <span
+            v-if="row.vol !== null"
+            class="block font-mono text-xs text-muted"
+            data-testid="event-row-vol"
+          >vol.{{ row.vol }}</span>
         </TableCell>
         <TableCell
           class="font-jp text-sm text-muted whitespace-nowrap"
@@ -213,6 +218,12 @@ function onHeaderKeyDown(col: SortKey, event: KeyboardEvent): void {
         class="mt-hq-2 block font-jp text-base font-medium text-ink underline-offset-4 hover:underline before:absolute before:inset-0 before:content-['']"
         :aria-label="`${row.name} の詳細を見る`"
         >{{ row.name }}</router-link
+      >
+      <span
+        v-if="row.vol !== null"
+        class="mt-hq-1 block font-mono text-xs text-muted"
+        data-testid="event-row-vol"
+        >vol.{{ row.vol }}</span
       >
       <p
         class="mt-hq-1 font-jp text-sm text-muted"

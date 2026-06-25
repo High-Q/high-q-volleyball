@@ -22,6 +22,7 @@ const baseRow = (overrides: Partial<EventListRow> = {}): EventListRow => ({
   reserved_count: 6,
   created_at: "2026-04-01T00:00:00+09:00",
   updated_at: "2026-04-01T00:00:00+09:00",
+  vol: 43,
   ...overrides,
 });
 
@@ -276,6 +277,18 @@ describe("EventsTable", () => {
     expect(titleCell?.attributes("title")).toBe(row.name);
     // セル内の <router-link> が truncate utility を持つ
     expect(titleCell?.find("a").classes()).toContain("truncate");
+  });
+
+  it("回号 vol が採番済みなら vol.NN を表示する", async () => {
+    const wrapper = await renderTable({ rows: [baseRow({ vol: 74 })] });
+    const vols = wrapper.findAll('[data-testid="event-row-vol"]');
+    expect(vols.length).toBeGreaterThan(0);
+    expect(vols.every((v) => v.text() === "vol.74")).toBe(true);
+  });
+
+  it("回号 vol が NULL（未採番）なら vol 表示を出さない", async () => {
+    const wrapper = await renderTable({ rows: [baseRow({ vol: null })] });
+    expect(wrapper.find('[data-testid="event-row-vol"]').exists()).toBe(false);
   });
 
   it("Enter キーで sort トグルが発火", async () => {

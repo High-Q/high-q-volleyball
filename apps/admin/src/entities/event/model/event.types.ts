@@ -31,6 +31,8 @@ export interface EventListRow {
   reserved_count: number;
   created_at: string;
   updated_at: string;
+  /** 回号。開催日時順に自動採番される。NULL は未採番。 */
+  vol: number | null;
 }
 
 /** Badge 表示用に解決済みのステータス。`status` と `visibility` を束ねた表示状態。 */
