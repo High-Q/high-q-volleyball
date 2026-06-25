@@ -22,7 +22,9 @@
 ### Modified Capabilities
 - `data-schema`: `events.vol` カラム定義（一意制約含む）と `event_list_view` / `event_detail_view` への vol 列追加
 - `admin-events-crud`: `EventForm` の回号運用を name 手入力（`ゆる練 vol.NN` 補完）から `events.vol` 自動採番 + 読み取り専用表示へ変更
+- `admin-events-list`: `/events` 一覧の各行に回号 `vol.NN` を表示（`event_list_view.vol` 由来）
 - `reservation-events-and-booking`: イベント詳細のイベント名見出しを `event.vol` 由来の `vol.NN` editorial 表示にし、単一取得 API に vol を含める
+- `lp-calendar`: LP のイベント取得に `vol` を含め、イベントカードに回号 `vol.NN` を表示
 
 ## Impact
 

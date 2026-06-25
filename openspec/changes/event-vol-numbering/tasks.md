@@ -36,3 +36,13 @@
 - [x] 5.3 `pnpm --filter @high-q/reservation build` / `pnpm --filter @high-q/admin build` 成功
 - [x] 5.4 両アプリの変更ファイルに eslint / stylelint 違反なし（トークン経由・マジックナンバーなし）
 - [ ] 5.5 dev で採番の探索的確認（admin で未開催イベントを 2 件作成→早い日付で割り込み→以降 +1 シフト / 予約サイト詳細で `vol.NN` 強調表示 / 中止で番号解放）
+
+## 6. admin 一覧への vol 表示（追加要望）
+
+- [x] 6.1 `EventListRow` に `vol` を追加（`event_list_view` の select("*") で取得済み）
+- [x] 6.2 `EventsTable` のタイトル下に `vol.NN`（mono/muted）を desktop / mobile card 両方で表示。NULL は非表示。component test 追加
+
+## 7. LP への vol 表示（追加要望）
+
+- [x] 7.1 LP `eventQueries` の SELECT に `vol` を追加し `LpEvent` / view-model に vol を付与
+- [x] 7.2 `EventList.vue` のカードに `vol.NN`（mono/accent kicker）を表示。NULL は非表示。query テストに vol 観点追加
