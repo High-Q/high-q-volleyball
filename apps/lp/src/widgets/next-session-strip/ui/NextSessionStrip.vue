@@ -14,7 +14,14 @@
         </template>
         <template v-else-if="nextEvent">
           <div class="next-strip__title">{{ formatDateName(nextEvent) }}</div>
-          <div class="next-strip__meta">{{ formatTimeLocation(nextEvent) }}</div>
+          <div class="next-strip__meta">
+            <template v-if="nextEvent.vol !== null"
+              ><span class="next-strip__vol" data-testid="next-session-vol"
+                >vol.{{ nextEvent.vol }}</span
+              >
+              · </template
+            >{{ formatTimeLocation(nextEvent) }}
+          </div>
         </template>
         <template v-else>
           <div class="next-strip__title next-strip__title--placeholder">
@@ -148,6 +155,10 @@ function formatTimeLocation(event: NextSessionEvent) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.next-strip__vol {
+  color: var(--hq-color-accent);
 }
 
 .next-strip__cta {
