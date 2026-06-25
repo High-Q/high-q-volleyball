@@ -88,6 +88,12 @@ const reservationNumber = computed(() =>
       </p>
 
       <p
+        v-if="reservation.event.vol !== null"
+        class="font-mono text-xs text-accent tracking-widest m-0"
+        data-testid="next-vol"
+      >vol.{{ reservation.event.vol }}</p>
+
+      <p
         class="font-jp-display text-lg font-medium m-0 leading-snug"
         data-testid="event-name"
       >{{ reservation.event.name }}</p>

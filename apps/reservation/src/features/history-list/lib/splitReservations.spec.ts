@@ -27,6 +27,7 @@ function makeItem(
       endAt: startAt,
       fee: null,
       venueName: "テスト会場",
+      vol: null,
       availability,
     },
   };

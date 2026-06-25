@@ -111,6 +111,11 @@ const linkTo = computed(() => {
     </div>
 
     <div class="flex-1 min-w-0 flex flex-col gap-hq-1">
+      <span
+        v-if="event.vol !== null"
+        class="font-mono text-[10px] text-accent tracking-widest"
+        data-testid="event-row-vol"
+      >vol.{{ event.vol }}</span>
       <p
         class="font-jp text-sm font-medium text-ink m-0 truncate"
         data-testid="event-row-name"

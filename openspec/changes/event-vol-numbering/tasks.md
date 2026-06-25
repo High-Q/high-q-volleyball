@@ -46,3 +46,8 @@
 
 - [x] 7.1 LP `eventQueries` の SELECT に `vol` を追加し `LpEvent` / view-model に vol を付与
 - [x] 7.2 `EventList.vue` のカードに `vol.NN`（mono/accent kicker）を表示。NULL は非表示。query テストに vol 観点追加
+
+## 8. 予約サイトホームへの vol 表示（追加要望）
+
+- [x] 8.1 `EventListItem` に `vol` を集約（`EventDetail` の重複削除）。`fetchUpcomingEvents` / `fetchMyReservations` の SELECT・マッピングに vol を追加。`MyReservationItem.event` に vol
+- [x] 8.2 `EventRow`（他イベント行）と `HomeNextCard`（次回予約カード）に `vol.NN` を表示。NULL は非表示。両者に component test 追加
