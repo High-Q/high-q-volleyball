@@ -46,7 +46,7 @@
 
 - [x] 7.1 LP `eventQueries` の SELECT に `vol` を追加し `LpEvent` / view-model に vol を付与
 - [x] 7.2 `EventList.vue` のカードに `vol.NN`（mono/accent kicker）を表示。NULL は非表示。query テストに vol 観点追加
-- [x] 7.3 Hero 直下の `NextSessionStrip`（次回開催 NEXT バー）でイベント名の右横に `vol.NN`（accent・タイトルと同フォントサイズ）を表示。NULL は非表示
+- [x] 7.3 Hero 直下の `NextSessionStrip`（次回開催 NEXT バー）を再設計: 日付スタンプ（M/D + 英略曜日・最優先・省略しない）/ シリーズ名 + 号数 vol.NN（accent 枠バッジ・分割しない）/ 時間·会場メタ（会場から省略）/ 予約テキストリンク（塗りなし）。特別回 (vol=null) は号数非表示でシリーズ名を主役に。component test 追加
 
 ## 8. 予約サイトホームへの vol 表示（追加要望）
 
