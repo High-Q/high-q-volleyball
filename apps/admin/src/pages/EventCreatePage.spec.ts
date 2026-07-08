@@ -3,13 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 import { createMemoryHistory, createRouter, type Router } from "vue-router";
 
-const { getEventByIdMock, useVenuesMock, useVolumeSuggestMock, suggestNextVolumeMock } =
-  vi.hoisted(() => ({
-    getEventByIdMock: vi.fn(),
-    useVenuesMock: vi.fn(),
-    useVolumeSuggestMock: vi.fn(),
-    suggestNextVolumeMock: vi.fn(),
-  }));
+const { getEventByIdMock, useVenuesMock } = vi.hoisted(() => ({
+  getEventByIdMock: vi.fn(),
+  useVenuesMock: vi.fn(),
+}));
 
 vi.mock("@/entities/event", async () => {
   const actual = await vi.importActual<typeof import("@/entities/event")>(
@@ -23,11 +20,6 @@ vi.mock("@/entities/event", async () => {
 
 vi.mock("@/entities/venue", () => ({
   useVenues: useVenuesMock,
-}));
-
-vi.mock("@/widgets/event-form/composables/useVolumeSuggest", () => ({
-  useVolumeSuggest: useVolumeSuggestMock,
-  suggestNextVolume: suggestNextVolumeMock,
 }));
 
 import EventCreatePage from "./EventCreatePage.vue";
@@ -46,6 +38,7 @@ const SAMPLE_EVENT: Event = {
   fee: 1000,
   capacity: null,
   email_note: null,
+  vol: null,
   visibility: "published",
   status: "scheduled",
   cancel_deadline: null,
@@ -76,8 +69,6 @@ beforeEach(() => {
     venues: ref([{ id: VENUE_ID, name: "亀戸スポーツセンター" }]),
     reload: vi.fn(),
   });
-  useVolumeSuggestMock.mockReturnValue({ suggestion: ref(undefined) });
-  suggestNextVolumeMock.mockResolvedValue("ゆる練 vol.46");
 });
 
 afterEach(() => {
@@ -114,8 +105,8 @@ describe("EventCreatePage — from 指定（複製）", () => {
     expect(wrapper.text()).toContain("ゆる練 vol.42");
 
     const inputValues = wrapper.findAll("input").map((i) => i.element.value);
-    // 連番採番（全体最大+1）でタイトルがシードされる
-    expect(inputValues).toContain("ゆる練 vol.46");
+    // 回号は events.vol で自動採番されるため、複製時はシリーズ名をそのまま引き継ぐ
+    expect(inputValues).toContain("ゆる練 vol.42");
     // 参加費は複製元から引き継ぐ
     expect(inputValues).toContain("1000");
     // 開催日は空のままシードされる（複製元の 2026-05-12 は入らない）

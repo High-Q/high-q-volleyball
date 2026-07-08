@@ -30,6 +30,11 @@
             <div class="event-card__dow">{{ event.dowLabel }}</div>
           </div>
           <div class="event-card__body">
+            <div
+              v-if="event.vol !== null"
+              class="event-card__vol"
+              :data-testid="`event-card-vol-${event.id}`"
+            >vol.{{ event.vol }}</div>
             <div class="event-card__title">{{ event.title }}</div>
             <div class="event-card__meta">{{ event.time }}</div>
             <div class="event-card__meta">{{ event.location }}</div>
@@ -193,6 +198,15 @@ function urlFor(id: string) {
 .event-card__body {
   flex: 1;
   min-width: 0;
+}
+
+.event-card__vol {
+  font-family: var(--hq-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--hq-color-accent);
+  text-transform: uppercase;
+  margin-bottom: 4px;
 }
 
 .event-card__title {

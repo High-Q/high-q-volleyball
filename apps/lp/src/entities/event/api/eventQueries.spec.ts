@@ -46,18 +46,20 @@ describe('eventQueryOptions.list()', () => {
         name:     'バレー会',
         start_at: '2026-06-01T09:00:00+09:00',
         end_at:   '2026-06-01T11:00:00+09:00',
+        vol:      74,
         venues:   { name: '体育館A' },
       },
     ]
     const { eventQueryOptions } = await import('./eventQueries')
 
-    const result = await (eventQueryOptions.list().queryFn as () => Promise<Array<{ id: string; name: string; location: string; start: Date; end: Date }>>)()
+    const result = await (eventQueryOptions.list().queryFn as () => Promise<Array<{ id: string; name: string; location: string; start: Date; end: Date; vol: number | null }>>)()
 
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
       id:       'evt-1',
       name:     'バレー会',
       location: '体育館A',
+      vol:      74,
     })
     expect(result[0]!.start).toBeInstanceOf(Date)
     expect(result[0]!.end).toBeInstanceOf(Date)
@@ -93,6 +95,7 @@ describe('eventQueryOptions.list()', () => {
     expect(selectArg).toContain('name')
     expect(selectArg).toContain('start_at')
     expect(selectArg).toContain('end_at')
+    expect(selectArg).toContain('vol')
     expect(selectArg).toMatch(/venues.*name/)
 
     expect(currentBuilder.eq).toHaveBeenCalledWith('visibility', 'published')

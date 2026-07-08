@@ -38,6 +38,7 @@ const baseRow = (i: number): EventListRow => ({
   reserved_count: 6,
   created_at: "2026-04-01T00:00:00+09:00",
   updated_at: "2026-04-01T00:00:00+09:00",
+  vol: i,
 });
 
 function setupListMock(state: {

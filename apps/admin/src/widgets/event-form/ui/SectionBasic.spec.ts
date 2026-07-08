@@ -96,17 +96,31 @@ describe("SectionBasic", () => {
     expect(texts).toContain("参加費は 0 以上の整数で入力してください");
   });
 
-  it("namePlaceholder が input placeholder に反映される", () => {
+  it("vol 未指定（create）では回号の読み取り表示を出さない", () => {
     const wrapper = mount(SectionBasic, {
-      props: {
-        modelValue: emptyState(),
-        errors: {},
-        venues,
-        namePlaceholder: "ゆる練 vol.43",
-      },
+      props: { modelValue: emptyState(), errors: {}, venues },
     });
-    const nameInput = wrapper.find('input[required][maxlength="100"]');
-    expect(nameInput.attributes("placeholder")).toBe("ゆる練 vol.43");
+    expect(wrapper.find('[data-testid="event-vol-readonly"]').exists()).toBe(
+      false,
+    );
+  });
+
+  it("vol 指定（edit）では回号を vol.NN で読み取り専用表示する", () => {
+    const wrapper = mount(SectionBasic, {
+      props: { modelValue: emptyState(), errors: {}, venues, vol: 42 },
+    });
+    const ro = wrapper.find('[data-testid="event-vol-readonly"]');
+    expect(ro.exists()).toBe(true);
+    expect(ro.text()).toBe("vol.42");
+  });
+
+  it("vol が null（edit・未採番）では未採番と表示する", () => {
+    const wrapper = mount(SectionBasic, {
+      props: { modelValue: emptyState(), errors: {}, venues, vol: null },
+    });
+    const ro = wrapper.find('[data-testid="event-vol-readonly"]');
+    expect(ro.exists()).toBe(true);
+    expect(ro.text()).toBe("未採番");
   });
 
   it("name 変更で update:modelValue が emit される", async () => {

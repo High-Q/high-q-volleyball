@@ -109,6 +109,12 @@ export type Event = {
   /** smallint。NULL は無制限を意味する。 */
   capacity: number | null;
   /**
+   * 回号。開催日時順に DB トリガで自動採番される (event-vol-numbering)。
+   * NULL は未採番。システム管理列であり admin から手入力・編集はしない
+   * (EventInsert / EventUpdate には含めない)。
+   */
+  vol: number | null;
+  /**
    * 予約完了/変更メールに掲載するイベント固有の任意追記メッセージ。
    * NULL / 空文字はメールに当該セクションを描画しない。会場固有の注意事項は
    * venues.access_note を使う。

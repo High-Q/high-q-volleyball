@@ -20,7 +20,7 @@ export async function fetchUpcomingEvents(): Promise<EventListItem[]> {
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, name, start_at, end_at, venue_id, fee, status, visibility, venues(name, default_fee)",
+      "id, name, start_at, end_at, venue_id, fee, status, visibility, vol, venues(name, default_fee)",
     )
     .eq("status", "scheduled")
     .eq("visibility", "published")
@@ -51,7 +51,7 @@ export async function fetchEventDetail(
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, name, start_at, end_at, venue_id, fee, status, visibility, venues(name, meeting_point, default_fee, map_url)",
+      "id, name, start_at, end_at, venue_id, fee, status, visibility, vol, venues(name, meeting_point, default_fee, map_url)",
     )
     .eq("id", id)
     .eq("status", "scheduled")
@@ -135,6 +135,7 @@ function rowToEventListItem(row: EventRow): EventListItem {
     venueName: row.venues?.name ?? "",
     fee: resolveFee(row),
     availability: null,
+    vol: row.vol ?? null,
   };
 }
 

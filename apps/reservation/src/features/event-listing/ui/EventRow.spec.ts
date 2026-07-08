@@ -26,6 +26,7 @@ const baseEvent: EventListItem = {
   endAt: "2026-05-12T12:30:00Z", // JST 21:30
   venueId: V_ID,
   venueName: "亀戸スポーツセンター",
+  vol: null,
   fee: 1000,
   availability: makeAvailability(null, 11),
 };
@@ -313,5 +314,23 @@ describe("EventRow", () => {
         wrapper.find('[data-testid="event-row-mine-badge"]').exists(),
       ).toBe(true);
     });
+  });
+});
+
+describe("EventRow - 回号 vol 表示", () => {
+  it("vol があれば vol.NN を表示する", async () => {
+    const wrapper = await mountWithRouter(EventRow, routes, "/", {
+      props: { event: { ...baseEvent, vol: 74 } },
+    });
+    const v = wrapper.find('[data-testid="event-row-vol"]');
+    expect(v.exists()).toBe(true);
+    expect(v.text()).toBe("vol.74");
+  });
+
+  it("vol が null なら vol を表示しない", async () => {
+    const wrapper = await mountWithRouter(EventRow, routes, "/", {
+      props: { event: { ...baseEvent, vol: null } },
+    });
+    expect(wrapper.find('[data-testid="event-row-vol"]').exists()).toBe(false);
   });
 });

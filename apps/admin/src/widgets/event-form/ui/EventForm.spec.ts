@@ -9,14 +9,12 @@ const {
   deleteEventMock,
   toastMock,
   useVenuesMock,
-  useVolumeSuggestMock,
 } = vi.hoisted(() => ({
   createEventMock: vi.fn(),
   updateEventMock: vi.fn(),
   deleteEventMock: vi.fn(),
   toastMock: vi.fn(),
   useVenuesMock: vi.fn(),
-  useVolumeSuggestMock: vi.fn(),
 }));
 
 vi.mock("@/entities/event", () => ({
@@ -27,10 +25,6 @@ vi.mock("@/entities/event", () => ({
 
 vi.mock("@/entities/venue", () => ({
   useVenues: useVenuesMock,
-}));
-
-vi.mock("../composables/useVolumeSuggest", () => ({
-  useVolumeSuggest: useVolumeSuggestMock,
 }));
 
 vi.mock("@/shared/ui/useToast", () => ({
@@ -57,6 +51,7 @@ const SAMPLE_EVENT: Event = {
   fee: 1000,
   capacity: null,
   email_note: null,
+  vol: null,
   visibility: "published",
   status: "scheduled",
   cancel_deadline: null,
@@ -88,7 +83,6 @@ beforeEach(() => {
     venues: ref([{ id: VENUE_ID, name: "亀戸スポーツセンター" }]),
     reload: vi.fn(),
   });
-  useVolumeSuggestMock.mockReturnValue({ suggestion: ref(undefined) });
 });
 
 afterEach(() => {
@@ -143,8 +137,7 @@ describe("EventForm — Create mode", () => {
     expect(alertTexts.some((t) => t.includes("会場を選択"))).toBe(true);
   });
 
-  it("namePlaceholder が「ゆる練 vol.43」で渡されると input placeholder に出る", async () => {
-    useVolumeSuggestMock.mockReturnValue({ suggestion: ref("ゆる練 vol.43") });
+  it("タイトルはシリーズ名の placeholder を持ち、create では回号の読み取り表示を出さない", async () => {
     const router = buildRouter();
     await router.push("/events/new");
     const wrapper = mount(EventForm, {
@@ -152,7 +145,11 @@ describe("EventForm — Create mode", () => {
       global: { plugins: [router] },
     });
     const nameInput = wrapper.find('input[required][maxlength="100"]');
-    expect(nameInput.attributes("placeholder")).toBe("ゆる練 vol.43");
+    expect(nameInput.attributes("placeholder")).toBe("例）ゆる練");
+    // create 時は vol 自動採番前のため読み取り専用 vol 表示は出ない
+    expect(wrapper.find('[data-testid="event-vol-readonly"]').exists()).toBe(
+      false,
+    );
   });
 });
 

@@ -38,6 +38,8 @@ export type MyReservationItem = {
     endAt: string;
     fee: number | null;
     venueName: string;
+    /** 回号。開催日時順に自動採番。NULL=未採番 */
+    vol: number | null;
     /** 予約埋まり具合 (Issue #305)。取得失敗時は null */
     availability: EventAvailability | null;
   };
@@ -56,6 +58,7 @@ type MyReservationRow = {
     start_at: string;
     end_at: string;
     fee: number | null;
+    vol: number | null;
     venue_id: string;
     venues: {
       name: string;
@@ -71,7 +74,7 @@ export async function fetchMyReservations(
   const { data, error } = await supabase
     .from("reservations")
     .select(
-      "id, status, guest_count, cancelled_at, event_id, member_id, events(id, name, start_at, end_at, fee, venue_id, venues(name, default_fee))",
+      "id, status, guest_count, cancelled_at, event_id, member_id, events(id, name, start_at, end_at, fee, vol, venue_id, venues(name, default_fee))",
     )
     .eq("member_id", uid as string)
     .order("start_at", { foreignTable: "events", ascending: false });
@@ -142,6 +145,7 @@ function rowToItem(
       endAt: row.events.end_at,
       fee: row.events.fee ?? row.events.venues?.default_fee ?? null,
       venueName: row.events.venues?.name ?? "",
+      vol: row.events.vol ?? null,
       availability: null,
     },
   };

@@ -67,6 +67,7 @@ const eventA: EventListItem = {
   endAt: "2026-05-12T12:30:00Z",
   venueId: unsafeVenueId("11111111-1111-1111-1111-111111111111"),
   venueName: "亀戸スポーツセンター",
+  vol: null,
   fee: 1000,
   availability: null,
 };
@@ -78,6 +79,7 @@ const eventB: EventListItem = {
   endAt: "2026-05-19T12:30:00Z",
   venueId: unsafeVenueId("11111111-1111-1111-1111-111111111111"),
   venueName: "亀戸スポーツセンター",
+  vol: null,
   fee: 1000,
   availability: null,
 };
@@ -94,6 +96,7 @@ const reservationOnA: MyReservationItem = {
     endAt: eventA.endAt,
     fee: eventA.fee,
     venueName: eventA.venueName,
+    vol: null,
     availability: null,
   },
 };

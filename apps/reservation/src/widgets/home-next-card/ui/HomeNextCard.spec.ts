@@ -29,6 +29,7 @@ const stubReservation: MyReservationItem = {
     endAt: "2026-05-12T12:30:00Z", // JST 21:30
     fee: 1000,
     venueName: "亀戸スポーツセンター",
+    vol: null,
     availability: makeAvailability(null, 9),
   },
 };
@@ -165,5 +166,29 @@ describe("HomeNextCard", () => {
       });
       expect(wrapper.text()).not.toContain("あなた");
     });
+  });
+});
+
+describe("HomeNextCard - 回号 vol 表示", () => {
+  it("vol があれば vol.NN を表示する", async () => {
+    const wrapper = await mountWithRouter(HomeNextCard, routes, "/", {
+      props: {
+        reservation: {
+          ...stubReservation,
+          event: { ...stubReservation.event, vol: 74 },
+        },
+        now: fixedNow,
+      },
+    });
+    const v = wrapper.find('[data-testid="next-vol"]');
+    expect(v.exists()).toBe(true);
+    expect(v.text()).toBe("vol.74");
+  });
+
+  it("vol が null なら vol を表示しない", async () => {
+    const wrapper = await mountWithRouter(HomeNextCard, routes, "/", {
+      props: { reservation: stubReservation, now: fixedNow },
+    });
+    expect(wrapper.find('[data-testid="next-vol"]').exists()).toBe(false);
   });
 });

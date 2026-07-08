@@ -52,6 +52,7 @@ export function useEventList() {
         monthLabel:   MONTH_EN[start.getMonth()] ?? "",
         dayLabel:     pad(start.getDate()),
         dowLabel:     DOW_EN[start.getDay()] ?? "",
+        vol:          e.vol ?? null,
         availability: formatAvailability(availability),
       };
     }),

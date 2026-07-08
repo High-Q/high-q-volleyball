@@ -23,6 +23,7 @@ const baseRow = (overrides: Partial<EventListRow> = {}): EventListRow => ({
   reserved_count: 0,
   created_at: "2026-04-01T00:00:00+09:00",
   updated_at: "2026-04-01T00:00:00+09:00",
+  vol: 43,
   ...overrides,
 });
 

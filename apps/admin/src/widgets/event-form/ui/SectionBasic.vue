@@ -30,8 +30,12 @@ const props = defineProps<{
   modelValue: EventFormState;
   errors: ValidationErrors;
   venues: ReadonlyArray<VenueOption>;
-  /** タイトル placeholder（ゆる練 vol.NN+1 補完）。 */
-  namePlaceholder?: string;
+  /**
+   * 確定済み回号。編集時のみ読み取り専用で表示する（number=採番済み /
+   * null=未採番 / undefined=create で非表示）。回号は events.vol として
+   * 開催日時順に自動採番されるため、フォームから手入力・編集はしない。
+   */
+  vol?: number | null;
   disabled?: boolean;
 }>();
 
@@ -116,8 +120,11 @@ const timeSelectClass =
 
 <template>
   <div class="grid grid-cols-1 gap-hq-4">
-    <!-- タイトル -->
-    <FormField :error="errors.name">
+    <!-- タイトル（シリーズ名のみ。回号 vol は自動採番のため含めない） -->
+    <FormField
+      :error="errors.name"
+      :hint="errors.name ? undefined : 'シリーズ名のみ入力してください（例「ゆる練」）。回号（vol）は開催日時順に自動で付きます。'"
+    >
       <template #default="{ fieldId, messageId, ariaInvalid }">
         <Label :html-for="fieldId">
           タイトル
@@ -130,11 +137,25 @@ const timeSelectClass =
           aria-required="true"
           :aria-invalid="ariaInvalid"
           :aria-describedby="messageId"
-          :placeholder="namePlaceholder"
+          placeholder="例）ゆる練"
           :disabled="disabled"
           maxlength="100"
           @update:model-value="(v: string | number) => update('name', String(v))"
         />
+      </template>
+    </FormField>
+
+    <!-- 回号（読み取り専用。編集時のみ。自動採番の結果を表示） -->
+    <FormField v-if="vol !== undefined" hint="回号は開催日時順に自動採番されます（手入力・編集はできません）。">
+      <template #default="{ fieldId }">
+        <Label :html-for="fieldId">回号</Label>
+        <p
+          :id="fieldId"
+          class="font-mono text-sm text-ink"
+          data-testid="event-vol-readonly"
+        >
+          {{ vol === null ? "未採番" : `vol.${vol}` }}
+        </p>
       </template>
     </FormField>
 

@@ -11,6 +11,7 @@ const stubEvent: EventListItem = {
   endAt: "2026-05-12T12:30:00Z", // JST 21:30
   venueId: unsafeVenueId("22222222-2222-2222-2222-222222222222"),
   venueName: "亀戸スポーツセンター",
+  vol: null,
   fee: 1000,
   availability: null,
 };

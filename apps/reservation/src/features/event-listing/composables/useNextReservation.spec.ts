@@ -34,6 +34,7 @@ function makeReservation(
       endAt: new Date(new Date(startAtIso).getTime() + 7200_000).toISOString(),
       fee: 1000,
       venueName: "亀戸スポーツセンター",
+      vol: null,
       availability: null,
     },
   };

@@ -50,7 +50,7 @@ vi.mock("@/features/booking", async () => {
 // ---------- fixtures ----------
 const futureEvent: EventDetail = {
   id: unsafeEventId("ev-1"),
-  name: "ゆる練 vol.43",
+  name: "ゆる練",
   startAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
   endAt: new Date(Date.now() + 26 * 3600 * 1000).toISOString(),
   venueId: unsafeVenueId("vn-1"),
@@ -58,6 +58,7 @@ const futureEvent: EventDetail = {
   fee: 1000,
   meetingPoint: "正面ロビー",
   mapUrl: null,
+  vol: 74,
   availability: null,
 };
 
@@ -132,5 +133,33 @@ describe("EventDetailPage - 予約 Sheet ディープリンク (?book=1)", () =>
   it("book クエリなしでは Sheet を開かない", async () => {
     const { wrapper } = await mountPage("");
     expect(sheetOpen(wrapper)).toBe("false");
+  });
+});
+
+describe("EventDetailPage - イベント名見出しの vol editorial 表示", () => {
+  it("vol があれば vol.NN を mono+accent span で改行強調する", async () => {
+    eventRef.value = { ...futureEvent, name: "ゆる練", vol: 74 };
+    const { wrapper } = await mountPage("");
+
+    const title = wrapper.find('[data-testid="event-title"]');
+    expect(title.exists()).toBe(true);
+    expect(title.text()).toContain("ゆる練");
+
+    const volume = wrapper.find('[data-testid="event-title-volume"]');
+    expect(volume.exists()).toBe(true);
+    expect(volume.text()).toBe("vol.74");
+    expect(volume.classes()).toContain("text-accent");
+    expect(volume.classes()).toContain("font-mono");
+  });
+
+  it("vol が null なら名前のみ大見出し（vol 行なし fallback）", async () => {
+    eventRef.value = { ...futureEvent, name: "特別練習会", vol: null };
+    const { wrapper } = await mountPage("");
+
+    const title = wrapper.find('[data-testid="event-title"]');
+    expect(title.text()).toBe("特別練習会");
+    expect(
+      wrapper.find('[data-testid="event-title-volume"]').exists(),
+    ).toBe(false);
   });
 });
