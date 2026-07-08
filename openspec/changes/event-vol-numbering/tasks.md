@@ -35,7 +35,7 @@
 - [x] 5.2 `pnpm --filter @high-q/admin exec vitest run` 全 green
 - [x] 5.3 `pnpm --filter @high-q/reservation build` / `pnpm --filter @high-q/admin build` 成功
 - [x] 5.4 両アプリの変更ファイルに eslint / stylelint 違反なし（トークン経由・マジックナンバーなし）
-- [ ] 5.5 dev で採番の探索的確認（admin で未開催イベントを 2 件作成→早い日付で割り込み→以降 +1 シフト / 予約サイト詳細で `vol.NN` 強調表示 / 中止で番号解放）
+- [x] 5.5 dev で採番の探索的確認（admin で未開催イベントを 2 件作成→早い日付で割り込み→以降 +1 シフト / 予約サイト詳細で `vol.NN` 強調表示 / 中止で番号解放）
 
 ## 6. admin 一覧への vol 表示（追加要望）
 
