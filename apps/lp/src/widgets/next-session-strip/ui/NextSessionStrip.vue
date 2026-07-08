@@ -1,14 +1,8 @@
 <template>
   <aside class="next-strip" aria-label="次回開催">
     <div class="next-strip__row">
-      <!-- 左ブロック: NEXT / 日付スタンプ / タイトル+メタ -->
+      <!-- 左: 情報ブロック (2 行) -->
       <div class="next-strip__left">
-        <span
-          class="next-strip__tag"
-          :class="{ 'next-strip__tag--muted': !nextEvent }"
-          >NEXT</span
-        >
-
         <template v-if="isPending">
           <div class="next-strip__placeholder">読み込み中…</div>
         </template>
@@ -16,30 +10,32 @@
           <div class="next-strip__placeholder">開催情報を取得できませんでした</div>
         </template>
         <template v-else-if="nextEvent">
-          <!-- 日付スタンプ (最優先情報・省略しない) -->
-          <div
-            v-if="stamp"
-            class="next-strip__stamp"
-            data-testid="next-session-stamp"
-          >
-            <span class="next-strip__date">{{ stamp.date }}</span>
-            <span class="next-strip__dow">{{ stamp.dow }}</span>
-          </div>
-
-          <div class="next-strip__info">
-            <div class="next-strip__titlerow">
+          <!-- 1 行目: NEXT / 日付 / シリーズ名 + 号数 -->
+          <div class="next-strip__line1">
+            <span class="next-strip__next">NEXT</span>
+            <span
+              v-if="stamp"
+              class="next-strip__date"
+              data-testid="next-session-date"
+              >{{ stamp.date }}<span class="next-strip__dow">{{
+                stamp.dow
+              }}</span></span
+            >
+            <span class="next-strip__title">
               <span class="next-strip__series" data-testid="next-session-series">{{
                 nextEvent.name
-              }}</span>
-              <!-- 号数: 特別回 (vol=null) では出さずシリーズ名を主役にする -->
-              <span
+              }}</span
+              ><span
                 v-if="nextEvent.vol !== null"
                 class="next-strip__vol"
                 data-testid="next-session-vol"
                 >vol.{{ nextEvent.vol }}</span
               >
-            </div>
-            <div class="next-strip__meta">{{ formatTimeLocation(nextEvent) }}</div>
+            </span>
+          </div>
+          <!-- 2 行目: 時間 · 会場 (省略せず折り返す) -->
+          <div class="next-strip__line2" data-testid="next-session-meta">
+            {{ formatTimeLocation(nextEvent) }}
           </div>
         </template>
         <template v-else>
@@ -47,14 +43,14 @@
         </template>
       </div>
 
-      <!-- 右ブロック: 予約導線 (塗りなしのテキストリンク) -->
+      <!-- 右: 予約 CTA (帯内で唯一のアクセント塗り) -->
       <a
         v-if="nextEvent"
         :href="targetUrl"
         class="next-strip__cta"
         data-testid="next-session-cta"
       >
-        予約
+        予約する
         <span aria-hidden="true">›</span>
       </a>
     </div>
@@ -75,7 +71,7 @@ const targetUrl = computed(() => {
 
 const DOW_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
-/** 日付スタンプ (上=M/D / 下=英略曜日)。日付不正時は null でスタンプ非表示。 */
+/** 日付 (M/D) と英略曜日。日付不正時は null。 */
 const stamp = computed<{ date: string; dow: string } | null>(() => {
   const d = nextEvent.value?.start
   if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null
@@ -125,124 +121,105 @@ function formatTimeLocation(event: NextSessionEvent) {
   padding-inline: max(24px, calc((100% - 880px) / 2));
 }
 
-/* 左ブロック: 残り幅を占有し、内部 (会場名) を省略可能にする */
 .next-strip__left {
   flex: 1;
   min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.next-strip__tag {
-  flex-shrink: 0;
-  font-family: var(--hq-font-mono);
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--hq-color-accent);
-}
-
-.next-strip__tag--muted {
-  color: rgba(247, 243, 234, 0.5);
 }
 
 .next-strip__placeholder {
-  font-family: var(--hq-font-jp);
-  font-size: 12.5px;
+  font-family: var(--hq-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
   color: rgba(247, 243, 234, 0.7);
 }
 
-/* 日付スタンプ: 最優先・省略しない */
-.next-strip__stamp {
-  flex-shrink: 0;
+/* 1 行目: 横並び・baseline 揃え・改行しない */
+.next-strip__line1 {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  border-right: 1px solid rgba(247, 243, 234, 0.18);
-  padding-right: 16px;
+  align-items: baseline;
+  gap: 12px;
+  white-space: nowrap;
 }
 
-.next-strip__date {
+/* NEXT: 文脈として弱く保つ (無彩色淡色) */
+.next-strip__next {
+  flex-shrink: 0;
   font-family: var(--hq-font-mono);
-  font-size: 22px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: rgba(247, 243, 234, 0.5);
+}
+
+/* 日付: 左ブロック内で最大・縮小しない */
+.next-strip__date {
+  flex-shrink: 0;
+  font-family: var(--hq-font-mono);
+  font-size: 20px;
   font-weight: 500;
   letter-spacing: -0.5px;
-  line-height: 1;
   color: var(--hq-color-paper);
 }
 
 .next-strip__dow {
   font-family: var(--hq-font-mono);
-  font-size: 8.5px;
-  letter-spacing: 2px;
-  color: rgba(247, 243, 234, 0.5);
-  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: normal;
+  color: rgba(247, 243, 234, 0.55);
+  margin-left: 4px;
 }
 
-.next-strip__info {
+/* シリーズ名 + 号数グループ: 溢れたら ellipsis */
+.next-strip__title {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.next-strip__titlerow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.next-strip__series {
-  flex-shrink: 0;
-  font-family: var(--hq-font-jp-display);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--hq-font-mono);
   font-size: 14px;
   font-weight: 500;
   color: var(--hq-color-paper);
-  white-space: nowrap;
 }
 
-/* 号数: 分割せず一語。アクセント色文字 + 枠のみ (塗りは使わない) */
+/* 号数: 分割しない・無彩色淡色 (線/枠/チップで飾らない) */
 .next-strip__vol {
-  flex-shrink: 0;
   font-family: var(--hq-font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--hq-color-accent);
-  border: 1px solid var(--hq-color-accent);
-  padding: 3px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-
-/* メタ (時間 · 会場): 狭幅では会場名から省略 */
-.next-strip__meta {
-  font-family: var(--hq-font-mono);
-  font-size: 9.5px;
-  letter-spacing: 1.2px;
+  font-size: 11px;
+  font-weight: 400;
   color: rgba(247, 243, 234, 0.6);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-left: 8px;
 }
 
+/* 2 行目: 時間 · 会場。省略せず折り返す (狭幅で情報を消さない) */
+.next-strip__line2 {
+  margin-top: 7px;
+  font-family: var(--hq-font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  line-height: 1.4;
+  color: rgba(247, 243, 234, 0.55);
+}
+
+/* CTA: 帯内で唯一のアクセント塗り・常に全文表示・縦中央 */
 .next-strip__cta {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: var(--hq-font-mono);
-  font-size: 10px;
-  color: rgba(247, 243, 234, 0.85);
+  font-family: var(--hq-font-jp);
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--hq-color-accent);
+  color: var(--hq-color-paper);
+  padding: 11px 18px;
+  border-radius: 999px;
   text-decoration: none;
   transition: opacity 120ms ease;
 }
 
 .next-strip__cta:hover {
-  opacity: 0.7;
+  opacity: 0.88;
 }
 
 .next-strip__cta:focus-visible {

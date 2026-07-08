@@ -36,13 +36,13 @@ beforeEach(() => {
 });
 
 describe("NextSessionStrip", () => {
-  it("日付スタンプ (M/D + 英略曜日) を表示する", () => {
+  it("日付 (M/D + 英略曜日) を表示する", () => {
     state.nextEvent.value = makeEvent();
     const wrapper = mount(NextSessionStrip);
-    const stamp = wrapper.find('[data-testid="next-session-stamp"]');
-    expect(stamp.exists()).toBe(true);
-    expect(stamp.find(".next-strip__date").text()).toBe("5/14");
-    expect(stamp.find(".next-strip__dow").text()).toMatch(/^[A-Z]{3}$/);
+    const date = wrapper.find('[data-testid="next-session-date"]');
+    expect(date.exists()).toBe(true);
+    expect(date.text()).toContain("5/14");
+    expect(date.find(".next-strip__dow").text()).toMatch(/^[A-Z]{3}$/);
   });
 
   it("シリーズ名と号数 vol.NN バッジを表示する", () => {
@@ -59,7 +59,7 @@ describe("NextSessionStrip", () => {
   it("時間 · 会場のメタを表示する", () => {
     state.nextEvent.value = makeEvent();
     const wrapper = mount(NextSessionStrip);
-    expect(wrapper.find(".next-strip__meta").text()).toBe(
+    expect(wrapper.find('[data-testid="next-session-meta"]').text()).toBe(
       "18:00–20:00 · 江東区スポーツ会館",
     );
   });
