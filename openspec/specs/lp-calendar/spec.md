@@ -1,5 +1,9 @@
-## ADDED Requirements
+# lp-calendar Specification
 
+## Purpose
+
+LP のイベント告知（次回開催の取得と 4 状態表示、および表示要素）を規定する。
+## Requirements
 ### Requirement: イベント取得中にローディング状態が表示される
 
 イベントデータの取得中、カレンダー領域にスケルトンローダーが表示されなければならない（SHALL）。
@@ -32,8 +36,6 @@ Supabase からのデータ取得が失敗した場合、ユーザーにエラ�
 - **WHEN** Supabase が 0 件の `data` を返した場合
 - **THEN** Empty 状態（"予定されているイベントはありません"）が表示され、Error 状態（`v-alert`）は表示されない
 
-## MODIFIED Requirements
-
 ### Requirement: APIからイベントを取得してカレンダーに表示する
 
 Supabase `events` テーブルからイベント一覧を取得し、カレンダー上に表示しなければならない（SHALL）。データ取得には TanStack Query を使用しなければならない（SHALL）。LP が画面に出すのは `visibility = 'published'` かつ `start_at >= now()` の未来イベントのみとし、絞り込みは Supabase 側のクエリで明示しなければならない（MUST）。並び順は `start_at` の昇順（直近順）でなければならない（SHALL）。`venues` テーブルとの結合により、各イベントには会場名を `location` 文字列として付与しなければならない（SHALL）。
@@ -57,3 +59,22 @@ Supabase `events` テーブルからイベント一覧を取得し、カレン�
 
 - **WHEN** `apps/lp/` 配下に対し `ptfomh71x9.execute-api` または `/api/event` を grep する
 - **THEN** マッチが 0 件である（Vite proxy 設定と URL ハードコードがいずれも撤去されている）
+
+### Requirement: LP イベントに回号 vol を付与・表示する
+
+LP のイベント取得は `events.vol`（回号）を取得し、各イベントの view-model に `vol`（`number | null`）として付与する SHALL。取得は Supabase クエリの SELECT に `vol` を明示的に含める MUST。回号を `name` 文字列からパースして得てはならない MUST NOT。
+
+LP のイベント表示箇所（Hero 直下の次回開催 NEXT ストリップ・Schedule セクションのイベントカード）は、`vol` が非 NULL のとき回号を `vol.NN` 形式で表示する SHALL。`vol` が NULL（未採番）のときは回号を表示しない MUST。表示色・書体は HQ デザイントークン（`var(--hq-*)`）経由とする MUST。
+
+#### Scenario: vol が SELECT に含まれる
+- **WHEN** LP のイベント取得クエリが発行される
+- **THEN** SELECT 句に `vol` が含まれ、各イベントの view-model に `vol` が付与される
+
+#### Scenario: 採番済みイベントは vol.NN を表示する
+- **WHEN** `vol = 74` のイベントが Schedule カードまたは NEXT ストリップに描画される
+- **THEN** 当該箇所に `vol.74` が表示される
+
+#### Scenario: 未採番イベントは回号を表示しない
+- **WHEN** `vol = null` のイベントが描画される
+- **THEN** 回号は表示されない
+

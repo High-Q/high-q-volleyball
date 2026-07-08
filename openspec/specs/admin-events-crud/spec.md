@@ -25,7 +25,9 @@ TBD - created by archiving change admin-events-crud-screen. Update Purpose after
 
 `EventForm` は MUST 以下の 1 セクションを表示する。セクションは `FormSection`（kicker 番号 + タイトル + hint テキスト + 子要素のスロット）コンポーネントで wrap される。
 
-- **01 基本情報**: タイトル / 開催日 / 開始時刻 / 終了時刻 / 会場（venues マスタからの select）/ 参加費（500 / 1,000 / 自由入力のプリセットボタン付き）/ **定員（任意）** / **メール追記メッセージ（任意）**
+- **01 基本情報**: タイトル（**シリーズ名**。回号は含めない）/ 開催日 / 開始時刻 / 終了時刻 / 会場（venues マスタからの select）/ 参加費（500 / 1,000 / 自由入力のプリセットボタン付き）/ **定員（任意）** / **メール追記メッセージ（任意）**
+
+タイトル欄には回号（`第N回` / `vol.NN`）を含めず、シリーズ名（例: `ゆる練`）のみを入力する MUST。回号は `events.vol` として保存時に自動採番される（`event-vol-numbering` capability）ため、フォームは回号をユーザーに手入力させない MUST NOT。フォームには「回号（vol）は開催日時順に自動採番される」旨の hint を示す SHALL。編集画面では当該イベントの確定済み `vol` を**読み取り専用**で表示する SHALL（NULL の場合は未採番である旨を示す）。
 
 定員入力は MUST `shared/ui/FormField` でラップし（生 `<label>+<input>` 直書き禁止）、`type="number"` の任意入力フィールドとして基本情報セクション内・参加費の下に配置する SHALL。空欄時のプレースホルダ / hint で「上限なし」運用であることを示す MUST。
 
@@ -36,6 +38,14 @@ TBD - created by archiving change admin-events-crud-screen. Update Purpose after
 #### Scenario: セクション構成が仕様どおり
 - **WHEN** EventForm を描画
 - **THEN** `01 基本情報` セクションのみ表示され、当該セクション内にタイトル / 開催日 / 開始時刻 / 終了時刻 / 会場 / 参加費 / 定員 / メール追記メッセージ の入力が含まれる（サムネイル / 公開設定セクションは存在しない）
+
+#### Scenario: タイトルはシリーズ名のみ・vol は自動採番
+- **WHEN** 新規作成画面でタイトルにシリーズ名（例 `ゆる練`）を入力して保存する
+- **THEN** `events.name` にはシリーズ名のみが保存され、回号はフォームから投入されない。`vol` は保存後に開催日時順で自動採番される
+
+#### Scenario: 編集画面で vol を読み取り専用表示
+- **WHEN** 既に vol が採番されたイベントの編集画面を開く
+- **THEN** 当該 `vol` が読み取り専用で表示され、ユーザーは編集できない（未採番なら未採番である旨が表示される）
 
 #### Scenario: 定員フィールドの描画
 - **WHEN** EventForm を描画
@@ -48,14 +58,6 @@ TBD - created by archiving change admin-events-crud-screen. Update Purpose after
 #### Scenario: メール追記メッセージの保存と空欄
 - **WHEN** メール追記メッセージに文字列を入力して保存／空欄のまま保存
 - **THEN** 入力時は events.email_note に当該文字列（前後トリム後）が、空欄時は NULL が投入される
-
-#### Scenario: 「ゆる練 vol.XX」テンプレ補完
-- **WHEN** 新規作成画面で初回マウント時、events に過去の「ゆる練 vol.NN」が存在する
-- **THEN** タイトル欄に `ゆる練 vol.<NN+1>` がプレースホルダとして提示され、ユーザーが何も入力していなければそのまま保存できる（ユーザーが任意の文字列を入力したら補完は無視）
-
-#### Scenario: テンプレ補完取得失敗時の縮退
-- **WHEN** vol.NN の取得クエリが失敗する
-- **THEN** タイトル欄は空のまま（補完なしで）描画され、フォーム全体の Error 状態にはしない
 
 #### Scenario: 参加費プリセット
 - **WHEN** ユーザーが参加費の `¥500` または `¥1,000` プリセットボタンを押下
