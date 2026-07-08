@@ -1,1 +1,5 @@
 export { eventQueryOptions } from './api/eventQueries'
+export { availabilityQueryOptions } from './api/availabilityQueries'
+export type { EventAvailability } from './model/event.types'
+export { formatAvailability } from './lib/format-availability'
+export type { AvailabilityDisplay, AvailabilityTone } from './lib/format-availability'

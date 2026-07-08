@@ -38,6 +38,15 @@
             <div class="event-card__title">{{ event.title }}</div>
             <div class="event-card__meta">{{ event.time }}</div>
             <div class="event-card__meta">{{ event.location }}</div>
+            <span
+              v-if="event.availability"
+              class="event-card__avail"
+              :class="`event-card__avail--${event.availability.tone}`"
+              :data-testid="`event-availability-${event.id}`"
+            >
+              <span class="event-card__avail-dot" aria-hidden="true" />
+              {{ event.availability.text }}
+            </span>
           </div>
           <a
             :href="urlFor(event.id)"
@@ -45,7 +54,7 @@
             :data-event-id="event.id"
             :data-testid="`event-card-cta-${event.id}`"
           >
-            予約する
+            {{ event.availability?.isFull ? 'キャンセル待ち' : '予約する' }}
             <span aria-hidden="true">›</span>
           </a>
         </article>
@@ -214,6 +223,48 @@ function urlFor(id: string) {
   font-size: 11.5px;
   color: var(--hq-color-muted);
   line-height: 1.7;
+}
+
+.event-card__avail {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-family: var(--hq-font-jp);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.event-card__avail-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* トーンはドット色で表現し、テキスト色は AA を満たす ink 系に保つ
+   (warn の amber を本文色に使うとコントラスト不足になるため)。
+   満員のみ danger 色 (#9c4030 は十分濃く AA を満たす) で強調する。 */
+.event-card__avail--ok {
+  color: var(--hq-color-ink-soft);
+}
+.event-card__avail--ok .event-card__avail-dot {
+  background: var(--hq-color-success);
+}
+
+.event-card__avail--warn {
+  color: var(--hq-color-ink);
+}
+.event-card__avail--warn .event-card__avail-dot {
+  background: var(--hq-color-warn);
+}
+
+.event-card__avail--full {
+  color: var(--hq-color-danger);
+}
+.event-card__avail--full .event-card__avail-dot {
+  background: var(--hq-color-danger);
 }
 
 .event-card__cta {

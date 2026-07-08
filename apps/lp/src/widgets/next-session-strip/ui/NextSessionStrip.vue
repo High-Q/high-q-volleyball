@@ -33,10 +33,20 @@
               >
             </span>
           </div>
-          <!-- 2 行目: 時間 · 会場 (省略せず折り返す) -->
+          <!-- 2 行目: 時間 · 会場 (省略せず折り返す) + 残席バッジ -->
           <div class="next-strip__line2" data-testid="next-session-meta">
             {{ formatTimeLocation(nextEvent) }}
+            <span
+              v-if="availability"
+              class="next-strip__avail"
+              :class="`next-strip__avail--${availability.tone}`"
+              data-testid="next-session-availability"
+            >
+              <span class="next-strip__avail-dot" aria-hidden="true" />
+              {{ availability.text }}
+            </span>
           </div>
+
         </template>
         <template v-else>
           <div class="next-strip__placeholder">次回開催は調整中です</div>
@@ -50,7 +60,7 @@
         class="next-strip__cta"
         data-testid="next-session-cta"
       >
-        予約する
+        {{ availability?.isFull ? 'キャンセル待ち' : '予約する' }}
         <span aria-hidden="true">›</span>
       </a>
     </div>
@@ -62,7 +72,7 @@ import { computed } from 'vue'
 import { useNextSession } from '../model/useNextSession'
 import { reservationEventUrl } from '@shared/config/reservation'
 
-const { nextEvent, isPending, isError } = useNextSession()
+const { nextEvent, availability, isPending, isError } = useNextSession()
 
 const targetUrl = computed(() => {
   if (!nextEvent.value) return ''
@@ -199,6 +209,39 @@ function formatTimeLocation(event: NextSessionEvent) {
   letter-spacing: 1px;
   line-height: 1.4;
   color: rgba(247, 243, 234, 0.55);
+}
+
+/* 残席バッジ (2 行目に併記)。ダーク帯上のため on-dark トークンで AA 確保。
+   ドット色でトーンを表現し、テキストは弱い淡色に保つ (強調は日付と CTA のみ)。 */
+.next-strip__avail {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  font-family: var(--hq-font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  line-height: 1.4;
+  color: rgba(247, 243, 234, 0.55);
+}
+
+.next-strip__avail-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.next-strip__avail--ok .next-strip__avail-dot {
+  background: var(--hq-color-success-on-dark);
+}
+
+.next-strip__avail--warn .next-strip__avail-dot {
+  background: var(--hq-color-warn-on-dark);
+}
+
+.next-strip__avail--full .next-strip__avail-dot {
+  background: var(--hq-color-danger-on-dark);
 }
 
 /* CTA: 帯内で唯一のアクセント塗り・常に全文表示・縦中央 */
