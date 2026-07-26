@@ -391,43 +391,6 @@ view は `SECURITY INVOKER` で作成され、参照テーブル（reservations 
 - **WHEN** Authorization ヘッダなしで Function を呼ぶ
 - **THEN** Function は 401 を返す
 
-### Requirement: event_availability_view の RLS と権限
-
-`event_availability_view` ビューは `SECURITY DEFINER` で作成 MUST する。関数所有者（postgres ロール）の権限で `reservations` を全件集計し、当該イベントの予約埋まり具合の集計のみを返す。本ビューは個人情報を含まない集計のみを返すため、未認証ユーザー（anon）を含む全ロールに SELECT を許可する。
-
-権限設定:
-
-- `grant select on public.event_availability_view to anon` — 未認証ユーザー（LP 来訪者）も集計を SELECT 可
-- `grant select on public.event_availability_view to authenticated` — 認証済ユーザーは SELECT 可
-
-view が返す列は集計 (`event_id`, `capacity`, `reserved_count`) のみで、個別予約行・予約者 ID 等の個人情報を含まない MUST。これにより `SECURITY DEFINER` でも個人情報漏洩リスクを構造的に排除する。anon への公開は本「個人情報を含まない集計のみ」という不変条件に依存する MUST であり、本ビューに個人情報に当たる列を追加してはならない MUST NOT。
-
-`reservations` テーブルの既存 SELECT RLS（`auth.uid() = member_id OR is_admin()`）は本変更で **改変 SHALL NOT**。会員ロールからの直接 SELECT は引き続き自分の予約のみが返る。全件集計を得る経路は `event_availability_view` のみに集約する MUST。
-
-#### Scenario: anon は event_availability_view から集計を SELECT できる
-- **WHEN** anon JWT で `SELECT event_id, capacity, reserved_count FROM event_availability_view`
-- **THEN** 各イベントの集計（定員・予約数）が返り、個別予約行・予約者 ID は含まれない
-
-#### Scenario: 会員ロールでの SELECT が全件集計を返す
-- **WHEN** AAL2 の `role = 'member'` ユーザーが `SELECT event_id, reserved_count FROM event_availability_view`
-- **THEN** 当該会員以外の予約も含めた全件集計が返る（view が `SECURITY DEFINER` であるため）
-
-#### Scenario: admin ロールでの SELECT も全件集計を返す
-- **WHEN** AAL2 の `is_admin() = true` ユーザーが `SELECT event_id, reserved_count FROM event_availability_view`
-- **THEN** 全件集計が返る（admin で呼んでも会員で呼んでも同じ結果）
-
-#### Scenario: reservations の直接 SELECT 経路は会員自身分のみ
-- **WHEN** 会員ロールで `SELECT * FROM reservations`
-- **THEN** 自分の予約のみが返る（既存 RLS 維持。anon への view 公開によって直接アクセス経路は緩和されていない）
-
-### Requirement: event_availability_view の呼び出し契約
-
-`event_availability_view` は `apps/reservation`・`apps/admin`・`apps/lp` から呼び出される MUST 契約とする。`apps/lp` は未認証（anon）の来訪者に対し当該イベントの残席表現（募集中の残席数・満員）を出すために本 view を SELECT してよい。anon に公開してよいのは個人情報を含まない集計（`event_id`, `capacity`, `reserved_count`）に限る MUST であり、待ち人数・予約者 ID・ニックネーム等を anon に返してはならない MUST NOT。
-
-#### Scenario: LP からの呼び出しは集計のみ
-- **WHEN** `apps/lp` 配下のソースで `event_availability_view` を SELECT する
-- **THEN** 取得列は `event_id`, `capacity`, `reserved_count` の集計のみであり、個人情報列を含まない
-
 ### Requirement: 参加者ニックネーム取得 RPC の権限境界
 
 `public.get_event_participant_nicknames(p_event_id uuid)` 関数は `SECURITY DEFINER` モードで定義され、`search_path` を `public` に固定する MUST。本関数は呼び出し元の `auth.uid()` が `p_event_id` に対して `reservations.status IN ('reserved', 'attended')` の有効な予約を 1 行以上持つときのみ非空の集合を SHALL 返し、それ以外は空集合を SHALL 返す (例外を投げない)。
@@ -472,4 +435,42 @@ view が返す列は集計 (`event_id`, `capacity`, `reserved_count`) のみで�
 #### Scenario: 退会済み参加者の除外
 - **WHEN** 同じイベントに `status='reserved'` の予約 3 件があり、うち 1 件は退会フローで `member_id IS NULL` になっている状態で本関数を呼ぶ
 - **THEN** 戻り値は `member_id IS NOT NULL` の 2 件のみで、退会済み参加者の行は含まれない
+
+### Requirement: get_event_availability の実行権限境界
+
+`public.get_event_availability(p_event_ids uuid[])` 関数は `SECURITY DEFINER` モードで定義され、`search_path` を `public` に固定する MUST。関数所有者（postgres ロール）の権限で `reservations` を全件集計し、当該イベントの予約埋まり具合の集計のみを返す。本関数は個人情報を含まない集計のみを返すため、未認証ユーザー（anon）を含む全ロールに実行を許可する。
+
+権限設定:
+
+- `revoke all on function public.get_event_availability(uuid[]) from public` — 既定を最小化
+- `grant execute on function public.get_event_availability(uuid[]) to anon` — 未認証ユーザー（LP 来訪者）も集計を取得可
+- `grant execute on function public.get_event_availability(uuid[]) to authenticated` — 認証済ユーザーは取得可
+
+関数が返す列は集計 (`event_id`, `capacity`, `reserved_count`) のみで、個別予約行・予約者 ID 等の個人情報を含まない MUST。これにより `SECURITY DEFINER` でも個人情報漏洩リスクを構造的に排除する。anon への公開は本「個人情報を含まない集計のみ」という不変条件に依存する MUST であり、本関数に個人情報に当たる列を追加してはならない MUST NOT。
+
+`reservations` テーブルの既存 SELECT RLS（`auth.uid() = member_id OR is_admin()`）は本変更で **改変 SHALL NOT**。会員ロールからの直接 SELECT は引き続き自分の予約のみが返る。全件集計を得る経路は `get_event_availability` 関数のみに集約する MUST。
+
+#### Scenario: anon は get_event_availability から集計を取得できる
+- **WHEN** anon JWT で `get_event_availability(array[...])` を呼び出す
+- **THEN** 各イベントの集計（定員・予約数）が返り、個別予約行・予約者 ID は含まれない
+
+#### Scenario: 会員ロールでの呼び出しが全件集計を返す
+- **WHEN** AAL2 の `role = 'member'` ユーザーが `get_event_availability` を呼び出す
+- **THEN** 当該会員以外の予約も含めた全件集計が返る（関数が `SECURITY DEFINER` であるため）
+
+#### Scenario: admin ロールでの呼び出しも全件集計を返す
+- **WHEN** AAL2 の `is_admin() = true` ユーザーが `get_event_availability` を呼び出す
+- **THEN** 全件集計が返る（admin で呼んでも会員で呼んでも同じ結果）
+
+#### Scenario: reservations の直接 SELECT 経路は会員自身分のみ
+- **WHEN** 会員ロールで `SELECT * FROM reservations`
+- **THEN** 自分の予約のみが返る（既存 RLS 維持。関数公開によって直接アクセス経路は緩和されていない）
+
+### Requirement: get_event_availability の呼び出し契約
+
+`get_event_availability` は `apps/reservation`・`apps/lp` から `.rpc()` で呼び出される MUST 契約とする。`apps/lp` は未認証（anon）の来訪者に対し当該イベントの残席表現（募集中の残席数・満員）を出すために本関数を呼び出してよい。anon に公開してよいのは個人情報を含まない集計（`event_id`, `capacity`, `reserved_count`）に限る MUST であり、待ち人数・予約者 ID・ニックネーム等を anon に返してはならない MUST NOT。
+
+#### Scenario: LP からの呼び出しは集計のみ
+- **WHEN** `apps/lp` 配下のソースで `get_event_availability` を呼び出す
+- **THEN** 取得列は `event_id`, `capacity`, `reserved_count` の集計のみであり、個人情報列を含まない
 
