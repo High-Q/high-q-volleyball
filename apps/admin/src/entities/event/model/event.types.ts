@@ -26,7 +26,7 @@ export interface EventListRow {
   cancel_deadline: string | null;
   /**
    * 予約済みの本人 + 同伴を含む人数 (reserved + attended を母集団とする)。
-   * event_detail_view / event_availability_view の reserved_count と同一集計。
+   * event_detail_view / get_event_availability の reserved_count と同一集計。
    */
   reserved_count: number;
   created_at: string;

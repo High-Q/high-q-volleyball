@@ -10,8 +10,6 @@ type Chain = {
   then: (resolve: (v: unknown) => unknown) => Promise<unknown>;
 };
 
-type FromTable = "events" | "event_availability_view";
-
 type Plan = {
   events?: { data: unknown[] | null; error: unknown };
   availability?: { data: unknown[] | null; error: unknown };
@@ -21,34 +19,38 @@ type Plan = {
 
 let plan: Plan = {};
 
-function makeChain(table: FromTable): Chain {
-  const settle = () => {
-    if (table === "events") {
-      // Detail uses maybeSingle which short-circuits via maybeSingle method
-      return plan.events ?? { data: null, error: null };
-    }
-    return plan.availability ?? { data: [], error: null };
-  };
+// events テーブルの chain (list は order/then で settle、detail は maybeSingle)。
+// availability は from ではなく get_event_availability(RPC) 経由になった。
+function makeEventsChain(): Chain {
+  const settle = () => plan.events ?? { data: null, error: null };
   const chain: Chain = {
     select: vi.fn().mockReturnThis() as Chain["select"],
     eq: vi.fn().mockReturnThis() as Chain["eq"],
     in: vi.fn().mockReturnThis() as Chain["in"],
     gte: vi.fn().mockReturnThis() as Chain["gte"],
     order: vi.fn().mockImplementation(() => Promise.resolve(settle())) as Chain["order"],
-    maybeSingle: vi.fn().mockImplementation(() => {
-      if (table === "events") {
-        return Promise.resolve(plan.eventDetail ?? { data: null, error: null });
-      }
-      return Promise.resolve(plan.availabilityOne ?? { data: null, error: null });
-    }) as Chain["maybeSingle"],
+    maybeSingle: vi.fn().mockImplementation(() =>
+      Promise.resolve(plan.eventDetail ?? { data: null, error: null }),
+    ) as Chain["maybeSingle"],
     then: (resolve) => Promise.resolve(settle()).then(resolve),
   };
   return chain;
 }
 
+// get_event_availability(RPC): list は plan.availability(配列)、detail は
+// plan.availabilityOne(単一) を配列化して返す（RPC は行の集合を返すため）。
+const rpcMock = vi.fn(async (_fn: string, _args: unknown) => {
+  if (plan.availabilityOne !== undefined) {
+    const { data, error } = plan.availabilityOne;
+    return { data: data === null ? null : [data], error };
+  }
+  return plan.availability ?? { data: [], error: null };
+});
+
 vi.mock("@/shared/api/supabase", () => ({
   getSupabase: () => ({
-    from: (table: FromTable) => makeChain(table),
+    from: (_table: string) => makeEventsChain(),
+    rpc: rpcMock,
   }),
 }));
 

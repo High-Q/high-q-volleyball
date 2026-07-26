@@ -2,29 +2,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { EventAvailability } from '../model/event.types'
 
-interface BuilderResult {
+interface RpcResult {
   data: unknown
   error: unknown
 }
 
-const builderResult: BuilderResult = {
+const rpcResult: RpcResult = {
   data: null,
   error: null,
 }
 
-function makeBuilder() {
-  return {
-    select: vi.fn().mockReturnThis(),
-    in:     vi.fn().mockImplementation(async () => ({
-      data:  builderResult.data,
-      error: builderResult.error,
-    })),
-  }
-}
-
-let currentBuilder = makeBuilder()
-const fromMock = vi.fn()
-const supabaseClient = { from: fromMock }
+const rpcMock = vi.fn(async () => ({
+  data:  rpcResult.data,
+  error: rpcResult.error,
+}))
+const supabaseClient = { rpc: rpcMock }
 
 vi.mock('@shared/api', () => ({
   getSupabase: () => supabaseClient,
@@ -32,17 +24,15 @@ vi.mock('@shared/api', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
-  currentBuilder = makeBuilder()
-  fromMock.mockReturnValue(currentBuilder)
-  builderResult.data = null
-  builderResult.error = null
+  rpcResult.data = null
+  rpcResult.error = null
 })
 
 type AvailabilityQueryFn = () => Promise<Map<string, EventAvailability>>
 
 describe('availabilityQueryOptions.byIds()', () => {
   it('Success: event_id をキーに capacity / reservedCount のマップを返す', async () => {
-    builderResult.data = [
+    rpcResult.data = [
       { event_id: 'evt-1', capacity: 12, reserved_count: 9 },
       { event_id: 'evt-2', capacity: null, reserved_count: 4 },
     ]
@@ -60,30 +50,26 @@ describe('availabilityQueryOptions.byIds()', () => {
     const map = await (availabilityQueryOptions.byIds([]).queryFn as AvailabilityQueryFn)()
 
     expect(map.size).toBe(0)
-    expect(fromMock).not.toHaveBeenCalled()
+    expect(rpcMock).not.toHaveBeenCalled()
   })
 
-  it('Error: Supabase が error を返すと throw する', async () => {
-    builderResult.error = { message: 'permission denied' }
+  it('Error: 失敗時は throw せず空マップを返す (残席は非クリティカル・graceful)', async () => {
+    rpcResult.error = { message: 'permission denied' }
     const { availabilityQueryOptions } = await import('./availabilityQueries')
 
-    await expect(
-      (availabilityQueryOptions.byIds(['evt-1']).queryFn as AvailabilityQueryFn)(),
-    ).rejects.toThrow('permission denied')
+    const map = await (availabilityQueryOptions.byIds(['evt-1']).queryFn as AvailabilityQueryFn)()
+
+    expect(map.size).toBe(0)
   })
 
-  it('Query: event_availability_view を集計3列のみで select / in(event_id, ids) を発行する', async () => {
-    builderResult.data = []
+  it('Query: get_event_availability を p_event_ids でRPC呼び出しする', async () => {
+    rpcResult.data = []
     const { availabilityQueryOptions } = await import('./availabilityQueries')
 
     await (availabilityQueryOptions.byIds(['evt-1', 'evt-2']).queryFn as AvailabilityQueryFn)()
 
-    expect(fromMock).toHaveBeenCalledWith('event_availability_view')
-
-    expect(currentBuilder.select).toHaveBeenCalledTimes(1)
-    const selectArg = currentBuilder.select.mock.calls[0]![0] as string
-    expect(selectArg).toBe('event_id, capacity, reserved_count')
-
-    expect(currentBuilder.in).toHaveBeenCalledWith('event_id', ['evt-1', 'evt-2'])
+    expect(rpcMock).toHaveBeenCalledWith('get_event_availability', {
+      p_event_ids: ['evt-1', 'evt-2'],
+    })
   })
 })

@@ -88,22 +88,23 @@ export async function fetchMyReservation(
 }
 
 /**
- * 単一 event_id の予約埋まり具合を取得する。取得失敗時は null を返し、
- * 詳細画面側で fallback 表示する。主データは継続描画される。
+ * 単一 event_id の予約埋まり具合を `get_event_availability`(RPC) から取得する。
+ * 取得失敗時は null を返し、詳細画面側で fallback 表示する。主データは継続描画される。
  */
 async function fetchAvailabilityOne(
   id: string,
 ): Promise<EventAvailability | null> {
   const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from("event_availability_view")
-    .select("event_id, capacity, reserved_count")
-    .eq("event_id", id)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_event_availability", {
+    p_event_ids: [id],
+  });
   if (error || data === null) {
     return null;
   }
-  const row = data as unknown as AvailabilityRow;
+  const row = (data as unknown as AvailabilityRow[])[0];
+  if (row === undefined) {
+    return null;
+  }
   return {
     eventId: unsafeEventId(row.event_id),
     capacity: row.capacity,

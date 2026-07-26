@@ -6,15 +6,9 @@ const reservationsBuilder = {
   order: vi.fn(),
 };
 
-const availabilityBuilder = {
-  select: vi.fn(),
-  in: vi.fn(),
-};
-
 const supabaseMock = {
-  from: vi.fn((table: string) =>
-    table === "event_availability_view" ? availabilityBuilder : reservationsBuilder,
-  ),
+  from: vi.fn(() => reservationsBuilder),
+  rpc: vi.fn(),
 };
 
 vi.mock("@/shared/api/supabase", () => ({
@@ -23,14 +17,11 @@ vi.mock("@/shared/api/supabase", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  supabaseMock.from.mockImplementation((table: string) =>
-    table === "event_availability_view" ? availabilityBuilder : reservationsBuilder,
-  );
+  supabaseMock.from.mockImplementation(() => reservationsBuilder);
   reservationsBuilder.select.mockReturnValue(reservationsBuilder);
   reservationsBuilder.eq.mockReturnValue(reservationsBuilder);
   reservationsBuilder.order.mockReturnValue(reservationsBuilder);
-  availabilityBuilder.select.mockReturnValue(availabilityBuilder);
-  availabilityBuilder.in.mockResolvedValue({ data: [], error: null });
+  supabaseMock.rpc.mockResolvedValue({ data: [], error: null });
 });
 
 afterEach(() => {
@@ -183,12 +174,15 @@ describe("fetchMyReservations", () => {
       ],
       error: null,
     });
-    availabilityBuilder.in.mockResolvedValueOnce({
+    supabaseMock.rpc.mockResolvedValueOnce({
       data: [{ event_id: evId, capacity: null, reserved_count: 9 }],
       error: null,
     });
     const { fetchMyReservations } = await import("./myReservations");
     const items = await fetchMyReservations(uid);
+    expect(supabaseMock.rpc).toHaveBeenCalledWith("get_event_availability", {
+      p_event_ids: [evId],
+    });
     expect(items[0]?.event.availability).toEqual({
       eventId: evId,
       capacity: null,
@@ -220,7 +214,7 @@ describe("fetchMyReservations", () => {
       ],
       error: null,
     });
-    availabilityBuilder.in.mockResolvedValueOnce({
+    supabaseMock.rpc.mockResolvedValueOnce({
       data: null,
       error: { message: "view down" },
     });
@@ -234,6 +228,6 @@ describe("fetchMyReservations", () => {
     reservationsBuilder.order.mockResolvedValueOnce({ data: [], error: null });
     const { fetchMyReservations } = await import("./myReservations");
     await fetchMyReservations("00000000-0000-0000-0000-000000000001");
-    expect(supabaseMock.from).not.toHaveBeenCalledWith("event_availability_view");
+    expect(supabaseMock.rpc).not.toHaveBeenCalled();
   });
 });

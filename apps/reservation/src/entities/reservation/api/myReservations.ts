@@ -102,7 +102,7 @@ export async function fetchMyReservations(
 }
 
 /**
- * `event_availability_view` から複数 event_id の予約埋まり具合を取得する。
+ * `get_event_availability`(RPC) から複数 event_id の予約埋まり具合を取得する。
  * 取得失敗時は空 Map を返し、呼び出し側で各 event に `availability: null` が割り当てられる
  * (主データの描画を阻害しないため、ここで throw しない)。
  */
@@ -110,10 +110,9 @@ async function fetchAvailabilityMap(
   ids: string[],
 ): Promise<Map<string, EventAvailability>> {
   const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from("event_availability_view")
-    .select("event_id, capacity, reserved_count")
-    .in("event_id", ids);
+  const { data, error } = await supabase.rpc("get_event_availability", {
+    p_event_ids: ids,
+  });
   if (error || data === null) {
     return new Map();
   }
