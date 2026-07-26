@@ -28,7 +28,7 @@ export type EventRow = {
 
 /**
  * 予約埋まり具合の集計値 (Issue #277)。
- * `event_availability_view` (SECURITY DEFINER) から取得する aggregate-only DTO。
+ * `get_event_availability`(RPC / SECURITY DEFINER) から取得する aggregate-only DTO。
  * 個人情報は含まない。
  */
 export type EventAvailability = {

@@ -7,7 +7,7 @@ import {
 } from "@/entities/event";
 
 const props = defineProps<{
-  /** `event_availability_view` の取得結果。取得失敗時 / 取得中でも prop は null で OK */
+  /** `get_event_availability` の取得結果。取得失敗時 / 取得中でも prop は null で OK */
   availability: EventAvailability | null | undefined;
   /** "dark" = 黒地カード内、"light" = 通常背景。色とプログレスバー実装を切り替える */
   variant?: "dark" | "light";

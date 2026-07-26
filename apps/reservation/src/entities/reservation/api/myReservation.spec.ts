@@ -6,16 +6,9 @@ const reservationsBuilder = {
   maybeSingle: vi.fn(),
 };
 
-const availabilityBuilder = {
-  select: vi.fn(),
-  eq: vi.fn(),
-  maybeSingle: vi.fn(),
-};
-
 const supabaseMock = {
-  from: vi.fn((table: string) =>
-    table === "event_availability_view" ? availabilityBuilder : reservationsBuilder,
-  ),
+  from: vi.fn(() => reservationsBuilder),
+  rpc: vi.fn(),
 };
 
 vi.mock("@/shared/api/supabase", () => ({
@@ -24,15 +17,11 @@ vi.mock("@/shared/api/supabase", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  supabaseMock.from.mockImplementation((table: string) =>
-    table === "event_availability_view" ? availabilityBuilder : reservationsBuilder,
-  );
+  supabaseMock.from.mockImplementation(() => reservationsBuilder);
   reservationsBuilder.select.mockReturnValue(reservationsBuilder);
   reservationsBuilder.eq.mockReturnValue(reservationsBuilder);
-  availabilityBuilder.select.mockReturnValue(availabilityBuilder);
-  availabilityBuilder.eq.mockReturnValue(availabilityBuilder);
-  // デフォルト: availability は取れない (null) 想定。各テストで上書き
-  availabilityBuilder.maybeSingle.mockResolvedValue({ data: null, error: null });
+  // デフォルト: availability は取れない (空配列) 想定。各テストで上書き
+  supabaseMock.rpc.mockResolvedValue({ data: [], error: null });
 });
 
 afterEach(() => {
@@ -235,14 +224,17 @@ describe("fetchMyReservation", () => {
       },
       error: null,
     });
-    availabilityBuilder.maybeSingle.mockResolvedValueOnce({
-      data: { event_id: evId, capacity: 18, reserved_count: 14 },
+    supabaseMock.rpc.mockResolvedValueOnce({
+      data: [{ event_id: evId, capacity: 18, reserved_count: 14 }],
       error: null,
     });
 
     const { fetchMyReservation } = await import("./myReservation");
     const result = await fetchMyReservation(RESERVATION_ID, UID);
 
+    expect(supabaseMock.rpc).toHaveBeenCalledWith("get_event_availability", {
+      p_event_ids: [evId],
+    });
     expect(result?.event.availability).toEqual({
       eventId: evId,
       capacity: 18,
@@ -272,7 +264,7 @@ describe("fetchMyReservation", () => {
       },
       error: null,
     });
-    availabilityBuilder.maybeSingle.mockResolvedValueOnce({
+    supabaseMock.rpc.mockResolvedValueOnce({
       data: null,
       error: { message: "view down" },
     });
@@ -290,6 +282,6 @@ describe("fetchMyReservation", () => {
     const { fetchMyReservation } = await import("./myReservation");
     await fetchMyReservation(RESERVATION_ID, UID);
 
-    expect(supabaseMock.from).not.toHaveBeenCalledWith("event_availability_view");
+    expect(supabaseMock.rpc).not.toHaveBeenCalled();
   });
 });

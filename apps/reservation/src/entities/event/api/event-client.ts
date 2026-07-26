@@ -69,7 +69,7 @@ export async function fetchEventDetail(
 }
 
 /**
- * `event_availability_view` から複数 event_id の予約埋まり具合を取得し、Map で返す。
+ * `get_event_availability`(RPC) から複数 event_id の予約埋まり具合を取得し、Map で返す。
  * 取得失敗時は空 Map を返し、呼び出し側で各 event に `availability: null` が割り当てられる
  * (主データの描画を阻害しないため、ここで throw しない)。
  */
@@ -77,10 +77,9 @@ async function fetchAvailabilityMap(
   ids: string[],
 ): Promise<Map<string, EventAvailability>> {
   const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from("event_availability_view")
-    .select("event_id, capacity, reserved_count")
-    .in("event_id", ids);
+  const { data, error } = await supabase.rpc("get_event_availability", {
+    p_event_ids: ids,
+  });
   if (error || data === null) {
     return new Map();
   }
@@ -99,15 +98,17 @@ async function fetchAvailabilityOne(
   id: string,
 ): Promise<EventAvailability | null> {
   const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from("event_availability_view")
-    .select("event_id, capacity, reserved_count")
-    .eq("event_id", id)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_event_availability", {
+    p_event_ids: [id],
+  });
   if (error || data === null) {
     return null;
   }
-  return rowToAvailability(data as unknown as AvailabilityRow);
+  const row = (data as unknown as AvailabilityRow[])[0];
+  if (row === undefined) {
+    return null;
+  }
+  return rowToAvailability(row);
 }
 
 function rowToAvailability(row: AvailabilityRow): EventAvailability {

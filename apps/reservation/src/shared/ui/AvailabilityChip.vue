@@ -7,7 +7,7 @@ import {
 } from "@/entities/event";
 
 const props = defineProps<{
-  /** `event_availability_view` の取得結果。取得失敗時 / 取得中 (loading=true) でも prop は null で OK */
+  /** `get_event_availability` の取得結果。取得失敗時 / 取得中 (loading=true) でも prop は null で OK */
   availability: EventAvailability | null | undefined;
   /** true の間は shimmer プレースホルダを描画する */
   loading?: boolean;

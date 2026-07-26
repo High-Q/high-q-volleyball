@@ -10,9 +10,11 @@ interface AvailabilityRow {
 }
 
 /**
- * 表示対象イベント ID 群の残席集計を event_availability_view から取得し、
- * event_id をキーにしたマップで返す。取得列は集計3列のみに限定し、
- * 予約者の個人情報は取得しない（anon 公開の不変条件）。
+ * 表示対象イベント ID 群の残席集計を get_event_availability(RPC) から取得し、
+ * event_id をキーにしたマップで返す。返る列は集計3列のみで、
+ * 予約者の個人情報は含まない（anon 公開の不変条件）。
+ * 取得失敗時は空マップを返す（残席は非クリティカル表示のため error を投げず、
+ * ロールアウト窓や一時障害でも残席非表示に留めて主データ描画を妨げない）。
  */
 async function fetchAvailabilityMap(
   ids: string[],
@@ -23,16 +25,15 @@ async function fetchAvailabilityMap(
   }
 
   const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from("event_availability_view")
-    .select("event_id, capacity, reserved_count")
-    .in("event_id", ids);
+  const { data, error } = await supabase.rpc("get_event_availability", {
+    p_event_ids: ids,
+  });
 
-  if (error) {
-    throw new Error(error.message || "failed to fetch availability");
+  if (error || data === null) {
+    return map;
   }
 
-  for (const row of (data ?? []) as unknown as AvailabilityRow[]) {
+  for (const row of data as unknown as AvailabilityRow[]) {
     map.set(row.event_id, {
       eventId:       row.event_id,
       capacity:      row.capacity,
