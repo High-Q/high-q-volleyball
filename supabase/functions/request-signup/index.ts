@@ -62,9 +62,10 @@ export async function handleRequestSignup(req: Request): Promise<Response> {
     .eq("email", payload.email)
     .maybeSingle();
   if (memberErr) {
+    // 内部エラー詳細はサーバ側ログにのみ残し、クライアントには返さない（CWE-209 情報漏洩防止）
     console.error("[request-signup] members lookup failed", memberErr);
     return jsonResponse(
-      { error: "internal", stage: "members-lookup", detail: memberErr.message },
+      { error: "internal", stage: "members-lookup" },
       { status: 500 },
     );
   }
@@ -121,9 +122,10 @@ export async function handleRequestSignup(req: Request): Promise<Response> {
       { onConflict: "email" },
     );
   if (upsertErr) {
+    // 内部エラー詳細はサーバ側ログにのみ残し、クライアントには返さない（CWE-209 情報漏洩防止）
     console.error("[request-signup] signup_pending upsert failed", upsertErr);
     return jsonResponse(
-      { error: "internal", stage: "upsert", detail: upsertErr.message },
+      { error: "internal", stage: "upsert" },
       { status: 500 },
     );
   }
@@ -135,11 +137,11 @@ export async function handleRequestSignup(req: Request): Promise<Response> {
     await sendMail(mailEnv, payload.email, subject, body);
   } catch (err) {
     // メール送信失敗時は signup_pending を巻き戻す（孤立行を残さない）
+    // 内部エラー詳細はサーバ側ログにのみ残し、クライアントには返さない（CWE-209 情報漏洩防止）
     console.error("[request-signup] sendMail failed", err);
     await supabase.from("signup_pending").delete().eq("email", payload.email);
-    const detail = err instanceof Error ? err.message : String(err);
     return jsonResponse(
-      { error: "mail-send-failed", detail },
+      { error: "mail-send-failed" },
       { status: 502 },
     );
   }
