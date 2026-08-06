@@ -46,7 +46,7 @@
 - [x] 6.3 `pnpm -r test` 全緑: edge-functions 162 / shared 118(+11 todo) / tailwind-preset 8 / ui 33 / lp 62 / reservation 845 / admin 1025 / design-tokens 13。**baseline 完全一致**（正規実行 `-r`）
 - [x] 6.4 `pnpm -r typecheck` 全 8 プロジェクト Done
 - [x] 6.5 eslint **0 errors**（既存の unused-var warning のみ・本変更のソース未変更で無関係）/ stylelint Done
-- [ ] 6.6 CI 全ジョブ緑（PR push 後に確認）
+- [x] 6.6 CI 全ジョブ緑（PR #364）: install / build / test(2m24s) / typecheck / lint / static-checks / e2e / migration-safety / CodeQL / Analyze すべて pass
 
 ## 7. Render Preview と記録
 
