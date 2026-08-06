@@ -34,13 +34,7 @@
       "supabase"
     ],
     "overrides": {
-      "form-data": ">=4.0.6 <5",
-      "fast-uri": ">=3.1.4 <4",
-      "js-yaml": ">=4.2.0 <5",
-      "tar": ">=7.5.16 <8",
-      "immutable": ">=4.3.9 <5",
-      "js-cookie": ">=3.0.7 <4",
-      "brace-expansion@5": ">=5.0.7 <6"
+      "tar": ">=7.5.16 <8"
     }
   },
   "devDependencies": {
@@ -48,7 +42,7 @@
     "@supabase/supabase-js": "^2.45.0",
     "@typescript-eslint/eslint-plugin": "^8.60.0",
     "@typescript-eslint/parser": "^8.60.0",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@vitest/coverage-v8": "^3.2.7",
     "dependency-cruiser": "^17.4.3",
     "eslint": "^8.57.1",
     "eslint-import-resolver-alias": "^1.1.2",
