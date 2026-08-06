@@ -11,6 +11,11 @@ on:
     paths:
       - "supabase/migrations/**"
 
+# 最小権限: dry-run / apply とも checkout + supabase link/db push（secrets 経由）のみで、
+# GITHUB_TOKEN によるリポジトリ書き込みは不要。contents:read に絞る。
+permissions:
+  contents: read
+
 concurrency:
   group: db-push-prd-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}

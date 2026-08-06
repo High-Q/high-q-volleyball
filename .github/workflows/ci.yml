@@ -7,6 +7,11 @@ on:
   push:
     branches: [master]
 
+# 最小権限: 全ジョブは checkout + build/test/静的検査のみで、リポジトリへの書き込みや
+# PR/Issue 操作を行わない。GITHUB_TOKEN をデフォルトの広い権限から contents:read に絞る。
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
