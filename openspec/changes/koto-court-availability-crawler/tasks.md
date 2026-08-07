@@ -8,17 +8,17 @@
   空き照会のログイン要否は未確定（reserve メニューが遷移フロー先）-->
 
 - [x] 1.1 `yoyaku.koto-sports.net/robots.txt` を取得し `Disallow` / `Crawl-delay` を記録する → **404（robots.txt 無し・指定なし）**
-- [ ] 1.2 利用規約ページを確認し「自動アクセス / プログラムによる収集の禁止」条項の有無を記録する。明確に禁止なら本 change を中止し、判断根拠を proposal 成功基準にメモして報告 → **[保留・翔太郎くんの判断待ち]** 公開範囲では禁止条項を発見できず。authoritative な system 利用規約はログイン内で要確認
-- [ ] 1.3 空き状況照会が「素の HTML / 公開 JSON」で取れるか「SPA / JS レンダリング必須」かを実地確認し、実行ランタイムを確定（素 HTML → Edge Function 経路 / SPA → GitHub Actions + Playwright 経路）
-- [ ] 1.4 空き照会にログインが必要かを確認する。要ログインなら区内登録アカウント要否・規約影響を報告して方針を仰ぐ
-- [ ] 1.5 バレーボール利用可能な体育室・種目を同定し、対象施設 / 室 / 種目の識別子リストを確定（アダプタ設定として持つ）
-- [ ] 1.6 照会リクエスト列（必要なセッション / パラメータ / エンドポイント）とレスポンス形式のサンプルを 1 枠分取得しておく
+- [x] 1.2 利用規約ページを確認し「自動アクセス / プログラムによる収集の禁止」条項の有無を記録する。明確に禁止なら本 change を中止し、判断根拠を proposal 成功基準にメモして報告 → **GO（2026-08-07 オーナー確認）**。公開 HTML（トップ / start.html / gin_menu の生 Shift-JIS）に禁止条項なし。authoritative な system_help.pdf / 利用者登録時の規約もオーナー目視で禁止条項なしを確認。robots.txt = 404。→ 決定0 の中止条件に非該当
+- [x] 1.3 空き状況照会が「素の HTML / 公開 JSON」で取れるか「SPA / JS レンダリング必須」かを実地確認し、実行ランタイムを確定（素 HTML → Edge Function 経路 / SPA → GitHub Actions + Playwright 経路）→ **サーバHTML（Shift-JIS）だが CULTOS 系のステートフル遷移ガードあり（cookie `cultos.attrib.session.token` / hidden `g_sessionid`）。順序外 POST は「ブラウザの履歴を使って操作できません」で弾かれる。素 fetch リプレイは脆いため → 実行ランタイムは Playwright（GitHub Actions）経路を本命に採用。理由は「SPA だから」ではなく「ステートフルなセッション遷移の正確な追従が必要だから」（2026-08-07 spike）**
+- [x] 1.4 空き照会にログインが必要かを確認する。要ログインなら区内登録アカウント要否・規約影響を報告して方針を仰ぐ → **要ログイン確定（2026-08-07）**。gin_menu に「利用するには事前に利用者登録が必要。登録用紙は区内スポーツセンター受付へ」と明記。照会は認証エリア内。→ **オーナーの会員アカウントで自動ログインする方針を承認（2026-08-07）**。20分間隔・単一施設・最小リクエストの politeness 前提
+- [x] 1.5 バレーボール利用可能な体育室・種目を同定し、対象施設 / 室 / 種目の識別子リストを確定（アダプタ設定として持つ）→ **確定（2026-08-08）**。種目 = `riyosmk=2`（バレーボール、選択肢の上から2番目）。検索フロー = 予約申込 → `g_bunruicd_1_show=1`（分類）→ `riyosmk=2` → 全選択 → 検索。**監視対象 = 大体育室「半面」のみ**（全面・小体育室は対象外）。対象6施設: スポーツ会館 / 深川 / 亀戸 / 有明 / 東砂 / 深川北 スポーツセンター（各 大体育室 半面）。実データで空き O を確認済（スポーツ会館 全/半面・東砂 半面）→ パーサ判定 `class="ok"` を実証
+- [x] 1.6 照会リクエスト列（必要なセッション / パラメータ / エンドポイント）とレスポンス形式のサンプルを 1 枠分取得しておく→ **大半取得（2026-08-07）**。Playwright codegen で全遷移採取（`/tmp/koto_flow.spec.ts`・秘密は伏字化済）。空きページ = `POST /koto_v2/reserve/gml_z_datetime_list`。結果 HTML 構造: 見出し `日付/時間/室場名`、セル `td<行>_<列>`、`class="ng"`＝Ｘ（埋まり）/ `class="empty"`＝空欄。サンプル `/tmp/koto_result.html`（147KB）は全枠 Ｘ だが、**描画 JS から ○ セル構造を復元済**: 空き = `td.className="ok"`（`<input type="image" src=".../timetable-o.gif" title="O" onClick="onclickbutton(...)">`）/ 埋まり = `class="ng"` / 対象外 = `class="empty"`。→ 追加採取不要。全埋まり HTML を「空きゼロ」fixture に、○ は既知構造で合成 fixture を作ってパーサ TDD 可能
 
 ## 2. DB: 通知済み空き枠テーブル
 
-- [ ] 2.1 `supabase/templates/new_table.sql` を起点に `court_availability_notifications` の migration を作成（列は data-schema spec 準拠、枠署名 UNIQUE 制約、末尾 `-- ROLLBACK:` に DROP 手順）
-- [ ] 2.2 RLS 有効化 + ポリシー（`anon` / `authenticated` は不可、`service_role` のみ CRUD）と 3 ロール明示 GRANT を書き切る
-- [ ] 2.3 dev に適用し `supabase db query --linked --file supabase/tests/verify_grants.sql` で権限状態を確認（anon/authenticated に権限が付いていないこと）
+- [x] 2.1 `supabase/templates/new_table.sql` を起点に `court_availability_notifications` の migration を作成（列は data-schema spec 準拠、枠署名 UNIQUE 制約、末尾 `-- ROLLBACK:` に DROP 手順）
+- [x] 2.2 RLS 有効化 + ポリシー（`anon` / `authenticated` は不可、`service_role` のみ CRUD）と 3 ロール明示 GRANT を書き切る
+- [x] 2.3 dev に適用し `supabase db query --linked --file supabase/tests/verify_grants.sql` で権限状態を確認（anon/authenticated に権限が付いていないこと）
 
 ## 3. crawl コア（施設非依存・TDD）
 
