@@ -1,0 +1,72 @@
+<!--
+  合成 fixture（構造のみ / PII・セッショントークンなし）。
+  江東区スポーツネット `POST /koto_v2/reserve/gml_z_datetime_list` の
+  空き状況グリッド HTML を、実データの DOM 構造だけ写して再現したもの。
+  実レスポンスはオーナーの個人情報と g_sessionid を含むため repo には入れない。
+
+  グリッド: 列 = 時間帯（thead の th）/ 行 = 施設・室場（tbody の th）/
+  セル = 空き状況（td）。判定は class:
+    ok    … 空き（timetable-o.gif の予約ボタン）
+    ng    … 埋まり（Ｘ）
+    empty … 対象外（貸出区分なし）
+-->
+<!DOCTYPE html>
+<html lang="ja">
+  <body>
+    <!-- 予約リスト（カート）。時間帯 th を持たないのでパーサは無視する。 -->
+    <div id="yyList">
+      <h2><span>予約リスト</span></h2>
+      <table class="reservation">
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>時間</th>
+            <th>室場名</th>
+            <th class="last">&nbsp;&nbsp;</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- 空き状況グリッド（selectdate = 20260808 相当の 1 日分） -->
+    <table id="1">
+      <thead>
+        <tr>
+          <td class="empty">&nbsp;</td>
+          <th id="td10_1">09:00<br /><span>～</span><br />12:00</th>
+          <th id="td10_2">13:00<br /><span>～</span><br />17:00</th>
+          <th id="td10_3">18:00<br /><span>～</span><br />21:30</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th><strong>スポーツ会館</strong><br />大体育室　全面</th>
+          <td id="td11_1" class="ng">Ｘ</td>
+          <td id="td11_2" class="ok">
+            <input type="image" src="/koto_v2/jsp/images_jp/multi_images/timetable-o.gif" title="O" onclick="onclickbutton(0,1,2)" />
+          </td>
+          <td id="td11_3" class="ng">Ｘ</td>
+        </tr>
+        <tr>
+          <th><strong>スポーツ会館</strong><br />大体育室　半面</th>
+          <td id="td12_1" class="ok">
+            <input type="image" src="/koto_v2/jsp/images_jp/multi_images/timetable-o.gif" title="O" onclick="onclickbutton(0,2,1)" />
+          </td>
+          <td id="td12_2" class="ng">Ｘ</td>
+          <td id="td12_3" class="ok">
+            <input type="image" src="/koto_v2/jsp/images_jp/multi_images/timetable-o.gif" title="O" onclick="onclickbutton(0,2,3)" />
+          </td>
+        </tr>
+        <tr>
+          <th><strong>東砂スポーツセンター</strong><br />大体育室　半面</th>
+          <td id="td13_1" class="empty">&nbsp;</td>
+          <td id="td13_2" class="ng">Ｘ</td>
+          <td id="td13_3" class="ok">
+            <input type="image" src="/koto_v2/jsp/images_jp/multi_images/timetable-o.gif" title="O" onclick="onclickbutton(0,3,3)" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

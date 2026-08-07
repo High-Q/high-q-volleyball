@@ -31,7 +31,7 @@
 ## 4. 江東区アダプタ（施設固有）
 
 - [ ] 4.1 江東区スポーツネットの照会手順を実装（1.6 のリクエスト列に基づく）
-- [ ] 4.2 レスポンスから空き枠（会場名 / 日付 / 開始・終了 / 予約 URL）をパースする関数を実装 + サンプルレスポンスでユニットテスト
+- [x] 4.2 レスポンスから空き枠（会場名 / 日付 / 開始・終了 / 予約 URL）をパースする関数を実装 + サンプルレスポンスでユニットテスト → **完了（2026-08-08）**。`packages/court-crawler/src/adapters/koto-sports/parse.ts`（`parseAvailability(html, {slotDate, reserveUrl, facility?})`）。`class="ok"` セルを抽出、thead 時間帯を開始・終了 ISO8601(+09:00) に対応づけ、会場名を「施設名 室場名」に正規化、予約リスト(カート)テーブルは除外。node-html-parser 依存追加。合成 fixture（`__fixtures__/result-mixed.html` / `result-all-full.html`・PII/セッショントークンなし）で vitest 7件。**実 HTML は g_sessionid 混入のため repo 非投入**
 - [ ] 4.3 コアとアダプタの結線（「対象日リスト → 空き枠リスト」をアダプタが返し、コアが reconcile / 通知）
 
 ## 5. LINE Messaging API 通知
