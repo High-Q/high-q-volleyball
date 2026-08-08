@@ -47,8 +47,8 @@
 
 ## 7. 動作確認 & 最終チェック
 
-- [ ] 7.1 dev で end-to-end 確認: 既知の（または擬似的に用意した）空き枠で LINE 通知が届く
-- [ ] 7.2 重複通知が出ないこと / 埋まって再度空いた枠が再通知されることを確認
-- [ ] 7.3 到達不可・パース不能を擬似発生させ Sentry に記録されることを確認
-- [ ] 7.4 `pnpm exec vitest run`（コア/アダプタのユニットテスト）を通す
-- [ ] 7.5 robots.txt / 利用規約の確認結果を proposal 成功基準にチェックとして反映
+- [ ] 7.1 dev で end-to-end 確認: 既知の（または擬似的に用意した）空き枠で LINE 通知が届く → ⏳ **マージ後にオーナー実行**。新規 workflow は feature branch から dispatch 不可のため merge 後に `workflow_dispatch` で実行し、実ログイン（新PW）で LINE 到達を確認
+- [ ] 7.2 重複通知が出ないこと / 埋まって再度空いた枠が再通知されることを確認 → ⏳ **マージ後にオーナー実行**（reconcile はユニットテスト済・実データで最終確認）
+- [ ] 7.3 到達不可・パース不能を擬似発生させ Sentry に記録されることを確認 → ⏳ **マージ後にオーナー実行**（`KOTO_SENTRY_DSN` 設定時。未設定なら Actions ログで確認）
+- [x] 7.4 `pnpm exec vitest run`（コア/アダプタのユニットテスト）を通す → **完了（2026-08-09）**。`pnpm --filter @high-q/court-crawler test` = 全 55 件緑・`typecheck` OK
+- [x] 7.5 robots.txt / 利用規約の確認結果を proposal 成功基準にチェックとして反映 → **完了（2026-08-09）**。proposal.md 成功基準の第1項に GO 判断（robots 404 / 禁止条項なし）を反映
