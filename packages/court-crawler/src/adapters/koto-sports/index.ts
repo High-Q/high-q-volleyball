@@ -4,3 +4,5 @@
  * 「対象日リスト → AvailabilitySlot[]」を返す。
  */
 export * from "./parse.js";
+export * from "./config.js";
+export * from "./driver.js";

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { parseAvailability } from "./parse.js";
+import { parseAvailability, parseSelectDate } from "./parse.js";
 import type { AvailabilitySlot } from "../../core/types.js";
 
 function fixture(name: string): string {
@@ -76,6 +76,11 @@ describe("parseAvailability", () => {
     // 予約リストの th は「日付/時間/室場名」。venueName に混入しないこと。
     expect(slots.every((s) => !s.venueName.includes("日付"))).toBe(true);
     expect(slots.every((s) => !s.venueName.includes("室場名"))).toBe(true);
+  });
+
+  it("selectdate hidden から表示日を YYYY-MM-DD で取り出す（空値は無視）", () => {
+    expect(parseSelectDate(fixture("result-mixed.html"))).toBe("2026-08-08");
+    expect(parseSelectDate("<html></html>")).toBeNull();
   });
 
   it("全枠 Ｘ（空きゼロ）なら 0 件", () => {

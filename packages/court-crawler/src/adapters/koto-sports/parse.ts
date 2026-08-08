@@ -51,6 +51,21 @@ function extractVenueName(head: HTMLElement): string {
 }
 
 /**
+ * 結果 HTML が表示している暦日を `<input name="selectdate" value="YYYYMMDD">`
+ * から取り出し `YYYY-MM-DD` で返す。値ありの selectdate が無ければ null。
+ * driver がナビゲーション後の「今どの日を見ているか」を自己判定するのに使う。
+ */
+export function parseSelectDate(html: string): string | null {
+  const root = parse(html);
+  for (const input of root.querySelectorAll('input[name="selectdate"]')) {
+    const v = input.getAttribute("value") ?? "";
+    const m = /^(\d{4})(\d{2})(\d{2})$/.exec(v);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  }
+  return null;
+}
+
+/**
  * 空き状況グリッド HTML から空き枠（`class="ok"` のセル）を抽出する。
  *
  * グリッドは「列 = 時間帯（thead の th）/ 行 = 施設・室場（tbody 行頭の th）/
