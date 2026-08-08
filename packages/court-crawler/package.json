@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./core": "./src/core/index.ts",
+    "./notify": "./src/notify/index.ts",
     "./adapters/koto-sports": "./src/adapters/koto-sports/index.ts"
   },
   "scripts": {

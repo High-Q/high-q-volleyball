@@ -8,3 +8,4 @@
  * オーケストレーション（crawl → reconcile → 通知）は後続タスクで結線する。
  */
 export * from "./core/index.js";
+export * from "./notify/index.js";

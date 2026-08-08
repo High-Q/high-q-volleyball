@@ -38,7 +38,7 @@
 
 - [ ] 5.1 LINE 公式アカウント（プロバイダ + チャネル）を作成し、channel access token と送信先 user ID を取得
 - [ ] 5.2 token / user ID を Secrets に登録（Edge Function 経路 → Supabase Secrets / Playwright 経路 → GitHub Secrets）。ハードコード禁止
-- [ ] 5.3 LINE push 送信処理を実装（3.3 の整形メッセージを送信、送信失敗も Sentry 記録）
+- [x] 5.3 LINE push 送信処理を実装（3.3 の整形メッセージを送信、送信失敗も Sentry 記録）→ **完了（2026-08-09）**。`packages/court-crawler/src/notify/line.ts`（`pushLineMessage(config, text, fetchImpl?)`）。`POST https://api.line.me/v2/bot/message/push`、token/宛先は Secrets 注入、5000 字上限で切り詰め、HTTP エラー・ネットワーク例外は握って `ok:false` を返す。送信失敗の Sentry 記録は結線側（4.3）が `LinePushResult` を見て `reportCrawlFailure` する。fetch 注入で vitest 5 件
 
 ## 6. スケジューラ結線（1.3 の確定経路に従う）
 
