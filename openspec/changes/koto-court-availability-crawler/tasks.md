@@ -42,8 +42,8 @@
 
 ## 6. スケジューラ結線（1.3 の確定経路に従う）
 
-- [ ] 6.1 【Edge Function 経路】pg_cron + pg_net で 20 分間隔に Edge Function を叩く cron を migration で登録 / 【Playwright 経路】GitHub Actions `schedule` workflow を作成
-- [ ] 6.2 スケジューラの秘密情報・エンドポイント設定を確認（Edge Function 経路は関数 URL + 認証、Playwright 経路は Secrets 参照）
+- [x] 6.1 【Playwright 経路】GitHub Actions `schedule` workflow を作成 → **完了（2026-08-09）**。`.github/workflows/court-crawler-koto.yml`。`cron: */20 * * * *`（20分間隔・design 決定3）+ `workflow_dispatch`。concurrency で直列化（politeness）。permissions `contents: read`。pnpm store + Playwright browser キャッシュ、`playwright install --with-deps chromium` → `pnpm --filter @high-q/court-crawler crawl:koto`。**public repo のため Actions 分は無料・無制限**（費用ゼロ方針に合致）
+- [x] 6.2 スケジューラの秘密情報・エンドポイント設定を確認（Playwright 経路は Secrets 参照）→ **完了（2026-08-09）**。workflow env で 6 秘密（`KOTO_USER_ID` / `KOTO_PASSWORD` / `KOTO_LINE_CHANNEL_TOKEN` / `KOTO_LINE_TO_USER_ID` / `KOTO_SUPABASE_URL` / `KOTO_SUPABASE_SERVICE_ROLE_KEY`）+ 任意 `KOTO_SENTRY_DSN` を参照。Playwright 経路なので関数 URL・認証は不要
 
 ## 7. 動作確認 & 最終チェック
 
