@@ -12,7 +12,11 @@
  */
 import type { Page } from "playwright";
 import type { AvailabilitySlot } from "../../core/types.js";
-import { parseAvailability, parseSelectDate } from "./parse.js";
+import {
+  hasAvailabilityGrid,
+  parseAvailability,
+  parseSelectDate,
+} from "./parse.js";
 import { BUNRUI_TAIIKU, KOTO_BASE_URL, RIYOSMK_VOLLEYBALL } from "./config.js";
 
 export interface KotoCredentials {
@@ -73,27 +77,37 @@ export interface CollectOptions {
   stepDelayMs?: number;
 }
 
+export interface CollectResult {
+  /** 集約した全施設・全室場の空き枠。 */
+  slots: AvailabilitySlot[];
+  /** グリッドを実際に読めた日数。0 ならレイアウト破壊の疑い（結線側で parse_empty）。 */
+  gridDays: number;
+}
+
 /**
  * 現在のグリッドから空き枠を読み、`#rightbutton`（翌日）で前進しながら
  * 全施設・全室場の空き枠を集約して返す（監視室場・土日祝の絞り込みは結線側）。
  * selectdate が進まなくなる / ナビが消える / maxDays 到達で停止する。
+ * gridDays はグリッドを読めた日数（0 = レイアウト破壊の疑い）。
  */
 export async function collectAvailability(
   page: Page,
   opts: CollectOptions = {},
-): Promise<AvailabilitySlot[]> {
+): Promise<CollectResult> {
   const reserveUrl = opts.reserveUrl ?? KOTO_BASE_URL;
   const maxDays = opts.maxDays ?? 60;
   const stepDelayMs = opts.stepDelayMs ?? 1000;
 
   const slots: AvailabilitySlot[] = [];
   const seen = new Set<string>();
+  let gridDays = 0;
 
   for (let day = 0; day < maxDays; day++) {
     const html = await page.content();
     const slotDate = parseSelectDate(html);
     if (!slotDate || seen.has(slotDate)) break;
     seen.add(slotDate);
+    if (hasAvailabilityGrid(html)) gridDays++;
     slots.push(...parseAvailability(html, { slotDate, reserveUrl }));
 
     const next = page.locator("#rightbutton");
@@ -104,7 +118,7 @@ export async function collectAvailability(
     await page.waitForTimeout(stepDelayMs);
   }
 
-  return slots;
+  return { slots, gridDays };
 }
 
 /**

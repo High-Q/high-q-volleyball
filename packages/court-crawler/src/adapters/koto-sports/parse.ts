@@ -51,6 +51,44 @@ function extractVenueName(head: HTMLElement): string {
 }
 
 /**
+ * テーブルが空き状況グリッドなら列（時間帯）配列を返す。thead の全 th が
+ * 時刻を持つものだけを対象にし、「日付/時間/室場名」の予約リストは弾く。
+ * グリッドでなければ null。
+ */
+function availabilityRanges(table: HTMLElement): TimeRange[] | null {
+  const thead = table.querySelector("thead");
+  if (!thead) return null;
+  const ths = thead.querySelectorAll("th");
+  if (ths.length === 0) return null;
+  const ranges: TimeRange[] = [];
+  for (const th of ths) {
+    const r = extractTimeRange(th);
+    if (!r) return null;
+    ranges.push(r);
+  }
+  return ranges;
+}
+
+/**
+ * 少なくとも 1 つの空き状況グリッド（時間帯 thead + 会場行）が存在するか。
+ * 「全埋まり（空きゼロ）」と「レイアウト破壊（グリッド無し）」を結線側で
+ * 区別するのに使う（前者は grid あり・後者は grid なし）。
+ */
+export function hasAvailabilityGrid(html: string): boolean {
+  const root = parse(html);
+  for (const table of root.querySelectorAll("table")) {
+    if (!availabilityRanges(table)) continue;
+    const tbody = table.querySelector("tbody");
+    if (!tbody) continue;
+    for (const row of tbody.querySelectorAll("tr")) {
+      const head = row.querySelector("th");
+      if (head && extractVenueName(head)) return true;
+    }
+  }
+  return false;
+}
+
+/**
  * 結果 HTML が表示している暦日を `<input name="selectdate" value="YYYYMMDD">`
  * から取り出し `YYYY-MM-DD` で返す。値ありの selectdate が無ければ null。
  * driver がナビゲーション後の「今どの日を見ているか」を自己判定するのに使う。
@@ -85,14 +123,10 @@ export function parseAvailability(
   const slots: AvailabilitySlot[] = [];
 
   for (const table of root.querySelectorAll("table")) {
-    const thead = table.querySelector("thead");
+    const ranges = availabilityRanges(table);
+    if (!ranges) continue;
     const tbody = table.querySelector("tbody");
-    if (!thead || !tbody) continue;
-
-    // 時間帯列。全 th が時刻を持つグリッドだけを対象にする
-    // （「日付/時間/室場名」の予約リストはここで弾かれる）。
-    const ranges = thead.querySelectorAll("th").map(extractTimeRange);
-    if (ranges.length === 0 || ranges.some((r) => r === null)) continue;
+    if (!tbody) continue;
 
     for (const row of tbody.querySelectorAll("tr")) {
       const head = row.querySelector("th");

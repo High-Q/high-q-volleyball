@@ -21,6 +21,12 @@ describe("slotSignature", () => {
     );
   });
 
+  it("同一 instant なら TZ 表記が違っても同署名（DB 往復 +09:00→Z 対策）", () => {
+    expect(
+      slotSignature(slot({ startAt: "2026-08-08T18:00:00+09:00" })),
+    ).toBe(slotSignature(slot({ startAt: "2026-08-08T09:00:00Z" })));
+  });
+
   it("キー列（会場/日付/時刻）が違えば別署名", () => {
     expect(slotSignature(slot())).not.toBe(
       slotSignature(slot({ venueName: "深川スポーツセンター 大体育室 半面" })),

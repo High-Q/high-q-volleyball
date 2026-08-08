@@ -9,3 +9,6 @@
  */
 export * from "./core/index.js";
 export * from "./notify/index.js";
+export * from "./store/index.js";
+export { runCrawl } from "./run/crawl.js";
+export type { CrawlDeps, CrawlSummary } from "./run/crawl.js";

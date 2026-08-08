@@ -1,6 +1,16 @@
 import type { AvailabilitySlot, SlotSignatureKey } from "./types.js";
 
 /**
+ * 時刻文字列を UTC ISO に正規化する（instant 比較のため）。
+ * `timestamptz` は DB 往復で `+09:00` → `Z` に正規化されるため、署名も瞬時に
+ * そろえないと現在枠と通知済み枠が食い違い重複通知になる。parse 不能なら原文。
+ */
+function canonicalInstant(ts: string): string {
+  const t = Date.parse(ts);
+  return Number.isNaN(t) ? ts : new Date(t).toISOString();
+}
+
+/**
  * 枠署名を生成する。DB UNIQUE 制約
  * (facility, venue_name, slot_date, start_at, end_at) と同一のキー構成。
  * reserveURL は含めない（同一枠でも URL は変わり得るため）。
@@ -10,8 +20,8 @@ export function slotSignature(slot: SlotSignatureKey): string {
     slot.facility,
     slot.venueName,
     slot.slotDate,
-    slot.startAt,
-    slot.endAt,
+    canonicalInstant(slot.startAt),
+    canonicalInstant(slot.endAt),
   ].join("");
 }
 

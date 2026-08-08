@@ -32,12 +32,12 @@
 
 - [x] 4.1 江東区スポーツネットの照会手順を実装（1.6 のリクエスト列に基づく）→ **コード実装（2026-08-09）**。`driver.ts`（`login` / `openVolleyballGrid` / `collectAvailability`）+ `config.ts`（施設定数・`isMonitoredVenue`）+ `parseSelectDate`。ログイン〜検索到達のセレクタは codegen 準拠。`#rightbutton` 日送りで各日グリッドを読み集約。playwright 依存追加。⚠️ **日付選択/日送りナビの通し検証は live ログイン必須（オーナー・新PW）**。単体は parse/selectdate/isMonitoredVenue のみ（driver はブラウザ I/O）
 - [x] 4.2 レスポンスから空き枠（会場名 / 日付 / 開始・終了 / 予約 URL）をパースする関数を実装 + サンプルレスポンスでユニットテスト → **完了（2026-08-08）**。`packages/court-crawler/src/adapters/koto-sports/parse.ts`（`parseAvailability(html, {slotDate, reserveUrl, facility?})`）。`class="ok"` セルを抽出、thead 時間帯を開始・終了 ISO8601(+09:00) に対応づけ、会場名を「施設名 室場名」に正規化、予約リスト(カート)テーブルは除外。node-html-parser 依存追加。合成 fixture（`__fixtures__/result-mixed.html` / `result-all-full.html`・PII/セッショントークンなし）で vitest 7件。**実 HTML は g_sessionid 混入のため repo 非投入**
-- [ ] 4.3 コアとアダプタの結線（「対象日リスト → 空き枠リスト」をアダプタが返し、コアが reconcile / 通知）
+- [x] 4.3 コアとアダプタの結線（「対象日リスト → 空き枠リスト」をアダプタが返し、コアが reconcile / 通知）→ **完了（2026-08-09）**。`src/run/crawl.ts`（`runCrawl(deps)`: collect → 監視室場/土日祝/リードタイム絞り込み → reconcile → LINE push → ストア更新、失敗は reporter に記録）+ `src/store/`（`NotifiedStore` 抽象 + `createSupabaseNotifiedStore` service_role 実装）+ `src/notify/sentry-reporter.ts`（DSN 任意）+ `src/run/koto.ts`（composition root・env から秘密取得・Playwright 起動）+ `holidays.ts`（`@holiday-jp/holiday_jp`）。⚠️ **署名 instant バグ修正**: `slotSignature` を UTC ISO 正規化（DB 往復 +09:00→Z の重複通知防止）。in-memory fake で runCrawl を vitest 7 件（新規/再通知抑止/記録解除/push失敗非記録/parse_empty/unreachable/フィルタ）
 
 ## 5. LINE Messaging API 通知
 
-- [ ] 5.1 LINE 公式アカウント（プロバイダ + チャネル）を作成し、channel access token と送信先 user ID を取得
-- [ ] 5.2 token / user ID を Secrets に登録（Edge Function 経路 → Supabase Secrets / Playwright 経路 → GitHub Secrets）。ハードコード禁止
+- [x] 5.1 LINE 公式アカウント（プロバイダ + チャネル）を作成し、channel access token と送信先 user ID を取得 → **オーナー完了（2026-08-09）**。Messaging API チャネル作成、channel access token (long-lived) と Basic settings の user ID を取得
+- [x] 5.2 token / user ID を Secrets に登録（Playwright 経路 → GitHub Secrets）。ハードコード禁止 → **オーナー完了（2026-08-09）**。`KOTO_LINE_CHANNEL_TOKEN` / `KOTO_LINE_TO_USER_ID` / `KOTO_USER_ID` / `KOTO_PASSWORD`（新PW）/ `KOTO_SUPABASE_URL` / `KOTO_SUPABASE_SERVICE_ROLE_KEY`（dev の `sb_secret_...`）を High-Q/high-q-volleyball の Repository secrets に登録済み
 - [x] 5.3 LINE push 送信処理を実装（3.3 の整形メッセージを送信、送信失敗も Sentry 記録）→ **完了（2026-08-09）**。`packages/court-crawler/src/notify/line.ts`（`pushLineMessage(config, text, fetchImpl?)`）。`POST https://api.line.me/v2/bot/message/push`、token/宛先は Secrets 注入、5000 字上限で切り詰め、HTTP エラー・ネットワーク例外は握って `ok:false` を返す。送信失敗の Sentry 記録は結線側（4.3）が `LinePushResult` を見て `reportCrawlFailure` する。fetch 注入で vitest 5 件
 
 ## 6. スケジューラ結線（1.3 の確定経路に従う）

@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { parseAvailability, parseSelectDate } from "./parse.js";
+import {
+  parseAvailability,
+  parseSelectDate,
+  hasAvailabilityGrid,
+} from "./parse.js";
 import type { AvailabilitySlot } from "../../core/types.js";
 
 function fixture(name: string): string {
@@ -86,6 +90,19 @@ describe("parseAvailability", () => {
   it("全枠 Ｘ（空きゼロ）なら 0 件", () => {
     const slots = parseAvailability(fixture("result-all-full.html"), OPTS);
     expect(slots).toEqual([]);
+  });
+
+  it("hasAvailabilityGrid はグリッド有無を判定する（全埋まりは true）", () => {
+    // 全埋まり(空きゼロ)でもグリッド自体は存在する → true
+    expect(hasAvailabilityGrid(fixture("result-all-full.html"))).toBe(true);
+    expect(hasAvailabilityGrid(fixture("result-mixed.html"))).toBe(true);
+    // グリッド無し（レイアウト破壊相当・予約リストのみ）→ false
+    expect(hasAvailabilityGrid("<html><body>no grid</body></html>")).toBe(false);
+    expect(
+      hasAvailabilityGrid(
+        '<table class="reservation"><thead><tr><th>日付</th><th>時間</th></tr></thead><tbody></tbody></table>',
+      ),
+    ).toBe(false);
   });
 
   it("空文字・グリッド無しの HTML でも例外を投げず 0 件", () => {
