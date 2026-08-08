@@ -53,7 +53,10 @@ async function main(): Promise<void> {
   const minLeadTimeMs = numEnv("KOTO_MIN_LEAD_HOURS", 3) * 60 * 60 * 1000;
   const maxDays = numEnv("KOTO_MAX_DAYS", 60);
 
-  const browser = await chromium.launch();
+  // ローカル動作確認用: KOTO_HEADFUL=1 でブラウザを表示して遷移を目視できる。
+  const browser = await chromium.launch({
+    headless: !process.env.KOTO_HEADFUL,
+  });
   try {
     const page = await browser.newPage();
     const summary = await runCrawl({
