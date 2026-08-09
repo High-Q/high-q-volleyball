@@ -1,0 +1,89 @@
+name: court crawler (江東区スポーツネット空き枠)
+
+on:
+  schedule:
+    # 20 分間隔（design 決定 3 / #286）。cron は UTC だが 20 分間隔は時差非依存。
+    # public repo のため GitHub-hosted 分は無料・無制限。
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "手動実行の理由 (例: 動作確認)"
+        required: false
+        default: "manual dispatch"
+
+# 直列化して多重 crawl を避ける（サイトへの politeness）。前実行は完走させる。
+concurrency:
+  group: court-crawler-koto
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  crawl:
+    name: crawl 江東区スポーツネット → LINE 通知
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # 秘密は GitHub Secrets 由来。コード・ログには出さない（#286 5.2）。
+      KOTO_USER_ID: ${{ secrets.KOTO_USER_ID }}
+      KOTO_PASSWORD: ${{ secrets.KOTO_PASSWORD }}
+      KOTO_LINE_CHANNEL_TOKEN: ${{ secrets.KOTO_LINE_CHANNEL_TOKEN }}
+      KOTO_LINE_TO_USER_ID: ${{ secrets.KOTO_LINE_TO_USER_ID }}
+      KOTO_SUPABASE_URL: ${{ secrets.KOTO_SUPABASE_URL }}
+      KOTO_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.KOTO_SUPABASE_SERVICE_ROLE_KEY }}
+      # 任意: 未設定なら Sentry へは送らず console 出力のみ（degraded）。
+      KOTO_SENTRY_DSN: ${{ secrets.KOTO_SENTRY_DSN }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Enable corepack (use packageManager from root package.json)
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Restore pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install dependencies (offline if cache hit)
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright Chromium (+ OS deps)
+        run: pnpm --filter @high-q/court-crawler exec playwright install --with-deps chromium
+
+      - name: Run koto crawl
+        run: pnpm --filter @high-q/court-crawler crawl:koto
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "### 江東区スポーツネット crawl result"
+            echo ""
+            echo "- Status: ${{ job.status }}"
+            echo "- Trigger: ${{ github.event_name }}"
+            echo "- Commit SHA: \`${{ github.sha }}\`"
+            echo ""
+            echo "詳細は step ログ / Sentry (KOTO_SENTRY_DSN 設定時) を参照。"
+          } >> "$GITHUB_STEP_SUMMARY"

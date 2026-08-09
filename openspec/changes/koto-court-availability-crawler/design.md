@@ -34,19 +34,17 @@
 - **理由**: Epic #285 が「共通 crawler 基盤として設計し Bumb で再利用」を要求。施設ごとに変わるのは照会手順とパースだけなので、そこをアダプタ境界にする。
 - **代替案**: 江東区専用に密結合実装 → Bumb で二重実装になり却下。
 
-### 決定 2（spike で確定）: crawl 実行ランタイム — 素 HTML なら Edge Function、SPA なら GitHub Actions + Playwright
-- **一次案（推奨・素 HTML かつログイン不要を想定）**: Supabase **Edge Function**（Deno）で `fetch` + HTML パース。既存通知系と同じ場所・同じ秘密管理（Supabase Secrets）に載り、`service_role` も露出しない。
-- **フォールバック（SPA / JS レンダリング必須と判明した場合）**: **GitHub Actions scheduled job** で Node + Playwright（本リポジトリは E2E で Playwright 実績あり）。この場合 dedup state は同じテーブルを service_role で読み書きし、LINE push も Node から送る。
-- **切替基準（spike の産物）**: 空き状況が (a) 素の HTML / 公開 JSON エンドポイントで取れる → Edge Function、(b) JS 実行後にしか描画されない or 複雑なセッション遷移が必須 → Playwright。
-- **理由**: Deno Edge Function はヘッドレスブラウザを積めないため SPA では詰む。逆に素 HTML なら Edge Function が最小構成。実サイト未確認のため一次案を推奨としつつ spike で確定する。
-- **代替案**: Render Cron Job → 有料で費用ゼロ方針に反するため却下。
+### 決定 2（spike で確定 → **Playwright / GitHub Actions を採用**）: crawl 実行ランタイム
+- **確定（2026-08-07 spike）**: **GitHub Actions scheduled job + Node + Playwright** を採用。dedup state は `court_availability_notifications` を service_role で読み書きし、LINE push も Node から送る。実装は `@high-q/court-crawler`（コア + 江東区アダプタ + composition root `src/run/koto.ts`）。
+- **一次案（Edge Function）は棄却**: サイトは Shift-JIS のサーバ HTML だが、CULTOS 系の**ステートフルなセッション遷移ガード**（cookie `cultos.attrib.session.token` / hidden `g_sessionid`、順序外 POST は「履歴で操作不可」で弾かれる）があり、素 fetch リプレイが脆い。かつ**要ログイン**。Deno Edge Function では実ブラウザの遷移追従ができないため詰む。
+- **切替基準（当初）**: (a) 素 HTML / 公開 JSON → Edge Function、(b) JS 描画必須 or 複雑なセッション遷移 → Playwright。→ **実地確認の結果 (b)**（「SPA だから」ではなく「ステートフルなセッション遷移の正確な追従が必要だから」）。
+- **代替案**: Render Cron Job → 有料で費用ゼロ方針に反するため却下。public repo の GitHub Actions 分は無料・無制限のため費用ゼロを満たす。
 
-### 決定 3: スケジューラはランタイムに従属させる
-- **Edge Function 経路**: **pg_cron + pg_net** で 20 分間隔に `net.http_post` で Edge Function を叩く（Supabase ネイティブ、GitHub Actions 分を消費しない）。migration で cron ジョブを登録。
-- **Playwright 経路**: **GitHub Actions `schedule`**（cron）で Node スクリプトを直接実行。
-- **頻度**: 20 分間隔を既定とする（キャンセル枠の即時性と、サイトへの負荷・規約順守のバランス）。robots.txt に `Crawl-delay` があれば従う。
-- **理由**: 二重のスケジューラ基盤を持ちたくないので、ランタイムが決まればスケジューラも一意に決まる。
-- **代替案**: 常時両方 GitHub Actions に寄せる → Edge Function 経路でも GitHub 分を使うのは無駄。pg_cron に寄せる → Playwright を pg_cron からは実行できない。
+### 決定 3: スケジューラはランタイムに従属させる → **GitHub Actions `schedule` を採用**
+- **確定**: Playwright 経路に従い **GitHub Actions `schedule`**（cron `*/20 * * * *`）で Node スクリプト（`crawl:koto`）を直接実行。`.github/workflows/court-crawler-koto.yml`。concurrency で直列化し多重 crawl を防ぐ。
+- **頻度**: 20 分間隔を既定（キャンセル枠の即時性と、サイトへの負荷・規約順守のバランス）。robots.txt=404 で `Crawl-delay` 指定なし。env（cron / `KOTO_MIN_LEAD_HOURS` / `KOTO_MAX_DAYS`）で調整可能。
+- **理由**: 二重のスケジューラ基盤を持たない。ランタイム（Playwright）が決まればスケジューラも一意（Actions）に決まる。
+- **代替案（pg_cron + pg_net）は不採用**: Playwright を pg_cron からは実行できないため。
 
 ### 決定 4: 重複通知防止は「通知済み空き枠テーブル」で reconcile する
 - **テーブル**: `court_availability_notifications`（仮）に、通知した空き枠の署名（施設 / 体育室 / 日付 / 開始 / 終了）と通知時刻を記録。
