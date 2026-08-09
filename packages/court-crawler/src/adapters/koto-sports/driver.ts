@@ -91,6 +91,30 @@ export async function openVolleyballGrid(page: Page): Promise<void> {
     .locator('form[name="heyaform"]')
     .getByRole("button", { name: "確定" })
     .click();
+
+  // TODO(#286 diag・一時): 日付選択チェックボックスの構造を採取（value に日付想定）。
+  await page.waitForLoadState("networkidle").catch(() => undefined);
+  const cbs = page.getByRole("checkbox");
+  const cbn = await cbs.count();
+  const cbInfo: Array<Record<string, string | null>> = [];
+  for (let i = 0; i < Math.min(cbn, 50); i++) {
+    const el = cbs.nth(i);
+    cbInfo.push({
+      name: await el.getAttribute("name"),
+      value: await el.getAttribute("value"),
+      id: await el.getAttribute("id"),
+    });
+  }
+  console.error("[court-crawler] diag date-checkbox count:", cbn);
+  console.error("[court-crawler] diag date-checkboxes:", JSON.stringify(cbInfo));
+  const dateTexts = (await page.locator("body").allInnerTexts())
+    .join(" ")
+    .match(/\d{1,2}\/\d{1,2}|\d{1,2}月\d{1,2}日|[月火水木金土日]曜/g);
+  console.error(
+    "[court-crawler] diag date-tokens:",
+    JSON.stringify((dateTexts ?? []).slice(0, 30)),
+  );
+
   step("検索");
   await page.getByRole("button", { name: "検索" }).click();
   await page.waitForLoadState("networkidle");
