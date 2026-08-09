@@ -74,9 +74,18 @@ async function main(): Promise<void> {
   // ローカル動作確認用: KOTO_HEADFUL=1 でブラウザを表示して遷移を目視できる。
   const browser = await chromium.launch({
     headless: !process.env.KOTO_HEADFUL,
+    args: ["--disable-blink-features=AutomationControlled"],
   });
   try {
-    const page = await browser.newPage();
+    // 実ブラウザに近い UA / 日本語ロケール / JST を付ける（headless・自動化検知の回避）。
+    const context = await browser.newContext({
+      locale: "ja-JP",
+      timezoneId: "Asia/Tokyo",
+      userAgent:
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      extraHTTPHeaders: { "Accept-Language": "ja,en-US;q=0.9,en;q=0.8" },
+    });
+    const page = await context.newPage();
     const summary = await runCrawl({
       facility: KOTO_FACILITY,
       collect: async () => {
