@@ -3,7 +3,7 @@
  * GitHub Actions（schedule）から `tsx src/run/koto.ts` で実行する。
  * 秘密は環境変数（GitHub Secrets）から読み、コード・ログに出さない。
  */
-import { chromium } from "playwright";
+import { chromium, type Page } from "playwright";
 import { runCrawl } from "./crawl.js";
 import {
   KOTO_BASE_URL,
@@ -34,6 +34,24 @@ function numEnv(name: string, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+/** 失敗時の軽量診断: 現在 URL と、見えているボタン/リンクの名前を出す（PII なし想定）。 */
+async function dumpControls(page: Page): Promise<void> {
+  const clean = (texts: string[]) =>
+    texts
+      .map((t) => t.replace(/\s+/g, " ").trim())
+      .filter((t) => t.length > 0 && t.length < 40)
+      .slice(0, 40);
+  const [title, buttons, links] = await Promise.all([
+    page.title(),
+    page.getByRole("button").allInnerTexts(),
+    page.getByRole("link").allInnerTexts(),
+  ]);
+  console.error("[court-crawler] diag url:", page.url());
+  console.error("[court-crawler] diag title:", title);
+  console.error("[court-crawler] diag buttons:", JSON.stringify(clean(buttons)));
+  console.error("[court-crawler] diag links:", JSON.stringify(clean(links)));
+}
+
 async function main(): Promise<void> {
   const reporter = createSentryReporter(process.env.KOTO_SENTRY_DSN);
 
@@ -62,13 +80,19 @@ async function main(): Promise<void> {
     const summary = await runCrawl({
       facility: KOTO_FACILITY,
       collect: async () => {
-        await login(page, credentials);
-        await openVolleyballGrid(page);
-        return collectAvailability(page, {
-          reserveUrl: KOTO_BASE_URL,
-          maxDays,
-          stepDelayMs: effectiveRequestIntervalMs(),
-        });
+        try {
+          await login(page, credentials);
+          await openVolleyballGrid(page);
+          return await collectAvailability(page, {
+            reserveUrl: KOTO_BASE_URL,
+            maxDays,
+            stepDelayMs: effectiveRequestIntervalMs(),
+          });
+        } catch (e) {
+          // 失敗時の軽量診断（ログイン前想定・PII なし）: URL と見えている操作要素の名前。
+          await dumpControls(page).catch(() => undefined);
+          throw e;
+        }
       },
       store,
       notify: (text) => pushLineMessage(lineConfig, text),
