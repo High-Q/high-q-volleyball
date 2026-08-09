@@ -21,6 +21,24 @@ export type LinePushResult =
   | { ok: true; status: number }
   | { ok: false; status: number; error: string };
 
+/** push で参照する最小レスポンス（グローバル `Response` に構造的に含まれる）。 */
+export interface LineFetchResponse {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  text(): Promise<string>;
+}
+
+/**
+ * 差し替え可能な最小 fetch。既定のグローバル `fetch` を割り当て可能。
+ * `@types/node`（undici-types）と lib.dom の `Response` 型ドリフトを避けるため、
+ * 実 `Response` 全体ではなく必要な形だけに依存する。
+ */
+export type LineFetch = (
+  url: string,
+  init: { method: string; headers: Record<string, string>; body: string },
+) => Promise<LineFetchResponse>;
+
 /** 末尾省略記号つきで最大長に収める。 */
 function truncate(text: string, max: number): string {
   if (text.length <= max) return text;
@@ -36,13 +54,13 @@ function truncate(text: string, max: number): string {
 export async function pushLineMessage(
   config: LinePushConfig,
   text: string,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: LineFetch = fetch,
 ): Promise<LinePushResult> {
   if (!text.trim()) {
     return { ok: false, status: 0, error: "empty message" };
   }
 
-  let res: Response;
+  let res: LineFetchResponse;
   try {
     res = await fetchImpl(LINE_PUSH_ENDPOINT, {
       method: "POST",
