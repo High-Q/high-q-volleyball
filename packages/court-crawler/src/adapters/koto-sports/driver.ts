@@ -26,15 +26,37 @@ export interface KotoCredentials {
   password: string;
 }
 
+/** 進捗ログ（どのステップまで到達したか live 検証で追える）。 */
+function step(msg: string): void {
+  console.log(`[court-crawler] step: ${msg}`);
+}
+
 /** オーナーの会員アカウントでログインする。秘密は Secrets 由来で呼び出し側が渡す。 */
 export async function login(page: Page, cred: KotoCredentials): Promise<void> {
+  step("トップへ遷移");
   await page.goto(KOTO_BASE_URL);
+  step("パソコン版 入口");
   await page.getByRole("link", { name: "パソコン版 入口" }).click();
+  step("多機能操作");
   await page.getByRole("button", { name: "多機能操作" }).click();
+  step("資格情報を入力");
   await page.getByRole("textbox", { name: "利用者番号" }).fill(cred.userId);
   await page.getByRole("textbox", { name: "パスワード" }).fill(cred.password);
+  step("ログイン クリック");
   await page.getByRole("button", { name: "ログイン" }).click();
   await page.waitForLoadState("networkidle");
+
+  // ログイン成否を確認（失敗を「予約申込が無い」等の分かりにくい後続エラーにしない）。
+  const loggedIn = await page
+    .getByRole("link", { name: "予約申込", exact: true })
+    .isVisible()
+    .catch(() => false);
+  if (!loggedIn) {
+    throw new Error(
+      "ログインに失敗した可能性（予約申込リンクが見つからない）。利用者番号 / パスワードを確認してください",
+    );
+  }
+  step("ログイン成功");
 }
 
 /**
@@ -45,7 +67,9 @@ export async function login(page: Page, cred: KotoCredentials): Promise<void> {
  * 特定日のチェックボックスを打つ codegen の手順は日付依存のため採らない。
  */
 export async function openVolleyballGrid(page: Page): Promise<void> {
+  step("予約申込");
   await page.getByRole("link", { name: "予約申込", exact: true }).click();
+  step("分類を選択（体育館系）");
   await page
     .locator('select[name="g_bunruicd_1_show"]')
     .selectOption(BUNRUI_TAIIKU);
@@ -53,19 +77,24 @@ export async function openVolleyballGrid(page: Page): Promise<void> {
     .locator('form[name="selBunrui1"]')
     .getByRole("button", { name: "確定" })
     .click();
+  step("施設 全選択");
   await page.getByRole("button", { name: "全選択" }).click();
+  step("種目を選択（バレー）");
   await page.locator('select[name="riyosmk"]').selectOption(RIYOSMK_VOLLEYBALL);
   await page
     .locator('form[name="selForm_1"]')
     .getByRole("button", { name: "確定" })
     .click();
+  step("室場 全選択");
   await page.getByRole("button", { name: "全選択" }).click();
   await page
     .locator('form[name="heyaform"]')
     .getByRole("button", { name: "確定" })
     .click();
+  step("検索");
   await page.getByRole("button", { name: "検索" }).click();
   await page.waitForLoadState("networkidle");
+  step("結果グリッド表示");
 }
 
 export interface CollectOptions {
