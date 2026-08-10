@@ -164,6 +164,20 @@ export async function collectAvailability(
     );
     if (nextCount === 0 || !nextVisible) break;
     await next.click();
+    await page.waitForTimeout(3000);
+    // DIAG: 次へ後の状態を採取
+    {
+      const sd = page.locator('input[name="selectdate"]');
+      const c = await sd.count();
+      const vals: (string | null)[] = [];
+      for (let i = 0; i < c; i++) vals.push(await sd.nth(i).getAttribute("value"));
+      const tok = (await page.locator("body").allInnerTexts())
+        .join(" ")
+        .match(/令和\s*\d+\s*年\s*\d+\s*月\s*\d+\s*日|\d{1,2}月\d{1,2}日/g);
+      console.error(
+        `[court-crawler] diag after 次へ url=${page.url()} selectdates=${JSON.stringify(vals)} tokens=${JSON.stringify((tok ?? []).slice(0, 6))}`,
+      );
+    }
     // JS 再描画を待つ: selectdate が別日に変わるまで（変わらなければ末尾とみなす）。
     const changed = await waitForDateChange(page, slotDate);
     console.error(`[court-crawler] diag after 次へ: changed=${changed}`);
