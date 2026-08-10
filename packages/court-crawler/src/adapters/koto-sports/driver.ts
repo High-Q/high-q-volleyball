@@ -157,10 +157,17 @@ export async function collectAvailability(
 
     // 日送りは「次へ」リンク（#rightbutton は display:none で使えない）。
     const next = page.getByRole("link", { name: "次へ", exact: true }).first();
-    if ((await next.count()) === 0 || !(await next.isVisible())) break;
+    const nextCount = await next.count();
+    const nextVisible = nextCount > 0 && (await next.isVisible().catch(() => false));
+    console.error(
+      `[court-crawler] diag day=${day} slotDate=${slotDate} nextCount=${nextCount} nextVisible=${nextVisible}`,
+    );
+    if (nextCount === 0 || !nextVisible) break;
     await next.click();
     // JS 再描画を待つ: selectdate が別日に変わるまで（変わらなければ末尾とみなす）。
-    if (!(await waitForDateChange(page, slotDate))) break;
+    const changed = await waitForDateChange(page, slotDate);
+    console.error(`[court-crawler] diag after 次へ: changed=${changed}`);
+    if (!changed) break;
     await page.waitForTimeout(stepDelayMs);
   }
 
