@@ -15,6 +15,7 @@ import type { AvailabilitySlot } from "../../core/types.js";
 import {
   hasAvailabilityGrid,
   parseAvailability,
+  parseReiwaDate,
   parseSelectDate,
 } from "./parse.js";
 import { BUNRUI_TAIIKU, KOTO_BASE_URL, RIYOSMK_VOLLEYBALL } from "./config.js";
@@ -149,7 +150,8 @@ export async function collectAvailability(
 
   for (let day = 0; day < maxDays; day++) {
     const html = await safeContent(page);
-    const slotDate = parseSelectDate(html);
+    // 表示日（令和表記）を真とする。hidden selectdate は「次へ」後に更新されない。
+    const slotDate = parseReiwaDate(html) ?? parseSelectDate(html);
     if (!slotDate || seen.has(slotDate)) break;
     seen.add(slotDate);
     if (hasAvailabilityGrid(html)) gridDays++;
@@ -157,31 +159,11 @@ export async function collectAvailability(
 
     // 日送りは「次へ」リンク（#rightbutton は display:none で使えない）。
     const next = page.getByRole("link", { name: "次へ", exact: true }).first();
-    const nextCount = await next.count();
-    const nextVisible = nextCount > 0 && (await next.isVisible().catch(() => false));
-    console.error(
-      `[court-crawler] diag day=${day} slotDate=${slotDate} nextCount=${nextCount} nextVisible=${nextVisible}`,
-    );
-    if (nextCount === 0 || !nextVisible) break;
+    if ((await next.count()) === 0 || !(await next.isVisible().catch(() => false)))
+      break;
     await next.click();
-    await page.waitForTimeout(3000);
-    // DIAG: 次へ後の状態を採取
-    {
-      const sd = page.locator('input[name="selectdate"]');
-      const c = await sd.count();
-      const vals: (string | null)[] = [];
-      for (let i = 0; i < c; i++) vals.push(await sd.nth(i).getAttribute("value"));
-      const tok = (await page.locator("body").allInnerTexts())
-        .join(" ")
-        .match(/令和\s*\d+\s*年\s*\d+\s*月\s*\d+\s*日|\d{1,2}月\d{1,2}日/g);
-      console.error(
-        `[court-crawler] diag after 次へ url=${page.url()} selectdates=${JSON.stringify(vals)} tokens=${JSON.stringify((tok ?? []).slice(0, 6))}`,
-      );
-    }
-    // JS 再描画を待つ: selectdate が別日に変わるまで（変わらなければ末尾とみなす）。
-    const changed = await waitForDateChange(page, slotDate);
-    console.error(`[court-crawler] diag after 次へ: changed=${changed}`);
-    if (!changed) break;
+    // 表示日が別日に変わるまで待つ（変わらなければ末尾とみなす）。
+    if (!(await waitForDateChange(page, slotDate))) break;
     await page.waitForTimeout(stepDelayMs);
   }
 
@@ -201,7 +183,8 @@ async function waitForDateChange(
 ): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const d = parseSelectDate(await safeContent(page));
+    const html = await safeContent(page);
+    const d = parseReiwaDate(html) ?? parseSelectDate(html);
     if (d && d !== prevDate) return true;
     await page.waitForTimeout(pollMs);
   }

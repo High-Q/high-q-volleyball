@@ -104,6 +104,20 @@ export function parseSelectDate(html: string): string | null {
 }
 
 /**
+ * 結果ページに表示されている「令和○年○月○日」を `YYYY-MM-DD` にして返す。
+ * 令和 N 年 = 2018 + N。会員情報の「有効期限 …まで」を拾わないよう `まで` を除外する。
+ * 「次へ」ナビ後は hidden `selectdate` が更新されないため、表示日を真とする。
+ */
+export function parseReiwaDate(html: string): string | null {
+  const m = /令和\s*(\d+)\s*年\s*(\d+)\s*月\s*(\d+)\s*日(?!\s*まで)/.exec(html);
+  if (!m) return null;
+  const year = 2018 + Number(m[1]);
+  const mm = String(Number(m[2])).padStart(2, "0");
+  const dd = String(Number(m[3])).padStart(2, "0");
+  return `${year}-${mm}-${dd}`;
+}
+
+/**
  * 空き状況グリッド HTML から空き枠（`class="ok"` のセル）を抽出する。
  *
  * グリッドは「列 = 時間帯（thead の th）/ 行 = 施設・室場（tbody 行頭の th）/
