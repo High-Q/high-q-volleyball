@@ -11,6 +11,14 @@ on:
         description: "手動実行の理由 (例: 動作確認)"
         required: false
         default: "manual dispatch"
+      monitor_all:
+        description: "全室場を監視して LINE 配信を確認する一時テスト（通常は false）"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 # 直列化して多重 crawl を避ける（サイトへの politeness）。前実行は完走させる。
 concurrency:
@@ -35,6 +43,8 @@ jobs:
       KOTO_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.KOTO_SUPABASE_SERVICE_ROLE_KEY }}
       # 任意: 未設定なら Sentry へは送らず console 出力のみ（degraded）。
       KOTO_SENTRY_DSN: ${{ secrets.KOTO_SENTRY_DSN }}
+      # 一時検証用: monitor_all=true の手動実行時のみ全室場監視（LINE 配信確認）。
+      KOTO_MONITOR_ALL: ${{ github.event.inputs.monitor_all == 'true' && '1' || '' }}
     steps:
       - uses: actions/checkout@v5
 

@@ -70,6 +70,9 @@ async function main(): Promise<void> {
 
   const minLeadTimeMs = numEnv("KOTO_MIN_LEAD_HOURS", 3) * 60 * 60 * 1000;
   const maxDays = numEnv("KOTO_MAX_DAYS", 60);
+  // 一時検証用: KOTO_MONITOR_ALL=1 で監視室場フィルタを外し全室場を通知対象にする
+  // （LINE 実配信の確認用。通常運用では未設定＝大体育室 半面のみ）。
+  const monitorAll = !!process.env.KOTO_MONITOR_ALL;
 
   // ローカル動作確認用: KOTO_HEADFUL=1 でブラウザを表示して遷移を目視できる。
   const browser = await chromium.launch({
@@ -109,7 +112,7 @@ async function main(): Promise<void> {
       now: new Date(),
       minLeadTimeMs,
       isHoliday: isJapaneseHoliday,
-      venueFilter: isMonitoredVenue,
+      ...(monitorAll ? {} : { venueFilter: isMonitoredVenue }),
     });
     console.log("[court-crawler] summary", summary);
   } finally {
