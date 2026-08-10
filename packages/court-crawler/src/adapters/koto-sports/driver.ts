@@ -103,7 +103,13 @@ export async function openVolleyballGrid(page: Page): Promise<void> {
 
   step("検索");
   await page.getByRole("button", { name: "検索" }).click();
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle").catch(() => undefined);
+  // グリッド確定（空き状況セルが描画される）まで待ってから読み取りに入る。
+  await page
+    .locator("td.ok, td.ng, td.empty")
+    .first()
+    .waitFor({ state: "attached", timeout: 15000 })
+    .catch(() => undefined);
   step("結果グリッド表示");
 }
 
@@ -142,7 +148,7 @@ export async function collectAvailability(
   let gridDays = 0;
 
   for (let day = 0; day < maxDays; day++) {
-    const html = await page.content();
+    const html = await safeContent(page);
     const slotDate = parseSelectDate(html);
     if (!slotDate || seen.has(slotDate)) break;
     seen.add(slotDate);
@@ -169,14 +175,29 @@ export async function collectAvailability(
 async function waitForDateChange(
   page: Page,
   prevDate: string,
-  timeoutMs = 5000,
-  pollMs = 200,
+  timeoutMs = 8000,
+  pollMs = 250,
 ): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const d = parseSelectDate(await page.content());
+    const d = parseSelectDate(await safeContent(page));
     if (d && d !== prevDate) return true;
     await page.waitForTimeout(pollMs);
   }
   return false;
+}
+
+/**
+ * `page.content()` を安全に読む。クライアント再描画中は
+ * 「page is navigating」で失敗するため、短い待機を挟んで数回リトライする。
+ */
+async function safeContent(page: Page, tries = 6, waitMs = 300): Promise<string> {
+  for (let i = 0; i < tries - 1; i++) {
+    try {
+      return await page.content();
+    } catch {
+      await page.waitForTimeout(waitMs);
+    }
+  }
+  return page.content();
 }
