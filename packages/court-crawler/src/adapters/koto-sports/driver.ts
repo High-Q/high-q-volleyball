@@ -105,32 +105,6 @@ export async function openVolleyballGrid(page: Page): Promise<void> {
   await page.getByRole("button", { name: "検索" }).click();
   await page.waitForLoadState("networkidle");
   step("結果グリッド表示");
-
-  // TODO(#286 diag・一時): 結果ページの日ナビ構造を採取。
-  const tbl = await page.locator("table").count();
-  const sd = page.locator('input[name="selectdate"]');
-  const sdc = await sd.count();
-  const sdvals: (string | null)[] = [];
-  for (let i = 0; i < sdc; i++) sdvals.push(await sd.nth(i).getAttribute("value"));
-  const rb = page.locator("#rightbutton");
-  const lb = page.locator("#leftbutton");
-  const navLinks = (await page.getByRole("link").allInnerTexts()).filter((t) =>
-    /次|翌|前|週|日|表示/.test(t),
-  );
-  const navBtns = (await page.getByRole("button").allInnerTexts()).filter((t) =>
-    /次|翌|前|週|日|表示|検索/.test(t),
-  );
-  console.error("[court-crawler] diag tables:", tbl, "selectdates:", JSON.stringify(sdvals));
-  console.error(
-    "[court-crawler] diag rightbutton count/visible:",
-    await rb.count(),
-    await rb.isVisible().catch(() => false),
-    "| leftbutton:",
-    await lb.count(),
-    await lb.isVisible().catch(() => false),
-  );
-  console.error("[court-crawler] diag navLinks:", JSON.stringify(navLinks.slice(0, 20)));
-  console.error("[court-crawler] diag navBtns:", JSON.stringify(navBtns.slice(0, 20)));
 }
 
 export interface CollectOptions {
@@ -150,7 +124,7 @@ export interface CollectResult {
 }
 
 /**
- * 現在のグリッドから空き枠を読み、`#rightbutton`（翌日）で前進しながら
+ * 現在のグリッドから空き枠を読み、「次へ」リンクで前進しながら
  * 全施設・全室場の空き枠を集約して返す（監視室場・土日祝の絞り込みは結線側）。
  * selectdate が進まなくなる / ナビが消える / maxDays 到達で停止する。
  * gridDays はグリッドを読めた日数（0 = レイアウト破壊の疑い）。
@@ -175,7 +149,8 @@ export async function collectAvailability(
     if (hasAvailabilityGrid(html)) gridDays++;
     slots.push(...parseAvailability(html, { slotDate, reserveUrl }));
 
-    const next = page.locator("#rightbutton");
+    // 日送りは「次へ」リンク（#rightbutton は display:none で使えない）。
+    const next = page.getByRole("link", { name: "次へ", exact: true }).first();
     if ((await next.count()) === 0 || !(await next.isVisible())) break;
     await next.click();
     // JS 再描画を待つ: selectdate が別日に変わるまで（変わらなければ末尾とみなす）。
