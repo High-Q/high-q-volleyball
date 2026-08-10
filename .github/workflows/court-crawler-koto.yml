@@ -2,9 +2,11 @@ name: court crawler (江東区スポーツネット空き枠)
 
 on:
   schedule:
-    # 20 分間隔（design 決定 3 / #286）。cron は UTC だが 20 分間隔は時差非依存。
+    # 20 分間隔（design 決定 3 / #286）。ただしサイトは夜間 JST 00:00〜06:00 停止のため
+    # その時間帯は走らせない（走っても 403 になり失敗ログのノイズになるだけ）。
+    # 稼働は JST 06:00〜24:00 = UTC 21:00〜23:59 + UTC 00:00〜14:59。cron は UTC。
     # public repo のため GitHub-hosted 分は無料・無制限。
-    - cron: "*/20 * * * *"
+    - cron: "*/20 0-14,21-23 * * *"
   workflow_dispatch:
     inputs:
       reason:
