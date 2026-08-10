@@ -63,6 +63,18 @@ async function main(): Promise<void> {
     channelToken: requireEnv("KOTO_LINE_CHANNEL_TOKEN"),
     toUserId: requireEnv("KOTO_LINE_TO_USER_ID"),
   };
+
+  // 一時検証用: KOTO_TEST_LINE=1 なら crawl せず、実トークンで LINE を 1 通送って
+  // 配信レグ（token / 宛先）だけを確認して終了する。
+  if (process.env.KOTO_TEST_LINE) {
+    const r = await pushLineMessage(
+      lineConfig,
+      "🏐 [テスト] court-crawler の LINE 配信確認です（本番の空き通知ではありません）",
+    );
+    console.log("[court-crawler] test-line result:", JSON.stringify(r));
+    await flushSentry();
+    return;
+  }
   const store = createSupabaseNotifiedStore(
     requireEnv("KOTO_SUPABASE_URL"),
     requireEnv("KOTO_SUPABASE_SERVICE_ROLE_KEY"),
