@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import {
   parseAvailability,
   parseSelectDate,
+  parseReiwaDate,
   hasAvailabilityGrid,
 } from "./parse.js";
 import type { AvailabilitySlot } from "../../core/types.js";
@@ -85,6 +86,15 @@ describe("parseAvailability", () => {
   it("selectdate hidden から表示日を YYYY-MM-DD で取り出す（空値は無視）", () => {
     expect(parseSelectDate(fixture("result-mixed.html"))).toBe("2026-08-08");
     expect(parseSelectDate("<html></html>")).toBeNull();
+  });
+
+  it("parseReiwaDate は令和を西暦にし、有効期限(まで)を除外する", () => {
+    expect(parseReiwaDate("令和08年08月15日")).toBe("2026-08-15");
+    // 会員の有効期限は「まで」付きなので拾わず、次の表示日を返す
+    expect(
+      parseReiwaDate("有効期限：令和09年01月31日まで … 令和08年08月15日"),
+    ).toBe("2026-08-15");
+    expect(parseReiwaDate("日付なし")).toBeNull();
   });
 
   it("全枠 Ｘ（空きゼロ）なら 0 件", () => {

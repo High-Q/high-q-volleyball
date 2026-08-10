@@ -15,6 +15,7 @@ import type { AvailabilitySlot } from "../../core/types.js";
 import {
   hasAvailabilityGrid,
   parseAvailability,
+  parseReiwaDate,
   parseSelectDate,
 } from "./parse.js";
 import { BUNRUI_TAIIKU, KOTO_BASE_URL, RIYOSMK_VOLLEYBALL } from "./config.js";
@@ -91,9 +92,25 @@ export async function openVolleyballGrid(page: Page): Promise<void> {
     .locator('form[name="heyaform"]')
     .getByRole("button", { name: "確定" })
     .click();
+  await page.waitForLoadState("networkidle").catch(() => undefined);
+
+  // 「表示開始日選択 → 曜日」の 8 チェックボックス（DOM 順に 日月火水木金土祝日）から
+  // 土・日・祝日を選び、当日以降の土日祝だけを結果に並べる（開始日は既定=当日のまま）。
+  step("曜日フィルタ（土日祝）");
+  const dow = page.getByRole("checkbox");
+  await dow.nth(0).check(); // 日
+  await dow.nth(6).check(); // 土
+  await dow.nth(7).check(); // 祝日
+
   step("検索");
   await page.getByRole("button", { name: "検索" }).click();
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle").catch(() => undefined);
+  // グリッド確定（空き状況セルが描画される）まで待ってから読み取りに入る。
+  await page
+    .locator("td.ok, td.ng, td.empty")
+    .first()
+    .waitFor({ state: "attached", timeout: 15000 })
+    .catch(() => undefined);
   step("結果グリッド表示");
 }
 
@@ -114,7 +131,7 @@ export interface CollectResult {
 }
 
 /**
- * 現在のグリッドから空き枠を読み、`#rightbutton`（翌日）で前進しながら
+ * 現在のグリッドから空き枠を読み、「次へ」リンクで前進しながら
  * 全施設・全室場の空き枠を集約して返す（監視室場・土日祝の絞り込みは結線側）。
  * selectdate が進まなくなる / ナビが消える / maxDays 到達で停止する。
  * gridDays はグリッドを読めた日数（0 = レイアウト破壊の疑い）。
@@ -132,17 +149,20 @@ export async function collectAvailability(
   let gridDays = 0;
 
   for (let day = 0; day < maxDays; day++) {
-    const html = await page.content();
-    const slotDate = parseSelectDate(html);
+    const html = await safeContent(page);
+    // 表示日（令和表記）を真とする。hidden selectdate は「次へ」後に更新されない。
+    const slotDate = parseReiwaDate(html) ?? parseSelectDate(html);
     if (!slotDate || seen.has(slotDate)) break;
     seen.add(slotDate);
     if (hasAvailabilityGrid(html)) gridDays++;
     slots.push(...parseAvailability(html, { slotDate, reserveUrl }));
 
-    const next = page.locator("#rightbutton");
-    if ((await next.count()) === 0 || !(await next.isVisible())) break;
+    // 日送りは「次へ」リンク（#rightbutton は display:none で使えない）。
+    const next = page.getByRole("link", { name: "次へ", exact: true }).first();
+    if ((await next.count()) === 0 || !(await next.isVisible().catch(() => false)))
+      break;
     await next.click();
-    // JS 再描画を待つ: selectdate が別日に変わるまで（変わらなければ末尾とみなす）。
+    // 表示日が別日に変わるまで待つ（変わらなければ末尾とみなす）。
     if (!(await waitForDateChange(page, slotDate))) break;
     await page.waitForTimeout(stepDelayMs);
   }
@@ -158,14 +178,30 @@ export async function collectAvailability(
 async function waitForDateChange(
   page: Page,
   prevDate: string,
-  timeoutMs = 5000,
-  pollMs = 200,
+  timeoutMs = 8000,
+  pollMs = 250,
 ): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const d = parseSelectDate(await page.content());
+    const html = await safeContent(page);
+    const d = parseReiwaDate(html) ?? parseSelectDate(html);
     if (d && d !== prevDate) return true;
     await page.waitForTimeout(pollMs);
   }
   return false;
+}
+
+/**
+ * `page.content()` を安全に読む。クライアント再描画中は
+ * 「page is navigating」で失敗するため、短い待機を挟んで数回リトライする。
+ */
+async function safeContent(page: Page, tries = 6, waitMs = 300): Promise<string> {
+  for (let i = 0; i < tries - 1; i++) {
+    try {
+      return await page.content();
+    } catch {
+      await page.waitForTimeout(waitMs);
+    }
+  }
+  return page.content();
 }

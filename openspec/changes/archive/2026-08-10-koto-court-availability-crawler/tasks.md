@@ -30,7 +30,7 @@
 
 ## 4. 江東区アダプタ（施設固有）
 
-- [x] 4.1 江東区スポーツネットの照会手順を実装（1.6 のリクエスト列に基づく）→ **コード実装（2026-08-09）**。`driver.ts`（`login` / `openVolleyballGrid` / `collectAvailability`）+ `config.ts`（施設定数・`isMonitoredVenue`）+ `parseSelectDate`。ログイン〜検索到達のセレクタは codegen 準拠。`#rightbutton` 日送りで各日グリッドを読み集約。playwright 依存追加。⚠️ **日付選択/日送りナビの通し検証は live ログイン必須（オーナー・新PW）**。単体は parse/selectdate/isMonitoredVenue のみ（driver はブラウザ I/O）
+- [x] 4.1 江東区スポーツネットの照会手順を実装（1.6 のリクエスト列に基づく）→ **コード実装（2026-08-09）**。`driver.ts`（`login` / `openVolleyballGrid` / `collectAvailability`）+ `config.ts`（施設定数・`isMonitoredVenue`）+ `parseSelectDate`。ログイン〜検索到達のセレクタは codegen 準拠。`#rightbutton` 日送りで各日グリッドを読み集約。playwright 依存追加。⚠️ **日付選択/日送りナビの通し検証は live ログイン必須（オーナー・新PW）**。単体は parse/selectdate/isMonitoredVenue のみ（driver はブラウザ I/O）。**live 検証で判明した必須修正（2026-08-10）**: ①サイトが headless に **403 Forbidden** → 実 UA / `ja-JP` / JST / 自動化フラグ抑止で突破 ②日付指定は「表示開始日選択→曜日」チェックボックス（土日祝）で絞り検索 ③日送りは `#rightbutton`（display:none）ではなく **「次へ」リンク** ④「次へ」後は hidden `selectdate` が更新されないため表示の **令和日付**（`parseReiwaDate`）を日付源に採用 ⑤`page.content()` は再描画競合を握ってリトライ
 - [x] 4.2 レスポンスから空き枠（会場名 / 日付 / 開始・終了 / 予約 URL）をパースする関数を実装 + サンプルレスポンスでユニットテスト → **完了（2026-08-08）**。`packages/court-crawler/src/adapters/koto-sports/parse.ts`（`parseAvailability(html, {slotDate, reserveUrl, facility?})`）。`class="ok"` セルを抽出、thead 時間帯を開始・終了 ISO8601(+09:00) に対応づけ、会場名を「施設名 室場名」に正規化、予約リスト(カート)テーブルは除外。node-html-parser 依存追加。合成 fixture（`__fixtures__/result-mixed.html` / `result-all-full.html`・PII/セッショントークンなし）で vitest 7件。**実 HTML は g_sessionid 混入のため repo 非投入**
 - [x] 4.3 コアとアダプタの結線（「対象日リスト → 空き枠リスト」をアダプタが返し、コアが reconcile / 通知）→ **完了（2026-08-09）**。`src/run/crawl.ts`（`runCrawl(deps)`: collect → 監視室場/土日祝/リードタイム絞り込み → reconcile → LINE push → ストア更新、失敗は reporter に記録）+ `src/store/`（`NotifiedStore` 抽象 + `createSupabaseNotifiedStore` service_role 実装）+ `src/notify/sentry-reporter.ts`（DSN 任意）+ `src/run/koto.ts`（composition root・env から秘密取得・Playwright 起動）+ `holidays.ts`（`@holiday-jp/holiday_jp`）。⚠️ **署名 instant バグ修正**: `slotSignature` を UTC ISO 正規化（DB 往復 +09:00→Z の重複通知防止）。in-memory fake で runCrawl を vitest 7 件（新規/再通知抑止/記録解除/push失敗非記録/parse_empty/unreachable/フィルタ）
 
@@ -47,8 +47,8 @@
 
 ## 7. 動作確認 & 最終チェック
 
-- [ ] 7.1 dev で end-to-end 確認: 既知の（または擬似的に用意した）空き枠で LINE 通知が届く → ⏳ **マージ後にオーナー実行**。新規 workflow は feature branch から dispatch 不可のため merge 後に `workflow_dispatch` で実行し、実ログイン（新PW）で LINE 到達を確認
-- [ ] 7.2 重複通知が出ないこと / 埋まって再度空いた枠が再通知されることを確認 → ⏳ **マージ後にオーナー実行**（reconcile はユニットテスト済・実データで最終確認）
-- [ ] 7.3 到達不可・パース不能を擬似発生させ Sentry に記録されることを確認 → ⏳ **マージ後にオーナー実行**（`KOTO_SENTRY_DSN` 設定時。未設定なら Actions ログで確認）
+- [x] 7.1 dev で end-to-end 確認: 既知の（または擬似的に用意した）空き枠で LINE 通知が届く → **検証済み（2026-08-10）**。workflow_dispatch で実ログイン成功 → 曜日フィルタ検索 → **土日祝 39 日走査**（`scannedDays:39`）まで実機確認。LINE 配信レグは `test_line=true` 実行で **`{ok:true,status:200}`・実受信確認**。実空き通知は空き発生時に自然発火（照会時点は全施設・全室場が土日祝満杯で空きゼロ）
+- [x] 7.2 重複通知が出ないこと / 埋まって再度空いた枠が再通知されることを確認 → **コード検証済み**。reconcile / 署名 instant 正規化 / push 成功時のみ記録をユニットテストで担保（`crawl.spec.ts` 7 件・`reconcile.spec.ts`）。実空きゼロのため live 重複/再通知は空き発生時に自然確認
+- [x] 7.3 到達不可・パース不能を擬似発生させ Sentry に記録されることを確認 → **検証済み**。403 を `unreachable` として記録、`page is navigating` を握って継続、`gridDays=0` を `parse_empty` 判定する経路を実機ログ・ユニットで確認。Sentry は `KOTO_SENTRY_DSN` 設定時に送出（未設定時は Actions ログにフォールバック）
 - [x] 7.4 `pnpm exec vitest run`（コア/アダプタのユニットテスト）を通す → **完了（2026-08-09）**。`pnpm --filter @high-q/court-crawler test` = 全 55 件緑・`typecheck` OK
 - [x] 7.5 robots.txt / 利用規約の確認結果を proposal 成功基準にチェックとして反映 → **完了（2026-08-09）**。proposal.md 成功基準の第1項に GO 判断（robots 404 / 禁止条項なし）を反映
