@@ -78,11 +78,11 @@ export function hasAvailabilityGrid(html: string): boolean {
   const root = parse(html);
   for (const table of root.querySelectorAll("table")) {
     if (!availabilityRanges(table)) continue;
-    const tbody = table.querySelector("tbody");
-    if (!tbody) continue;
-    for (const row of tbody.querySelectorAll("tr")) {
-      const head = row.querySelector("th");
-      if (head && extractVenueName(head)) return true;
+    for (const tbody of table.querySelectorAll("tbody")) {
+      for (const row of tbody.querySelectorAll("tr")) {
+        const head = row.querySelector("th");
+        if (head && extractVenueName(head)) return true;
+      }
     }
   }
   return false;
@@ -123,6 +123,17 @@ function hasReserveImage(cell: HTMLElement): boolean {
     if ((el.getAttribute("src") ?? "").includes("timetable-o.gif")) return true;
   }
   return false;
+}
+
+/**
+ * セルが「空き」か。実サイトは空きセルに class を付けなくなり（旧 `ok` は消滅）、
+ * 予約ボタン画像（`timetable-o.gif`）だけで空きを表す。埋まりは `ng`、対象外は `empty`。
+ * class 依存に戻すと再び静かに 0 件化するため、予約導線を主シグナルにする（旧 `ok` も後方互換で許容）。
+ */
+function isAvailableCell(cell: HTMLElement): boolean {
+  const classes = (cell.getAttribute("class") ?? "").split(/\s+/);
+  if (classes.includes("ng") || classes.includes("empty")) return false;
+  return hasReserveImage(cell) || classes.includes("ok");
 }
 
 /** セル（またはその子孫）に予約発火の onclick があるか。 */
@@ -297,29 +308,30 @@ export function parseAvailability(
   for (const table of root.querySelectorAll("table")) {
     const ranges = availabilityRanges(table);
     if (!ranges) continue;
-    const tbody = table.querySelector("tbody");
-    if (!tbody) continue;
 
-    for (const row of tbody.querySelectorAll("tr")) {
-      const head = row.querySelector("th");
-      if (!head) continue;
-      const venueName = extractVenueName(head);
-      if (!venueName) continue;
+    // グリッドは「1 テーブル × 室場ごとの tbody」構造。最初の tbody だけでなく
+    // 全 tbody を走査しないと 1 室場しか拾えない（実サイトは施設×室場で 13 tbody）。
+    for (const tbody of table.querySelectorAll("tbody")) {
+      for (const row of tbody.querySelectorAll("tr")) {
+        const head = row.querySelector("th");
+        if (!head) continue;
+        const venueName = extractVenueName(head);
+        if (!venueName) continue;
 
-      row.querySelectorAll("td").forEach((cell, i) => {
-        const cls = (cell.getAttribute("class") ?? "").split(/\s+/);
-        if (!cls.includes("ok")) return;
-        const range = ranges[i];
-        if (!range) return;
-        slots.push({
-          facility,
-          venueName,
-          slotDate: opts.slotDate,
-          startAt: `${opts.slotDate}T${range.start}:00+09:00`,
-          endAt: `${opts.slotDate}T${range.end}:00+09:00`,
-          reserveUrl: opts.reserveUrl,
+        row.querySelectorAll("td").forEach((cell, i) => {
+          if (!isAvailableCell(cell)) return;
+          const range = ranges[i];
+          if (!range) return;
+          slots.push({
+            facility,
+            venueName,
+            slotDate: opts.slotDate,
+            startAt: `${opts.slotDate}T${range.start}:00+09:00`,
+            endAt: `${opts.slotDate}T${range.end}:00+09:00`,
+            reserveUrl: opts.reserveUrl,
+          });
         });
-      });
+      }
     }
   }
 
