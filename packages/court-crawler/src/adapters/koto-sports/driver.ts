@@ -66,23 +66,19 @@ export async function login(page: Page, cred: KotoCredentials): Promise<void> {
  * 施設・室場名（PII なし）で観測する。認証情報・セッション ID は含めない。
  */
 async function snapshotSelection(page: Page, label: string): Promise<void> {
-  // evaluate はブラウザ側で走る。Node 専用 tsconfig（DOM lib 無し）のため DOM 型名は使わない。
-  const snap = await page.evaluate(() => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    const doc: any = (globalThis as any).document;
-    const short = (t: string | null | undefined) =>
-      (t ?? "").replace(/\s+/g, " ").trim().slice(0, 24);
-    const boxes = Array.from(
-      doc.querySelectorAll('input[type="checkbox"]'),
-    ).map((cb: any) => ({
+  // evaluate はブラウザ側で走る。tsx/esbuild が関数へ注入する __name ヘルパーが
+  // ブラウザに無く ReferenceError になるため、関数ではなく文字列式を渡す。
+  const snap = await page.evaluate(`(() => {
+    const short = (t) => (t == null ? "" : String(t)).replace(/\\s+/g, " ").trim().slice(0, 24);
+    const boxes = Array.from(document.querySelectorAll('input[type="checkbox"]')).map((cb) => ({
       value: short(cb.value),
       checked: !!cb.checked,
-      label: short(cb.parentElement?.textContent),
+      label: short(cb.parentElement && cb.parentElement.textContent),
     }));
-    const selects = Array.from(doc.querySelectorAll("select")).map((sel: any) => ({
+    const selects = Array.from(document.querySelectorAll('select')).map((sel) => ({
       name: String(sel.name),
       optionCount: sel.options.length,
-      selected: Array.from(sel.selectedOptions).map((o: any) => short(o.text)),
+      selected: Array.from(sel.selectedOptions).map((o) => short(o.text)),
     }));
     return {
       checkboxTotal: boxes.length,
@@ -90,8 +86,7 @@ async function snapshotSelection(page: Page, label: string): Promise<void> {
       boxes: boxes.slice(0, 30),
       selects,
     };
-    /* eslint-enable @typescript-eslint/no-explicit-any */
-  });
+  })()`);
   console.log(`[court-crawler] diag-sel ${label}`, JSON.stringify(snap));
 }
 
