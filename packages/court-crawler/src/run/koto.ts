@@ -86,7 +86,7 @@ async function runDiagnostics(credentials: {
   const { browser, page } = await launchContextPage();
   try {
     await login(page, credentials);
-    await openVolleyballGrid(page);
+    await openVolleyballGrid(page, { diagnose: true });
     let days = 0;
     await collectAvailability(page, {
       reserveUrl: KOTO_BASE_URL,

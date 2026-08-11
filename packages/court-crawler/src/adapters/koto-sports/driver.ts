@@ -61,13 +61,56 @@ export async function login(page: Page, cred: KotoCredentials): Promise<void> {
 }
 
 /**
+ * 選択ページの状態を sanitize してダンプする（原因 B 診断・#375）。
+ * 「全選択」がどのステップで落ちているかを、チェックボックスの総数/選択数と
+ * 施設・室場名（PII なし）で観測する。認証情報・セッション ID は含めない。
+ */
+async function snapshotSelection(page: Page, label: string): Promise<void> {
+  // evaluate はブラウザ側で走る。Node 専用 tsconfig（DOM lib 無し）のため DOM 型名は使わない。
+  const snap = await page.evaluate(() => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const doc: any = (globalThis as any).document;
+    const short = (t: string | null | undefined) =>
+      (t ?? "").replace(/\s+/g, " ").trim().slice(0, 24);
+    const boxes = Array.from(
+      doc.querySelectorAll('input[type="checkbox"]'),
+    ).map((cb: any) => ({
+      value: short(cb.value),
+      checked: !!cb.checked,
+      label: short(cb.parentElement?.textContent),
+    }));
+    const selects = Array.from(doc.querySelectorAll("select")).map((sel: any) => ({
+      name: String(sel.name),
+      optionCount: sel.options.length,
+      selected: Array.from(sel.selectedOptions).map((o: any) => short(o.text)),
+    }));
+    return {
+      checkboxTotal: boxes.length,
+      checkboxChecked: boxes.filter((b) => b.checked).length,
+      boxes: boxes.slice(0, 30),
+      selects,
+    };
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+  });
+  console.log(`[court-crawler] diag-sel ${label}`, JSON.stringify(snap));
+}
+
+/**
  * ログイン後、予約申込 → 分類（体育館系）→ 種目（バレー）→ 施設全選択 → 検索まで
  * 進め、最初の空き状況グリッドを表示する。
  *
  * ⚠️ 既定日で検索し、以降は {@link collectAvailability} が日送りで前進して集める。
  * 特定日のチェックボックスを打つ codegen の手順は日付依存のため採らない。
+ *
+ * @param opts.diagnose true で各選択ステップの状態を sanitize ダンプする（原因 B 診断・#375）。
  */
-export async function openVolleyballGrid(page: Page): Promise<void> {
+export async function openVolleyballGrid(
+  page: Page,
+  opts: { diagnose?: boolean } = {},
+): Promise<void> {
+  const diag = opts.diagnose
+    ? (label: string) => snapshotSelection(page, label)
+    : async () => undefined;
   step("予約申込");
   await page.getByRole("link", { name: "予約申込", exact: true }).click();
   step("分類を選択（体育館系）");
@@ -78,16 +121,20 @@ export async function openVolleyballGrid(page: Page): Promise<void> {
     .locator('form[name="selBunrui1"]')
     .getByRole("button", { name: "確定" })
     .click();
+  await diag("facility-page (施設全選択の前)");
   step("施設 全選択");
   await page.getByRole("button", { name: "全選択" }).click();
+  await diag("facility-selected (施設全選択の後)");
   step("種目を選択（バレー）");
   await page.locator('select[name="riyosmk"]').selectOption(RIYOSMK_VOLLEYBALL);
   await page
     .locator('form[name="selForm_1"]')
     .getByRole("button", { name: "確定" })
     .click();
+  await diag("room-page (室場全選択の前)");
   step("室場 全選択");
   await page.getByRole("button", { name: "全選択" }).click();
+  await diag("room-selected (室場全選択の後)");
   await page
     .locator('form[name="heyaform"]')
     .getByRole("button", { name: "確定" })
