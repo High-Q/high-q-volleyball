@@ -27,14 +27,6 @@ on:
         options:
           - "false"
           - "true"
-      diagnose:
-        description: "一時診断: crawl せず・LINE 送らず、各日のグリッド構造を sanitize してダンプ（#375 原因切り分け用・通常は false）"
-        required: false
-        default: "false"
-        type: choice
-        options:
-          - "false"
-          - "true"
 
 # 直列化して多重 crawl を避ける（サイトへの politeness）。前実行は完走させる。
 concurrency:
@@ -64,8 +56,6 @@ jobs:
       KOTO_MONITOR_ALL: ${{ github.event.inputs.monitor_all == 'true' && '1' || '' }}
       # 一時検証用: test_line=true なら crawl せず LINE を 1 通だけ送る。
       KOTO_TEST_LINE: ${{ github.event.inputs.test_line == 'true' && '1' || '' }}
-      # 一時診断用: diagnose=true なら crawl せず各日のグリッド構造を sanitize してダンプ（#375）。
-      KOTO_DIAGNOSE: ${{ github.event.inputs.diagnose == 'true' && '1' || '' }}
     steps:
       - uses: actions/checkout@v5
 

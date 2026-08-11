@@ -29,6 +29,6 @@
 
 ## 5. 診断足場の撤去と最終確認
 
-- [ ] 5.1 1.1 の診断モード（一時足場）を撤去し、恒久観測（funnel + 静かな 0 異常化）だけを残す。生 HTML をログに残す経路が本番に残っていないことを確認
-- [ ] 5.2 `pnpm --filter @high-q/court-crawler exec vitest run` を実行し全テスト緑を確認。lint / typecheck も通す
-- [ ] 5.3 修正ブランチを dispatch で実 run し、空き枠が実在する状態でオーナーに LINE 通知が届くことを確認する（`monitor_all` で生の funnel が非 0 になること、通常運用フィルタで監視室場の空きが通知されること）
+- [x] 5.1 診断モード（KOTO_DIAGNOSE / snapshot 群 / onDay フック / workflow diagnose 入力）を全撤去し、恒久観測（funnel + 静かな 0 異常化）だけを残した。生 HTML をログに残す経路が本番に無いこと（`page.content()` は正規クロール読取のみ）を grep で確認
+- [x] 5.2 `pnpm --filter @high-q/court-crawler exec vitest run` で全 63 件緑 / typecheck 緑
+- [ ] 5.3 修正ブランチを dispatch で実 run し、空き枠が実在する状態でオーナーに LINE 通知が届くことを確認する（`monitor_all` で生の funnel が非 0 になること、通常運用フィルタで監視室場の空きが通知されること）。あわせて DSN 実設定の要否を確定

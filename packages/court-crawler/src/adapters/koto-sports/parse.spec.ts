@@ -6,7 +6,6 @@ import {
   parseSelectDate,
   parseReiwaDate,
   hasAvailabilityGrid,
-  diagnoseGridStructure,
 } from "./parse.js";
 import type { AvailabilitySlot } from "../../core/types.js";
 
@@ -175,75 +174,5 @@ describe("parseAvailability（実サイト構造 / #375 回帰）", () => {
 
   it("実構造でも grid ありと判定する（全 tbody 走査）", () => {
     expect(hasAvailabilityGrid(fixture("result-koto-real.html"))).toBe(true);
-  });
-});
-
-describe("diagnoseGridStructure", () => {
-  it("class ヒストグラムと予約画像セル数を集計する（class 変化 vs 描画未完の切り分け）", () => {
-    const d = diagnoseGridStructure(fixture("result-mixed.html"));
-    expect(d.hasGrid).toBe(true);
-    // ok/ng/empty の実出現数（グリッド 3 行 × 3 列）
-    expect(d.classHistogram).toMatchObject({ ok: 4, ng: 4, empty: 1 });
-    // 空きセルは class に依らず予約ボタン画像も持つ（class が消えても検出できる保険）
-    expect(d.reserveImageCells).toBe(4);
-  });
-
-  it("会場行を持つグリッドだけを対象にし、予約カート表は無視する", () => {
-    const d = diagnoseGridStructure(fixture("result-mixed.html"));
-    // 予約リスト(カート)は tbody 空 → 対象外。グリッド表のみ 1 つ。
-    expect(d.tables).toHaveLength(1);
-    expect(d.tables[0]!.rangesParsed).toBe(true);
-    expect(d.tables[0]!.rows.map((r) => r.venueName)).toEqual([
-      "スポーツ会館 大体育室 全面",
-      "スポーツ会館 大体育室 半面",
-      "東砂スポーツセンター 大体育室 半面",
-    ]);
-  });
-
-  it("空きセル（ok）の hasReserveImage が立ち、埋まりセル（ng）は立たない", () => {
-    const d = diagnoseGridStructure(fixture("result-mixed.html"));
-    const hanmen = d.tables[0]!.rows.find(
-      (r) => r.venueName === "スポーツ会館 大体育室 半面",
-    )!;
-    // 半面: [ok, ng, ok] → 予約画像は 0,2 に立ち 1 は立たない
-    expect(hanmen.cells.map((c) => c.hasReserveImage)).toEqual([
-      true,
-      false,
-      true,
-    ]);
-    expect(hanmen.cells.map((c) => c.classes.includes("ok"))).toEqual([
-      true,
-      false,
-      true,
-    ]);
-  });
-
-  it("全埋まりでは ok が 0・予約画像も 0（『空き無し』の正しい像）", () => {
-    const d = diagnoseGridStructure(fixture("result-all-full.html"));
-    expect(d.classHistogram.ok ?? 0).toBe(0);
-    expect(d.reserveImageCells).toBe(0);
-    expect(d.classHistogram.ng).toBe(5);
-  });
-
-  it("slotDate は明示指定を優先し、無ければ HTML から解決する", () => {
-    expect(
-      diagnoseGridStructure(fixture("result-mixed.html"), "2026-08-11").slotDate,
-    ).toBe("2026-08-11");
-    // selectdate hidden から解決（fixture は 20260808）
-    expect(diagnoseGridStructure(fixture("result-mixed.html")).slotDate).toBe(
-      "2026-08-08",
-    );
-  });
-
-  it("HTML 全文は保持しない（構造像のみ・PII 混入防止）", () => {
-    const d = diagnoseGridStructure(fixture("result-mixed.html"));
-    // セルテキストは短縮済みで、記号のみ想定（長い生テキストを持たない）
-    for (const t of d.tables) {
-      for (const row of t.rows) {
-        for (const cell of row.cells) {
-          expect(cell.text.length).toBeLessThanOrEqual(13);
-        }
-      }
-    }
   });
 });

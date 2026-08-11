@@ -61,114 +61,13 @@ export async function login(page: Page, cred: KotoCredentials): Promise<void> {
 }
 
 /**
- * 選択ページの状態を sanitize してダンプする（原因 B 診断・#375）。
- * 「全選択」がどのステップで落ちているかを、チェックボックスの総数/選択数と
- * 施設・室場名（PII なし）で観測する。認証情報・セッション ID は含めない。
- */
-async function snapshotSelection(page: Page, label: string): Promise<void> {
-  // evaluate はブラウザ側で走る。tsx/esbuild が関数へ注入する __name ヘルパーが
-  // ブラウザに無く ReferenceError になるため、関数ではなく文字列式を渡す。
-  const snap = await page.evaluate(`(() => {
-    const short = (t) => (t == null ? "" : String(t)).replace(/\\s+/g, " ").trim().slice(0, 24);
-    const boxes = Array.from(document.querySelectorAll('input[type="checkbox"]')).map((cb) => ({
-      value: short(cb.value),
-      checked: !!cb.checked,
-      label: short(cb.parentElement && cb.parentElement.textContent),
-    }));
-    const selects = Array.from(document.querySelectorAll('select')).map((sel) => ({
-      name: String(sel.name),
-      optionCount: sel.options.length,
-      selected: Array.from(sel.selectedOptions).map((o) => short(o.text)),
-    }));
-    return {
-      checkboxTotal: boxes.length,
-      checkboxChecked: boxes.filter((b) => b.checked).length,
-      boxes: boxes.slice(0, 30),
-      selects,
-    };
-  })()`);
-  console.log(`[court-crawler] diag-sel ${label}`, JSON.stringify(snap));
-}
-
-/**
- * 結果ページのナビゲーション構造を sanitize してダンプする（原因 B 診断・#375）。
- * 室場ごとにページ分割されている場合の「室場切替」導線（リンク / select / ボタン）を探す。
- */
-export async function snapshotResultNav(page: Page): Promise<void> {
-  const snap = await page.evaluate(`(() => {
-    const short = (t) => (t == null ? "" : String(t)).replace(/\\s+/g, " ").trim().slice(0, 40);
-    const links = Array.from(document.querySelectorAll('a')).map((a) => ({
-      text: short(a.textContent),
-      onclick: !!a.getAttribute('onclick'),
-      href: short(a.getAttribute('href')),
-    })).filter((l) => l.text || l.onclick);
-    const inputs = Array.from(document.querySelectorAll('input[type="button"],input[type="submit"],input[type="image"],button')).map((b) => ({
-      value: short(b.value || b.textContent),
-      title: short(b.getAttribute('title')),
-      name: short(b.getAttribute('name')),
-    }));
-    const selects = Array.from(document.querySelectorAll('select')).map((sel) => ({
-      name: String(sel.name), optionCount: sel.options.length,
-      selected: Array.from(sel.selectedOptions).map((o) => short(o.text)),
-    }));
-    const tables = Array.from(document.querySelectorAll('table')).map((t) => ({
-      id: short(t.getAttribute('id')),
-      cls: short(t.getAttribute('class')),
-      rows: t.querySelectorAll('tbody tr').length,
-    }));
-    return { links: links.slice(0, 60), inputs: inputs.slice(0, 40), selects, tables: tables.slice(0, 20) };
-  })()`);
-  console.log("[court-crawler] diag-nav", JSON.stringify(snap));
-}
-
-/**
- * 空き状況グリッドのタグ骨格だけを sanitize してダンプする（原因 B 診断・#375）。
- * テキストと属性値を除去し、タグ名 + class/id + 予約画像有無だけを残すので PII は含まない。
- * ブラウザ DOM とパーサで行数の見え方が食い違う原因（ネスト構造）を突き止める。
- */
-export async function snapshotGridSkeleton(page: Page): Promise<void> {
-  const skeleton = await page.evaluate(`(() => {
-    const pick = (el) => {
-      const tag = el.tagName.toLowerCase();
-      if (tag === 'img' || (tag === 'input' && el.getAttribute('type') === 'image')) {
-        const src = (el.getAttribute('src') || '').split('/').pop() || '';
-        return '<img ' + src + '>';
-      }
-      const cls = el.getAttribute('class');
-      const id = el.getAttribute('id');
-      let head = tag;
-      if (id) head += '#' + id;
-      if (cls) head += '.' + cls.replace(/\\s+/g, '.');
-      const kids = Array.from(el.children).map(pick).join('');
-      // テキストは出さない。子が無い要素は自己完結タグに。
-      return kids ? '<' + head + '>' + kids + '</' + tag + '>' : '<' + head + '/>';
-    };
-    const tables = Array.from(document.querySelectorAll('table'));
-    // 時間帯 thead を持つ最初のグリッド表を選ぶ（無ければ最大の表）。
-    const grid = tables.find((t) => /\\d{1,2}:\\d{2}/.test(t.querySelector('thead') ? t.querySelector('thead').textContent : ''))
-      || tables.sort((a,b)=>b.querySelectorAll('tr').length - a.querySelectorAll('tr').length)[0];
-    if (!grid) return 'NO_TABLE';
-    return pick(grid).slice(0, 6000);
-  })()`);
-  console.log("[court-crawler] diag-skeleton", JSON.stringify({ skeleton }));
-}
-
-/**
  * ログイン後、予約申込 → 分類（体育館系）→ 種目（バレー）→ 施設全選択 → 検索まで
  * 進め、最初の空き状況グリッドを表示する。
  *
  * ⚠️ 既定日で検索し、以降は {@link collectAvailability} が日送りで前進して集める。
  * 特定日のチェックボックスを打つ codegen の手順は日付依存のため採らない。
- *
- * @param opts.diagnose true で各選択ステップの状態を sanitize ダンプする（原因 B 診断・#375）。
  */
-export async function openVolleyballGrid(
-  page: Page,
-  opts: { diagnose?: boolean } = {},
-): Promise<void> {
-  const diag = opts.diagnose
-    ? (label: string) => snapshotSelection(page, label)
-    : async () => undefined;
+export async function openVolleyballGrid(page: Page): Promise<void> {
   step("予約申込");
   await page.getByRole("link", { name: "予約申込", exact: true }).click();
   step("分類を選択（体育館系）");
@@ -179,20 +78,16 @@ export async function openVolleyballGrid(
     .locator('form[name="selBunrui1"]')
     .getByRole("button", { name: "確定" })
     .click();
-  await diag("facility-page (施設全選択の前)");
   step("施設 全選択");
   await page.getByRole("button", { name: "全選択" }).click();
-  await diag("facility-selected (施設全選択の後)");
   step("種目を選択（バレー）");
   await page.locator('select[name="riyosmk"]').selectOption(RIYOSMK_VOLLEYBALL);
   await page
     .locator('form[name="selForm_1"]')
     .getByRole("button", { name: "確定" })
     .click();
-  await diag("room-page (室場全選択の前)");
   step("室場 全選択");
   await page.getByRole("button", { name: "全選択" }).click();
-  await diag("room-selected (室場全選択の後)");
   await page
     .locator('form[name="heyaform"]')
     .getByRole("button", { name: "確定" })
@@ -227,11 +122,6 @@ export interface CollectOptions {
   maxDays?: number;
   /** 日送りクリック間の待機（ms・politeness）。既定 1000。 */
   stepDelayMs?: number;
-  /**
-   * 各日について、パースが読むのと同じ HTML をそのまま観測するフック（診断用）。
-   * 通常運用では未指定。診断モードが sanitize 済み構造ダンプに使う。
-   */
-  onDay?: (html: string, slotDate: string) => void;
 }
 
 export interface CollectResult {
@@ -266,7 +156,6 @@ export async function collectAvailability(
     if (!slotDate || seen.has(slotDate)) break;
     seen.add(slotDate);
     if (hasAvailabilityGrid(html)) gridDays++;
-    opts.onDay?.(html, slotDate);
     slots.push(...parseAvailability(html, { slotDate, reserveUrl }));
 
     // 日送りは「次へ」リンク（#rightbutton は display:none で使えない）。

@@ -10,12 +10,9 @@ import {
   KOTO_BASE_URL,
   KOTO_FACILITY,
   collectAvailability,
-  diagnoseGridStructure,
   isMonitoredVenue,
   login,
   openVolleyballGrid,
-  snapshotGridSkeleton,
-  snapshotResultNav,
 } from "../adapters/koto-sports/index.js";
 import { isJapaneseHoliday } from "../adapters/koto-sports/holidays.js";
 import { createSupabaseNotifiedStore } from "../store/supabase-store.js";
@@ -77,44 +74,6 @@ async function launchContextPage(): Promise<{ browser: Browser; page: Page }> {
 }
 
 /**
- * 一時診断モード（KOTO_DIAGNOSE=1）: crawl せず・LINE 送らず・ストア更新もせず、
- * 各日のグリッド構造を sanitize してダンプする（原因切り分け専用の足場・#375）。
- * パースが読むのと同じ HTML を観測し、class 変化か描画未完（タイミング）かを見分ける。
- */
-async function runDiagnostics(credentials: {
-  userId: string;
-  password: string;
-}): Promise<void> {
-  const maxDays = numEnv("KOTO_MAX_DAYS", 60);
-  const { browser, page } = await launchContextPage();
-  try {
-    await login(page, credentials);
-    await openVolleyballGrid(page, { diagnose: true });
-    await snapshotResultNav(page);
-    await snapshotGridSkeleton(page);
-    let days = 0;
-    await collectAvailability(page, {
-      reserveUrl: KOTO_BASE_URL,
-      maxDays,
-      stepDelayMs: effectiveRequestIntervalMs(),
-      onDay: (html, slotDate) => {
-        days++;
-        console.log(
-          "[court-crawler] diagnose",
-          JSON.stringify(diagnoseGridStructure(html, slotDate)),
-        );
-      },
-    });
-    console.log("[court-crawler] diagnose done", JSON.stringify({ days }));
-  } catch (e) {
-    await dumpControls(page).catch(() => undefined);
-    throw e;
-  } finally {
-    await browser.close();
-  }
-}
-
-/**
  * 空き検知 funnel を GitHub Actions の job summary に出す（DSN 未設定でも run 一覧で
  * どの段階で 0 件に落ちたか追える）。GITHUB_STEP_SUMMARY 未設定のローカルでは何もしない。
  */
@@ -151,13 +110,6 @@ async function main(): Promise<void> {
     userId: requireEnv("KOTO_USER_ID"),
     password: requireEnv("KOTO_PASSWORD"),
   };
-
-  // 一時診断（#375）: 資格情報だけで走り、LINE / ストアの秘密は要求しない。
-  if (process.env.KOTO_DIAGNOSE) {
-    await runDiagnostics(credentials);
-    await flushSentry();
-    return;
-  }
 
   const lineConfig = {
     channelToken: requireEnv("KOTO_LINE_CHANNEL_TOKEN"),
