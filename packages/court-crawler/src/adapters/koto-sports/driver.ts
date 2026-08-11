@@ -121,6 +121,11 @@ export interface CollectOptions {
   maxDays?: number;
   /** 日送りクリック間の待機（ms・politeness）。既定 1000。 */
   stepDelayMs?: number;
+  /**
+   * 各日について、パースが読むのと同じ HTML をそのまま観測するフック（診断用）。
+   * 通常運用では未指定。診断モードが sanitize 済み構造ダンプに使う。
+   */
+  onDay?: (html: string, slotDate: string) => void;
 }
 
 export interface CollectResult {
@@ -155,6 +160,7 @@ export async function collectAvailability(
     if (!slotDate || seen.has(slotDate)) break;
     seen.add(slotDate);
     if (hasAvailabilityGrid(html)) gridDays++;
+    opts.onDay?.(html, slotDate);
     slots.push(...parseAvailability(html, { slotDate, reserveUrl }));
 
     // 日送りは「次へ」リンク（#rightbutton は display:none で使えない）。

@@ -3,12 +3,13 @@
  * GitHub Actions（schedule）から `tsx src/run/koto.ts` で実行する。
  * 秘密は環境変数（GitHub Secrets）から読み、コード・ログに出さない。
  */
-import { chromium, type Page } from "playwright";
+import { chromium, type Browser, type Page } from "playwright";
 import { runCrawl } from "./crawl.js";
 import {
   KOTO_BASE_URL,
   KOTO_FACILITY,
   collectAvailability,
+  diagnoseGridStructure,
   isMonitoredVenue,
   login,
   openVolleyballGrid,
@@ -52,6 +53,62 @@ async function dumpControls(page: Page): Promise<void> {
   console.error("[court-crawler] diag links:", JSON.stringify(clean(links)));
 }
 
+/** 実ブラウザに近い context（headless・自動化検知の回避）。crawl / 診断で共通に使う。 */
+const CONTEXT_OPTIONS = {
+  locale: "ja-JP",
+  timezoneId: "Asia/Tokyo",
+  userAgent:
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  extraHTTPHeaders: { "Accept-Language": "ja,en-US;q=0.9,en;q=0.8" },
+} as const;
+
+/** browser を起動し、本番と同じ context / page を返す（診断と本番の環境差を作らない）。 */
+async function launchContextPage(): Promise<{ browser: Browser; page: Page }> {
+  const browser = await chromium.launch({
+    headless: !process.env.KOTO_HEADFUL,
+    args: ["--disable-blink-features=AutomationControlled"],
+  });
+  const context = await browser.newContext(CONTEXT_OPTIONS);
+  const page = await context.newPage();
+  return { browser, page };
+}
+
+/**
+ * 一時診断モード（KOTO_DIAGNOSE=1）: crawl せず・LINE 送らず・ストア更新もせず、
+ * 各日のグリッド構造を sanitize してダンプする（原因切り分け専用の足場・#375）。
+ * パースが読むのと同じ HTML を観測し、class 変化か描画未完（タイミング）かを見分ける。
+ */
+async function runDiagnostics(credentials: {
+  userId: string;
+  password: string;
+}): Promise<void> {
+  const maxDays = numEnv("KOTO_MAX_DAYS", 60);
+  const { browser, page } = await launchContextPage();
+  try {
+    await login(page, credentials);
+    await openVolleyballGrid(page);
+    let days = 0;
+    await collectAvailability(page, {
+      reserveUrl: KOTO_BASE_URL,
+      maxDays,
+      stepDelayMs: effectiveRequestIntervalMs(),
+      onDay: (html, slotDate) => {
+        days++;
+        console.log(
+          "[court-crawler] diagnose",
+          JSON.stringify(diagnoseGridStructure(html, slotDate)),
+        );
+      },
+    });
+    console.log("[court-crawler] diagnose done", JSON.stringify({ days }));
+  } catch (e) {
+    await dumpControls(page).catch(() => undefined);
+    throw e;
+  } finally {
+    await browser.close();
+  }
+}
+
 async function main(): Promise<void> {
   const reporter = createSentryReporter(process.env.KOTO_SENTRY_DSN);
 
@@ -59,6 +116,14 @@ async function main(): Promise<void> {
     userId: requireEnv("KOTO_USER_ID"),
     password: requireEnv("KOTO_PASSWORD"),
   };
+
+  // 一時診断（#375）: 資格情報だけで走り、LINE / ストアの秘密は要求しない。
+  if (process.env.KOTO_DIAGNOSE) {
+    await runDiagnostics(credentials);
+    await flushSentry();
+    return;
+  }
+
   const lineConfig = {
     channelToken: requireEnv("KOTO_LINE_CHANNEL_TOKEN"),
     toUserId: requireEnv("KOTO_LINE_TO_USER_ID"),
@@ -87,20 +152,8 @@ async function main(): Promise<void> {
   const monitorAll = !!process.env.KOTO_MONITOR_ALL;
 
   // ローカル動作確認用: KOTO_HEADFUL=1 でブラウザを表示して遷移を目視できる。
-  const browser = await chromium.launch({
-    headless: !process.env.KOTO_HEADFUL,
-    args: ["--disable-blink-features=AutomationControlled"],
-  });
+  const { browser, page } = await launchContextPage();
   try {
-    // 実ブラウザに近い UA / 日本語ロケール / JST を付ける（headless・自動化検知の回避）。
-    const context = await browser.newContext({
-      locale: "ja-JP",
-      timezoneId: "Asia/Tokyo",
-      userAgent:
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      extraHTTPHeaders: { "Accept-Language": "ja,en-US;q=0.9,en;q=0.8" },
-    });
-    const page = await context.newPage();
     const summary = await runCrawl({
       facility: KOTO_FACILITY,
       collect: async () => {
