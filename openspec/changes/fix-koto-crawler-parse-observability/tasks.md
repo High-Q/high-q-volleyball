@@ -22,10 +22,10 @@
 
 ## 4. 観測性（空き検知 funnel と静かな 0 の異常化）
 
-- [ ] 4.1 crawl 結果サマリ（`CrawlSummary` / `collect` 戻り値）に段階ごとの件数を追加する: 読めたグリッド日数 / 絞り込み前の生の空き枠数 / 監視室場フィルタ後 / 土日祝・リードタイム絞り込み後（通知候補）/ 新規通知数 / 記録解除数（`crawl.ts` / `driver.ts` の `CollectResult`）
-- [ ] 4.2 funnel を GitHub Actions のログと job summary（`court-crawler-koto.yml`）に出力し、DSN 未設定でも run 一覧でどの段で 0 に落ちたか追えるようにする
-- [ ] 4.3 「読めたグリッド日数 > 0 かつ 生の空き枠数 = 0」を単一 run の異常として reporter に送る（グリッド 0 件の既存失敗とは文言・context で区別。`crawl.ts` + `failure.ts` / `sentry-reporter.ts`）。単一 run raw-0 を異常化する回帰テストを追加
-- [ ] 4.4 Sentry 送出先（`KOTO_SENTRY_DSN`）設定の要否を運用手順として明記する（設定するかは翔太郎くんの判断を仰ぎ、決定に沿って docs / workflow コメントを更新）
+- [x] 4.1 crawl 結果サマリ（`CrawlSummary`）に funnel を追加した: 読めたグリッド日数 / 生の空き枠数 / 監視室場フィルタ後 / 通知候補 / 新規通知 / 記録解除
+- [x] 4.2 funnel を GitHub Actions ログ（`[court-crawler] summary`）と job summary（`writeJobSummary` → `$GITHUB_STEP_SUMMARY`）に出力。DSN 未設定でも run 一覧で段階別件数と「生 0 件」警告が見える
+- [x] 4.3 「グリッド > 0 かつ 生の空き枠 = 0」を parse_empty 異常として reporter に送る（既存のグリッド 0 件とは文言・context `scannedDays` で区別）。回帰テスト（静かな 0 検知 / funnel 件数）を追加（crawl.spec 9 件緑）
+- [x] 4.4 workflow に DSN 設定推奨と funnel/job-summary フォールバックを明記。DSN 実設定の要否は最終確認で翔太郎くんに確認（5.3）
 
 ## 5. 診断足場の撤去と最終確認
 
