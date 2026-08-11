@@ -91,6 +91,37 @@ async function snapshotSelection(page: Page, label: string): Promise<void> {
 }
 
 /**
+ * 結果ページのナビゲーション構造を sanitize してダンプする（原因 B 診断・#375）。
+ * 室場ごとにページ分割されている場合の「室場切替」導線（リンク / select / ボタン）を探す。
+ */
+export async function snapshotResultNav(page: Page): Promise<void> {
+  const snap = await page.evaluate(`(() => {
+    const short = (t) => (t == null ? "" : String(t)).replace(/\\s+/g, " ").trim().slice(0, 40);
+    const links = Array.from(document.querySelectorAll('a')).map((a) => ({
+      text: short(a.textContent),
+      onclick: !!a.getAttribute('onclick'),
+      href: short(a.getAttribute('href')),
+    })).filter((l) => l.text || l.onclick);
+    const inputs = Array.from(document.querySelectorAll('input[type="button"],input[type="submit"],input[type="image"],button')).map((b) => ({
+      value: short(b.value || b.textContent),
+      title: short(b.getAttribute('title')),
+      name: short(b.getAttribute('name')),
+    }));
+    const selects = Array.from(document.querySelectorAll('select')).map((sel) => ({
+      name: String(sel.name), optionCount: sel.options.length,
+      selected: Array.from(sel.selectedOptions).map((o) => short(o.text)),
+    }));
+    const tables = Array.from(document.querySelectorAll('table')).map((t) => ({
+      id: short(t.getAttribute('id')),
+      cls: short(t.getAttribute('class')),
+      rows: t.querySelectorAll('tbody tr').length,
+    }));
+    return { links: links.slice(0, 60), inputs: inputs.slice(0, 40), selects, tables: tables.slice(0, 20) };
+  })()`);
+  console.log("[court-crawler] diag-nav", JSON.stringify(snap));
+}
+
+/**
  * ログイン後、予約申込 → 分類（体育館系）→ 種目（バレー）→ 施設全選択 → 検索まで
  * 進め、最初の空き状況グリッドを表示する。
  *

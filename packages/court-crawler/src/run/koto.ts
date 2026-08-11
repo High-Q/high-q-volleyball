@@ -13,6 +13,7 @@ import {
   isMonitoredVenue,
   login,
   openVolleyballGrid,
+  snapshotResultNav,
 } from "../adapters/koto-sports/index.js";
 import { isJapaneseHoliday } from "../adapters/koto-sports/holidays.js";
 import { createSupabaseNotifiedStore } from "../store/supabase-store.js";
@@ -87,6 +88,7 @@ async function runDiagnostics(credentials: {
   try {
     await login(page, credentials);
     await openVolleyballGrid(page, { diagnose: true });
+    await snapshotResultNav(page);
     let days = 0;
     await collectAvailability(page, {
       reserveUrl: KOTO_BASE_URL,
