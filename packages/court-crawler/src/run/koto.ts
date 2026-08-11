@@ -13,6 +13,7 @@ import {
   isMonitoredVenue,
   login,
   openVolleyballGrid,
+  snapshotGridSkeleton,
   snapshotResultNav,
 } from "../adapters/koto-sports/index.js";
 import { isJapaneseHoliday } from "../adapters/koto-sports/holidays.js";
@@ -89,6 +90,7 @@ async function runDiagnostics(credentials: {
     await login(page, credentials);
     await openVolleyballGrid(page, { diagnose: true });
     await snapshotResultNav(page);
+    await snapshotGridSkeleton(page);
     let days = 0;
     await collectAvailability(page, {
       reserveUrl: KOTO_BASE_URL,

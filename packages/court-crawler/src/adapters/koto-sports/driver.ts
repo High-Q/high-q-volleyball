@@ -122,6 +122,38 @@ export async function snapshotResultNav(page: Page): Promise<void> {
 }
 
 /**
+ * 空き状況グリッドのタグ骨格だけを sanitize してダンプする（原因 B 診断・#375）。
+ * テキストと属性値を除去し、タグ名 + class/id + 予約画像有無だけを残すので PII は含まない。
+ * ブラウザ DOM とパーサで行数の見え方が食い違う原因（ネスト構造）を突き止める。
+ */
+export async function snapshotGridSkeleton(page: Page): Promise<void> {
+  const skeleton = await page.evaluate(`(() => {
+    const pick = (el) => {
+      const tag = el.tagName.toLowerCase();
+      if (tag === 'img' || (tag === 'input' && el.getAttribute('type') === 'image')) {
+        const src = (el.getAttribute('src') || '').split('/').pop() || '';
+        return '<img ' + src + '>';
+      }
+      const cls = el.getAttribute('class');
+      const id = el.getAttribute('id');
+      let head = tag;
+      if (id) head += '#' + id;
+      if (cls) head += '.' + cls.replace(/\\s+/g, '.');
+      const kids = Array.from(el.children).map(pick).join('');
+      // テキストは出さない。子が無い要素は自己完結タグに。
+      return kids ? '<' + head + '>' + kids + '</' + tag + '>' : '<' + head + '/>';
+    };
+    const tables = Array.from(document.querySelectorAll('table'));
+    // 時間帯 thead を持つ最初のグリッド表を選ぶ（無ければ最大の表）。
+    const grid = tables.find((t) => /\\d{1,2}:\\d{2}/.test(t.querySelector('thead') ? t.querySelector('thead').textContent : ''))
+      || tables.sort((a,b)=>b.querySelectorAll('tr').length - a.querySelectorAll('tr').length)[0];
+    if (!grid) return 'NO_TABLE';
+    return pick(grid).slice(0, 6000);
+  })()`);
+  console.log("[court-crawler] diag-skeleton", JSON.stringify({ skeleton }));
+}
+
+/**
  * ログイン後、予約申込 → 分類（体育館系）→ 種目（バレー）→ 施設全選択 → 検索まで
  * 進め、最初の空き状況グリッドを表示する。
  *
