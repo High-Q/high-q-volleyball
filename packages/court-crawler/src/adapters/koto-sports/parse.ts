@@ -147,6 +147,17 @@ export interface RowDiagnostic {
   cells: CellDiagnostic[];
 }
 
+/** tbody の 1 行を、会場名 th の有無に依らず生の構造で観測する（原因 B 診断）。 */
+export interface RawRowDiagnostic {
+  /** 行頭セルのタグ（th/td）。 */
+  firstTag: string;
+  /** 行頭セルの短縮テキスト（会場名がここに無い場合を見抜く）。 */
+  firstText: string;
+  cellCount: number;
+  /** 各セルの「タグ:class(予約画像なら *)」の要約。 */
+  cells: string[];
+}
+
 export interface TableDiagnostic {
   /** thead の th テキスト（時間帯見出し）。 */
   timeHeaders: string[];
@@ -154,6 +165,8 @@ export interface TableDiagnostic {
   rangesParsed: boolean;
   rowCount: number;
   rows: RowDiagnostic[];
+  /** tbody 全行の生構造（会場名 th を持たない行も含む・最大 20 行）。 */
+  allRows: RawRowDiagnostic[];
 }
 
 /**
@@ -221,8 +234,24 @@ export function diagnoseGridStructure(
       rows.push({ venueName, cellCount: tds.length, cells });
     }
 
-    // 会場行を 1 つも持たない表（予約カート等）は診断対象外。
-    if (rows.length === 0) continue;
+    // tbody 全行の生構造（会場名 th を持つ行に限らない）。原因 B の切り分け用。
+    const allRows: RawRowDiagnostic[] = bodyRows.slice(0, 20).map((row) => {
+      const cells = row.querySelectorAll("th, td");
+      const first = cells[0];
+      return {
+        firstTag: first ? first.rawTagName : "",
+        firstText: first ? shortText(first.text) : "",
+        cellCount: cells.length,
+        cells: cells.slice(0, 12).map((c) => {
+          const cls = (c.getAttribute("class") ?? "").trim();
+          const mark = hasReserveImage(c) ? "*" : "";
+          return `${c.rawTagName}:${cls}${mark}`;
+        }),
+      };
+    });
+
+    // 会場行を 1 つも持たない、かつ生行も無い表（予約カート等）は診断対象外。
+    if (rows.length === 0 && allRows.every((r) => r.cellCount <= 1)) continue;
 
     const thead = table.querySelector("thead");
     const timeHeaders = thead
@@ -233,6 +262,7 @@ export function diagnoseGridStructure(
       rangesParsed: availabilityRanges(table) !== null,
       rowCount: rows.length,
       rows,
+      allRows,
     });
   }
 
