@@ -124,6 +124,40 @@ describe("runCrawl", () => {
     expect(notify).not.toHaveBeenCalled();
   });
 
+  it("グリッドは取れるが生の空き 0 件なら parse_empty を報告する（静かな 0 の検知）", async () => {
+    const reporter = { capture: vi.fn() };
+    const res = await runCrawl(
+      baseDeps({ reporter, collect: async () => ({ slots: [], gridDays: 39 }) }),
+    );
+    expect(reporter.capture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "parse_empty",
+        context: expect.objectContaining({ scannedDays: 39 }),
+      }),
+    );
+    expect(res.scannedDays).toBe(39);
+    expect(res.rawSlots).toBe(0);
+  });
+
+  it("funnel（生 / 監視後 / 通知候補）の件数をサマリに載せる", async () => {
+    const res = await runCrawl(
+      baseDeps({
+        venueFilter: (v) => v.includes("半面"),
+        collect: async () => ({
+          slots: [
+            slot({ venueName: "スポーツ会館 大体育室 半面" }), // 監視対象・土日祝 → 通知候補
+            slot({ venueName: "スポーツ会館 大体育室 全面" }), // 監視外
+          ],
+          gridDays: 5,
+        }),
+      }),
+    );
+    expect(res.scannedDays).toBe(5);
+    expect(res.rawSlots).toBe(2);
+    expect(res.monitoredSlots).toBe(1);
+    expect(res.targetSlots).toBe(1);
+  });
+
   it("collect が例外なら unreachable を報告する", async () => {
     const reporter = { capture: vi.fn() };
     await runCrawl(

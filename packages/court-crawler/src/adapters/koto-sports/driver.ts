@@ -106,8 +106,9 @@ export async function openVolleyballGrid(page: Page): Promise<void> {
   await page.getByRole("button", { name: "検索" }).click();
   await page.waitForLoadState("networkidle").catch(() => undefined);
   // グリッド確定（空き状況セルが描画される）まで待ってから読み取りに入る。
+  // 空きセルは class を持たず予約画像だけなので、埋まり/対象外 class に加えて予約画像も待つ。
   await page
-    .locator("td.ok, td.ng, td.empty")
+    .locator('td.ng, td.empty, input[src*="timetable-o.gif"]')
     .first()
     .waitFor({ state: "attached", timeout: 15000 })
     .catch(() => undefined);

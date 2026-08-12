@@ -78,11 +78,11 @@ export function hasAvailabilityGrid(html: string): boolean {
   const root = parse(html);
   for (const table of root.querySelectorAll("table")) {
     if (!availabilityRanges(table)) continue;
-    const tbody = table.querySelector("tbody");
-    if (!tbody) continue;
-    for (const row of tbody.querySelectorAll("tr")) {
-      const head = row.querySelector("th");
-      if (head && extractVenueName(head)) return true;
+    for (const tbody of table.querySelectorAll("tbody")) {
+      for (const row of tbody.querySelectorAll("tr")) {
+        const head = row.querySelector("th");
+        if (head && extractVenueName(head)) return true;
+      }
     }
   }
   return false;
@@ -117,12 +117,32 @@ export function parseReiwaDate(html: string): string | null {
   return `${year}-${mm}-${dd}`;
 }
 
+/** セル内に予約導線（空きに現れる予約ボタン画像）があるか。 */
+function hasReserveImage(cell: HTMLElement): boolean {
+  for (const el of cell.querySelectorAll("[src]")) {
+    if ((el.getAttribute("src") ?? "").includes("timetable-o.gif")) return true;
+  }
+  return false;
+}
+
 /**
- * 空き状況グリッド HTML から空き枠（`class="ok"` のセル）を抽出する。
+ * セルが「空き」か。実サイトは空きセルに class を付けなくなり（旧 `ok` は消滅）、
+ * 予約ボタン画像（`timetable-o.gif`）だけで空きを表す。埋まりは `ng`、対象外は `empty`。
+ * class 依存に戻すと再び静かに 0 件化するため、予約導線を主シグナルにする（旧 `ok` も後方互換で許容）。
+ */
+function isAvailableCell(cell: HTMLElement): boolean {
+  const classes = (cell.getAttribute("class") ?? "").split(/\s+/);
+  if (classes.includes("ng") || classes.includes("empty")) return false;
+  return hasReserveImage(cell) || classes.includes("ok");
+}
+
+/**
+ * 空き状況グリッド HTML から空き枠（予約導線のあるセル）を抽出する。
  *
- * グリッドは「列 = 時間帯（thead の th）/ 行 = 施設・室場（tbody 行頭の th）/
- * セル = 空き状況（td, class ok|ng|empty）」の構造。thead の各 th から時間帯を、
- * tbody の各行から会場名を取り、`ok` セルの列位置を時間帯に対応づけて枠を作る。
+ * グリッドは「列 = 時間帯（thead の th）/ 行 = 施設・室場（室場ごとの tbody 行頭 th）/
+ * セル = 空き状況（td）」の構造。空きは予約導線（{@link isAvailableCell}）で判定し、
+ * 埋まりは `ng`・対象外は `empty`。thead の各 th から時間帯を、各行から会場名を取り、
+ * 空きセルの列位置を時間帯に対応づけて枠を作る。室場ごとに tbody が分かれるため全 tbody を走査する。
  *
  * 監視対象（大体育室 半面のみ 等）への絞り込みはアダプタ結線側の責務とし、
  * ここでは見つかった空き枠をすべて返す純粋関数に徹する。
@@ -139,29 +159,30 @@ export function parseAvailability(
   for (const table of root.querySelectorAll("table")) {
     const ranges = availabilityRanges(table);
     if (!ranges) continue;
-    const tbody = table.querySelector("tbody");
-    if (!tbody) continue;
 
-    for (const row of tbody.querySelectorAll("tr")) {
-      const head = row.querySelector("th");
-      if (!head) continue;
-      const venueName = extractVenueName(head);
-      if (!venueName) continue;
+    // グリッドは「1 テーブル × 室場ごとの tbody」構造。最初の tbody だけでなく
+    // 全 tbody を走査しないと 1 室場しか拾えない（実サイトは施設×室場で 13 tbody）。
+    for (const tbody of table.querySelectorAll("tbody")) {
+      for (const row of tbody.querySelectorAll("tr")) {
+        const head = row.querySelector("th");
+        if (!head) continue;
+        const venueName = extractVenueName(head);
+        if (!venueName) continue;
 
-      row.querySelectorAll("td").forEach((cell, i) => {
-        const cls = (cell.getAttribute("class") ?? "").split(/\s+/);
-        if (!cls.includes("ok")) return;
-        const range = ranges[i];
-        if (!range) return;
-        slots.push({
-          facility,
-          venueName,
-          slotDate: opts.slotDate,
-          startAt: `${opts.slotDate}T${range.start}:00+09:00`,
-          endAt: `${opts.slotDate}T${range.end}:00+09:00`,
-          reserveUrl: opts.reserveUrl,
+        row.querySelectorAll("td").forEach((cell, i) => {
+          if (!isAvailableCell(cell)) return;
+          const range = ranges[i];
+          if (!range) return;
+          slots.push({
+            facility,
+            venueName,
+            slotDate: opts.slotDate,
+            startAt: `${opts.slotDate}T${range.start}:00+09:00`,
+            endAt: `${opts.slotDate}T${range.end}:00+09:00`,
+            reserveUrl: opts.reserveUrl,
+          });
         });
-      });
+      }
     }
   }
 

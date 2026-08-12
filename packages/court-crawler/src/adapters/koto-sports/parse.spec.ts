@@ -122,3 +122,57 @@ describe("parseAvailability", () => {
     );
   });
 });
+
+describe("parseAvailability（実サイト構造 / #375 回帰）", () => {
+  const REAL_OPTS = {
+    slotDate: "2026-08-11",
+    reserveUrl: "https://yoyaku.koto-sports.net/",
+  };
+
+  it("複数 tbody（室場ごと）を全走査し、1 室場で打ち切らない（原因 B）", () => {
+    const slots = parseAvailability(fixture("result-koto-real.html"), REAL_OPTS);
+    const venues = new Set(slots.map((s) => s.venueName));
+    // スポーツ会館 半面(09:00) と 東砂 半面(18:00) の 2 室場から検出できること
+    expect(venues).toContain("スポーツ会館 大体育室 半面");
+    expect(venues).toContain("東砂スポーツセンター 大体育室 半面");
+  });
+
+  it("class なし + 予約画像のセルを空きとして拾う（原因 A: ok class 消滅）", () => {
+    const slots = parseAvailability(fixture("result-koto-real.html"), REAL_OPTS);
+    // ground truth: 東砂 半面 18:00-21:30 が空きとして出ること
+    const azuma = slots.find(
+      (s) => s.venueName === "東砂スポーツセンター 大体育室 半面",
+    );
+    expect(azuma).toEqual<AvailabilitySlot>({
+      facility: "koto-sports",
+      venueName: "東砂スポーツセンター 大体育室 半面",
+      slotDate: "2026-08-11",
+      startAt: "2026-08-11T18:00:00+09:00",
+      endAt: "2026-08-11T21:30:00+09:00",
+      reserveUrl: "https://yoyaku.koto-sports.net/",
+    });
+  });
+
+  it("埋まり(ng)・対象外(empty)は拾わず、空きだけを返す", () => {
+    const slots = parseAvailability(fixture("result-koto-real.html"), REAL_OPTS);
+    // 全埋まりのスポーツ会館 全面は 0 件、空きは計 2 件（会館 半面 09:00 / 東砂 半面 18:00）
+    expect(slots.map((s) => s.venueName)).not.toContain(
+      "スポーツ会館 大体育室 全面",
+    );
+    expect(slots).toHaveLength(2);
+  });
+
+  it("hidden input を挟んでも td 列と時間帯の対応がずれない", () => {
+    const slots = parseAvailability(fixture("result-koto-real.html"), REAL_OPTS);
+    const kaikan = slots.find(
+      (s) => s.venueName === "スポーツ会館 大体育室 半面",
+    );
+    // 会館 半面の空きは 1 列目 = 09:00-12:00
+    expect(kaikan?.startAt).toBe("2026-08-11T09:00:00+09:00");
+    expect(kaikan?.endAt).toBe("2026-08-11T12:00:00+09:00");
+  });
+
+  it("実構造でも grid ありと判定する（全 tbody 走査）", () => {
+    expect(hasAvailabilityGrid(fixture("result-koto-real.html"))).toBe(true);
+  });
+});

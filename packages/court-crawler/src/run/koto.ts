@@ -3,8 +3,9 @@
  * GitHub Actions（schedule）から `tsx src/run/koto.ts` で実行する。
  * 秘密は環境変数（GitHub Secrets）から読み、コード・ログに出さない。
  */
-import { chromium, type Page } from "playwright";
-import { runCrawl } from "./crawl.js";
+import { appendFileSync } from "node:fs";
+import { chromium, type Browser, type Page } from "playwright";
+import { runCrawl, type CrawlSummary } from "./crawl.js";
 import {
   KOTO_BASE_URL,
   KOTO_FACILITY,
@@ -52,6 +53,56 @@ async function dumpControls(page: Page): Promise<void> {
   console.error("[court-crawler] diag links:", JSON.stringify(clean(links)));
 }
 
+/** 実ブラウザに近い context（headless・自動化検知の回避）。crawl / 診断で共通に使う。 */
+const CONTEXT_OPTIONS = {
+  locale: "ja-JP",
+  timezoneId: "Asia/Tokyo",
+  userAgent:
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  extraHTTPHeaders: { "Accept-Language": "ja,en-US;q=0.9,en;q=0.8" },
+} as const;
+
+/** browser を起動し、本番と同じ context / page を返す（診断と本番の環境差を作らない）。 */
+async function launchContextPage(): Promise<{ browser: Browser; page: Page }> {
+  const browser = await chromium.launch({
+    headless: !process.env.KOTO_HEADFUL,
+    args: ["--disable-blink-features=AutomationControlled"],
+  });
+  const context = await browser.newContext(CONTEXT_OPTIONS);
+  const page = await context.newPage();
+  return { browser, page };
+}
+
+/**
+ * 空き検知 funnel を GitHub Actions の job summary に出す（DSN 未設定でも run 一覧で
+ * どの段階で 0 件に落ちたか追える）。GITHUB_STEP_SUMMARY 未設定のローカルでは何もしない。
+ */
+function writeJobSummary(summary: CrawlSummary): void {
+  const path = process.env.GITHUB_STEP_SUMMARY;
+  if (!path) return;
+  const silentZero = summary.scannedDays > 0 && summary.rawSlots === 0;
+  const lines = [
+    "### 🏐 空き検知 funnel",
+    "",
+    "| 段階 | 件数 |",
+    "| --- | ---: |",
+    `| 読めたグリッド日数 | ${summary.scannedDays} |`,
+    `| 生の空き枠（絞り込み前） | ${summary.rawSlots} |`,
+    `| 監視室場フィルタ後 | ${summary.monitoredSlots} |`,
+    `| 通知候補（土日祝・リード） | ${summary.targetSlots} |`,
+    `| 新規通知 | ${summary.notified} |`,
+    `| 記録解除 | ${summary.released} |`,
+    "",
+  ];
+  if (silentZero) {
+    lines.push(
+      "> ⚠️ グリッドは取得できたが**生の空き枠が 0 件**（パース/構造変化の疑い）。",
+      "",
+    );
+  }
+  appendFileSync(path, lines.join("\n") + "\n");
+}
+
 async function main(): Promise<void> {
   const reporter = createSentryReporter(process.env.KOTO_SENTRY_DSN);
 
@@ -59,6 +110,7 @@ async function main(): Promise<void> {
     userId: requireEnv("KOTO_USER_ID"),
     password: requireEnv("KOTO_PASSWORD"),
   };
+
   const lineConfig = {
     channelToken: requireEnv("KOTO_LINE_CHANNEL_TOKEN"),
     toUserId: requireEnv("KOTO_LINE_TO_USER_ID"),
@@ -87,20 +139,8 @@ async function main(): Promise<void> {
   const monitorAll = !!process.env.KOTO_MONITOR_ALL;
 
   // ローカル動作確認用: KOTO_HEADFUL=1 でブラウザを表示して遷移を目視できる。
-  const browser = await chromium.launch({
-    headless: !process.env.KOTO_HEADFUL,
-    args: ["--disable-blink-features=AutomationControlled"],
-  });
+  const { browser, page } = await launchContextPage();
   try {
-    // 実ブラウザに近い UA / 日本語ロケール / JST を付ける（headless・自動化検知の回避）。
-    const context = await browser.newContext({
-      locale: "ja-JP",
-      timezoneId: "Asia/Tokyo",
-      userAgent:
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      extraHTTPHeaders: { "Accept-Language": "ja,en-US;q=0.9,en;q=0.8" },
-    });
-    const page = await context.newPage();
     const summary = await runCrawl({
       facility: KOTO_FACILITY,
       collect: async () => {
@@ -127,6 +167,7 @@ async function main(): Promise<void> {
       ...(monitorAll ? {} : { venueFilter: isMonitoredVenue }),
     });
     console.log("[court-crawler] summary", summary);
+    writeJobSummary(summary);
   } finally {
     await browser.close();
     await flushSentry();

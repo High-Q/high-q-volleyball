@@ -1,0 +1,74 @@
+<!--
+  実サイト構造を写した fixture（構造のみ / PII・セッショントークンなし・#375 診断で採取）。
+  江東区スポーツネットの空き状況グリッドの「実際の」DOM を sanitize して再現:
+
+  - グリッドは「1 テーブル × 室場ごとの <tbody>」構造（施設×室場で複数 tbody）。
+    最初の tbody だけ読むと 1 室場しか拾えない（原因 B）。
+  - 空きセルは class を持たず（旧 `ok` は消滅）、予約ボタン画像 `timetable-o.gif` だけで表す（原因 A）。
+    埋まり = class `ng`（Ｘ）/ 対象外 = class `empty`。
+  - 各行は td セルの合間に hidden input（record/kaisitime/… ）が挟まる。td 抽出はこれらを無視する。
+
+  ground truth: 2026-08-11 東砂スポーツセンター 大体育室 半面 18:00-21:30 = 空き。
+-->
+<!DOCTYPE html>
+<html lang="ja">
+  <body>
+    <input type="hidden" name="selectdate" value="20260811" />
+    <input type="hidden" name="selectdate" value="" />
+
+    <table id="1">
+      <input type="hidden" name="g_maxrow" value="13" />
+      <thead>
+        <tr>
+          <td class="empty">&nbsp;</td>
+          <th id="td10_1">09:00<br /><span>～</span><br />12:00</th>
+          <th id="td10_2">13:00<br /><span>～</span><br />17:00</th>
+          <th id="td10_3">18:00<br /><span>～</span><br />21:30</th>
+        </tr>
+      </thead>
+
+      <!-- 室場0: スポーツ会館 大体育室 全面（全時間帯 埋まり） -->
+      <input type="hidden" id="record0_1" value="x" />
+      <tbody>
+        <tr>
+          <th><strong>スポーツ会館</strong><br />大体育室　全面</th>
+          <td id="td11_1" class="ng">Ｘ</td>
+          <input type="hidden" id="kaisitime0_2" value="x" />
+          <td id="td11_2" class="ng">Ｘ</td>
+          <input type="hidden" id="kaisitime0_3" value="x" />
+          <td id="td11_3" class="ng">Ｘ</td>
+          <input type="hidden" id="record0_28" value="x" />
+        </tr>
+      </tbody>
+
+      <!-- 室場1: スポーツ会館 大体育室 半面（09:00 のみ空き・class なし + 予約画像） -->
+      <input type="hidden" id="record1_1" value="x" />
+      <tbody>
+        <tr>
+          <th><strong>スポーツ会館</strong><br />大体育室　半面</th>
+          <td id="td12_1">
+            <input type="image" src="/koto_v2/jsp/images_jp/multi_images/timetable-o.gif" title="O" onclick="onclickbutton(1,1,1)" />
+          </td>
+          <input type="hidden" id="kaisitime1_2" value="x" />
+          <td id="td12_2" class="ng">Ｘ</td>
+          <td id="td12_3" class="ng">Ｘ</td>
+          <input type="hidden" id="record1_28" value="x" />
+        </tr>
+      </tbody>
+
+      <!-- 室場2: 東砂スポーツセンター 大体育室 半面（18:00 空き = ground truth） -->
+      <input type="hidden" id="record2_1" value="x" />
+      <tbody>
+        <tr>
+          <th><strong>東砂スポーツセンター</strong><br />大体育室　半面</th>
+          <td id="td13_1" class="ng">Ｘ</td>
+          <td id="td13_2" class="empty">&nbsp;</td>
+          <td id="td13_3">
+            <input type="image" src="/koto_v2/jsp/images_jp/multi_images/timetable-o.gif" title="O" onclick="onclickbutton(2,3,3)" />
+          </td>
+          <input type="hidden" id="record2_28" value="x" />
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

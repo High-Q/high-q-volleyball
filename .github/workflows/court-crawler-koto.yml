@@ -51,7 +51,8 @@ jobs:
       KOTO_LINE_TO_USER_ID: ${{ secrets.KOTO_LINE_TO_USER_ID }}
       KOTO_SUPABASE_URL: ${{ secrets.KOTO_SUPABASE_URL }}
       KOTO_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.KOTO_SUPABASE_SERVICE_ROLE_KEY }}
-      # 任意: 未設定なら Sentry へは送らず console 出力のみ（degraded）。
+      # 推奨設定: 継続的な異常（parse_empty 等）を常設アラート化する送出先。未設定でも
+      # 空き検知 funnel と「生 0 件」警告は job summary に出るため run 一覧で検知できる（degraded）。
       KOTO_SENTRY_DSN: ${{ secrets.KOTO_SENTRY_DSN }}
       # 一時検証用: monitor_all=true の手動実行時のみ全室場監視（LINE 配信確認）。
       KOTO_MONITOR_ALL: ${{ github.event.inputs.monitor_all == 'true' && '1' || '' }}
@@ -107,5 +108,6 @@ jobs:
             echo "- Trigger: ${{ github.event_name }}"
             echo "- Commit SHA: \`${{ github.sha }}\`"
             echo ""
-            echo "詳細は step ログ / Sentry (KOTO_SENTRY_DSN 設定時) を参照。"
+            echo "空き検知 funnel（段階別件数）は crawl step が本サマリに追記する。"
+            echo "「生 0 件」警告が出続ける場合はパース/構造変化の疑い。詳細は step ログ / Sentry (KOTO_SENTRY_DSN 設定時) を参照。"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -36,12 +36,31 @@ export interface CrawlDeps {
 export interface CrawlSummary {
   /** crawl が到達・パースまで到達したか（push 失敗は別途 reporter 記録）。 */
   ok: boolean;
+  /** グリッドを読めた日数。 */
+  scannedDays: number;
+  /** 絞り込み前に抽出した生の空き枠数（全施設・全室場）。0 が続けばパース異常の疑い。 */
+  rawSlots: number;
+  /** 監視室場フィルタ後の枠数。 */
+  monitoredSlots: number;
+  /** 土日祝・リードタイム絞り込み後（通知候補）の枠数。 */
+  targetSlots: number;
   /** 新規通知した枠数。 */
   notified: number;
   /** 記録解除した枠数。 */
   released: number;
-  /** グリッドを読めた日数。 */
-  scannedDays: number;
+}
+
+/** 空き検知 funnel の各段が 0 の初期サマリ（失敗系の早期 return に使う）。 */
+function emptySummary(scannedDays: number): CrawlSummary {
+  return {
+    ok: false,
+    scannedDays,
+    rawSlots: 0,
+    monitoredSlots: 0,
+    targetSlots: 0,
+    notified: 0,
+    released: 0,
+  };
 }
 
 function messageOf(e: unknown): string {
@@ -58,7 +77,7 @@ export async function runCrawl(deps: CrawlDeps): Promise<CrawlSummary> {
     reportCrawlFailure(deps.reporter, "unreachable", messageOf(e), {
       facility: deps.facility,
     });
-    return { ok: false, notified: 0, released: 0, scannedDays: 0 };
+    return emptySummary(0);
   }
 
   // グリッドを 1 日も読めなければレイアウト破壊の疑い（全埋まり＝空きゼロとは区別）。
@@ -69,17 +88,26 @@ export async function runCrawl(deps: CrawlDeps): Promise<CrawlSummary> {
       "空き状況グリッドを読めませんでした（レイアウト変化の疑い）",
       { facility: deps.facility },
     );
-    return { ok: false, notified: 0, released: 0, scannedDays: 0 };
+    return emptySummary(0);
   }
 
-  const current = filterTargetSlots(
-    collected.slots.filter((s) => venueOk(s.venueName)),
-    {
-      now: deps.now,
-      minLeadTimeMs: deps.minLeadTimeMs,
-      isHoliday: deps.isHoliday,
-    },
-  );
+  // グリッドは取れているのに生の空き枠が 0 件 = 全施設・全室場が空きゼロは実運用上ほぼ
+  // 起きない。パース／構造変化の疑いとして異常記録し、黙って 0 を返し続けない（決定 5）。
+  if (collected.slots.length === 0) {
+    reportCrawlFailure(
+      deps.reporter,
+      "parse_empty",
+      "グリッドは取得できたが空き枠を 1 件も抽出できませんでした（class/構造変化の疑い）",
+      { facility: deps.facility, scannedDays: collected.gridDays },
+    );
+  }
+
+  const monitored = collected.slots.filter((s) => venueOk(s.venueName));
+  const current = filterTargetSlots(monitored, {
+    now: deps.now,
+    minLeadTimeMs: deps.minLeadTimeMs,
+    isHoliday: deps.isHoliday,
+  });
 
   let notified: AvailabilitySlot[];
   try {
@@ -89,10 +117,10 @@ export async function runCrawl(deps: CrawlDeps): Promise<CrawlSummary> {
       facility: deps.facility,
     });
     return {
-      ok: false,
-      notified: 0,
-      released: 0,
-      scannedDays: collected.gridDays,
+      ...emptySummary(collected.gridDays),
+      rawSlots: collected.slots.length,
+      monitoredSlots: monitored.length,
+      targetSlots: current.length,
     };
   }
 
@@ -137,8 +165,11 @@ export async function runCrawl(deps: CrawlDeps): Promise<CrawlSummary> {
 
   return {
     ok: true,
+    scannedDays: collected.gridDays,
+    rawSlots: collected.slots.length,
+    monitoredSlots: monitored.length,
+    targetSlots: current.length,
     notified: notifiedCount,
     released: toRelease.length,
-    scannedDays: collected.gridDays,
   };
 }
