@@ -4,9 +4,13 @@
  * 振る舞いの詳細は composable (`useUploadIdentityDocument`) でオーケストレーションする。
  * 本ファイルの関数は副作用のみを担当し、状態管理しない。
  *
+ * 手順は「Storage 表裏並列 upload → 実パス確定済みで行 INSERT」の順 (design D2)。
+ * 行が作られる時点でその storage_path_* が指すオブジェクトは必ず存在するため、
+ * 仮パス placeholder → 確定 UPDATE の手順は取らない (#379)。
+ *
  * 関連:
- *   openspec/changes/reservation-identity-document-upload/design.md (D8 / D9 / D17)
- *   openspec/changes/reservation-identity-document-upload/specs/reservation-identity-document-upload/spec.md
+ *   openspec/changes/reservation-identity-upload-atomic-path/design.md (D1 / D2 / D3)
+ *   openspec/changes/reservation-identity-upload-atomic-path/specs/reservation-identity-document-upload/spec.md
  */
 
 import { getSupabase } from "@/shared/api/supabase";
@@ -16,8 +20,6 @@ export type Side = "front" | "back";
 
 const BUCKET = "identity-documents";
 const TABLE = "identity_documents";
-
-const STORAGE_PATH_PLACEHOLDER = "__pending__";
 
 /**
  * MIME type から保存拡張子を導出する。heic/heif は heic2any で変換済の前提
@@ -39,49 +41,6 @@ export function buildStoragePath(
   return `${memberId}/${documentId}-${side}.${extFromMime(mimeType)}`;
 }
 
-/**
- * `status='pending'` で identity_documents 行を作成し、生成された ID を返す。
- * `storage_path_front` には placeholder を入れ、Storage upload 後に UPDATE する。
- *
- * 失敗時は Supabase の error オブジェクトを console.error に詳細出力してから throw
- * する (本番デバッグ性の確保。本番でのみ意味のある情報のため、テストは error を
- * throw するかどうかのみ確認する)。
- */
-export async function insertPendingRecord(
-  memberId: string,
-  documentType: DocumentType,
-): Promise<string> {
-  const supabase = getSupabase();
-  const payload = {
-    member_id: memberId,
-    document_type: documentType,
-    storage_path_front: STORAGE_PATH_PLACEHOLDER,
-    storage_path_back: null,
-    status: "pending",
-  };
-  const { data, error } = await supabase
-    .from(TABLE)
-    .insert(payload)
-    .select("id")
-    .single();
-  if (error) {
-    // 本番で 400 等が出た時に原因を特定できるよう、Supabase error の全フィールドを残す
-    // eslint-disable-next-line no-console
-    console.error("[#92] identity_documents INSERT failed", {
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-      code: error.code,
-      payload,
-    });
-    throw error;
-  }
-  if (!data || typeof data.id !== "string") {
-    throw new Error("identity_documents INSERT did not return id");
-  }
-  return data.id;
-}
-
 /** 単一ファイルを Supabase Storage に upload する。 */
 export async function uploadFileToStorage(
   path: string,
@@ -95,27 +54,44 @@ export async function uploadFileToStorage(
   if (error) throw error;
 }
 
-/** 表/裏のパスを identity_documents 行に確定 UPDATE する。 */
-export async function confirmStoragePaths(
-  documentId: string,
-  paths: { front: string; back?: string | null },
-): Promise<void> {
+/**
+ * 実パス確定済みで identity_documents 行を 1 回だけ INSERT する。
+ * id はクライアント採番 (`crypto.randomUUID()`) 値を明示指定し、storage_path_* には
+ * upload 済みの実パスを入れる。行作成後に storage_path を書き換える追加 UPDATE は行わない。
+ *
+ * 失敗時は Supabase の error オブジェクトを console.error に詳細出力してから throw
+ * する (本番デバッグ性の確保)。呼び出し側 (composable) で upload 済みオブジェクトを
+ * 撤去する。
+ */
+export async function insertRecord(params: {
+  id: string;
+  memberId: string;
+  documentType: DocumentType;
+  frontPath: string;
+  backPath?: string | null;
+}): Promise<void> {
   const supabase = getSupabase();
-  const { error } = await supabase
-    .from(TABLE)
-    .update({
-      storage_path_front: paths.front,
-      storage_path_back: paths.back ?? null,
-    })
-    .eq("id", documentId);
-  if (error) throw error;
-}
-
-/** Storage upload 失敗時のロールバック (best-effort、エラーは飲み込む)。 */
-export async function rollbackRecord(documentId: string): Promise<void> {
-  const supabase = getSupabase();
-  await supabase.from(TABLE).delete().eq("id", documentId);
-  // 削除エラーは呼び出し側でログするだけ。UI には伝えない
+  const payload = {
+    id: params.id,
+    member_id: params.memberId,
+    document_type: params.documentType,
+    storage_path_front: params.frontPath,
+    storage_path_back: params.backPath ?? null,
+    status: "pending",
+  };
+  const { error } = await supabase.from(TABLE).insert(payload);
+  if (error) {
+    // 本番で 400 等が出た時に原因を特定できるよう、Supabase error の全フィールドを残す
+    // eslint-disable-next-line no-console
+    console.error("[#379] identity_documents INSERT failed", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+      payload,
+    });
+    throw error;
+  }
 }
 
 /** 失敗時に既に upload された Storage オブジェクトを削除する (best-effort)。 */

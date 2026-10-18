@@ -13,22 +13,12 @@ const MEMBER_ID = "11111111-1111-4111-8111-111111111111";
 const DOC_ID = "22222222-2222-4222-8222-222222222222";
 
 function buildFromMock({
-  insertSingle,
-  updateEqResult,
-  deleteEqResult,
+  insertResult,
 }: {
-  insertSingle?: ReturnType<typeof vi.fn>;
-  updateEqResult?: ReturnType<typeof vi.fn>;
-  deleteEqResult?: ReturnType<typeof vi.fn>;
+  insertResult?: ReturnType<typeof vi.fn>;
 } = {}) {
   return {
-    insert: vi.fn(() => ({
-      select: vi.fn(() => ({
-        single: insertSingle ?? vi.fn(),
-      })),
-    })),
-    update: vi.fn(() => ({ eq: updateEqResult ?? vi.fn() })),
-    delete: vi.fn(() => ({ eq: deleteEqResult ?? vi.fn() })),
+    insert: insertResult ?? vi.fn().mockResolvedValue({ error: null }),
   };
 }
 
@@ -78,33 +68,6 @@ describe("buildStoragePath", () => {
   });
 });
 
-describe("insertPendingRecord", () => {
-  it("identity_documents に行を INSERT し新規 ID を返す (storage_path_front は placeholder)", async () => {
-    const insertSingle = vi
-      .fn()
-      .mockResolvedValue({ data: { id: DOC_ID }, error: null });
-    supabaseMock.from.mockReturnValue(buildFromMock({ insertSingle }));
-
-    const { insertPendingRecord } = await import("./identity-document-client");
-    const id = await insertPendingRecord(MEMBER_ID, "drivers_license");
-
-    expect(id).toBe(DOC_ID);
-    expect(supabaseMock.from).toHaveBeenCalledWith("identity_documents");
-  });
-
-  it("DB エラー時は throw する", async () => {
-    const insertSingle = vi
-      .fn()
-      .mockResolvedValue({ data: null, error: { message: "boom" } });
-    supabaseMock.from.mockReturnValue(buildFromMock({ insertSingle }));
-
-    const { insertPendingRecord } = await import("./identity-document-client");
-    await expect(
-      insertPendingRecord(MEMBER_ID, "drivers_license"),
-    ).rejects.toMatchObject({ message: "boom" });
-  });
-});
-
 describe("uploadFileToStorage", () => {
   it("Storage バケット identity-documents にファイルを upload する", async () => {
     const upload = vi.fn().mockResolvedValue({ data: {}, error: null });
@@ -136,75 +99,86 @@ describe("uploadFileToStorage", () => {
   });
 });
 
-describe("confirmStoragePaths", () => {
-  it("storage_path_front / storage_path_back を UPDATE する (back あり)", async () => {
-    const updateEq = vi.fn().mockResolvedValue({ data: {}, error: null });
-    supabaseMock.from.mockReturnValue(buildFromMock({ updateEqResult: updateEq }));
+describe("insertRecord", () => {
+  it("実パス確定済みで identity_documents に 1 回だけ INSERT する (placeholder を使わない)", async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    supabaseMock.from.mockReturnValue(buildFromMock({ insertResult: insert }));
 
-    const { confirmStoragePaths } = await import("./identity-document-client");
-    await confirmStoragePaths(DOC_ID, {
-      front: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
-      back: `${MEMBER_ID}/${DOC_ID}-back.jpg`,
+    const { insertRecord } = await import("./identity-document-client");
+    await insertRecord({
+      id: DOC_ID,
+      memberId: MEMBER_ID,
+      documentType: "drivers_license",
+      frontPath: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
+      backPath: `${MEMBER_ID}/${DOC_ID}-back.jpg`,
     });
-
-    const fromCall = supabaseMock.from.mock.results[0]!
-      .value as ReturnType<typeof buildFromMock>;
-    expect(fromCall.update).toHaveBeenCalledWith({
-      storage_path_front: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
-      storage_path_back: `${MEMBER_ID}/${DOC_ID}-back.jpg`,
-    });
-  });
-
-  it("back なしの場合 storage_path_back を null で UPDATE する", async () => {
-    const updateEq = vi.fn().mockResolvedValue({ data: {}, error: null });
-    supabaseMock.from.mockReturnValue(buildFromMock({ updateEqResult: updateEq }));
-
-    const { confirmStoragePaths } = await import("./identity-document-client");
-    await confirmStoragePaths(DOC_ID, {
-      front: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
-    });
-
-    const fromCall = supabaseMock.from.mock.results[0]!
-      .value as ReturnType<typeof buildFromMock>;
-    expect(fromCall.update).toHaveBeenCalledWith({
-      storage_path_front: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
-      storage_path_back: null,
-    });
-  });
-
-  it("UPDATE エラーは throw する", async () => {
-    const updateEq = vi
-      .fn()
-      .mockResolvedValue({ data: null, error: { message: "update fail" } });
-    supabaseMock.from.mockReturnValue(buildFromMock({ updateEqResult: updateEq }));
-
-    const { confirmStoragePaths } = await import("./identity-document-client");
-    await expect(
-      confirmStoragePaths(DOC_ID, { front: "x" }),
-    ).rejects.toMatchObject({ message: "update fail" });
-  });
-});
-
-describe("rollbackRecord", () => {
-  it("identity_documents 行を削除する", async () => {
-    const deleteEq = vi.fn().mockResolvedValue({ data: {}, error: null });
-    supabaseMock.from.mockReturnValue(buildFromMock({ deleteEqResult: deleteEq }));
-
-    const { rollbackRecord } = await import("./identity-document-client");
-    await rollbackRecord(DOC_ID);
 
     expect(supabaseMock.from).toHaveBeenCalledWith("identity_documents");
+    expect(supabaseMock.from).toHaveBeenCalledTimes(1);
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(insert).toHaveBeenCalledWith({
+      id: DOC_ID,
+      member_id: MEMBER_ID,
+      document_type: "drivers_license",
+      storage_path_front: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
+      storage_path_back: `${MEMBER_ID}/${DOC_ID}-back.jpg`,
+      status: "pending",
+    });
   });
 
-  it("DELETE エラー時もユーザー表示用に静かに飲み込む (best-effort)", async () => {
-    const deleteEq = vi
-      .fn()
-      .mockResolvedValue({ data: null, error: { message: "delete fail" } });
-    supabaseMock.from.mockReturnValue(buildFromMock({ deleteEqResult: deleteEq }));
+  it("back なしの場合 storage_path_back を null で INSERT する", async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    supabaseMock.from.mockReturnValue(buildFromMock({ insertResult: insert }));
 
-    const { rollbackRecord } = await import("./identity-document-client");
-    // ロールバック自体の失敗は呼び出し側 (composable) で別途ログ、UI には伝えない
-    await expect(rollbackRecord(DOC_ID)).resolves.toBeUndefined();
+    const { insertRecord } = await import("./identity-document-client");
+    await insertRecord({
+      id: DOC_ID,
+      memberId: MEMBER_ID,
+      documentType: "drivers_license",
+      frontPath: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
+    });
+
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        storage_path_front: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
+        storage_path_back: null,
+      }),
+    );
+  });
+
+  it("INSERT する storage_path は placeholder 文字列を含まない (再発防止)", async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    supabaseMock.from.mockReturnValue(buildFromMock({ insertResult: insert }));
+
+    const { insertRecord } = await import("./identity-document-client");
+    await insertRecord({
+      id: DOC_ID,
+      memberId: MEMBER_ID,
+      documentType: "drivers_license",
+      frontPath: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
+      backPath: `${MEMBER_ID}/${DOC_ID}-back.jpg`,
+    });
+
+    const payload = insert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(payload.storage_path_front).not.toContain("__pending__");
+    expect(payload.storage_path_back).not.toContain("__pending__");
+  });
+
+  it("DB エラー時は throw する", async () => {
+    const insert = vi
+      .fn()
+      .mockResolvedValue({ error: { message: "boom" } });
+    supabaseMock.from.mockReturnValue(buildFromMock({ insertResult: insert }));
+
+    const { insertRecord } = await import("./identity-document-client");
+    await expect(
+      insertRecord({
+        id: DOC_ID,
+        memberId: MEMBER_ID,
+        documentType: "drivers_license",
+        frontPath: `${MEMBER_ID}/${DOC_ID}-front.jpg`,
+      }),
+    ).rejects.toMatchObject({ message: "boom" });
   });
 });
 

@@ -25,10 +25,8 @@ import type {
 } from "@/entities/identity-document";
 import {
   buildStoragePath,
-  confirmStoragePaths,
-  insertPendingRecord,
+  insertRecord,
   removeStorageObjects,
-  rollbackRecord,
   uploadFileToStorage,
 } from "../api/identity-document-client";
 import { triggerIdentityDocumentPendingNotification } from "@/shared/api/identity-document-notification";
@@ -197,14 +195,11 @@ export function useUploadIdentityDocument(): UseUploadIdentityDocument {
 
     submitting.value = true;
 
-    let docId: string;
-    try {
-      docId = await insertPendingRecord(memberId, docType);
-    } catch {
-      submitting.value = false;
-      error.value = "db_failed";
-      return { ok: false, error: "db_failed" };
-    }
+    // #379: 手順を「Storage upload → 実パス確定済みで行 INSERT」の順にする (design D2)。
+    // id をクライアント採番することで upload 前に最終パスを確定でき、行作成後の
+    // 確定 UPDATE が不要になる。行は最後に 1 回だけ作られるため、行が存在する時点で
+    // その storage_path_* が指すオブジェクトは必ず存在する (仮パス行が生成され得ない)。
+    const docId = crypto.randomUUID();
 
     const back = backRef.value.file;
     const frontPath = buildStoragePath(memberId, docId, "front", front.type);
@@ -233,11 +228,10 @@ export function useUploadIdentityDocument(): UseUploadIdentityDocument {
     const backResult = results.find((r) => r.side === "back");
 
     if (frontResult && !frontResult.ok) {
-      // 表面失敗 — 裏面が成功していれば消し、行も DELETE
+      // 表面失敗 — 裏面が成功していれば消す (行はまだ作られていない)
       if (backResult?.ok && backPath) {
         await removeStorageObjects([backPath]);
       }
-      await rollbackRecord(docId);
       submitting.value = false;
       setSlot("front", {
         state: "error",
@@ -250,9 +244,8 @@ export function useUploadIdentityDocument(): UseUploadIdentityDocument {
     }
 
     if (backResult && !backResult.ok) {
-      // 裏面失敗 — 表面 Storage 削除 + 行 DELETE
+      // 裏面失敗 — 表面 Storage を削除 (行はまだ作られていない)
       await removeStorageObjects([frontPath]);
-      await rollbackRecord(docId);
       submitting.value = false;
       setSlot("back", {
         state: "error",
@@ -267,9 +260,18 @@ export function useUploadIdentityDocument(): UseUploadIdentityDocument {
     setSlot("front", { state: "uploaded", file: front, progress: 100 });
     if (back) setSlot("back", { state: "uploaded", file: back, progress: 100 });
 
+    // 実パス確定済みで行を INSERT (この時点で表裏の実体は保存済み)。
     try {
-      await confirmStoragePaths(docId, { front: frontPath, back: backPath });
+      await insertRecord({
+        id: docId,
+        memberId,
+        documentType: docType,
+        frontPath,
+        backPath,
+      });
     } catch {
+      // 行作成に失敗 — upload 済みオブジェクトを撤去し、孤立オブジェクトも残さない。
+      await removeStorageObjects(backPath ? [frontPath, backPath] : [frontPath]);
       submitting.value = false;
       error.value = "db_failed";
       return { ok: false, error: "db_failed" };
