@@ -1,10 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const apiMock = {
-  insertPendingRecord: vi.fn(),
+  insertRecord: vi.fn(),
   uploadFileToStorage: vi.fn(),
-  confirmStoragePaths: vi.fn(),
-  rollbackRecord: vi.fn(),
   removeStorageObjects: vi.fn(),
   buildStoragePath: vi.fn(),
 };
@@ -48,6 +46,10 @@ beforeEach(() => {
   apiMock.buildStoragePath.mockImplementation(
     (mid: string, did: string, side: "front" | "back") =>
       `${mid}/${did}-${side}.jpg`,
+  );
+  // id はクライアント採番 (crypto.randomUUID)。テストでは固定値に差し替える
+  vi.spyOn(crypto, "randomUUID").mockReturnValue(
+    DOC_ID as `${string}-${string}-${string}-${string}-${string}`,
   );
   notificationMock.triggerIdentityDocumentPendingNotification.mockResolvedValue(
     undefined,
@@ -282,9 +284,8 @@ describe("submit — 業務ガード", () => {
   });
 
   it("運転免許証 + 表面のみは back_required を返さない (任意のため)", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.insertRecord.mockResolvedValue(undefined);
     apiMock.uploadFileToStorage.mockResolvedValue(undefined);
-    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
 
     const { useUploadIdentityDocument } = await import(
       "./useUploadIdentityDocument"
@@ -297,9 +298,8 @@ describe("submit — 業務ガード", () => {
   });
 
   it("在留カード + 表裏両方なら成功", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.insertRecord.mockResolvedValue(undefined);
     apiMock.uploadFileToStorage.mockResolvedValue(undefined);
-    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
 
     const { useUploadIdentityDocument } = await import(
       "./useUploadIdentityDocument"
@@ -315,9 +315,8 @@ describe("submit — 業務ガード", () => {
 
 describe("submit — happy path", () => {
   it("表面のみで成功 (storage_path_back=null)", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.insertRecord.mockResolvedValue(undefined);
     apiMock.uploadFileToStorage.mockResolvedValue(undefined);
-    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
 
     const { useUploadIdentityDocument } = await import(
       "./useUploadIdentityDocument"
@@ -329,22 +328,22 @@ describe("submit — happy path", () => {
     const r = await c.submit();
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.value).toBe(DOC_ID);
-    expect(apiMock.insertPendingRecord).toHaveBeenCalledWith(
-      MEMBER_ID,
-      "drivers_license",
-    );
+    // upload が先、行 INSERT は最後の 1 回。確定 UPDATE は存在しない
     expect(apiMock.uploadFileToStorage).toHaveBeenCalledTimes(1);
-    expect(apiMock.confirmStoragePaths).toHaveBeenCalledWith(DOC_ID, {
-      front: PATH_FRONT,
-      back: null,
+    expect(apiMock.insertRecord).toHaveBeenCalledTimes(1);
+    expect(apiMock.insertRecord).toHaveBeenCalledWith({
+      id: DOC_ID,
+      memberId: MEMBER_ID,
+      documentType: "drivers_license",
+      frontPath: PATH_FRONT,
+      backPath: null,
     });
     expect(c.pageState.value).toBe("success");
   });
 
   it("表裏両方で成功 (storage_path_back あり)", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.insertRecord.mockResolvedValue(undefined);
     apiMock.uploadFileToStorage.mockResolvedValue(undefined);
-    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
 
     const { useUploadIdentityDocument } = await import(
       "./useUploadIdentityDocument"
@@ -357,16 +356,45 @@ describe("submit — happy path", () => {
     const r = await c.submit();
     expect(r.ok).toBe(true);
     expect(apiMock.uploadFileToStorage).toHaveBeenCalledTimes(2);
-    expect(apiMock.confirmStoragePaths).toHaveBeenCalledWith(DOC_ID, {
-      front: PATH_FRONT,
-      back: PATH_BACK,
+    expect(apiMock.insertRecord).toHaveBeenCalledWith({
+      id: DOC_ID,
+      memberId: MEMBER_ID,
+      documentType: "residence_card",
+      frontPath: PATH_FRONT,
+      backPath: PATH_BACK,
     });
+  });
+
+  it("[回帰 #379] 行が INSERT される時、storage_path は実パスで placeholder を含まない", async () => {
+    apiMock.insertRecord.mockResolvedValue(undefined);
+    apiMock.uploadFileToStorage.mockResolvedValue(undefined);
+
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("drivers_license");
+    await c.selectFile("front", makeJpeg("front.jpg"));
+
+    await c.submit();
+    // upload が INSERT より先に呼ばれている (invocationCallOrder で順序を検証)
+    const uploadOrder =
+      apiMock.uploadFileToStorage.mock.invocationCallOrder[0]!;
+    const insertOrder = apiMock.insertRecord.mock.invocationCallOrder[0]!;
+    expect(uploadOrder).toBeLessThan(insertOrder);
+    // INSERT payload の storage_path は upload 済み実パスと一致し、仮パスを含まない
+    const payload = apiMock.insertRecord.mock.calls[0]![0] as {
+      frontPath: string;
+      backPath: string | null;
+    };
+    expect(payload.frontPath).toBe(PATH_FRONT);
+    expect(payload.frontPath).not.toContain("__pending__");
   });
 });
 
 describe("submit — エラー / ロールバック", () => {
-  it("表面 upload 失敗 → 行 DELETE → storage_failed_front", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+  it("表面 upload 失敗 → 行は作られず storage_failed_front", async () => {
+    apiMock.insertRecord.mockResolvedValue(undefined);
     apiMock.uploadFileToStorage.mockRejectedValue(new Error("storage down"));
 
     const { useUploadIdentityDocument } = await import(
@@ -378,11 +406,12 @@ describe("submit — エラー / ロールバック", () => {
 
     const r = await c.submit();
     expect(r).toEqual({ ok: false, error: "storage_failed_front" });
-    expect(apiMock.rollbackRecord).toHaveBeenCalledWith(DOC_ID);
+    // 行はまだ作られていない (INSERT は呼ばれない)
+    expect(apiMock.insertRecord).not.toHaveBeenCalled();
   });
 
-  it("裏面 upload 失敗 → 表面 Storage 削除 + 行 DELETE → storage_failed_back", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+  it("裏面 upload 失敗 → 表面 Storage 削除 + 行は作られず storage_failed_back", async () => {
+    apiMock.insertRecord.mockResolvedValue(undefined);
     apiMock.uploadFileToStorage
       .mockResolvedValueOnce(undefined) // front 成功
       .mockRejectedValueOnce(new Error("storage down")); // back 失敗
@@ -398,28 +427,34 @@ describe("submit — エラー / ロールバック", () => {
     const r = await c.submit();
     expect(r).toEqual({ ok: false, error: "storage_failed_back" });
     expect(apiMock.removeStorageObjects).toHaveBeenCalledWith([PATH_FRONT]);
-    expect(apiMock.rollbackRecord).toHaveBeenCalledWith(DOC_ID);
+    expect(apiMock.insertRecord).not.toHaveBeenCalled();
   });
 
-  it("DB INSERT 失敗 → db_failed", async () => {
-    apiMock.insertPendingRecord.mockRejectedValue(new Error("db down"));
-
-    const { useUploadIdentityDocument } = await import(
-      "./useUploadIdentityDocument"
-    );
-    const c = useUploadIdentityDocument();
-    c.selectDocumentType("drivers_license");
-    await c.selectFile("front", makeJpeg());
-
-    const r = await c.submit();
-    expect(r).toEqual({ ok: false, error: "db_failed" });
-    expect(apiMock.uploadFileToStorage).not.toHaveBeenCalled();
-  });
-
-  it("最終 UPDATE 失敗 → db_failed (Storage には実体あり)", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+  it("行 INSERT 失敗 → 表裏オブジェクト撤去 → db_failed", async () => {
+    apiMock.insertRecord.mockRejectedValue(new Error("db down"));
     apiMock.uploadFileToStorage.mockResolvedValue(undefined);
-    apiMock.confirmStoragePaths.mockRejectedValue(new Error("update fail"));
+
+    const { useUploadIdentityDocument } = await import(
+      "./useUploadIdentityDocument"
+    );
+    const c = useUploadIdentityDocument();
+    c.selectDocumentType("residence_card");
+    await c.selectFile("front", makeJpeg("front.jpg"));
+    await c.selectFile("back", makeJpeg("back.jpg"));
+
+    const r = await c.submit();
+    expect(r).toEqual({ ok: false, error: "db_failed" });
+    // upload は INSERT より先に実行済み、INSERT 失敗で孤立オブジェクトを撤去する
+    expect(apiMock.uploadFileToStorage).toHaveBeenCalledTimes(2);
+    expect(apiMock.removeStorageObjects).toHaveBeenCalledWith([
+      PATH_FRONT,
+      PATH_BACK,
+    ]);
+  });
+
+  it("行 INSERT 失敗 (表面のみ) → 表面オブジェクト撤去 → db_failed", async () => {
+    apiMock.insertRecord.mockRejectedValue(new Error("db down"));
+    apiMock.uploadFileToStorage.mockResolvedValue(undefined);
 
     const { useUploadIdentityDocument } = await import(
       "./useUploadIdentityDocument"
@@ -430,14 +465,14 @@ describe("submit — エラー / ロールバック", () => {
 
     const r = await c.submit();
     expect(r).toEqual({ ok: false, error: "db_failed" });
+    expect(apiMock.removeStorageObjects).toHaveBeenCalledWith([PATH_FRONT]);
   });
 });
 
 describe("submit — オーナー通知 trigger (#284)", () => {
   it("表面のみ happy path で triggerIdentityDocumentPendingNotification が DOC_ID で 1 回呼ばれる", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.insertRecord.mockResolvedValue(undefined);
     apiMock.uploadFileToStorage.mockResolvedValue(undefined);
-    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
 
     const { useUploadIdentityDocument } = await import(
       "./useUploadIdentityDocument"
@@ -456,9 +491,8 @@ describe("submit — オーナー通知 trigger (#284)", () => {
   });
 
   it("表裏両方 happy path でも trigger は 1 回 (表裏で 2 回呼ばれない)", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.insertRecord.mockResolvedValue(undefined);
     apiMock.uploadFileToStorage.mockResolvedValue(undefined);
-    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
 
     const { useUploadIdentityDocument } = await import(
       "./useUploadIdentityDocument"
@@ -475,7 +509,7 @@ describe("submit — オーナー通知 trigger (#284)", () => {
   });
 
   it("storage_failed_front 分岐では trigger を呼ばない", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.insertRecord.mockResolvedValue(undefined);
     apiMock.uploadFileToStorage.mockRejectedValue(new Error("storage down"));
 
     const { useUploadIdentityDocument } = await import(
@@ -492,7 +526,7 @@ describe("submit — オーナー通知 trigger (#284)", () => {
   });
 
   it("storage_failed_back 分岐では trigger を呼ばない", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.insertRecord.mockResolvedValue(undefined);
     apiMock.uploadFileToStorage
       .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new Error("storage down"));
@@ -511,26 +545,9 @@ describe("submit — オーナー通知 trigger (#284)", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("db_failed (最終 UPDATE 失敗) でも trigger を呼ばない", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+  it("db_failed (行 INSERT 失敗) でも trigger を呼ばない", async () => {
+    apiMock.insertRecord.mockRejectedValue(new Error("db down"));
     apiMock.uploadFileToStorage.mockResolvedValue(undefined);
-    apiMock.confirmStoragePaths.mockRejectedValue(new Error("update fail"));
-
-    const { useUploadIdentityDocument } = await import(
-      "./useUploadIdentityDocument"
-    );
-    const c = useUploadIdentityDocument();
-    c.selectDocumentType("drivers_license");
-    await c.selectFile("front", makeJpeg());
-
-    await c.submit();
-    expect(
-      notificationMock.triggerIdentityDocumentPendingNotification,
-    ).not.toHaveBeenCalled();
-  });
-
-  it("db_failed (INSERT 失敗) でも trigger を呼ばない", async () => {
-    apiMock.insertPendingRecord.mockRejectedValue(new Error("db down"));
 
     const { useUploadIdentityDocument } = await import(
       "./useUploadIdentityDocument"
@@ -546,9 +563,8 @@ describe("submit — オーナー通知 trigger (#284)", () => {
   });
 
   it("trigger 内部失敗が submit の成功判定を覆さない", async () => {
-    apiMock.insertPendingRecord.mockResolvedValue(DOC_ID);
+    apiMock.insertRecord.mockResolvedValue(undefined);
     apiMock.uploadFileToStorage.mockResolvedValue(undefined);
-    apiMock.confirmStoragePaths.mockResolvedValue(undefined);
     // notification 側は元々握りつぶす設計だが、defensive に rejected でも submit が ok を返すことを確認
     notificationMock.triggerIdentityDocumentPendingNotification.mockRejectedValue(
       new Error("notification down"),
