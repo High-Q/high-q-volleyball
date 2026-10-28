@@ -91,18 +91,18 @@
 
 ## 6. 予約サイト: 自動オープン判定の強化（TDD）
 
-- [ ] 6.1 RED: `apps/reservation/src/pages/EventDetailPage.spec.ts` の「予約 Sheet ディープリンク (?book=1)」に追加
+- [x] 6.1 RED: `apps/reservation/src/pages/EventDetailPage.spec.ts` の「予約 Sheet ディープリンク (?book=1)」に追加
   - 本人予約 `reserved` / `waitlist` → `?book=1` でも開かない・`book` は除去
   - 本人予約 `cancelled` → 開く
   - 本人予約状態の取得失敗（読み込み完了・`resolved=false`）→ 開かない・`book` は除去
   - `?book=1&openExternalBrowser=1` → 開く・両方除去
   - `?openExternalBrowser=1&foo=bar`（`book` 無し）→ `openExternalBrowser` だけ除去、`foo` は残る
-- [ ] 6.2 GREEN: `apps/reservation/src/pages/EventDetailPage.vue` の自動オープン watch を修正
+- [x] 6.2 GREEN: `apps/reservation/src/pages/EventDetailPage.vue` の自動オープン watch を修正
   - 監視対象を `event` + `useMyEventReservation` の `resolved` / `loading` に広げ、「イベント取得済み かつ 本人予約の読み込み完了」で 1 回だけ判定
   - 開く条件: `book === "1"` かつ未開催 かつ非満席 かつ `resolved === true` かつ `myReservation?.status` が `reserved` / `waitlist` でない
   - 判定後に `book` と `openExternalBrowser` を `router.replace` で除去（`book` 無しでも `openExternalBrowser` は除去）
   - コメントに LINE 告知リンクの着地点でもあることを追記
-- [ ] 6.3 RED→GREEN: `apps/reservation/src/app/router.spec.ts` の「auth guard — next クエリ保持 (#229)」に、未認証で `/events/<id>?book=1&openExternalBrowser=1` → `next` にクエリごと保持されるケースを追加（既存実装で通る想定）
+- [x] 6.3 RED→GREEN: `apps/reservation/src/app/router.spec.ts` の「auth guard — next クエリ保持 (#229)」に、未認証で `/events/<id>?book=1&openExternalBrowser=1` → `next` にクエリごと保持されるケースを追加（既存実装で通る想定）
 
 ## 7. E2E
 
