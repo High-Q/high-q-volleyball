@@ -177,11 +177,12 @@ describe("router auth guard", () => {
 });
 
 describe("router routes", () => {
-  it("13 つのルートが定義されている (events 5 + members 1 + venues 1 + identity-documents 2 + auth 4)", async () => {
+  it("14 つのルートが定義されている (events 5 + members 1 + venues 1 + identity-documents 2 + announcement-template 1 + auth 4)", async () => {
     const { routes } = await import("./router");
     const paths = routes.map((r) => r.path).sort();
     expect(paths).toEqual([
       "/",
+      "/announcement-template",
       "/auth/callback",
       "/events",
       "/events/:id",
