@@ -10,7 +10,7 @@
 
 ## 2. DB: announcement_templates
 
-- [ ] 2.1 `supabase/migrations/20261029000000_announcement_templates.sql` を `supabase/templates/new_table.sql` から作成
+- [x] 2.1 `supabase/migrations/20261029000000_announcement_templates.sql` を `supabase/templates/new_table.sql` から作成
   - 列: `channel text primary key check (channel in ('line'))` / `body text not null check (char_length(body) between 1 and 5000)` / `updated_by uuid references public.members(id) on delete set null` / `created_at` / `updated_at`（`id` 列は持たない）
   - `create trigger set_announcement_templates_updated_at before update ... execute function public.set_updated_at()`
   - RLS 有効化 + ポリシー `announcement_templates_select_admin` / `_insert_admin` / `_update_admin`（すべて `public.is_admin()`）。delete ポリシー無し
@@ -40,9 +40,9 @@
 
     ご予約お待ちしています！🙌
     ```
-- [ ] 2.2 `bash scripts/static-checks/migrations/check-rls.sh` 等 3 本の migration 静的チェックをローカル実行して通す
-- [ ] 2.3 dev DB へ適用（`supabase/.temp/project-ref` が dev `ydkejnlivlzypizrmhwh` であることを確認してから `pnpm db:push`）。`supabase db query --linked --file supabase/tests/verify_grants.sql` で 3 ロール × 4 権限を確認
-- [ ] 2.4 dev DB で RLS 検証 SQL を実行（`supabase db query --linked`）: authenticated（非 admin の会員 JWT claims）/ anon で SELECT 0 行・INSERT 拒否、`channel='jimoty'` / 空本文の INSERT が CHECK 違反、初期テンプレートが 1 行入っていることを確認。検証 SQL は `supabase/tests/verify_announcement_templates_rls.sql` として残す
+- [x] 2.2 `bash scripts/static-checks/migrations/check-rls.sh` 等 3 本の migration 静的チェックをローカル実行して通す
+- [x] 2.3 dev DB へ適用（`supabase/.temp/project-ref` が dev `ydkejnlivlzypizrmhwh` であることを確認してから `pnpm db:push`）。`supabase db query --linked --file supabase/tests/verify_grants.sql` で 3 ロール × 4 権限を確認
+- [x] 2.4 dev DB で RLS 検証 SQL を実行（`supabase db query --linked`）: authenticated（非 admin の会員 JWT claims）/ anon で SELECT 0 行・INSERT 拒否、`channel='jimoty'` / 空本文の INSERT が CHECK 違反、初期テンプレートが 1 行入っていることを確認。検証 SQL は `supabase/tests/verify_announcement_templates_rls.sql` として残す
 
 ## 3. admin entities: announcement-template（TDD）
 
