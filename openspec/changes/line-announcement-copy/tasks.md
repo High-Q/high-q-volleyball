@@ -77,17 +77,17 @@
 
 ## 5. admin: 告知テンプレート画面
 
-- [ ] 5.1 `apps/admin/src/features/announcement-template-edit/composables/useAnnouncementTemplateForm.ts`（+ spec）: 取得（未登録時は初期テンプレートを入れる）/ 入力チェック（必須・5,000 文字・残り文字数）/ 知らない差し込み項目 / 保存（`updatedBy` は現在の admin 会員 ID）/ 保存中・成功・失敗の状態 / 最終更新日時
+- [x] 5.1 `apps/admin/src/features/announcement-template-edit/composables/useAnnouncementTemplateForm.ts`（+ spec）: 取得（未登録時は初期テンプレートを入れる）/ 入力チェック（必須・5,000 文字・残り文字数）/ 知らない差し込み項目 / 保存（`updatedBy` は現在の admin 会員 ID）/ 保存中・成功・失敗の状態 / 最終更新日時
   - 初期テンプレート文字列は migration と同一内容を `entities/announcement-template/model/defaultTemplate.ts` に置き、spec で migration ファイルの本文と一致することをテストする（ずれ防止）
-- [ ] 5.2 `apps/admin/src/features/announcement-template-edit/ui/AnnouncementTemplateForm.vue`
+- [x] 5.2 `apps/admin/src/features/announcement-template-edit/ui/AnnouncementTemplateForm.vue`
   - 既存 `EventEditPage.vue` / `VenuesPage.vue` を Read してから着手
   - `FormField` + `Textarea`（初期表示で赤枠を出さない）/ 差し込み項目ボタン群（押下でカーソル位置に挿入しフォーカスを戻す）/ 残り文字数 / 知らない差し込み項目の注意 / サンプル展開プレビュー / 保存ボタン（保存中は無効）/ 最終更新日時
   - md 以上は本文 | プレビューの 2 カラム、md 未満は縦積み
-- [ ] 5.3 `AnnouncementTemplateForm.spec.ts`: 保存成功 / 失敗時に入力保持 / 空は保存不可 / 5,000 文字超は保存不可 / 差し込み挿入 / 知らない項目の注意 / 4 状態
-- [ ] 5.4 `apps/admin/src/features/announcement-template-edit/index.ts`（Public API）
-- [ ] 5.5 `apps/admin/src/pages/AnnouncementTemplatePage.vue`: header（パンくず「Workspace / 告知テンプレート」+ タイトル「告知テンプレート」）+ フォーム。主 CTA（保存）はフォーム内に置く
-- [ ] 5.6 `apps/admin/src/app/router.ts` に `{ path: "/announcement-template", name: "announcement-template", meta: { title: "告知テンプレート" } }` を追加
-- [ ] 5.7 `apps/admin/src/widgets/admin-shell/model/navItems.ts` に「告知テンプレート」（`icon: "message"`, `activePrefix: "announcement-template"`）を本人確認書類の後に追加。`ShellIcon.vue` に `message` アイコン（既存アイコンと同じ線画スタイル）を追加。`SidebarNavContent.spec.ts` の項目数・項目名を更新
+- [x] 5.3 `AnnouncementTemplateForm.spec.ts`: 保存成功 / 失敗時に入力保持 / 空は保存不可 / 5,000 文字超は保存不可 / 差し込み挿入 / 知らない項目の注意 / 4 状態
+- [x] 5.4 `apps/admin/src/features/announcement-template-edit/index.ts`（Public API）
+- [x] 5.5 `apps/admin/src/pages/AnnouncementTemplatePage.vue`: header（パンくず「Workspace / 告知テンプレート」+ タイトル「告知テンプレート」）+ フォーム。主 CTA（保存）はフォーム内に置く
+- [x] 5.6 `apps/admin/src/app/router.ts` に `{ path: "/announcement-template", name: "announcement-template", meta: { title: "告知テンプレート" } }` を追加
+- [x] 5.7 `apps/admin/src/widgets/admin-shell/model/navItems.ts` に「告知テンプレート」（`icon: "message"`, `activePrefix: "announcement-template"`）を本人確認書類の後に追加。`ShellIcon.vue` に `message` アイコン（既存アイコンと同じ線画スタイル）を追加。`SidebarNavContent.spec.ts` の項目数・項目名を更新
 
 ## 6. 予約サイト: 自動オープン判定の強化（TDD）
 

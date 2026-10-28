@@ -4,7 +4,15 @@
  * `currentColor` で着色するため、親側で text-* トークンを当てて色を決める。
  */
 interface Props {
-  name: "home" | "calendar" | "users" | "pin" | "document" | "menu" | "logout";
+  name:
+    | "home"
+    | "calendar"
+    | "users"
+    | "pin"
+    | "document"
+    | "message"
+    | "menu"
+    | "logout";
   size?: number;
 }
 withDefaults(defineProps<Props>(), { size: 18 });
@@ -42,6 +50,10 @@ withDefaults(defineProps<Props>(), { size: 18 });
     <template v-else-if="name === 'document'">
       <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
       <path d="M14 3v5h5M9 13h6M9 17h6" />
+    </template>
+    <template v-else-if="name === 'message'">
+      <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V6a1 1 0 0 1 1-1Z" />
+      <path d="M8 10h8M8 13h5" />
     </template>
     <template v-else-if="name === 'menu'">
       <path d="M4 6h16M4 12h16M4 18h16" />

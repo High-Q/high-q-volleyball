@@ -10,7 +10,7 @@ export interface AdminNavItem {
   readonly routeName: string;
   readonly label: string;
   /** ShellIcon の name */
-  readonly icon: "home" | "calendar" | "users" | "pin" | "document";
+  readonly icon: "home" | "calendar" | "users" | "pin" | "document" | "message";
   /** 現在ルート名がこの文字列で始まればアクティブ */
   readonly activePrefix: string;
   /** 本人確認書類のみ pending 件数 Badge を表示 */
@@ -48,6 +48,12 @@ export const ADMIN_NAV_ITEMS: ReadonlyArray<AdminNavItem> = [
     icon: "document",
     activePrefix: "identity-document",
     pendingBadge: true,
+  },
+  {
+    routeName: "announcement-template",
+    label: "告知テンプレート",
+    icon: "message",
+    activePrefix: "announcement-template",
   },
 ];
 

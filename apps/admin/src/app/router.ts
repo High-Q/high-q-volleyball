@@ -90,6 +90,13 @@ const routes: RouteRecordRaw[] = [
     component: () => import("@/pages/IdentityDocumentDetailPage.vue"),
     meta: { title: "本人確認書類" },
   },
+  // #386 LINE 告知テンプレート (lazy import)
+  {
+    path: "/announcement-template",
+    name: "announcement-template",
+    component: () => import("@/pages/AnnouncementTemplatePage.vue"),
+    meta: { title: "告知テンプレート" },
+  },
   {
     path: "/login",
     name: "login",
