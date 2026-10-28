@@ -21,14 +21,14 @@
 
 ## 5. クラスタ A: vitest メジャー更新（critical 2 + moderate 3）
 
-- [ ] 5.1 vitest 系を使う全ワークスペース（lp / admin / reservation / court-crawler / shared）の `vitest` / `@vitest/coverage-v8` /（使用していれば）`@vitest/ui` を同一メジャー 4 系（現時点 `4.1.12`、`@vitest/mocker` firstPatched `4.1.11` 以上）へ揃える。旧メジャー併存を残さない
-- [ ] 5.2 `pnpm install` 後、vitest 3→4 の破壊的変更へ各 `vitest.config.{ts,js}` を設定 API 追随のみで対応（`environment: "jsdom"` / `globals: false` / `include: src/**/*.spec.{ts,tsx,js,jsx}` / coverage provider 設定を等価維持）。`packages/shared/vitest.config.ts` は vitest-baseline spec に従い挙動等価を維持（環境は `node`）
-- [ ] 5.3 `pnpm why -r tinypool` で `<2.1.2` が消滅（vitest 4 同梱の patched 版に解決）、`pnpm why -r vitest @vitest/mocker` で `<4.1.11` が消滅していることを確認
-- [ ] 5.4 coverage threshold ポリシー（lines/branches/functions 下限）は現行値を維持（引き上げは #312）。coverage-v8 4 系で計測が緑であることを確認。このクラスタ単位で 1 コミット
+- [x] 5.1 vitest 系を使う全ワークスペース（lp / admin / reservation / court-crawler / shared / design-tokens / tailwind-preset / ui / supabase functions の 10 ws）の `vitest` / `@vitest/coverage-v8` を同一メジャー 4 系（`4.1.12`、`@vitest/mocker` firstPatched `4.1.11` 以上）へ揃える。`@vitest/ui` は未使用。`pnpm up -r` で一括、旧メジャー併存なし
+- [x] 5.2 `pnpm install` 後、vitest 3→4 の破壊的変更へ設定 API 追随で対応。(a) reservation `ReservationDetailPage.spec.ts`: v4 の clearAllMocks が once-queue を purge しない件で順序依存 leak が顕在化 → `beforeEach` に `fetchMyReservationMock.mockReset()` 追加（承認済み）。(b) `vitest/globals` が node 型を transitively 供給しなくなった件で design-tokens / shared / court-crawler の tsconfig `types` に `"node"` 追加 + `@types/node` を明示 devDep 化（hoisting 依存を排除）。`environment`/`globals`/`include` は全 ws 等価維持、`packages/shared/vitest.config.ts` の node 環境も維持
+- [x] 5.3 `pnpm why -r tinypool` で `<2.1.2` が消滅（解決木から tinypool 自体が消失）、`vitest`/`@vitest/mocker` が 4.1.12 に解決されていることを確認
+- [x] 5.4 coverage: v4 の coverage-v8 が AST-aware remapping 既定化（v3 復帰フラグ削除済み）で実コード不変のまま計測値低下 → admin/reservation の threshold を v4 実測直下へ再 baseline（承認済み、理由をコメント明記、引き上げは #312）。shared/court-crawler は閾値維持 or 閾値なしで緑。coverage exit 0
 
 ## 6. 最終確認
 
-- [ ] 6.1 `pnpm audit` で該当 23 件が **0 件**であることを確認（critical/high/moderate/low すべて）
-- [ ] 6.2 `pnpm -r test`（全ワークスペース緑）／`pnpm -r --if-present test:coverage`（threshold 達成）／`pnpm -r --if-present typecheck`／`pnpm -r lint`／全アプリ `pnpm build` 系が緑
-- [ ] 6.3 #383（braces）が現 audit に出ていないことを再確認し、PR 本文で close 候補として言及。#318（vitest メジャー）を本 change で消化した旨を PR で明示
-- [ ] 6.4 CI 全ジョブ緑を `gh pr checks --watch` で確認（レム責務）。ローカル動作確認は dev 依存のみの変更のため不要だが、admin/reservation/lp の `pnpm build` が通ることをもって代替確認とする
+- [x] 6.1 `pnpm audit` で該当 23 件が **0 件** → `No known vulnerabilities found` 確認
+- [x] 6.2 `pnpm -r test`（exit 0）／`pnpm -r --if-present test:coverage`（exit 0・再 baseline 後 threshold 達成）／`pnpm -r --if-present typecheck`（exit 0）／`pnpm -r lint`（exit 0）／`pnpm -r build`（exit 0・admin/reservation/lp 他ビルド成功）
+- [x] 6.3 #383（braces）は現 audit に出ておらず（brace-expansion override で実質解決済み）→ PR 本文で close 候補として言及予定。#318（vitest メジャー）を本 change で消化した旨も PR で明示予定
+- [ ] 6.4 CI 全ジョブ緑を `gh pr checks --watch` で確認（レム責務）。ローカル動作確認は dev 依存のみの変更のため不要、admin/reservation/lp の `pnpm build` 成功で代替確認済み → push/PR 後に実施

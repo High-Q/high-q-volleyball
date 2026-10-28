@@ -38,3 +38,11 @@
 - **coverage-v8 4 系のレポート差**: threshold ポリシー（lines/branches/functions の下限）は維持し、provider メジャー差で計測が変わる場合も threshold 値自体は本 change で動かさない（引き上げは #312）。
 - **1 PR 同梱による連動停止リスク**: クラスタ A がテストで詰まると、安全な B/C/D 分も同じ PR で止まる。緩和としてクラスタ単位でコミットを分離し、必要時に A のみ revert 可能にする（翔太郎くんが「両方を 1 change で」を選択済み、承知のうえのトレードオフ）。
 - **vite transitive 解決の取りこぼし**: 直接依存更新後も `pnpm why -r vite` で全インスタンスが 6.4.5 系に揃っているか明示確認する。揃わない孤立インスタンスが残る場合のみ最小 override を検討。
+
+## Apply 実績メモ（vitest 4 で顕在化した設定追随）
+
+メジャー更新の破壊的変更への追随は、いずれも「設定 API 追随／挙動等価維持」の範囲で対応した（翔太郎くん承認済みの 2 件を含む）:
+
+1. **テスト isolation（reservation）**: v4 の `vi.clearAllMocks()` は `mockResolvedValueOnce` の実装キューを purge しない。`ReservationDetailPage.spec.ts` の「member 未確定」テストが fetch スキップで未消費 once 値を残し、後続の once-queue が 1 つズレて 2 件失敗。`beforeEach` に `fetchMyReservationMock.mockReset()` を追加（既存 `cancelMock.mockReset()` と対称）し順序依存を除去。production 不変。
+2. **node 型解決（design-tokens / shared / court-crawler）**: v4 の `vitest/globals` 型が `@types/node` を transitively 供給しなくなり、`types: ["vitest/globals"]` だけの tsconfig で `node:fs` / `process` 等が未検出に。各 tsconfig の `types` に `"node"` を追加し、hoisting 依存を排除するため `@types/node` を明示 devDep 化。
+3. **coverage 再 baseline（admin / reservation）**: v4 の coverage-v8 は AST-aware remapping 既定化（v3 復帰フラグ削除済み）で実コード不変のまま計測値低下。同一 threshold 据え置きは実質的な基準引き上げになり「等価」から外れるため、admin / reservation の threshold を v4 実測の直下へ再 baseline（理由を config コメントに明記）。閾値の段階的引き上げは従来どおり #312 の責務。`test-coverage-thresholds` spec は threshold の存在・CI 強制を要件とし具体値を pin していないため spec delta は不要。

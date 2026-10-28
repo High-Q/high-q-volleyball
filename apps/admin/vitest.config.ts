@@ -37,11 +37,14 @@ export default defineConfig({
       ],
       // baseline 計測: lines 89.7 / branches 87.59 / functions 77.4 / statements 89.7
       // design.md D8 (段階導入): 実測 -10% を初期値。Group 8 で追加の error 修正後に再計測。
+      // vitest 4 再 baseline (deps-vuln-sweep-2026-10): coverage-v8 v4 の AST-aware remapping
+      // 既定化で実コード不変のまま計測値が低下 (lines 75.24 / stmts 73.69 / branches 66.31 /
+      // funcs 69.64)。実質的な基準引き上げを避けるため v4 実測の直下へ再設定。引き上げは #312。
       thresholds: {
-        lines: 75,
-        branches: 70,
+        lines: 73,
+        branches: 65,
         functions: 65,
-        statements: 75,
+        statements: 72,
       },
     },
   },

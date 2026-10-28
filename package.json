@@ -58,7 +58,7 @@
     "@supabase/supabase-js": "^2.45.0",
     "@typescript-eslint/eslint-plugin": "^8.60.0",
     "@typescript-eslint/parser": "^8.60.0",
-    "@vitest/coverage-v8": "^3.2.7",
+    "@vitest/coverage-v8": "^4.1.12",
     "dependency-cruiser": "^17.4.3",
     "eslint": "^8.57.1",
     "eslint-import-resolver-alias": "^1.1.2",
