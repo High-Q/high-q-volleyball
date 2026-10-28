@@ -3,7 +3,6 @@
 ## Purpose
 
 LP（ランディングページ）のイベント表示（HERO 直下の次回開催ストリップとイベント一覧）が、Supabase から取得したイベント・回号(vol)・残席集計をどう表示するかを定義する。取得条件・並び順、Loading / Empty / Error / Success の 4 状態、回号表現、残席表現（募集中・満員・無制限）と取得失敗時のグレースフル劣化を規定する。
-
 ## Requirements
 ### Requirement: イベント取得中にローディング状態が表示される
 
@@ -41,6 +40,8 @@ Supabase からのデータ取得が失敗した場合、ユーザーにエラ�
 
 Supabase `events` テーブルからイベント一覧を取得し、カレンダー上に表示しなければならない（SHALL）。データ取得には TanStack Query を使用しなければならない（SHALL）。LP が画面に出すのは `visibility = 'published'` かつ `start_at >= now()` の未来イベントのみとし、絞り込みは Supabase 側のクエリで明示しなければならない（MUST）。並び順は `start_at` の昇順（直近順）でなければならない（SHALL）。`venues` テーブルとの結合により、各イベントには会場名を `location` 文字列として付与しなければならない（SHALL）。
 
+LP / events のデータ経路は Supabase 単一でなければならない（MUST）。レガシー LP イベント取得バックエンド（AWS API Gateway + Lambda + DynamoDB + 実行用 IAM role）は、コード上の参照が撤去されているだけでなく、AWS アカウント上の実体も退役されていなければならない（SHALL）。
+
 #### Scenario: イベントがカレンダー上に表示される
 
 - **WHEN** Supabase から1件以上の `visibility = 'published'` の未来イベントが返る
@@ -60,6 +61,11 @@ Supabase `events` テーブルからイベント一覧を取得し、カレン�
 
 - **WHEN** `apps/lp/` 配下に対し `ptfomh71x9.execute-api` または `/api/event` を grep する
 - **THEN** マッチが 0 件である（Vite proxy 設定と URL ハードコードがいずれも撤去されている）
+
+#### Scenario: レガシー AWS バックエンドが実体として退役されている
+
+- **WHEN** AWS アカウント（`ap-northeast-1`）でレガシー LP イベント取得スタックの構成リソース（API Gateway / Lambda / DynamoDB テーブル / 実行用 IAM role）の存在を確認する
+- **THEN** いずれのリソースも存在しない（Python 3.10 ランタイムの Lambda はアカウントから消滅している）
 
 ### Requirement: LP イベントに回号 vol を付与・表示する
 
