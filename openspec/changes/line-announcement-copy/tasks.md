@@ -46,19 +46,19 @@
 
 ## 3. admin entities: announcement-template（TDD）
 
-- [ ] 3.1 `apps/admin/src/shared/config/reservation.ts` を新設（LP `apps/lp/src/shared/config/reservation.ts` を踏襲。`VITE_RESERVATION_URL` 未設定時は `https://high-q-reservation.onrender.com`、末尾スラッシュ除去）。admin の ImportMetaEnv 型に `VITE_RESERVATION_URL?: string` を追加
-- [ ] 3.2 型 `apps/admin/src/entities/announcement-template/model/types.ts`: `AnnouncementChannel = "line"` / `AnnouncementTemplate { channel; body; updatedAt: string; updatedBy: MemberId | null }` / `ANNOUNCEMENT_BODY_MAX = 5000`
-- [ ] 3.3 RED→GREEN: `lib/buildBookingLink.ts`（+ spec）— `buildBookingLink(eventId: EventId, baseUrl?)` → `<base>/events/<encodeURIComponent(id)>?book=1&openExternalBrowser=1`。末尾スラッシュ有無で同一 / 記号のエンコード
-- [ ] 3.4 RED→GREEN: `lib/renderAnnouncement.ts`（+ spec）
+- [x] 3.1 `apps/admin/src/shared/config/reservation.ts` を新設（LP `apps/lp/src/shared/config/reservation.ts` を踏襲。`VITE_RESERVATION_URL` 未設定時は `https://high-q-reservation.onrender.com`、末尾スラッシュ除去）。admin の ImportMetaEnv 型に `VITE_RESERVATION_URL?: string` を追加
+- [x] 3.2 型 `apps/admin/src/entities/announcement-template/model/types.ts`: `AnnouncementChannel = "line"` / `AnnouncementTemplate { channel; body; updatedAt: string; updatedBy: MemberId | null }` / `ANNOUNCEMENT_BODY_MAX = 5000`
+- [x] 3.3 RED→GREEN: `lib/buildBookingLink.ts`（+ spec）— `buildBookingLink(eventId: EventId, baseUrl?)` → `<base>/events/<encodeURIComponent(id)>?book=1&openExternalBrowser=1`。末尾スラッシュ有無で同一 / 記号のエンコード
+- [x] 3.4 RED→GREEN: `lib/renderAnnouncement.ts`（+ spec）
   - `ANNOUNCEMENT_PLACEHOLDERS`（表示名と説明の配列。編集画面の一覧にも使う）
   - `renderAnnouncement(body, input)`: input = `{ name, vol, startAt, endAt, venueName, fee, capacity, bookingLink }`。spec「差し込み項目の展開規則」の全シナリオ（全項目 / 値無し / 0 円 / 知らない項目は残す / 複数回置換 / TZ=UTC でも JST）をテスト化。日時整形は `Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo" })`
   - `findUnknownPlaceholders(body)`: 知らない `{...}` を重複なしで返す
   - `SAMPLE_ANNOUNCEMENT_INPUT`（編集画面プレビュー用のサンプル値）
-- [ ] 3.5 RED→GREEN: `api/announcementTemplateQueries.ts`（+ spec、`entities/venue/api/venueQueries.spec.ts` のモック方式を踏襲）
+- [x] 3.5 RED→GREEN: `api/announcementTemplateQueries.ts`（+ spec、`entities/venue/api/venueQueries.spec.ts` のモック方式を踏襲）
   - `fetchAnnouncementTemplate("line")` → `Result<AnnouncementTemplate | null, FetchError>`（`maybeSingle`、未登録は `ok(null)`）
   - `saveAnnouncementTemplate("line", body, updatedBy)` → `upsert(..., { onConflict: "channel" })` で `Result<AnnouncementTemplate, FetchError>`
   - RLS 拒否 / 通信失敗の分類は既存 entities と同じ
-- [ ] 3.6 `apps/admin/src/entities/announcement-template/index.ts`（Public API）
+- [x] 3.6 `apps/admin/src/entities/announcement-template/index.ts`（Public API）
 
 ## 4. admin: 告知文ダイアログ
 
