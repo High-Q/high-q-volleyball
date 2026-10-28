@@ -4,7 +4,7 @@
 
 ## 進捗
 
-- 完了: 9 / 10 タスク（残: T-10 PR 作成）
+- 完了: 10 / 10 タスク ✓
 
 ---
 
@@ -64,9 +64,9 @@
   - 既存 `03-AWS-Supabase-events-移行手順.md` と対になる「退役」編として位置づけ
   - コミット（`chore(infra): ...`）
 
-- [ ] **T-10**: PR 作成・Issue 連携
-  - PR 作成（本文に退役実施ログと実体確認結果を添付）
-  - CI 全パス確認（コード変更なしだが lint / 静的チェックが緑であること）
+- [x] **T-10**: PR 作成・Issue 連携 ✓（2026-10-29）
+  - PR #385 作成（本文に退役実施ログと実体確認結果を添付）✓
+  - CI 全パス確認（test / e2e / build / typecheck / lint / static-checks / migration-safety / CodeQL / Analyze すべて pass）✓
   - ship フロー（sync / archive / push / merge / ブランチ削除 / #371 クローズ）は `/opsx-ship`
 
 ---
