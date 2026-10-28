@@ -59,6 +59,8 @@ export interface EventDetailRow {
    * 「内 同伴 = checked_in_count - checked_in_member_count」算出用。
    */
   checked_in_member_count: number;
+  /** 回号（event_detail_view.vol）。採番前・対象外は null。告知文の {回号} に使う (#386) */
+  vol: number | null;
   created_at: string;
   updated_at: string;
 }

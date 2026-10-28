@@ -62,18 +62,18 @@
 
 ## 4. admin: 告知文ダイアログ
 
-- [ ] 4.1 `apps/admin/src/features/line-announcement/composables/useAnnouncementDialog.ts`（+ spec）: テンプレート取得の 4 状態管理（loading / empty / error / success）・再試行・展開済み告知文・告知リンク・`copy(text)`（`navigator.clipboard.writeText`、成功 / 失敗を返す）
-- [ ] 4.2 `apps/admin/src/features/line-announcement/ui/AnnouncementDialog.vue`
+- [x] 4.1 `apps/admin/src/features/line-announcement/composables/useAnnouncementDialog.ts`（+ spec）: テンプレート取得の 4 状態管理（loading / empty / error / success）・再試行・展開済み告知文・告知リンク・`copy(text)`（`navigator.clipboard.writeText`、成功 / 失敗を返す）
+- [x] 4.2 `apps/admin/src/features/line-announcement/ui/AnnouncementDialog.vue`
   - props: `open` / `event: EventDetailRow`。既存 `shared/ui/Dialog*` + `@high-q/ui` `Button`
   - Success: プレビュー（`whitespace-pre-wrap`、`aria-label="告知文プレビュー"`）+「告知文をコピー」(primary) /「リンクだけコピー」(outline) /「テンプレートを編集」（`announcement-template` へ遷移）/ 閉じる
   - Empty:「告知テンプレートが未設定です」+「テンプレートを作成」導線 /「リンクだけコピー」
   - Error:「テンプレートを読み込めませんでした」+ 再試行 /「リンクだけコピー」
   - コピー成功トースト「告知文をコピーしました」/「リンクをコピーしました」。失敗時はエラートースト「コピーできませんでした。表示中の文面を長押しでコピーしてください」+ 読み取り専用 `Textarea` にコピー対象を表示しフォーカス + 全選択
   - スマホ幅でボタン縦積み
-- [ ] 4.3 `AnnouncementDialog.spec.ts`: 4 状態 / 告知文コピー / リンクだけコピー / 失敗時の退避 / テンプレート編集への遷移
-- [ ] 4.4 `apps/admin/src/features/line-announcement/index.ts`（Public API: `AnnouncementDialog`）
-- [ ] 4.5 `apps/admin/src/widgets/event-detail/ui/EventDetailTopBar.vue`: 「編集」の左に「告知文をコピー」(`variant="outline"` `size="sm"`) を追加しダイアログを開閉。アクション部に `flex-wrap`。先頭コメント更新
-- [ ] 4.6 `apps/admin/src/widgets/event-detail/ui/EventDetailWidget.spec.ts` に「告知文をコピー」表示 + 押下でダイアログが開くテストを追加
+- [x] 4.3 `AnnouncementDialog.spec.ts`: 4 状態 / 告知文コピー / リンクだけコピー / 失敗時の退避 / テンプレート編集への遷移
+- [x] 4.4 `apps/admin/src/features/line-announcement/index.ts`（Public API: `AnnouncementDialog`）
+- [x] 4.5 `apps/admin/src/widgets/event-detail/ui/EventDetailTopBar.vue`: 「編集」の左に「告知文をコピー」(`variant="outline"` `size="sm"`) を追加しダイアログを開閉。アクション部に `flex-wrap`。先頭コメント更新
+- [x] 4.6 `apps/admin/src/widgets/event-detail/ui/EventDetailWidget.spec.ts` に「告知文をコピー」表示 + 押下でダイアログが開くテストを追加
 
 ## 5. admin: 告知テンプレート画面
 
