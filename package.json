@@ -35,7 +35,7 @@
     ],
     "overrides": {
       "tar": ">=7.5.16 <8",
-      "fast-uri": ">=3.1.6 <4",
+      "fast-uri": ">=3.1.9 <4",
       "brace-expansion@1": ">=1.1.21 <2",
       "brace-expansion@2": ">=2.1.7 <3",
       "postcss": ">=8.5.23 <9",
@@ -47,6 +47,7 @@
       "handlebars": ">=4.7.10 <5",
       "browserslist": ">=4.28.7 <5",
       "baseline-browser-mapping": ">=2.11.0 <3",
+      "postcss-selector-parser@6": ">=6.1.5 <7",
       "postcss-selector-parser@7": ">=7.1.6 <8",
       "colord": ">=2.9.4 <3",
       "source-map-js": ">=1.2.2 <2"

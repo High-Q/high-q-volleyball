@@ -6,18 +6,18 @@
 
 ## 2. クラスタ C: fast-uri override 下限引き上げ（moderate 2 + low 2）
 
-- [ ] 2.1 ルート `package.json` の `pnpm.overrides["fast-uri"]` を `>=3.1.6 <4` から下限のみ `>=3.1.9 <4` へ引き上げ（firstPatched `3.1.9`、range 構造・上限境界は不変）
-- [ ] 2.2 `pnpm install` → `pnpm why -r fast-uri` で `<3.1.9` が解決木から消えたことを確認
+- [x] 2.1 ルート `package.json` の `pnpm.overrides["fast-uri"]` を `>=3.1.6 <4` から下限のみ `>=3.1.9 <4` へ引き上げ（firstPatched `3.1.9`、range 構造・上限境界は不変）
+- [x] 2.2 `pnpm install` → `pnpm why -r fast-uri` で `<3.1.9` が解決木から消えたことを確認 — `fast-uri@3.1.9` に収束
 
 ## 3. クラスタ D: postcss-selector-parser@6 override 追加（moderate 1）
 
-- [ ] 3.1 脆弱な 6.x インスタンスの親を `pnpm why -r postcss-selector-parser` で特定。ルート `pnpm.overrides` に `"postcss-selector-parser@6": ">=6.1.5 <7"` を追加（既存 `@7` セレクタは不変。`npm view postcss-selector-parser@6 version` で 6.1.5 以上の実在を確認）
-- [ ] 3.2 `pnpm install` → `pnpm why -r postcss-selector-parser` で `<6.1.5` が消えたことを確認
+- [x] 3.1 脆弱な 6.x インスタンスの親を `pnpm why -r postcss-selector-parser` で特定。ルート `pnpm.overrides` に `"postcss-selector-parser@6": ">=6.1.5 <7"` を追加（既存 `@7` セレクタは不変。`npm view postcss-selector-parser@6 version` で 6.1.5 以上の実在を確認） — 脆弱版 6.1.4 を確認、6.1.5 を追加
+- [x] 3.2 `pnpm install` → `pnpm why -r postcss-selector-parser` で `<6.1.5` が消えたことを確認 — 6.1.4→6.1.5、@7 系は 7.1.6 のまま不変
 
 ## 4. 中間検証（クラスタ B/C/D）
 
-- [ ] 4.1 `pnpm -r test` 全ワークスペース緑（ルート直 vitest は不可。各 workspace スクリプト経由）／`pnpm -r --if-present typecheck` 緑／`pnpm -r lint` 緑
-- [ ] 4.2 `pnpm audit` で残件がクラスタ A（tinypool / @vitest/mocker / vitest）のみになったことを確認。ここまでをコミットし、A が詰まっても切り離せる状態を確保
+- [x] 4.1 `pnpm -r test` 全ワークスペース緑（ルート直 vitest は不可。各 workspace スクリプト経由）／`pnpm -r --if-present typecheck` 緑／`pnpm -r lint` 緑 — すべて exit 0（admin 1025 / reservation 842 / lp 62 他 passed）
+- [x] 4.2 `pnpm audit` で残件がクラスタ A（tinypool / @vitest/mocker / vitest）のみになったことを確認。ここまでをコミットし、A が詰まっても切り離せる状態を確保 — 残件 8（critical 2 + moderate 6）すべて vitest 系
 
 ## 5. クラスタ A: vitest メジャー更新（critical 2 + moderate 3）
 
