@@ -212,8 +212,10 @@ pages/AnnouncementTemplatePage
 
 ### E2E ハッピーパス対象シナリオ
 
-- admin: 告知テンプレートを編集して保存 → イベント詳細の「告知文をコピー」ダイアログのプレビューに編集内容とイベント情報が反映されている（1 本。クリップボードの中身はコンポーネントテストで担保）
-- 予約サイト: ログイン済み会員が `/events/<id>?book=1&openExternalBrowser=1` を開く → 予約シートが開き、URL から両パラメータが消えている（1 本）
+既存 E2E の方針（認証済みセッションは再現せず、ガード統合までを確認）に合わせる。
+
+- admin: 未認証で `/announcement-template` を開くと `/login` にリダイレクトされる（新ルートの保護）。編集・保存・告知文ダイアログは component test で担保
+- 予約サイト: 未認証で告知リンク（`?book=1&openExternalBrowser=1`）を開く → `/login` に回され、マジックリンクの戻り先にクエリごと保持される。認証後の自動オープン判定は component test で担保
 
 ---
 
@@ -258,7 +260,7 @@ pages/AnnouncementTemplatePage
 | 予約詳細: 予約済み / キャンセル待ち / キャンセル済み / 取得失敗 / クエリ除去 | コンポーネント | 既存 `EventDetailPage.spec.ts` に追加 |
 | 予約詳細: 未ログイン時に `next` にクエリが保持される | ユニット | 既存 `router.spec.ts` に追加 |
 | RLS / GRANT: admin のみ読み書き可、会員・anon は不可 | DB 検証 | dev DB に適用後、`verify_grants.sql` と、会員 / anon のロールに切り替えた SELECT が 0 行・INSERT が拒否されることを SQL で確認（`supabase db query --linked`） |
-| E2E | 2 本 | Playwright（セクション 3 参照） |
+| E2E | 2 本（ガード統合 + 告知リンクの next 保持） | Playwright（セクション 3 参照） |
 
 ---
 

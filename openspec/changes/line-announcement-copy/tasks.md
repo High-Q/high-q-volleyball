@@ -106,8 +106,10 @@
 
 ## 7. E2E
 
-- [ ] 7.1 `e2e/admin/announcement-template.e2e.ts`: テンプレートを編集して保存 → イベント詳細で「告知文をコピー」→ ダイアログのプレビューに編集した文言とイベント名・会場が反映されている。テスト後に初期テンプレートへ戻す
-- [ ] 7.2 `e2e/reservation/` に 1 本追加（既存のログイン済みヘルパーを流用）: 受付可能イベントを `/events/<id>?book=1&openExternalBrowser=1` で開く → 予約シートが表示され、URL に `book` / `openExternalBrowser` が無い
+> 既存 E2E の方針（認証済みセッションは再現せず、ガード統合までを確認。認証後の挙動は component test に押し下げ）に合わせて Apply 中に調整した。
+
+- [x] 7.1 `e2e/admin/announcement-template.e2e.ts`: 未認証で `/announcement-template` → `/login` にリダイレクト（新ルートのガード統合）。編集・保存・告知文ダイアログは component test で担保
+- [x] 7.2 `e2e/reservation/line-announcement-link.e2e.ts`: 未認証で `/events/<id>?book=1&openExternalBrowser=1` → `/login?next=` にクエリごと保持 → メール送信時の `redirect_to` が `/auth/callback?next=<告知リンクのパス>` になる。認証後の自動オープン判定・クエリ除去は `EventDetailPage.spec.ts` で担保
 
 ## 8. 最終確認
 
