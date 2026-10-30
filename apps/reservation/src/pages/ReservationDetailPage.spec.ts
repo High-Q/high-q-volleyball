@@ -97,6 +97,10 @@ beforeEach(() => {
   cancelSubmitting.value = false;
   cancelError.value = null;
   cancelMock.mockReset();
+  // vitest 4 では clearAllMocks が mockResolvedValueOnce のキューを purge しないため、
+  // fetch をスキップするテスト (member 未確定) の未消費 once 値が後続へ漏れる。
+  // mockReset で once-queue を毎テストでクリアし、順序依存を断つ。
+  fetchMyReservationMock.mockReset();
 });
 
 afterEach(() => {
