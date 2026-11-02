@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, toRef } from "vue";
+import { computed, nextTick, onMounted, ref, toRef, watch } from "vue";
 import { Button, Kicker } from "@high-q/ui";
 import type { MemberId } from "@high-q/shared";
 import {
   ANNOUNCEMENT_BODY_MAX,
+  ANNOUNCEMENT_CHANNELS,
   ANNOUNCEMENT_PLACEHOLDERS,
+  X_MAX_WEIGHTED,
+  type AnnouncementChannel,
 } from "@/entities/announcement-template";
 import FormField from "@/shared/ui/FormField.vue";
 import Textarea from "@/shared/ui/Textarea.vue";
@@ -12,17 +15,27 @@ import Skeleton from "@/shared/ui/Skeleton.vue";
 import { useAnnouncementTemplateForm } from "../composables/useAnnouncementTemplateForm";
 
 /**
- * LINE 告知テンプレートの編集フォーム (#386)。
+ * 告知テンプレート（LINE / X のうち 1 チャネル）の編集フォーム (#386)。
  *
  * 本文 / 差し込み項目（押下でカーソル位置に挿入）/ サンプル展開プレビュー / 保存。
+ * X はサンプル展開後の X 文字数（上限 280）を表示する。
+ * チャネル切り替えは親ページが担い、未保存確認のため `dirty` を通知する。
  * md 以上は「本文 | プレビュー」の 2 カラム、md 未満は縦積み。
  *
  * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *   「告知テンプレート画面」
  */
 
-const props = defineProps<{
-  adminMemberId: MemberId | null;
+const props = withDefaults(
+  defineProps<{
+    adminMemberId: MemberId | null;
+    channel?: AnnouncementChannel;
+  }>(),
+  { channel: "line" },
+);
+
+const emit = defineEmits<{
+  "update:dirty": [value: boolean];
 }>();
 
 const {
@@ -34,10 +47,21 @@ const {
   bodyError,
   unknownPlaceholders,
   preview,
+  previewXLength,
+  isDirty,
   saving,
   load,
   save,
-} = useAnnouncementTemplateForm(toRef(props, "adminMemberId"));
+} = useAnnouncementTemplateForm(toRef(props, "adminMemberId"), props.channel);
+
+watch(isDirty, (v) => emit("update:dirty", v), { immediate: true });
+
+const channelLabel = computed(
+  () => ANNOUNCEMENT_CHANNELS.find((c) => c.channel === props.channel)?.label ?? "",
+);
+const xOverLimit = computed(
+  () => previewXLength.value !== null && previewXLength.value > X_MAX_WEIGHTED,
+);
 
 onMounted(() => {
   void load();
@@ -127,7 +151,11 @@ const hint = computed(
     <div class="grid grid-cols-1 gap-hq-6 md:grid-cols-2">
       <!-- 本文 + 差し込み項目 -->
       <div ref="editorRef" class="flex flex-col gap-hq-4">
-        <FormField label="LINE 告知テンプレート" :error="bodyError ?? undefined" :hint="hint">
+        <FormField
+          :label="`${channelLabel} 告知テンプレート`"
+          :error="bodyError ?? undefined"
+          :hint="hint"
+        >
           <template #default="{ fieldId, messageId, ariaInvalid }">
             <Textarea
               :id="fieldId"
@@ -184,6 +212,16 @@ const hint = computed(
           class="m-0 min-h-[12rem] whitespace-pre-wrap break-words rounded-hq-md border border-hairline bg-paper-warm p-hq-4 font-jp text-sm text-ink"
           data-testid="template-preview"
         >{{ preview }}</pre>
+        <p
+          v-if="previewXLength !== null"
+          :role="xOverLimit ? 'status' : undefined"
+          :class="['m-0 font-jp text-xs', xOverLimit ? 'text-danger' : 'text-muted']"
+          data-testid="template-x-length"
+        >
+          X の文字数（サンプル展開後）: {{ previewXLength }} / {{ X_MAX_WEIGHTED }}
+          <template v-if="xOverLimit">（上限を超えています。X Premium 以外では投稿できません）</template>
+          <template v-else>。会場名が長い日は増えるので余裕をもたせてください</template>
+        </p>
       </section>
     </div>
 

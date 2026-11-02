@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 import { err, ok, unsafeMemberId } from "@high-q/shared";
-import { DEFAULT_LINE_TEMPLATE } from "@/entities/announcement-template";
+import {
+  DEFAULT_LINE_TEMPLATE,
+  DEFAULT_X_TEMPLATE,
+} from "@/entities/announcement-template";
 
 /**
  * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
@@ -40,9 +43,12 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-async function setup(admin = ADMIN as typeof ADMIN | null) {
+async function setup(
+  admin = ADMIN as typeof ADMIN | null,
+  channel: "line" | "x" = "line",
+) {
   const { useAnnouncementTemplateForm } = await import("./useAnnouncementTemplateForm");
-  const form = useAnnouncementTemplateForm(ref(admin));
+  const form = useAnnouncementTemplateForm(ref(admin), channel);
   await form.load();
   return form;
 }
@@ -64,6 +70,13 @@ describe("useAnnouncementTemplateForm — 読み込み", () => {
     expect(form.isNew.value).toBe(true);
     expect(form.body.value).toBe(DEFAULT_LINE_TEMPLATE);
     expect(form.updatedAt.value).toBeNull();
+  });
+
+  it("X: チャネル x を取得し、未登録なら X の初期テンプレートを入れる", async () => {
+    fetchMock.mockResolvedValue(ok(null));
+    const form = await setup(ADMIN, "x");
+    expect(fetchMock).toHaveBeenCalledWith("x");
+    expect(form.body.value).toBe(DEFAULT_X_TEMPLATE);
   });
 
   it("取得失敗は error", async () => {
@@ -113,6 +126,34 @@ describe("useAnnouncementTemplateForm — 入力チェック", () => {
     expect(form.bodyError.value).toBeNull();
   });
 
+  it("LINE はプレビューの X 文字数を返さない", async () => {
+    const form = await setup();
+    expect(form.previewXLength.value).toBeNull();
+  });
+
+  it("X はサンプル展開後の X 文字数を返し、予約リンクに openExternalBrowser を付けない", async () => {
+    fetchMock.mockResolvedValue(ok({ ...TEMPLATE, channel: "x" }));
+    const form = await setup(ADMIN, "x");
+    form.body.value = "あ {予約リンク}";
+    expect(form.preview.value).not.toContain("openExternalBrowser");
+    expect(form.previewXLength.value).toBe(2 + 1 + 23);
+  });
+
+  it("X の初期テンプレートは展開後 280 以内に収まる", async () => {
+    fetchMock.mockResolvedValue(ok(null));
+    const form = await setup(ADMIN, "x");
+    expect(form.previewXLength.value).toBeLessThanOrEqual(280);
+  });
+
+  it("isDirty は編集で true、保存前の内容に戻すと false", async () => {
+    const form = await setup();
+    expect(form.isDirty.value).toBe(false);
+    form.body.value = "変更";
+    expect(form.isDirty.value).toBe(true);
+    form.body.value = TEMPLATE.body;
+    expect(form.isDirty.value).toBe(false);
+  });
+
   it("プレビューはサンプル値で展開される", async () => {
     const form = await setup();
     form.body.value = "{会場} {参加費}";
@@ -123,6 +164,15 @@ describe("useAnnouncementTemplateForm — 入力チェック", () => {
 describe("useAnnouncementTemplateForm — 保存", () => {
   beforeEach(() => {
     fetchMock.mockResolvedValue(ok(TEMPLATE));
+  });
+
+  it("X では channel x で保存する", async () => {
+    saveMock.mockResolvedValue(ok({ ...TEMPLATE, channel: "x", body: "X本文" }));
+    fetchMock.mockResolvedValue(ok({ ...TEMPLATE, channel: "x" }));
+    const form = await setup(ADMIN, "x");
+    form.body.value = "X本文";
+    expect(await form.save()).toBe(true);
+    expect(saveMock).toHaveBeenCalledWith("x", "X本文", ADMIN);
   });
 
   it("成功で保存 API を呼び、トーストと最終更新日時を更新する", async () => {

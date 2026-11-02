@@ -2,19 +2,23 @@ import { computed, ref, type ComputedRef, type Ref } from "vue";
 import type { MemberId } from "@high-q/shared";
 import {
   ANNOUNCEMENT_BODY_MAX,
-  DEFAULT_LINE_TEMPLATE,
+  DEFAULT_TEMPLATES,
   SAMPLE_ANNOUNCEMENT_INPUT,
+  countXWeightedLength,
   fetchAnnouncementTemplate,
   findUnknownPlaceholders,
   renderAnnouncement,
   saveAnnouncementTemplate,
+  type AnnouncementChannel,
 } from "@/entities/announcement-template";
 import { useToast } from "@/shared/ui/useToast";
 
 /**
  * 告知テンプレート編集フォームの状態管理 (#386)。
  *
- * - 未登録時は初期テンプレートを入れた状態で表示し、保存で作成する
+ * - チャネル（LINE / X）ごとに 1 テンプレート。未登録時はチャネルの初期テンプレートを
+ *   入れた状態で表示し、保存で作成する
+ * - X はサンプル展開後の X 文字数を提供する（差し込み後の長さが実際の投稿に近いため）
  * - 入力エラーは編集後（または保存試行後）にのみ出す（初期表示で赤枠を出さない）
  * - 知らない差し込み項目は注意のみで保存は妨げない
  *
@@ -33,6 +37,10 @@ export interface UseAnnouncementTemplateForm {
   bodyError: ComputedRef<string | null>;
   unknownPlaceholders: ComputedRef<string[]>;
   preview: ComputedRef<string>;
+  /** X のみサンプル展開後の X 文字数。LINE は null */
+  previewXLength: ComputedRef<number | null>;
+  /** 読み込み / 保存後から本文が変わっているか */
+  isDirty: ComputedRef<boolean>;
   saving: Ref<boolean>;
   load: () => Promise<void>;
   save: () => Promise<boolean>;
@@ -40,6 +48,7 @@ export interface UseAnnouncementTemplateForm {
 
 export function useAnnouncementTemplateForm(
   adminMemberId: Ref<MemberId | null>,
+  channel: AnnouncementChannel = "line",
 ): UseAnnouncementTemplateForm {
   const { toast } = useToast();
   const status = ref<AnnouncementTemplateFormStatus>("loading");
@@ -63,20 +72,34 @@ export function useAnnouncementTemplateForm(
   });
 
   const unknownPlaceholders = computed(() => findUnknownPlaceholders(body.value));
-  const preview = computed(() =>
-    renderAnnouncement(body.value, SAMPLE_ANNOUNCEMENT_INPUT),
+  // X の予約リンクには openExternalBrowser を付けない（ダイアログの実リンクと揃える）
+  const sampleInput =
+    channel === "x"
+      ? {
+          ...SAMPLE_ANNOUNCEMENT_INPUT,
+          bookingLink: SAMPLE_ANNOUNCEMENT_INPUT.bookingLink.replace(
+            "&openExternalBrowser=1",
+            "",
+          ),
+        }
+      : SAMPLE_ANNOUNCEMENT_INPUT;
+
+  const preview = computed(() => renderAnnouncement(body.value, sampleInput));
+  const previewXLength = computed<number | null>(() =>
+    channel === "x" ? countXWeightedLength(preview.value) : null,
   );
+  const isDirty = computed(() => body.value !== loadedBody.value);
 
   async function load(): Promise<void> {
     status.value = "loading";
-    const result = await fetchAnnouncementTemplate("line");
+    const result = await fetchAnnouncementTemplate(channel);
     if (!result.ok) {
       status.value = "error";
       return;
     }
     const template = result.value;
     isNew.value = template === null;
-    body.value = template?.body ?? DEFAULT_LINE_TEMPLATE;
+    body.value = template?.body ?? DEFAULT_TEMPLATES[channel];
     loadedBody.value = body.value;
     updatedAt.value = template?.updatedAt ?? null;
     submitted.value = false;
@@ -96,7 +119,7 @@ export function useAnnouncementTemplateForm(
       return false;
     }
     saving.value = true;
-    const result = await saveAnnouncementTemplate("line", body.value, admin);
+    const result = await saveAnnouncementTemplate(channel, body.value, admin);
     saving.value = false;
     if (!result.ok) {
       toast({
@@ -123,6 +146,8 @@ export function useAnnouncementTemplateForm(
     bodyError,
     unknownPlaceholders,
     preview,
+    previewXLength,
+    isDirty,
     saving,
     load,
     save,

@@ -38,14 +38,14 @@ export const DEFAULT_LINE_TEMPLATE = `🏐 {イベント名}のお知らせ 🏐
  */
 export const DEFAULT_X_TEMPLATE = `🏐{日付} {開始時刻}〜 {会場}でバレーします！
 
-初心者・ひとり参加・久しぶりの方 大歓迎🙌
+初心者・ひとり参加 大歓迎🙌
 20〜30代中心のゆるい社会人サークルです。
 途中参加・途中抜けOK／参加費{参加費}
 
-雰囲気はこちら👇 気軽にのぞいてみてください
+気軽にのぞいてみてください👇
 {紹介ページリンク}
 
-#バレーボール #社会人サークル #江東区 #初心者歓迎`;
+#バレーボール #社会人サークル #江東区`;
 
 export const DEFAULT_TEMPLATES: Readonly<Record<AnnouncementChannel, string>> = {
   line: DEFAULT_LINE_TEMPLATE,

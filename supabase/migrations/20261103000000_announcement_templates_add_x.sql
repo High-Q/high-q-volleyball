@@ -33,14 +33,14 @@ alter table public.announcement_templates
 insert into public.announcement_templates (channel, body)
 values ('x', $tpl$🏐{日付} {開始時刻}〜 {会場}でバレーします！
 
-初心者・ひとり参加・久しぶりの方 大歓迎🙌
+初心者・ひとり参加 大歓迎🙌
 20〜30代中心のゆるい社会人サークルです。
 途中参加・途中抜けOK／参加費{参加費}
 
-雰囲気はこちら👇 気軽にのぞいてみてください
+気軽にのぞいてみてください👇
 {紹介ページリンク}
 
-#バレーボール #社会人サークル #江東区 #初心者歓迎$tpl$)
+#バレーボール #社会人サークル #江東区$tpl$)
 on conflict (channel) do nothing;
 
 

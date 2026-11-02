@@ -50,9 +50,9 @@ afterEach(() => {
   wrapper = null;
 });
 
-async function mountForm() {
+async function mountForm(channel: "line" | "x" = "line") {
   wrapper = mount(AnnouncementTemplateForm, {
-    props: { adminMemberId: ADMIN },
+    props: { adminMemberId: ADMIN, channel },
     attachTo: document.body,
   });
   await flushPromises();
@@ -170,5 +170,38 @@ describe("AnnouncementTemplateForm — 編集", () => {
       expect.objectContaining({ variant: "destructive" }),
     );
     expect((body(w).element as HTMLTextAreaElement).value).toBe("編集中");
+  });
+});
+
+describe("AnnouncementTemplateForm — X チャネル", () => {
+  it("X の文字数（サンプル展開後）を表示し、LINE では出さない", async () => {
+    fetchMock.mockResolvedValue(ok({ ...TEMPLATE, channel: "x", body: "あいう" }));
+    const w = await mountForm("x");
+    expect(fetchMock).toHaveBeenCalledWith("x");
+    expect(w.find('[data-testid="template-x-length"]').text()).toContain("6 / 280");
+    expect(w.text()).toContain("X 告知テンプレート");
+
+    w.unmount();
+    fetchMock.mockResolvedValue(ok(TEMPLATE));
+    const line = await mountForm("line");
+    expect(line.find('[data-testid="template-x-length"]').exists()).toBe(false);
+  });
+
+  it("280 超で上限超過の注意を出す（保存は可能）", async () => {
+    fetchMock.mockResolvedValue(ok({ ...TEMPLATE, channel: "x" }));
+    saveMock.mockResolvedValue(ok({ ...TEMPLATE, channel: "x" }));
+    const w = await mountForm("x");
+    await body(w).setValue("あ".repeat(141));
+    expect(w.find('[data-testid="template-x-length"]').text()).toContain("上限を超えています");
+    await w.find("form").trigger("submit");
+    await flushPromises();
+    expect(saveMock).toHaveBeenCalled();
+  });
+
+  it("編集すると dirty=true を通知する", async () => {
+    fetchMock.mockResolvedValue(ok(TEMPLATE));
+    const w = await mountForm();
+    await body(w).setValue("変更");
+    expect(w.emitted("update:dirty")?.at(-1)).toEqual([true]);
   });
 });
