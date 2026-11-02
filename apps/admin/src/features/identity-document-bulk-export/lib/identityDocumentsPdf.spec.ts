@@ -69,8 +69,8 @@ describe("buildIdentityDocumentsPdf", () => {
     ]);
     const labelArg = h.drawText.mock.calls[0]?.[0] as string;
     expect(labelArg).toBe("No.1  drivers_license");
-    // 日本語（CJK）を含まない
-    expect(/[　-鿿]/.test(labelArg)).toBe(false);
+    // 日本語（ひらがな / カタカナ / 漢字）を含まない
+    expect(/[぀-ヿ一-鿿]/.test(labelArg)).toBe(false);
   });
 
   it("保存結果の Uint8Array を返す", async () => {

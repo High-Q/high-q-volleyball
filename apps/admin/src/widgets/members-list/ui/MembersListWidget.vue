@@ -1,9 +1,21 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import type { MemberId } from "@high-q/shared";
 import {
   MembersFilterToolbar,
   useMembersFilter,
 } from "@/features/members-filter";
+import { useAuthSession } from "@/features/auth";
+import { fetchMembersForExport } from "@/entities/member";
+import {
+  useMembersSelection,
+  useBulkExport,
+  BulkExportToolbar,
+  ExportPrepDialog,
+  ExportResultDialog,
+  type ExportDialogMember,
+  type BulkExportResult,
+} from "@/features/identity-document-bulk-export";
 import { useMembersListData } from "../composables/useMembersListData";
 import MembersListTable from "./MembersListTable.vue";
 import MembersListPagination from "./MembersListPagination.vue";
@@ -15,10 +27,14 @@ import MembersErrorState from "./MembersErrorState.vue";
  * /members 画面のメイン widget。Toolbar + 4 状態 + Pagination + 行クリック
  * で詳細 sheet を開く制御を統合する。
  *
+ * #172: 会員の複数選択 + 役所提出用一括ダウンロード（準備ダイアログ / 結果ダイアログ）
+ * を統合する。
+ *
  * 詳細 sheet 自体は `widgets/member-detail-sheet` で実装され、
  * Page で並列に配置される。本 widget は `?detail=:id` クエリの開閉のみ担う。
  *
  * 関連: openspec/changes/admin-members-list-screen/specs/admin-members-list/spec.md
+ *       openspec/changes/admin-identity-document-bulk-export/specs/admin-members-list/spec.md
  */
 
 const {
@@ -48,6 +64,102 @@ const view = computed<"loading" | "empty" | "error" | "success">(() => {
   if (rows.value.length === 0) return "empty";
   return "success";
 });
+
+// ---------------------------------------------------------------------------
+// #172 複数選択 + 一括ダウンロード
+// ---------------------------------------------------------------------------
+const session = useAuthSession();
+const selection = useMembersSelection();
+const bulkExport = useBulkExport();
+
+// 現ページの選択可能 id（本人確認書類を 1 件以上持つ会員のみ選択可）
+const pageSelectableIds = computed<MemberId[]>(() =>
+  rows.value.filter((r) => r.has_identity_document).map((r) => r.id),
+);
+
+const selectedIdStrings = computed<ReadonlySet<string>>(
+  () => selection.selectedIds.value as ReadonlySet<string>,
+);
+const allSelected = computed(() =>
+  selection.pageAllSelected(pageSelectableIds.value),
+);
+const indeterminate = computed(() =>
+  selection.pageIndeterminate(pageSelectableIds.value),
+);
+
+function onToggleSelect(memberId: string): void {
+  selection.toggle(memberId as unknown as MemberId);
+}
+
+function onToggleSelectAll(): void {
+  selection.setPageSelection(pageSelectableIds.value, !allSelected.value);
+}
+
+// 準備ダイアログ / 結果ダイアログ
+const prepOpen = ref(false);
+const resultOpen = ref(false);
+const dialogMembers = ref<ExportDialogMember[]>([]);
+const exportResult = ref<BulkExportResult | null>(null);
+const exportError = ref<string | null>(null);
+
+const busy = computed(() => bulkExport.phase.value === "running");
+
+async function openPrep(): Promise<void> {
+  const ids = selection.toArray();
+  if (ids.length === 0) return;
+  // 準備ダイアログ表示用に名簿フィールド（氏名・電話）を取得
+  const res = await fetchMembersForExport(ids);
+  if (!res.ok) {
+    exportError.value = res.error.message;
+    exportResult.value = null;
+    resultOpen.value = true;
+    return;
+  }
+  const byId = new Map(res.value.map((m) => [m.id as unknown as string, m]));
+  dialogMembers.value = ids
+    .map((id) => byId.get(id as unknown as string))
+    .filter((m): m is NonNullable<typeof m> => m != null)
+    .map((m) => ({
+      id: m.id as unknown as string,
+      name: [m.last_name, m.first_name].filter(Boolean).join(" "),
+      phone: m.phone ?? "",
+    }));
+  prepOpen.value = true;
+}
+
+async function runExport(
+  phoneOverrides: Record<string, string>,
+): Promise<void> {
+  const adminMemberId = session.session.value?.user.id as
+    | MemberId
+    | undefined;
+  if (!adminMemberId) {
+    exportError.value = "管理者セッションが確認できませんでした。再ログインしてください。";
+    exportResult.value = null;
+    prepOpen.value = false;
+    resultOpen.value = true;
+    return;
+  }
+  prepOpen.value = false;
+  const result = await bulkExport.run({
+    selectedIds: selection.toArray(),
+    phoneOverrides,
+    adminMemberId,
+  });
+  if (result.ok) {
+    exportResult.value = result.value;
+    exportError.value = null;
+  } else {
+    exportResult.value = null;
+    exportError.value = result.error.message;
+  }
+  resultOpen.value = true;
+}
+
+function onRetry(): void {
+  resultOpen.value = false;
+  void openPrep();
+}
 </script>
 
 <template>
@@ -59,6 +171,14 @@ const view = computed<"loading" | "empty" | "error" | "success">(() => {
       @update:exp="setExp"
       @update:attended-range="setAttendedRange"
       @update:last-period="setLastPeriod"
+    />
+
+    <BulkExportToolbar
+      v-if="selection.count.value > 0"
+      :count="selection.count.value"
+      :busy="busy"
+      @download="openPrep"
+      @clear="selection.clear"
     />
 
     <div class="flex-1 overflow-auto">
@@ -81,8 +201,14 @@ const view = computed<"loading" | "empty" | "error" | "success">(() => {
         :rows="rows"
         :sort="filter.sort"
         :dir="filter.dir"
+        show-selection
+        :selected-ids="selectedIdStrings"
+        :all-selected="allSelected"
+        :indeterminate="indeterminate"
         @click-row="openDetail"
         @update:sort="setSort"
+        @toggle-select="onToggleSelect"
+        @toggle-select-all="onToggleSelectAll"
       />
     </div>
 
@@ -92,6 +218,22 @@ const view = computed<"loading" | "empty" | "error" | "success">(() => {
       :total="total"
       :per="PER_PAGE"
       @update:page="setPage"
+    />
+
+    <ExportPrepDialog
+      :open="prepOpen"
+      :members="dialogMembers"
+      :busy="busy"
+      @update:open="prepOpen = $event"
+      @submit="runExport"
+    />
+
+    <ExportResultDialog
+      :open="resultOpen"
+      :result="exportResult"
+      :error-message="exportError"
+      @update:open="resultOpen = $event"
+      @retry="onRetry"
     />
   </div>
 </template>

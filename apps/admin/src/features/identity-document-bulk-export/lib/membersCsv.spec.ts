@@ -44,6 +44,10 @@ describe("buildMembersCsv", () => {
     },
   ];
 
+  // 先頭の UTF-8 BOM (U+FEFF) を除いて本文を行に分解する
+  const bodyLines = (csv: string): string[] =>
+    (csv.charCodeAt(0) === 0xfeff ? csv.slice(1) : csv).split("\r\n");
+
   it("先頭に UTF-8 BOM が付く", () => {
     const csv = buildMembersCsv(members, asOf);
     expect(csv.charCodeAt(0)).toBe(0xfeff);
@@ -51,27 +55,23 @@ describe("buildMembersCsv", () => {
 
   it("ヘッダは 氏名/住所/年齢/電話番号 の順で役職名を含まない", () => {
     const csv = buildMembersCsv(members, asOf);
-    const firstLine = csv.replace(/^﻿/, "").split("\r\n")[0];
-    expect(firstLine).toBe("氏名,住所,年齢,電話番号");
+    expect(bodyLines(csv)[0]).toBe("氏名,住所,年齢,電話番号");
     expect(csv).not.toContain("役職");
   });
 
   it("氏名は姓+名、住所は空欄、年齢は自動算出、電話は確認値", () => {
     const csv = buildMembersCsv(members, asOf);
-    const lines = csv.replace(/^﻿/, "").split("\r\n");
-    expect(lines[1]).toBe("田中 太郎,,42,090-1234-5678");
+    expect(bodyLines(csv)[1]).toBe("田中 太郎,,42,090-1234-5678");
   });
 
   it("birthday / phone が NULL の行は年齢・電話が空欄", () => {
     const csv = buildMembersCsv(members, asOf);
-    const lines = csv.replace(/^﻿/, "").split("\r\n");
-    expect(lines[2]).toBe("鈴木 一郎,,,");
+    expect(bodyLines(csv)[2]).toBe("鈴木 一郎,,,");
   });
 
   it("住所列は全行空欄", () => {
     const csv = buildMembersCsv(members, asOf);
-    const lines = csv.replace(/^﻿/, "").split("\r\n").filter(Boolean);
-    // ヘッダを除く各データ行の 2 列目（住所）が空
+    const lines = bodyLines(csv).filter(Boolean);
     for (const line of lines.slice(1)) {
       expect(line.split(",")[1]).toBe("");
     }
@@ -82,8 +82,7 @@ describe("buildMembersCsv", () => {
       [{ last_name: "A,B", first_name: '"X"', birthday: null, phone: null }],
       asOf,
     );
-    const lines = csv.replace(/^﻿/, "").split("\r\n");
     // 氏名 `A,B "X"` はカンマと引用符を含むため引用符で囲まれ、内部引用符は二重化
-    expect(lines[1]).toBe('"A,B ""X""",,,');
+    expect(bodyLines(csv)[1]).toBe('"A,B ""X""",,,');
   });
 });

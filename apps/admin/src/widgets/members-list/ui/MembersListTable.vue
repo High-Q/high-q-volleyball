@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
   DataCardList,
+  Checkbox,
 } from "@/shared/ui";
 import {
   EXPERIENCE_LABEL,
@@ -29,12 +30,32 @@ const props = defineProps<{
   rows: ReadonlyArray<MemberListRow>;
   sort: MembersListSortKey;
   dir: SortDir;
+  /** #172 選択チェックボックス列を表示するか（既定 false）。 */
+  showSelection?: boolean;
+  /** 選択中 member id の集合。 */
+  selectedIds?: ReadonlySet<string>;
+  /** ヘッダ全選択チェックボックスの状態。 */
+  allSelected?: boolean;
+  /** ヘッダ全選択チェックボックスの indeterminate 状態。 */
+  indeterminate?: boolean;
 }>();
 
 const emit = defineEmits<{
   "click-row": [memberId: string];
   "update:sort": [sort: MembersListSortKey, dir: SortDir];
+  "toggle-select": [memberId: string];
+  "toggle-select-all": [];
 }>();
+
+function isRowSelected(id: string): boolean {
+  return props.selectedIds?.has(id) ?? false;
+}
+
+/** ヘッダ全選択の checked 値（indeterminate のときは 'indeterminate'）。 */
+const headerCheckedState = computed<boolean | "indeterminate">(() => {
+  if (props.indeterminate) return "indeterminate";
+  return props.allSelected ?? false;
+});
 
 const EXPERIENCE_TONE: Record<
   ExperienceLevel,
@@ -123,6 +144,13 @@ function onRowKeyDown(memberId: string, event: KeyboardEvent): void {
   <Table class="hidden md:block">
     <TableHeader>
       <TableRow>
+        <TableHead v-if="props.showSelection" class="w-10">
+          <Checkbox
+            :checked="headerCheckedState"
+            aria-label="現ページを全選択"
+            @update:checked="emit('toggle-select-all')"
+          />
+        </TableHead>
         <TableHead
           :aria-sort="ariaSortFor('display_name')"
           tabindex="0"
@@ -179,6 +207,19 @@ function onRowKeyDown(memberId: string, event: KeyboardEvent): void {
         @click="onRowClick(row.id as unknown as string)"
         @keydown="onRowKeyDown(row.id as unknown as string, $event)"
       >
+        <TableCell
+          v-if="props.showSelection"
+          class="w-10"
+          @click.stop
+          @keydown.stop
+        >
+          <Checkbox
+            :checked="isRowSelected(row.id as unknown as string)"
+            :disabled="!row.has_identity_document"
+            :aria-label="`${row.display_name} を選択`"
+            @update:checked="emit('toggle-select', row.id as unknown as string)"
+          />
+        </TableCell>
         <TableCell class="font-jp text-sm text-ink whitespace-nowrap">
           <span class="inline-flex items-center gap-hq-2">
             <span
@@ -245,6 +286,14 @@ function onRowKeyDown(memberId: string, event: KeyboardEvent): void {
       @keydown="onRowKeyDown(row.id as unknown as string, $event)"
     >
       <div class="flex flex-wrap items-center gap-hq-2">
+        <span v-if="props.showSelection" @click.stop @keydown.stop>
+          <Checkbox
+            :checked="isRowSelected(row.id as unknown as string)"
+            :disabled="!row.has_identity_document"
+            :aria-label="`${row.display_name} を選択`"
+            @update:checked="emit('toggle-select', row.id as unknown as string)"
+          />
+        </span>
         <span
           class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-hairline bg-paper-warm font-jp text-xs text-muted"
           aria-hidden="true"

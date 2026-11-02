@@ -31,18 +31,18 @@
 - [x] 5.5 一括ダウンロードのオーケストレーション composable を実装: 選択 member id → 名簿フィールド取得（§2.3 `fetchMembersForExport`）→ admin 確認済み電話番号をマージ（住所は空欄固定）→ 承認済み書類取得（§2.1）→ 各画像を `supabase.storage.from('identity-documents').download(path)` で Blob 取得（部分失敗は継続）→ CSV（§5.2）+ PDF（§5.4）生成 → `jszip` を **dynamic import** して `会員名簿.csv` + `本人確認書類.pdf` を ZIP 化 → ローカル保存 → 監査ログ INSERT（§3、実含有集合で記録）。進捗（取得済み / 対象数）と結果（含めた書類数 / 名簿会員数 / 承認済みなし会員 / 失敗書類）を Result で返す
 - [x] 5.6 `jszip` と `pdf-lib` を `apps/admin/package.json` に依存追加（dynamic import 前提）
 - [x] 5.7 オーケストレーションの unit test: approved のみ抽出 / NULL 書類除外 / 部分失敗で成功分のみ PDF・監査ログ対象が実含有集合に一致 / 全画像失敗でも CSV 出力 / 承認済み 0 件会員は CSV に載るが PDF 対象外 / 監査ログ INSERT 失敗時の警告分岐
-- [ ] 5.8 一括アクションツールバー UI（選択件数 / 「会員名簿と本人確認書類をダウンロード」ボタン / 「選択を解除」、取得中は disabled + `aria-busy`）を実装
-- [ ] 5.9 エクスポート準備ダイアログ UI（選択会員一覧、氏名=読み取り専用 / 電話番号=DB プリフィル編集可、**住所入力欄は設けない**、電話番号は `shared/ui/FormField` でラップ・初期赤枠なし、「ダウンロード」で §5.5 起動）を実装
-- [ ] 5.10 結果ダイアログ UI（含めた書類数 / 名簿会員数 / 承認済みなしで PDF 対象外の会員 / 取得失敗書類、エラー時 `role="alert"` + 再試行）を実装。`features/identity-document-bulk-export/index.ts` で公開
+- [x] 5.8 一括アクションツールバー UI（選択件数 / 「会員名簿と本人確認書類をダウンロード」ボタン / 「選択を解除」、取得中は disabled + `aria-busy`）を実装
+- [x] 5.9 エクスポート準備ダイアログ UI（選択会員一覧、氏名=読み取り専用 / 電話番号=DB プリフィル編集可、**住所入力欄は設けない**、電話番号は `shared/ui/FormField` でラップ・初期赤枠なし、「ダウンロード」で §5.5 起動）を実装
+- [x] 5.10 結果ダイアログ UI（含めた書類数 / 名簿会員数 / 承認済みなしで PDF 対象外の会員 / 取得失敗書類、エラー時 `role="alert"` + 再試行）を実装。`features/identity-document-bulk-export/index.ts` で公開
 
 ## 6. widgets/members-list: 選択列の統合
 
-- [ ] 6.1 `MembersListTable.vue` に選択チェックボックス列を 7 列の左に追加（デスクトップ DataTable + モバイルカード両方）。`has_identity_document === false` は disabled。チェックボックス領域は `@click.stop` で行クリック（詳細 sheet）と分離。ヘッダに現ページ全選択（indeterminate 対応）
-- [ ] 6.2 `MembersListWidget.vue` に選択 composable・一括アクションツールバー・エクスポート準備ダイアログ・結果ダイアログを統合。1 件以上選択時のみツールバー表示。既存フィルタ / ソート / ページネーション / 行クリック詳細 sheet を維持
-- [ ] 6.3 component test: ツールバー表示条件 / 件数表示 / ダウンロード起動で準備ダイアログ表示 / チェックボックスクリックで行クリック非発火 / 書類未提出会員の disabled / 現ページ全選択 indeterminate
+- [x] 6.1 `MembersListTable.vue` に選択チェックボックス列を 7 列の左に追加（デスクトップ DataTable + モバイルカード両方）。`has_identity_document === false` は disabled。チェックボックス領域は `@click.stop` で行クリック（詳細 sheet）と分離。ヘッダに現ページ全選択（indeterminate 対応）
+- [x] 6.2 `MembersListWidget.vue` に選択 composable・一括アクションツールバー・エクスポート準備ダイアログ・結果ダイアログを統合。1 件以上選択時のみツールバー表示。既存フィルタ / ソート / ページネーション / 行クリック詳細 sheet を維持
+- [x] 6.3 component test: ツールバー表示条件 / 件数表示 / ダウンロード起動で準備ダイアログ表示 / チェックボックスクリックで行クリック非発火 / 書類未提出会員の disabled / 現ページ全選択 indeterminate
 
 ## 7. 最終確認（UI 一括検証）
 
 - [ ] 7.1 E2E（Playwright, admin, 1 件）: 認証済み admin で `/members` → 複数会員選択 → ダウンロード起動 → ダウンロード → 結果ダイアログ表示の happy path
-- [ ] 7.2 `pnpm exec vitest run` / `pnpm --filter @high-q/admin lint`（boundaries / no-restricted-imports / stylelint）/ `pnpm build`（admin）をまとめて実行し緑を確認。マジックナンバー grep（`#[0-9a-f]{3,6}` / `\[\d+px\]`）が新規コンポーネントで 0 件
+- [x] 7.2 `pnpm exec vitest run` / `pnpm --filter @high-q/admin lint`（boundaries / no-restricted-imports / stylelint）/ `pnpm build`（admin）をまとめて実行し緑を確認。マジックナンバー grep（`#[0-9a-f]{3,6}` / `\[\d+px\]`）が新規コンポーネントで 0 件
 - [ ] 7.3 ローカル動作確認の案内（`verify-locally`）を作成し翔太郎くんに提示（dev passwordless login + admin `/members` の URL・主要シナリオ・4 状態 + a11y + モバイル + 権限・生成 ZIP の中身確認）
