@@ -1,26 +1,25 @@
 ## ADDED Requirements
 
-### Requirement: エクスポート準備ダイアログ（住所 / 電話番号の入力・確認）
+### Requirement: エクスポート準備ダイアログ（会員確認 / 電話番号）
 
 `/members` で会員を選択し一括アクションの「会員名簿と本人確認書類をダウンロード」を起動すると、システムは MUST **エクスポート準備ダイアログ**を表示する SHALL。ダイアログは選択会員を一覧し、会員ごとに以下を表示する:
 
 - **氏名**: `last_name + ' ' + first_name`（読み取り専用）
 - **電話番号**: DB の `phone` をプリフィルし、admin が編集可能。NULL のときは空欄
-- **住所**: 空欄の入力フィールド（DB 未収集のため admin がその場で入力）
 
-admin が住所等を入力し「ダウンロード」を押すと CSV / PDF / ZIP の生成を開始する。住所の入力値は MUST DB に保存せず、当該ダウンロードの CSV にのみ反映する SHALL。
+ダイアログは MUST 住所の入力欄を持たない SHALL。住所はアプリで扱わず、CSV に空欄列として出力しエクスポート後に補記する（SOP §3・費用ゼロ方針に照らしアプリへ OCR / 外部送信を組み込まない）。admin が「ダウンロード」を押すと CSV / PDF / ZIP の生成を開始する。
 
 #### Scenario: ダイアログに選択会員が並ぶ
 - **WHEN** 会員を 3 名選択して一括ダウンロードを起動する
-- **THEN** エクスポート準備ダイアログに 3 名分の 氏名 / 電話番号（DB 値プリフィル）/ 住所（空欄入力）が表示される
+- **THEN** エクスポート準備ダイアログに 3 名分の 氏名 / 電話番号（DB 値プリフィル）が表示され、住所の入力欄は存在しない
 
 #### Scenario: 電話番号のプリフィルと編集
 - **WHEN** DB の `phone` が登録済みの会員行を表示する
 - **THEN** 電話番号フィールドにその値がプリフィルされ、admin が編集できる
 
-#### Scenario: 住所は DB に保存されない
-- **WHEN** admin が住所を入力してダウンロードを実行する
-- **THEN** 住所は当該 CSV にのみ出力され、`members` テーブルへの UPDATE は発行されない
+#### Scenario: 住所の入力欄が無い
+- **WHEN** エクスポート準備ダイアログを表示する
+- **THEN** 住所の入力フィールドは存在せず、`members` テーブルへの UPDATE も発行されない
 
 ### Requirement: 承認済み書類のみの抽出
 
@@ -48,21 +47,26 @@ admin が住所等を入力し「ダウンロード」を押すと CSV / PDF / Z
 
 ### Requirement: 会員名簿 CSV（江東区フォーマット）
 
-ZIP は MUST `会員名簿.csv` を 1 ファイル同梱する SHALL。CSV は江東区登録団体名簿様式に準拠し、MUST 以下の列を持つ: **氏名 / 住所 / 電話番号**。役職名列は MUST 含めない SHALL。
+ZIP は MUST `会員名簿.csv` を 1 ファイル同梱する SHALL。CSV は江東区登録団体名簿様式を基に、MUST 以下の列をこの順で持つ: **氏名 / 住所 / 年齢 / 電話番号**。役職名列は MUST 含めない SHALL。
 
 - 氏名 = `last_name + ' ' + first_name`（本名）。
-- 住所 = エクスポート準備ダイアログで admin が入力した値（未入力は空欄）。
+- 住所 = **常に空欄で出力する**（アプリは住所を入力させない。エクスポート後にオーナーが本人確認書類 PDF と突合して手で補記する）。
+- 年齢 = DB の `birthday` から**エクスポート実行日時点の満年齢を自動計算**した整数（admin 入力なし）。`birthday` が未設定・算出不能な場合は MUST 空欄とする SHALL。
 - 電話番号 = ダイアログで確認・編集した値（未入力 / NULL は空欄）。
 - CSV は MUST UTF-8 BOM 付きで出力し、Excel で日本語が文字化けしないようにする SHALL。
 - 行は選択した全会員を対象とする（承認済み書類の有無に関わらず名簿に載せる）。
 
 #### Scenario: CSV の列構成
 - **WHEN** エクスポートを実行して ZIP を生成する
-- **THEN** `会員名簿.csv` の列が 氏名 / 住所 / 電話番号 の 3 列であり、役職名列は存在しない
+- **THEN** `会員名簿.csv` の列が 氏名 / 住所 / 年齢 / 電話番号 の 4 列をこの順で持ち、役職名列は存在しない
 
-#### Scenario: admin 入力の住所が反映される
-- **WHEN** ある会員の住所に「東京都江東区…」と入力してダウンロードする
-- **THEN** CSV の当該行の住所列にその値が出力される
+#### Scenario: 年齢の自動計算
+- **WHEN** `birthday` が 2000-01-01 の会員を 2026-11-02 にエクスポートする
+- **THEN** CSV の当該行の年齢列に `26` が出力され、admin は年齢を入力しない
+
+#### Scenario: 住所列は空欄で出力される
+- **WHEN** エクスポートを実行して ZIP を生成する
+- **THEN** `会員名簿.csv` の住所列は全行空欄で、ヘッダ（住所）は存在する
 
 #### Scenario: UTF-8 BOM
 - **WHEN** 生成した `会員名簿.csv` を Excel で開く
@@ -165,6 +169,7 @@ ZIP は MUST `本人確認書類.pdf` を 1 ファイル同梱する SHALL。PDF
 
 - `apps/admin/src/features/identity-document-bulk-export/` — 選択状態 composable・エクスポート準備ダイアログ・一括ダウンロードのオーケストレーション・一括アクションツールバー UI・結果ダイアログ
 - `apps/admin/src/entities/identity-document/` — 承認済み書類を会員 ID 群で取得するクエリ（既存 entity に追加）
+- `apps/admin/src/entities/member/` — 選択会員の名簿フィールド（`last_name` / `first_name` / `phone` / `birthday`）を `members` テーブルから会員 ID 群で取得するクエリ（既存 entity に追加。`member_list_view` に無いため実テーブル参照）
 - `apps/admin/src/entities/identity-document-download/` — 監査ログテーブルの DTO + INSERT クエリ
 - `apps/admin/src/shared/ui/Checkbox.*` — shadcn-vue Checkbox プリミティブ（新規取り込み）
 
@@ -180,7 +185,7 @@ ZIP は MUST `本人確認書類.pdf` を 1 ファイル同梱する SHALL。PDF
 
 a11y は MUST WCAG 2.1 AA を満たす SHALL:
 - 各チェックボックスは関連ラベル（`aria-label` 等）を持つ。
-- エクスポート準備ダイアログの 住所 / 電話番号 入力は `shared/ui/FormField` でラップし、ラベルと関連付ける（初期表示で赤枠を出さない）。
+- エクスポート準備ダイアログの 電話番号 入力は `shared/ui/FormField` でラップし、ラベルと関連付ける（初期表示で赤枠を出さない）。
 - 一括アクションツールバー / 各ダイアログはキーボード操作可能で、ダイアログはフォーカストラップ + ESC で閉じる。
 - 取得中のボタンは `aria-busy="true"`、エラーは `role="alert"`。
 
@@ -188,9 +193,9 @@ a11y は MUST WCAG 2.1 AA を満たす SHALL:
 - **WHEN** 本機能のコンポーネントを `#[0-9a-f]{3,6}\b` および `\[\d+px\]` で grep する
 - **THEN** マッチが 0 件である
 
-#### Scenario: 住所入力のフォーム規約
+#### Scenario: 電話番号入力のフォーム規約
 - **WHEN** エクスポート準備ダイアログを初期表示する
-- **THEN** 住所 / 電話番号入力は FormField でラップされ、初期表示で赤枠（invalid 表示）は出ない
+- **THEN** 電話番号入力は FormField でラップされ、初期表示で赤枠（invalid 表示）は出ない
 
 ### Requirement: テスト
 
@@ -199,17 +204,18 @@ a11y は MUST WCAG 2.1 AA を満たす SHALL:
 - **Composable / unit test**（Vitest）:
   - 選択状態 composable（追加 / 解除 / ページまたぎ保持 / 現ページ全選択 / indeterminate 判定 / 全解除）
   - 承認済み書類取得クエリが `status = 'approved'` と選択 member id 群で WHERE を組み立て、NULL 書類を除外する
+  - 名簿フィールド取得クエリ（`fetchMembersForExport`）が選択 member id 群で `id in` を組み立て、`last_name` / `first_name` / `phone` / `birthday` を取得する
   - 監査ログ INSERT クエリが `downloaded_by` / `document_ids` / `member_ids` / 件数を組み立てる
-  - 会員名簿 CSV ビルダの列（氏名 / 住所 / 電話番号）・admin 入力住所の反映・UTF-8 BOM・役職名を含まないこと
+  - 会員名簿 CSV ビルダの列順（氏名 / 住所 / 年齢 / 電話番号）・住所列が常に空欄であること・`birthday` からの満年齢算出（基準日と誕生日前後の境界 / 未設定空欄）・UTF-8 BOM・役職名を含まないこと
   - 画像形式判定（jpg / png）と PDF 埋め込み関数の選択
   - 部分失敗時に成功分のみで PDF を構成し、監査ログ対象が実含有集合に一致する
 - **Component test**（Vitest + @vue/test-utils）:
   - 一括アクションツールバーの表示条件（1 件以上選択時）と件数表示
-  - エクスポート準備ダイアログの 氏名表示 / 電話プリフィル / 住所入力 / 住所未保存
+  - エクスポート準備ダイアログの 氏名表示 / 電話プリフィル / 住所入力欄が無いこと
   - 結果ダイアログの「含めた件数 / 承認済みなし会員 / 失敗書類」表示
   - チェックボックスクリックで行クリック（詳細 sheet）が発火しない（イベント分離）
 - **E2E**（Playwright、本 change で 1 件）:
-  - happy path: 認証済み admin で `/members` を開く → 複数会員を選択 → 一括ダウンロード起動 → 住所入力 → ダウンロード → 結果ダイアログが表示される
+  - happy path: 認証済み admin で `/members` を開く → 複数会員を選択 → 一括ダウンロード起動 → ダウンロード → 結果ダイアログが表示される
 
 #### Scenario: ユニット / コンポーネントテストの網羅
 - **WHEN** `pnpm --filter @high-q/admin test` を実行する
@@ -217,4 +223,4 @@ a11y は MUST WCAG 2.1 AA を満たす SHALL:
 
 #### Scenario: E2E の通過
 - **WHEN** `pnpm --filter @high-q/e2e test` を admin プロジェクトで実行する
-- **THEN** 「`/members` で複数選択 → 住所入力 → 一括ダウンロード → ZIP 生成」の happy path が pass する
+- **THEN** 「`/members` で複数選択 → 一括ダウンロード → ZIP 生成」の happy path が pass する
