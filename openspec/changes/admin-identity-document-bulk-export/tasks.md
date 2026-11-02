@@ -14,8 +14,8 @@
 
 ## 3. entities/identity-document-download: 監査ログ entity
 
-- [ ] 3.1 `apps/admin/src/entities/identity-document-download/` を新規作成。DTO 型（Branded `MemberId` / 書類 id）と INSERT クエリ（`downloaded_by` / `member_ids` / `document_ids` / `member_count` / `document_count` / `note?`）を実装。`Result<T>` を返す。`index.ts` で公開
-- [ ] 3.2 INSERT クエリの unit test（Vitest + Supabase mock）: payload 組み立て / 成功・失敗の Result 分岐
+- [x] 3.1 `apps/admin/src/entities/identity-document-download/` を新規作成。DTO 型（Branded `MemberId` / 書類 id）と INSERT クエリ（`downloaded_by` / `member_ids` / `document_ids` / `member_count` / `document_count` / `note?`）を実装。`Result<T>` を返す。`index.ts` で公開
+- [x] 3.2 INSERT クエリの unit test（Vitest + Supabase mock）: payload 組み立て / 成功・失敗の Result 分岐
 
 ## 4. shared/ui: Checkbox プリミティブ
 
