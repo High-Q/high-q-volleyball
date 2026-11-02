@@ -126,7 +126,7 @@
 ## 8. 最終確認
 
 - [x] 8.1 `pnpm -r test` / lint / typecheck / stylelint / dependency-cruiser / admin・reservation の build を実行し全て緑
-- [ ] 8.2 `verify-locally` Skill でローカル確認手順を案内し、翔太郎くんの OK を待つ
+- [x] 8.2 `verify-locally` Skill でローカル確認手順を案内し、翔太郎くんの OK を待つ
   - admin（5173）: 告知テンプレート画面で編集・保存 → イベント詳細で告知文 / リンクのコピー。スマホ幅も確認
   - ローカル予約サイトに向ける場合は root `.env.local` に `VITE_RESERVATION_URL=http://localhost:5174` を設定する手順を案内（値の設定は翔太郎くんが行う）
   - reservation（5174）: ログイン済み / 未ログイン / 予約済み / 満席 の 4 パターン
