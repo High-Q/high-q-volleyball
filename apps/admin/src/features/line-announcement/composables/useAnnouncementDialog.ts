@@ -15,8 +15,8 @@ import { useToast } from "@/shared/ui/useToast";
  * 告知文ダイアログの状態管理 (#386)。
  *
  * - 選択中チャネル（LINE / X）のテンプレートを取得し、対象イベントで展開した告知文を提供する
- * - 予約リンク（LINE のみ openExternalBrowser 付き）と紹介ページリンクは、テンプレートの
- *   状態によらず生成し、Empty / Error でもリンクはコピーできる
+ * - 予約リンク（LINE のみ openExternalBrowser 付き）と紹介ページリンクを差し込み値として生成する
+ * - コピー操作は告知文の 1 つのみ（リンク単体のコピーは提供しない）
  * - X 選択時は X の数え方による文字数を提供する
  * - クリップボード書き込み失敗時は `fallbackText` に対象文字列を入れ、UI 側で手動コピーへ退避させる
  *
@@ -37,8 +37,6 @@ export interface UseAnnouncementDialog {
   fallbackText: Ref<string | null>;
   load: () => Promise<void>;
   copyMessage: () => Promise<void>;
-  copyBookingLink: () => Promise<void>;
-  copyIntroLink: () => Promise<void>;
 }
 
 export function useAnnouncementDialog(
@@ -123,15 +121,6 @@ export function useAnnouncementDialog(
     await copy(message.value, "告知文をコピーしました");
   }
 
-  async function copyBookingLink(): Promise<void> {
-    if (bookingLink.value === "") return;
-    await copy(bookingLink.value, "予約リンクをコピーしました");
-  }
-
-  async function copyIntroLink(): Promise<void> {
-    await copy(introLink, "紹介ページリンクをコピーしました");
-  }
-
   return {
     state,
     message,
@@ -141,7 +130,5 @@ export function useAnnouncementDialog(
     fallbackText,
     load,
     copyMessage,
-    copyBookingLink,
-    copyIntroLink,
   };
 }

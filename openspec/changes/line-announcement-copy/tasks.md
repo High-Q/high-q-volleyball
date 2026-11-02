@@ -119,6 +119,10 @@
 - [x] 9.4 告知テンプレート画面: LINE / X 切り替え（`?channel=` 同期）・チャネル別の初期テンプレート・X の文字数表示と 280 超の注意。テスト更新
 - [x] 9.5 全体テスト / typecheck / lint / build を再実行
 
+## 10. コピー操作を 1 つに絞る（ローカル確認でのフィードバック）
+
+- [x] 10.1 告知文ダイアログから「予約リンクをコピー」「紹介ページリンクをコピー」を削除し、コピーは「告知文をコピー」のみにする（composable の `copyBookingLink` / `copyIntroLink` も削除）。テスト更新
+
 ## 8. 最終確認
 
 - [x] 8.1 `pnpm -r test` / lint / typecheck / stylelint / dependency-cruiser / admin・reservation の build を実行し全て緑

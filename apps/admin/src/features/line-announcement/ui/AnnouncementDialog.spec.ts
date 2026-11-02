@@ -80,6 +80,15 @@ function q(testId: string): HTMLElement | null {
 }
 
 describe("AnnouncementDialog", () => {
+  it("コピー操作は「告知文をコピー」の 1 つのみ", async () => {
+    fetchMock.mockResolvedValue(ok(TEMPLATE));
+    await mountDialog();
+    const labels = Array.from(document.querySelectorAll('[role="dialog"] button'))
+      .map((b) => b.textContent?.trim() ?? "")
+      .filter((t) => t.includes("コピー"));
+    expect(labels).toEqual(["告知文をコピー"]);
+  });
+
   it("Success: 展開済み告知文をプレビューする", async () => {
     fetchMock.mockResolvedValue(ok(TEMPLATE));
     await mountDialog();
@@ -101,25 +110,7 @@ describe("AnnouncementDialog", () => {
     );
   });
 
-  it("「予約リンクをコピー」で LINE 用予約リンクのみ書き込む", async () => {
-    fetchMock.mockResolvedValue(ok(TEMPLATE));
-    writeText.mockResolvedValue(undefined);
-    await mountDialog();
-    q("announcement-copy-booking-link")?.click();
-    await flushPromises();
-    expect(writeText).toHaveBeenCalledWith(
-      "https://r.example.com/events/ev-1?book=1&openExternalBrowser=1",
-    );
-  });
 
-  it("「紹介ページリンクをコピー」で LP トップのみ書き込む", async () => {
-    fetchMock.mockResolvedValue(ok(TEMPLATE));
-    writeText.mockResolvedValue(undefined);
-    await mountDialog();
-    q("announcement-copy-intro-link")?.click();
-    await flushPromises();
-    expect(writeText).toHaveBeenCalledWith(expect.stringMatching(/^https?:\/\/.+\/$/));
-  });
 
   it("X に切り替えると X のテンプレートで展開し、X 文字数を表示する", async () => {
     fetchMock.mockImplementation(async (channel: string) =>
@@ -154,13 +145,12 @@ describe("AnnouncementDialog", () => {
     expect(q("announcement-copy-message")).not.toBeNull();
   });
 
-  it("Empty: 未設定メッセージを出し、告知文コピーは無くリンクだけコピーは使える", async () => {
+  it("Empty: 未設定メッセージを出し、告知文コピーは出さない", async () => {
     fetchMock.mockResolvedValue(ok(null));
     await mountDialog();
     expect(q("announcement-empty")?.textContent).toContain("告知テンプレートが未設定です");
     expect(q("announcement-copy-message")).toBeNull();
-    expect(q("announcement-copy-booking-link")).not.toBeNull();
-    expect(q("announcement-copy-intro-link")).not.toBeNull();
+    expect(q("announcement-copy-message")).toBeNull();
   });
 
   it("Error: エラーと再試行を出し、再試行で再取得する", async () => {
@@ -168,8 +158,7 @@ describe("AnnouncementDialog", () => {
     await mountDialog();
     const error = q("announcement-error");
     expect(error?.textContent).toContain("テンプレートを読み込めませんでした");
-    expect(q("announcement-copy-booking-link")).not.toBeNull();
-    expect(q("announcement-copy-intro-link")).not.toBeNull();
+    expect(q("announcement-copy-message")).toBeNull();
     fetchMock.mockResolvedValueOnce(ok(TEMPLATE));
     error?.querySelector("button")?.click();
     await flushPromises();

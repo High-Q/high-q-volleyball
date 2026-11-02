@@ -21,9 +21,9 @@ import { useAnnouncementDialog } from "../composables/useAnnouncementDialog";
  * イベント詳細から開く告知文ダイアログ (#386)。
  *
  * LINE / X を切り替え、選択中チャネルのテンプレートを当該イベントで展開した告知文を
- * プレビューし、告知文全体 / 予約リンク / 紹介ページリンクをコピーできる。貼る前に
- * 日時・参加費を目で確認できるよう、即コピーではなくプレビューを挟む。
- * Empty / Error でもリンクのコピーは使える。X 選択時は X の文字数を表示する。
+ * プレビューし、告知文をコピーできる（コピー操作はこの 1 つのみ。リンクは
+ * テンプレートの差し込み項目で告知文に含める）。貼る前に日時・参加費を目で確認
+ * できるよう、即コピーではなくプレビューを挟む。X 選択時は X の文字数を表示する。
  *
  * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *   「告知文ダイアログ」
@@ -47,8 +47,6 @@ const {
   fallbackText,
   load,
   copyMessage,
-  copyBookingLink,
-  copyIntroLink,
 } = useAnnouncementDialog(toRef(props, "event"), channel);
 
 const fallbackRef = ref<HTMLTextAreaElement | null>(null);
@@ -192,22 +190,6 @@ function goToTemplate(): void {
           @click="goToTemplate"
         >
           テンプレートを編集
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          data-testid="announcement-copy-intro-link"
-          @click="copyIntroLink"
-        >
-          紹介ページリンクをコピー
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          data-testid="announcement-copy-booking-link"
-          @click="copyBookingLink"
-        >
-          予約リンクをコピー
         </Button>
         <Button
           v-if="state === 'success'"

@@ -168,29 +168,7 @@ describe("useAnnouncementDialog", () => {
     expect(d.fallbackText.value).toBeNull();
   });
 
-  it("copyBookingLink 成功で予約リンクのみ書き込み成功トースト", async () => {
-    fetchMock.mockResolvedValue(ok(null));
-    writeText.mockResolvedValue(undefined);
-    const d = await setup();
-    await d.load();
-    await d.copyBookingLink();
-    expect(writeText).toHaveBeenCalledWith(d.bookingLink.value);
-    expect(toastMock).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "予約リンクをコピーしました" }),
-    );
-  });
 
-  it("copyIntroLink 成功で紹介ページリンクのみ書き込み成功トースト", async () => {
-    fetchMock.mockResolvedValue(ok(null));
-    writeText.mockResolvedValue(undefined);
-    const d = await setup();
-    await d.load();
-    await d.copyIntroLink();
-    expect(writeText).toHaveBeenCalledWith(d.introLink);
-    expect(toastMock).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "紹介ページリンクをコピーしました" }),
-    );
-  });
 
   it("書き込み失敗でエラートーストを出し、退避用テキストを設定する", async () => {
     fetchMock.mockResolvedValue(ok(TEMPLATE));
@@ -209,10 +187,10 @@ describe("useAnnouncementDialog", () => {
       value: undefined,
       configurable: true,
     });
-    fetchMock.mockResolvedValue(ok(null));
+    fetchMock.mockResolvedValue(ok(TEMPLATE));
     const d = await setup();
     await d.load();
-    await d.copyBookingLink();
-    expect(d.fallbackText.value).toBe(d.bookingLink.value);
+    await d.copyMessage();
+    expect(d.fallbackText.value).toBe(d.message.value);
   });
 });
