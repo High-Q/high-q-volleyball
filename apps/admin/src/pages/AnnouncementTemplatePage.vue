@@ -12,7 +12,7 @@ import { PageBreadcrumb } from "@/widgets/page-breadcrumb";
  * 保存者 (updated_by) として session.user.id (auth.uid()) をフォームに渡す。
  *
  * 関連:
- *   openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ *   openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  */
 
 const session = useAuthSession();

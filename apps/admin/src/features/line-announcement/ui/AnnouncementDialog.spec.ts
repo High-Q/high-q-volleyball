@@ -4,7 +4,7 @@ import { ok, err, unsafeEventId, unsafeVenueId } from "@high-q/shared";
 import type { EventDetailRow } from "@/entities/event-detail";
 
 /**
- * spec: openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *   「告知文ダイアログ」
  */
 
@@ -101,15 +101,57 @@ describe("AnnouncementDialog", () => {
     );
   });
 
-  it("「リンクだけコピー」でリンクのみ書き込む", async () => {
+  it("「予約リンクをコピー」で LINE 用予約リンクのみ書き込む", async () => {
     fetchMock.mockResolvedValue(ok(TEMPLATE));
     writeText.mockResolvedValue(undefined);
     await mountDialog();
-    q("announcement-copy-link")?.click();
+    q("announcement-copy-booking-link")?.click();
     await flushPromises();
     expect(writeText).toHaveBeenCalledWith(
       "https://r.example.com/events/ev-1?book=1&openExternalBrowser=1",
     );
+  });
+
+  it("「紹介ページリンクをコピー」で LP トップのみ書き込む", async () => {
+    fetchMock.mockResolvedValue(ok(TEMPLATE));
+    writeText.mockResolvedValue(undefined);
+    await mountDialog();
+    q("announcement-copy-intro-link")?.click();
+    await flushPromises();
+    expect(writeText).toHaveBeenCalledWith(expect.stringMatching(/^https?:\/\/.+\/$/));
+  });
+
+  it("X に切り替えると X のテンプレートで展開し、X 文字数を表示する", async () => {
+    fetchMock.mockImplementation(async (channel: string) =>
+      channel === "x"
+        ? ok({ ...TEMPLATE, channel: "x", body: "あいう {予約リンク}" })
+        : ok(TEMPLATE),
+    );
+    await mountDialog();
+    expect(q("announcement-x-length")).toBeNull();
+    const xTab = q("announcement-channel-x");
+    expect(q("announcement-channel-line")?.getAttribute("aria-selected")).toBe("true");
+    xTab?.click();
+    await flushPromises();
+    expect(xTab?.getAttribute("aria-selected")).toBe("true");
+    expect(fetchMock).toHaveBeenLastCalledWith("x");
+    expect(q("announcement-preview")?.textContent).toBe(
+      "あいう https://r.example.com/events/ev-1?book=1",
+    );
+    expect(q("announcement-x-length")?.textContent).toContain("X の文字数: 30 / 280");
+  });
+
+  it("X で 280 を超えると上限超過の注意を出す", async () => {
+    fetchMock.mockImplementation(async (channel: string) =>
+      channel === "x"
+        ? ok({ ...TEMPLATE, channel: "x", body: "あ".repeat(141) })
+        : ok(TEMPLATE),
+    );
+    await mountDialog();
+    q("announcement-channel-x")?.click();
+    await flushPromises();
+    expect(q("announcement-x-length")?.textContent).toContain("上限を超えています");
+    expect(q("announcement-copy-message")).not.toBeNull();
   });
 
   it("Empty: 未設定メッセージを出し、告知文コピーは無くリンクだけコピーは使える", async () => {
@@ -117,7 +159,8 @@ describe("AnnouncementDialog", () => {
     await mountDialog();
     expect(q("announcement-empty")?.textContent).toContain("告知テンプレートが未設定です");
     expect(q("announcement-copy-message")).toBeNull();
-    expect(q("announcement-copy-link")).not.toBeNull();
+    expect(q("announcement-copy-booking-link")).not.toBeNull();
+    expect(q("announcement-copy-intro-link")).not.toBeNull();
   });
 
   it("Error: エラーと再試行を出し、再試行で再取得する", async () => {
@@ -125,7 +168,8 @@ describe("AnnouncementDialog", () => {
     await mountDialog();
     const error = q("announcement-error");
     expect(error?.textContent).toContain("テンプレートを読み込めませんでした");
-    expect(q("announcement-copy-link")).not.toBeNull();
+    expect(q("announcement-copy-booking-link")).not.toBeNull();
+    expect(q("announcement-copy-intro-link")).not.toBeNull();
     fetchMock.mockResolvedValueOnce(ok(TEMPLATE));
     error?.querySelector("button")?.click();
     await flushPromises();
@@ -144,12 +188,17 @@ describe("AnnouncementDialog", () => {
     expect(fallback?.readOnly).toBe(true);
   });
 
-  it("「テンプレートを編集」で告知テンプレート画面へ遷移し、閉じる", async () => {
+  it("「テンプレートを編集」で選択中チャネルの告知テンプレート画面へ遷移し、閉じる", async () => {
     fetchMock.mockResolvedValue(ok(TEMPLATE));
     await mountDialog();
+    q("announcement-channel-x")?.click();
+    await flushPromises();
     q("announcement-edit-template")?.click();
     await flushPromises();
-    expect(pushMock).toHaveBeenCalledWith({ name: "announcement-template" });
+    expect(pushMock).toHaveBeenCalledWith({
+      name: "announcement-template",
+      query: { channel: "x" },
+    });
     expect(wrapper?.emitted("update:open")?.[0]).toEqual([false]);
   });
 });

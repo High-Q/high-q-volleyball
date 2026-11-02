@@ -7,11 +7,12 @@ import {
 } from "./renderAnnouncement";
 
 /**
- * spec: openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *   「差し込み項目の展開規則」
  */
 
 const LINK = "https://example.com/events/abc?book=1&openExternalBrowser=1";
+const INTRO = "https://lp.example.com/";
 
 const FULL: AnnouncementEventInput = {
   name: "ゆる練",
@@ -23,10 +24,11 @@ const FULL: AnnouncementEventInput = {
   fee: 1000,
   capacity: 24,
   bookingLink: LINK,
+  introLink: INTRO,
 };
 
 const ALL =
-  "{イベント名}|{回号}|{日付}|{開始時刻}|{終了時刻}|{会場}|{参加費}|{定員}|{予約リンク}";
+  "{イベント名}|{回号}|{日付}|{開始時刻}|{終了時刻}|{会場}|{参加費}|{定員}|{予約リンク}|{紹介ページリンク}";
 
 describe("renderAnnouncement", () => {
   afterEach(() => {
@@ -35,7 +37,7 @@ describe("renderAnnouncement", () => {
 
   it("全差し込み項目を展開する", () => {
     expect(renderAnnouncement(ALL, FULL)).toBe(
-      `ゆる練|vol.42|11/14(土)|18:00|20:00|有明会場|1,000円|24名|${LINK}`,
+      `ゆる練|vol.42|11/14(土)|18:00|20:00|有明会場|1,000円|24名|${LINK}|${INTRO}`,
     );
   });
 
@@ -101,7 +103,7 @@ describe("findUnknownPlaceholders", () => {
 });
 
 describe("ANNOUNCEMENT_PLACEHOLDERS", () => {
-  it("9 項目を定義順で持つ", () => {
+  it("10 項目を定義順で持つ", () => {
     expect(ANNOUNCEMENT_PLACEHOLDERS.map((p) => p.token)).toEqual([
       "{イベント名}",
       "{回号}",
@@ -112,6 +114,7 @@ describe("ANNOUNCEMENT_PLACEHOLDERS", () => {
       "{参加費}",
       "{定員}",
       "{予約リンク}",
+      "{紹介ページリンク}",
     ]);
   });
 });

@@ -17,7 +17,7 @@ import { useAnnouncementTemplateForm } from "../composables/useAnnouncementTempl
  * 本文 / 差し込み項目（押下でカーソル位置に挿入）/ サンプル展開プレビュー / 保存。
  * md 以上は「本文 | プレビュー」の 2 カラム、md 未満は縦積み。
  *
- * spec: openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *   「告知テンプレート画面」
  */
 

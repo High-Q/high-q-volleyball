@@ -4,7 +4,7 @@ import { ok, err, unsafeEventId, unsafeVenueId } from "@high-q/shared";
 import type { EventDetailRow } from "@/entities/event-detail";
 
 /**
- * spec: openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *   「告知文ダイアログ」
  */
 
@@ -67,9 +67,10 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-async function setup() {
+async function setup(channel: "line" | "x" = "line") {
   const { useAnnouncementDialog } = await import("./useAnnouncementDialog");
-  return useAnnouncementDialog(ref(EVENT));
+  const channelRef = ref<"line" | "x">(channel);
+  return { ...useAnnouncementDialog(ref(EVENT), channelRef), channelRef };
 }
 
 describe("useAnnouncementDialog", () => {
@@ -106,6 +107,45 @@ describe("useAnnouncementDialog", () => {
     expect(d.state.value).toBe("success");
   });
 
+  it("X ではチャネル x のテンプレートを取得し、予約リンクに openExternalBrowser を付けず、X 文字数を返す", async () => {
+    fetchMock.mockResolvedValue(ok({ ...TEMPLATE, channel: "x", body: "あ {予約リンク}" }));
+    const d = await setup("x");
+    await d.load();
+    expect(fetchMock).toHaveBeenCalledWith("x");
+    expect(d.bookingLink.value).toBe("https://r.example.com/events/ev-1?book=1");
+    expect(d.message.value).toBe("あ https://r.example.com/events/ev-1?book=1");
+    expect(d.xLength.value).toBe(2 + 1 + 23);
+  });
+
+  it("LINE では X 文字数は null", async () => {
+    fetchMock.mockResolvedValue(ok(TEMPLATE));
+    const d = await setup("line");
+    await d.load();
+    expect(d.xLength.value).toBeNull();
+  });
+
+  it("チャネルを素早く切り替えたとき、古い応答で上書きしない", async () => {
+    let resolveLine!: (v: unknown) => void;
+    fetchMock
+      .mockReturnValueOnce(new Promise((r) => (resolveLine = r)))
+      .mockResolvedValueOnce(ok({ ...TEMPLATE, channel: "x", body: "X本文" }));
+    const d = await setup("line");
+    const first = d.load();
+    d.channelRef.value = "x";
+    await d.load();
+    resolveLine(ok({ ...TEMPLATE, body: "LINE本文" }));
+    await first;
+    expect(d.message.value).toBe("X本文");
+  });
+
+  it("{紹介ページリンク} は LP トップに展開される", async () => {
+    fetchMock.mockResolvedValue(ok({ ...TEMPLATE, body: "{紹介ページリンク}" }));
+    const d = await setup();
+    await d.load();
+    expect(d.message.value).toBe(d.introLink);
+    expect(d.introLink).toMatch(/^https?:\/\/.+\/$/);
+  });
+
   it("告知リンクはテンプレートの状態によらず生成される", async () => {
     fetchMock.mockResolvedValue(ok(null));
     const d = await setup();
@@ -128,15 +168,27 @@ describe("useAnnouncementDialog", () => {
     expect(d.fallbackText.value).toBeNull();
   });
 
-  it("copyLink 成功でリンクのみ書き込み成功トースト", async () => {
+  it("copyBookingLink 成功で予約リンクのみ書き込み成功トースト", async () => {
     fetchMock.mockResolvedValue(ok(null));
     writeText.mockResolvedValue(undefined);
     const d = await setup();
     await d.load();
-    await d.copyLink();
+    await d.copyBookingLink();
     expect(writeText).toHaveBeenCalledWith(d.bookingLink.value);
     expect(toastMock).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "リンクをコピーしました" }),
+      expect.objectContaining({ title: "予約リンクをコピーしました" }),
+    );
+  });
+
+  it("copyIntroLink 成功で紹介ページリンクのみ書き込み成功トースト", async () => {
+    fetchMock.mockResolvedValue(ok(null));
+    writeText.mockResolvedValue(undefined);
+    const d = await setup();
+    await d.load();
+    await d.copyIntroLink();
+    expect(writeText).toHaveBeenCalledWith(d.introLink);
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "紹介ページリンクをコピーしました" }),
     );
   });
 
@@ -160,7 +212,7 @@ describe("useAnnouncementDialog", () => {
     fetchMock.mockResolvedValue(ok(null));
     const d = await setup();
     await d.load();
-    await d.copyLink();
+    await d.copyBookingLink();
     expect(d.fallbackText.value).toBe(d.bookingLink.value);
   });
 });

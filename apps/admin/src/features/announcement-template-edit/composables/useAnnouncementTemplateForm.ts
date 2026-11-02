@@ -18,7 +18,7 @@ import { useToast } from "@/shared/ui/useToast";
  * - 入力エラーは編集後（または保存試行後）にのみ出す（初期表示で赤枠を出さない）
  * - 知らない差し込み項目は注意のみで保存は妨げない
  *
- * spec: openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *   「告知テンプレート画面」
  */
 

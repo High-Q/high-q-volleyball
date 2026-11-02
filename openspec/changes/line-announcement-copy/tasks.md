@@ -114,8 +114,8 @@
 ## 9. X チャネル対応（Apply 中の追加要望、design D10〜D12）
 
 - [x] 9.1 migration `supabase/migrations/20261103000000_announcement_templates_add_x.sql`: CHECK 制約を `channel in ('line', 'x')` に張り替え + X 初期テンプレート投入（`on conflict do nothing`）+ `-- ROLLBACK:`。静的チェック 3 本 → dev へ `db push` → `verify_announcement_templates_rls.sql` に x 行の確認を追加して実行
-- [ ] 9.2 entities（TDD）: `AnnouncementChannel = "line" | "x"` / `ANNOUNCEMENT_CHANNELS`（表示名）/ `DEFAULT_TEMPLATES`（チャネル別、migration と一致検査）/ `buildBookingLink` に `openExternalBrowser` 指定 / `{紹介ページリンク}`（`shared/lib/externalLinks.ts` に LP トップ URL を追加）/ `countXWeightedLength` + `X_MAX_WEIGHTED = 280`
-- [ ] 9.3 告知文ダイアログ: LINE / X 切り替え（tablist）・チャネル別の取得・「予約リンクをコピー」「紹介ページリンクをコピー」・X の文字数表示と 280 超の注意・「テンプレートを編集」で選択中チャネルへ。テスト更新
+- [x] 9.2 entities（TDD）: `AnnouncementChannel = "line" | "x"` / `ANNOUNCEMENT_CHANNELS`（表示名）/ `DEFAULT_TEMPLATES`（チャネル別、migration と一致検査）/ `buildBookingLink` に `openExternalBrowser` 指定 / `{紹介ページリンク}`（`shared/lib/externalLinks.ts` に LP トップ URL を追加）/ `countXWeightedLength` + `X_MAX_WEIGHTED = 280`
+- [x] 9.3 告知文ダイアログ: LINE / X 切り替え（tablist）・チャネル別の取得・「予約リンクをコピー」「紹介ページリンクをコピー」・X の文字数表示と 280 超の注意・「テンプレートを編集」で選択中チャネルへ。テスト更新
 - [ ] 9.4 告知テンプレート画面: LINE / X 切り替え（`?channel=` 同期）・チャネル別の初期テンプレート・X の文字数表示と 280 超の注意。テスト更新
 - [ ] 9.5 全体テスト / typecheck / lint / build を再実行
 

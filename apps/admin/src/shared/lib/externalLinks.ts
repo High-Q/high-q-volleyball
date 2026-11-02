@@ -12,3 +12,6 @@ const normalizedLpOrigin = lpOrigin.replace(/\/$/, "");
 
 export const EXTERNAL_TRANSMISSION_URL = `${normalizedLpOrigin}/external-transmission`;
 export const PRIVACY_POLICY_URL = `${normalizedLpOrigin}/privacy`;
+
+/** LP トップ（サークル紹介ページ）。告知文の {紹介ページリンク} に使う (#386) */
+export const LP_TOP_URL = `${normalizedLpOrigin}/`;

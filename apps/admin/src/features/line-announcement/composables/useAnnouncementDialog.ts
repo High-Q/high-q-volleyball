@@ -2,20 +2,25 @@ import { computed, ref, type ComputedRef, type Ref } from "vue";
 import type { EventDetailRow } from "@/entities/event-detail";
 import {
   buildBookingLink,
+  countXWeightedLength,
   fetchAnnouncementTemplate,
   renderAnnouncement,
+  type AnnouncementChannel,
   type AnnouncementTemplate,
 } from "@/entities/announcement-template";
+import { LP_TOP_URL } from "@/shared/lib/externalLinks";
 import { useToast } from "@/shared/ui/useToast";
 
 /**
  * 告知文ダイアログの状態管理 (#386)。
  *
- * - LINE 用テンプレートを取得し、対象イベントで展開した告知文を提供する
- * - 告知リンクはテンプレートの状態によらず生成し、Empty / Error でもリンクだけはコピーできる
+ * - 選択中チャネル（LINE / X）のテンプレートを取得し、対象イベントで展開した告知文を提供する
+ * - 予約リンク（LINE のみ openExternalBrowser 付き）と紹介ページリンクは、テンプレートの
+ *   状態によらず生成し、Empty / Error でもリンクはコピーできる
+ * - X 選択時は X の数え方による文字数を提供する
  * - クリップボード書き込み失敗時は `fallbackText` に対象文字列を入れ、UI 側で手動コピーへ退避させる
  *
- * spec: openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *   「告知文ダイアログ」
  */
 
@@ -25,23 +30,33 @@ export interface UseAnnouncementDialog {
   state: Ref<AnnouncementDialogState>;
   message: ComputedRef<string | null>;
   bookingLink: ComputedRef<string>;
+  introLink: string;
+  /** X 選択時のみ X の文字数。それ以外は null */
+  xLength: ComputedRef<number | null>;
   /** クリップボード書き込み失敗時の手動コピー用テキスト */
   fallbackText: Ref<string | null>;
   load: () => Promise<void>;
   copyMessage: () => Promise<void>;
-  copyLink: () => Promise<void>;
+  copyBookingLink: () => Promise<void>;
+  copyIntroLink: () => Promise<void>;
 }
 
 export function useAnnouncementDialog(
   event: Ref<EventDetailRow | null>,
+  channel: Ref<AnnouncementChannel>,
 ): UseAnnouncementDialog {
   const { toast } = useToast();
   const state = ref<AnnouncementDialogState>("idle");
   const template = ref<AnnouncementTemplate | null>(null);
   const fallbackText = ref<string | null>(null);
+  const introLink = LP_TOP_URL;
 
   const bookingLink = computed(() =>
-    event.value ? buildBookingLink(event.value.id) : "",
+    event.value
+      ? buildBookingLink(event.value.id, {
+          openExternalBrowser: channel.value === "line",
+        })
+      : "",
   );
 
   const message = computed<string | null>(() => {
@@ -56,15 +71,28 @@ export function useAnnouncementDialog(
       fee: e.fee,
       capacity: e.capacity,
       bookingLink: bookingLink.value,
+      introLink,
     });
   });
 
+  const xLength = computed<number | null>(() =>
+    channel.value === "x" && message.value !== null
+      ? countXWeightedLength(message.value)
+      : null,
+  );
+
+  let requestSeq = 0;
+
   async function load(): Promise<void> {
+    const seq = ++requestSeq;
+    const target = channel.value;
     state.value = "loading";
+    template.value = null;
     fallbackText.value = null;
-    const result = await fetchAnnouncementTemplate("line");
+    const result = await fetchAnnouncementTemplate(target);
+    // チャネルを素早く切り替えた場合、古い応答で上書きしない
+    if (seq !== requestSeq) return;
     if (!result.ok) {
-      template.value = null;
       state.value = "error";
       return;
     }
@@ -95,10 +123,25 @@ export function useAnnouncementDialog(
     await copy(message.value, "告知文をコピーしました");
   }
 
-  async function copyLink(): Promise<void> {
+  async function copyBookingLink(): Promise<void> {
     if (bookingLink.value === "") return;
-    await copy(bookingLink.value, "リンクをコピーしました");
+    await copy(bookingLink.value, "予約リンクをコピーしました");
   }
 
-  return { state, message, bookingLink, fallbackText, load, copyMessage, copyLink };
+  async function copyIntroLink(): Promise<void> {
+    await copy(introLink, "紹介ページリンクをコピーしました");
+  }
+
+  return {
+    state,
+    message,
+    bookingLink,
+    introLink,
+    xLength,
+    fallbackText,
+    load,
+    copyMessage,
+    copyBookingLink,
+    copyIntroLink,
+  };
 }

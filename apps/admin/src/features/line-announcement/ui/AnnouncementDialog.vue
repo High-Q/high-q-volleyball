@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { nextTick, ref, toRef, watch } from "vue";
+import { computed, nextTick, ref, toRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import { Button } from "@high-q/ui";
 import type { EventDetailRow } from "@/entities/event-detail";
+import {
+  ANNOUNCEMENT_CHANNELS,
+  X_MAX_WEIGHTED,
+  type AnnouncementChannel,
+} from "@/entities/announcement-template";
 import Dialog from "@/shared/ui/Dialog.vue";
 import DialogContent from "@/shared/ui/DialogContent.vue";
 import DialogHeader from "@/shared/ui/DialogHeader.vue";
@@ -13,13 +18,14 @@ import Skeleton from "@/shared/ui/Skeleton.vue";
 import { useAnnouncementDialog } from "../composables/useAnnouncementDialog";
 
 /**
- * イベント詳細から開く LINE 告知文ダイアログ (#386)。
+ * イベント詳細から開く告知文ダイアログ (#386)。
  *
- * テンプレートを当該イベントで展開した告知文をプレビューし、告知文全体 / リンクだけを
- * コピーできる。貼る前に日時・参加費を目で確認できるよう、即コピーではなくプレビューを挟む。
- * Empty / Error でも「リンクだけコピー」は使える。
+ * LINE / X を切り替え、選択中チャネルのテンプレートを当該イベントで展開した告知文を
+ * プレビューし、告知文全体 / 予約リンク / 紹介ページリンクをコピーできる。貼る前に
+ * 日時・参加費を目で確認できるよう、即コピーではなくプレビューを挟む。
+ * Empty / Error でもリンクのコピーは使える。X 選択時は X の文字数を表示する。
  *
- * spec: openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *   「告知文ダイアログ」
  */
 
@@ -33,17 +39,38 @@ const emit = defineEmits<{
 }>();
 
 const router = useRouter();
-const { state, message, fallbackText, load, copyMessage, copyLink } =
-  useAnnouncementDialog(toRef(props, "event"));
+const channel = ref<AnnouncementChannel>("line");
+const {
+  state,
+  message,
+  xLength,
+  fallbackText,
+  load,
+  copyMessage,
+  copyBookingLink,
+  copyIntroLink,
+} = useAnnouncementDialog(toRef(props, "event"), channel);
 
 const fallbackRef = ref<HTMLTextAreaElement | null>(null);
 
+const xOverLimit = computed(
+  () => xLength.value !== null && xLength.value > X_MAX_WEIGHTED,
+);
+
 watch(
-  () => props.open,
-  (open) => {
+  [() => props.open, channel],
+  ([open]) => {
     if (open) void load();
   },
   { immediate: true },
+);
+
+// 開き直したときは LINE から始める
+watch(
+  () => props.open,
+  (open) => {
+    if (!open) channel.value = "line";
+  },
 );
 
 // 書き込み失敗時は退避欄にフォーカスして全選択し、そのまま手動コピーできるようにする
@@ -56,7 +83,10 @@ watch(fallbackText, async (text) => {
 
 function goToTemplate(): void {
   emit("update:open", false);
-  void router.push({ name: "announcement-template" });
+  void router.push({
+    name: "announcement-template",
+    query: { channel: channel.value },
+  });
 }
 </script>
 
@@ -64,11 +94,33 @@ function goToTemplate(): void {
   <Dialog :open="open" @update:open="(v: boolean) => emit('update:open', v)">
     <DialogContent class="max-w-xl">
       <DialogHeader>
-        <DialogTitle>LINE 告知文</DialogTitle>
+        <DialogTitle>告知文</DialogTitle>
         <DialogDescription>
-          内容を確認してコピーし、LINE オープンチャットに貼り付けてください。
+          内容を確認してコピーし、{{ channel === "line" ? "LINE オープンチャット" : "X" }}に貼り付けてください。
         </DialogDescription>
       </DialogHeader>
+
+      <div
+        role="tablist"
+        aria-label="告知チャネル"
+        class="inline-flex w-fit gap-hq-1 rounded-hq-md border border-hairline bg-paper-warm p-hq-1"
+      >
+        <button
+          v-for="c in ANNOUNCEMENT_CHANNELS"
+          :key="c.channel"
+          type="button"
+          role="tab"
+          :aria-selected="channel === c.channel"
+          :class="[
+            'rounded-hq-sm px-hq-4 py-hq-1 font-jp text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent',
+            channel === c.channel ? 'bg-paper text-ink shadow-hq-sm' : 'text-muted hover:text-ink',
+          ]"
+          :data-testid="`announcement-channel-${c.channel}`"
+          @click="channel = c.channel"
+        >
+          {{ c.label }}
+        </button>
+      </div>
 
       <div v-if="state === 'loading' || state === 'idle'" class="flex flex-col gap-hq-2">
         <Skeleton class="h-4 w-2/3" />
@@ -111,6 +163,16 @@ function goToTemplate(): void {
         data-testid="announcement-preview"
       >{{ message }}</pre>
 
+      <p
+        v-if="state === 'success' && xLength !== null"
+        :role="xOverLimit ? 'status' : undefined"
+        :class="['m-0 font-jp text-xs', xOverLimit ? 'text-danger' : 'text-muted']"
+        data-testid="announcement-x-length"
+      >
+        X の文字数: {{ xLength }} / {{ X_MAX_WEIGHTED }}
+        <template v-if="xOverLimit">（上限を超えています。X Premium 以外では投稿できません）</template>
+      </p>
+
       <textarea
         v-if="fallbackText !== null"
         ref="fallbackRef"
@@ -134,10 +196,18 @@ function goToTemplate(): void {
         <Button
           variant="outline"
           size="sm"
-          data-testid="announcement-copy-link"
-          @click="copyLink"
+          data-testid="announcement-copy-intro-link"
+          @click="copyIntroLink"
         >
-          リンクだけコピー
+          紹介ページリンクをコピー
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          data-testid="announcement-copy-booking-link"
+          @click="copyBookingLink"
+        >
+          予約リンクをコピー
         </Button>
         <Button
           v-if="state === 'success'"

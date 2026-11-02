@@ -1,3 +1,5 @@
+import type { AnnouncementChannel } from "./types";
+
 /**
  * LINE 告知の初期テンプレート。
  *
@@ -26,3 +28,26 @@ export const DEFAULT_LINE_TEMPLATE = `🏐 {イベント名}のお知らせ 🏐
 {予約リンク}
 
 ご予約お待ちしています！🙌`;
+
+
+/**
+ * X 告知の初期テンプレート（High Q を知らない人向け。リンクは紹介ページ）。
+ *
+ * `supabase/migrations/20261103000000_announcement_templates_add_x.sql` の初期投入と
+ * 同一内容でなければならない（defaultTemplate.spec.ts で一致を検査）。
+ */
+export const DEFAULT_X_TEMPLATE = `🏐{日付} {開始時刻}〜 {会場}でバレーします！
+
+初心者・ひとり参加・久しぶりの方 大歓迎🙌
+20〜30代中心のゆるい社会人サークルです。
+途中参加・途中抜けOK／参加費{参加費}
+
+雰囲気はこちら👇 気軽にのぞいてみてください
+{紹介ページリンク}
+
+#バレーボール #社会人サークル #江東区 #初心者歓迎`;
+
+export const DEFAULT_TEMPLATES: Readonly<Record<AnnouncementChannel, string>> = {
+  line: DEFAULT_LINE_TEMPLATE,
+  x: DEFAULT_X_TEMPLATE,
+};

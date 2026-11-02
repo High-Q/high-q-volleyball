@@ -5,7 +5,7 @@ import { installSupabaseGuard } from './_helpers/supabaseGuard'
  * #386 admin 告知テンプレートの E2E (Playwright)。
  *
  * 関連:
- *   openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ *   openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *
  * 既存 admin E2E と同方針（認証済 admin の AAL2 セッション再現は肥大化するため
  * E2E 化しない）で、本 E2E では「auth guard が新ルート /announcement-template を

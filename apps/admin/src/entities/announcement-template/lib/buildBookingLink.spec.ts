@@ -9,20 +9,29 @@ describe("buildBookingLink", () => {
 
   it("予約シート自動オープン + 外部ブラウザ指定付きのイベント詳細リンクを返す", () => {
     expect(
-      buildBookingLink(unsafeEventId("abc"), "https://high-q-reservation.onrender.com"),
+      buildBookingLink(unsafeEventId("abc"), { baseUrl: "https://high-q-reservation.onrender.com" }),
     ).toBe(
       "https://high-q-reservation.onrender.com/events/abc?book=1&openExternalBrowser=1",
     );
   });
 
+  it("openExternalBrowser: false（X 用）では book=1 のみ", () => {
+    expect(
+      buildBookingLink(unsafeEventId("abc"), {
+        baseUrl: "https://high-q-reservation.onrender.com",
+        openExternalBrowser: false,
+      }),
+    ).toBe("https://high-q-reservation.onrender.com/events/abc?book=1");
+  });
+
   it("ベース URL 末尾スラッシュの有無で結果が変わらない", () => {
-    expect(buildBookingLink(unsafeEventId("abc"), "https://example.com/")).toBe(
-      buildBookingLink(unsafeEventId("abc"), "https://example.com"),
+    expect(buildBookingLink(unsafeEventId("abc"), { baseUrl: "https://example.com/" })).toBe(
+      buildBookingLink(unsafeEventId("abc"), { baseUrl: "https://example.com" }),
     );
   });
 
   it("イベント ID を URL エンコードする", () => {
-    expect(buildBookingLink(unsafeEventId("a/b c"), "https://example.com")).toBe(
+    expect(buildBookingLink(unsafeEventId("a/b c"), { baseUrl: "https://example.com" })).toBe(
       "https://example.com/events/a%2Fb%20c?book=1&openExternalBrowser=1",
     );
   });

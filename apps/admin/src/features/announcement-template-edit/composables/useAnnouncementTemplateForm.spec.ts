@@ -4,7 +4,7 @@ import { err, ok, unsafeMemberId } from "@high-q/shared";
 import { DEFAULT_LINE_TEMPLATE } from "@/entities/announcement-template";
 
 /**
- * spec: openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *   「告知テンプレート画面」
  */
 

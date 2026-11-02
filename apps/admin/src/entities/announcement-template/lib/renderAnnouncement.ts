@@ -4,7 +4,7 @@
  * 差し込み項目は `{日本語名}` 形式。下表に無い `{...}` は本文中の普通の波括弧を
  * 壊さないためにそのまま残す。日時は端末タイムゾーンによらず日本時間で整形する。
  *
- * spec: openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ * spec: openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  *   「差し込み項目の展開規則」
  */
 
@@ -19,7 +19,10 @@ export interface AnnouncementEventInput {
   /** 会場既定額を引き継いだ参加費（円） */
   fee: number | null;
   capacity: number | null;
+  /** チャネル別の予約直行リンク */
   bookingLink: string;
+  /** 紹介ページ（LP トップ）リンク */
+  introLink: string;
 }
 
 export interface AnnouncementPlaceholder {
@@ -92,8 +95,13 @@ export const ANNOUNCEMENT_PLACEHOLDERS: ReadonlyArray<AnnouncementPlaceholder> =
   },
   {
     token: "{予約リンク}",
-    description: "予約画面へ直行するリンク",
+    description: "イベントの予約画面へ直行するリンク",
     resolve: (i) => i.bookingLink,
+  },
+  {
+    token: "{紹介ページリンク}",
+    description: "サークル紹介ページ（LP）のリンク。初めての人向け",
+    resolve: (i) => i.introLink,
   },
 ];
 
@@ -128,4 +136,5 @@ export const SAMPLE_ANNOUNCEMENT_INPUT: AnnouncementEventInput = {
   capacity: 24,
   bookingLink:
     "https://high-q-reservation.onrender.com/events/xxxx?book=1&openExternalBrowser=1",
+  introLink: "https://high-q-volleyball.onrender.com/",
 };

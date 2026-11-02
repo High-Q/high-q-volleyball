@@ -4,6 +4,6 @@
  * LINE 告知テンプレートの編集フォーム。
  *
  * 関連:
- *   openspec/changes/line-announcement-copy/specs/admin-line-announcement/spec.md
+ *   openspec/changes/line-announcement-copy/specs/admin-announcement/spec.md
  */
 export { default as AnnouncementTemplateForm } from "./ui/AnnouncementTemplateForm.vue";
