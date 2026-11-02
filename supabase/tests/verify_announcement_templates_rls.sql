@@ -21,9 +21,11 @@ begin
   select id into v_admin  from public.members where role = 'admin'  limit 1;
   select id into v_member from public.members where role <> 'admin' limit 1;
 
-  -- 1. 初期テンプレート
+  -- 1. 初期テンプレート（line / x）
   select count(*) into v_cnt from public.announcement_templates where channel = 'line';
   insert into _atr values ('初期テンプレート (line) が 1 行', '1', v_cnt::text);
+  select count(*) into v_cnt from public.announcement_templates where channel = 'x';
+  insert into _atr values ('初期テンプレート (x) が 1 行', '1', v_cnt::text);
 
   -- 2. anon SELECT は権限なし
   begin
@@ -69,14 +71,14 @@ begin
     insert into _atr values ('会員 INSERT', 'denied', 'denied');
   end;
 
-  -- 6. admin SELECT は 1 行
+  -- 6. admin SELECT は 2 行（line / x）
   begin
     perform set_config('request.jwt.claims',
       json_build_object('sub', v_admin, 'role', 'authenticated')::text, true);
     execute 'set local role authenticated';
     select count(*) into v_cnt from public.announcement_templates;
     execute 'reset role';
-    insert into _atr values ('admin SELECT 行数', '1', v_cnt::text);
+    insert into _atr values ('admin SELECT 行数', '2', v_cnt::text);
   end;
 
   -- 7. admin UPDATE は 1 行（例外で巻き戻す）
