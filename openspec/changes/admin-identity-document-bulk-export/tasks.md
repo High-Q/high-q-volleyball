@@ -24,8 +24,8 @@
 
 ## 5. features/identity-document-bulk-export: 選択・生成ロジック
 
-- [ ] 5.1 選択状態 composable `useMembersSelection`（`Set<MemberId>`、toggle / add / remove / clear / 現ページ全選択 / indeterminate 判定 / ページ・フィルタまたぎ保持）を実装 + unit test
-- [ ] 5.2 会員名簿 CSV ビルダ（列順: 氏名 = `last_name + ' ' + first_name` / 住所 = **常に空欄**（アプリは出力しない・ヘッダのみ） / 年齢 / 電話番号 = 確認値、**役職名は含めない**、**UTF-8 BOM 付き**、CSV エスケープ）を純粋関数で実装 + unit test（住所列が空欄であること含む）。年齢は `birthday` からエクスポート基準日時点の満年齢を算出する純粋関数（`calcAge(birthday, asOf)`、未設定・算出不能は空欄）を併せて実装し unit test（誕生日前後の境界 / 未設定空欄）
+- [x] 5.1 選択状態 composable `useMembersSelection`（`Set<MemberId>`、toggle / add / remove / clear / 現ページ全選択 / indeterminate 判定 / ページ・フィルタまたぎ保持）を実装 + unit test
+- [x] 5.2 会員名簿 CSV ビルダ（列順: 氏名 = `last_name + ' ' + first_name` / 住所 = **常に空欄**（アプリは出力しない・ヘッダのみ） / 年齢 / 電話番号 = 確認値、**役職名は含めない**、**UTF-8 BOM 付き**、CSV エスケープ）を純粋関数で実装 + unit test（住所列が空欄であること含む）。年齢は `birthday` からエクスポート基準日時点の満年齢を算出する純粋関数（`calcAge(birthday, asOf)`、未設定・算出不能は空欄）を併せて実装し unit test（誕生日前後の境界 / 未設定空欄）
 - [ ] 5.3 画像形式判定ユーティリティ（拡張子 + マジックバイトで jpg / png 判定、判定不能は失敗扱い）を純粋関数で実装 + unit test
 - [ ] 5.4 本人確認書類 PDF ビルダ（`pdf-lib` を **dynamic import**。会員ごとにページ、ページ上部に氏名ラベル + 書類種別、表面→裏面の順に画像配置、jpg は `embedJpg` / png は `embedPng`）を実装 + unit test（ページ数 / 氏名ラベル / 埋め込み関数選択）
 - [ ] 5.5 一括ダウンロードのオーケストレーション composable を実装: 選択 member id → 名簿フィールド取得（§2.3 `fetchMembersForExport`）→ admin 確認済み電話番号をマージ（住所は空欄固定）→ 承認済み書類取得（§2.1）→ 各画像を `supabase.storage.from('identity-documents').download(path)` で Blob 取得（部分失敗は継続）→ CSV（§5.2）+ PDF（§5.4）生成 → `jszip` を **dynamic import** して `会員名簿.csv` + `本人確認書類.pdf` を ZIP 化 → ローカル保存 → 監査ログ INSERT（§3、実含有集合で記録）。進捗（取得済み / 対象数）と結果（含めた書類数 / 名簿会員数 / 承認済みなし会員 / 失敗書類）を Result で返す
