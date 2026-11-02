@@ -24,6 +24,8 @@
     "@vitejs/plugin-vue": "^5.2.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "jszip": "^3.10.2",
+    "pdf-lib": "^1.17.1",
     "qrcode": "^1.5.4",
     "radix-vue": "^1.9.0",
     "tailwind-merge": "^2.5.0",
