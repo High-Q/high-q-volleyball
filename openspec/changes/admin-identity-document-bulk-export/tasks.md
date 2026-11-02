@@ -28,9 +28,9 @@
 - [x] 5.2 会員名簿 CSV ビルダ（列順: 氏名 = `last_name + ' ' + first_name` / 住所 = **常に空欄**（アプリは出力しない・ヘッダのみ） / 年齢 / 電話番号 = 確認値、**役職名は含めない**、**UTF-8 BOM 付き**、CSV エスケープ）を純粋関数で実装 + unit test（住所列が空欄であること含む）。年齢は `birthday` からエクスポート基準日時点の満年齢を算出する純粋関数（`calcAge(birthday, asOf)`、未設定・算出不能は空欄）を併せて実装し unit test（誕生日前後の境界 / 未設定空欄）
 - [x] 5.3 画像形式判定ユーティリティ（拡張子 + マジックバイトで jpg / png 判定、判定不能は失敗扱い）を純粋関数で実装 + unit test
 - [x] 5.4 本人確認書類 PDF ビルダ（`pdf-lib` を **dynamic import**。承認済み書類 1 件 = 1 ページ、ページ上部に ASCII ラベル（通し番号 + 英語書類種別）のみ・日本語テキストは描画しない、表面→裏面の順に画像配置、jpg は `embedJpg` / png は `embedPng`）を実装 + unit test（ページ数 / ASCII ラベル / 埋め込み関数選択 / 日本語非描画）
-- [ ] 5.5 一括ダウンロードのオーケストレーション composable を実装: 選択 member id → 名簿フィールド取得（§2.3 `fetchMembersForExport`）→ admin 確認済み電話番号をマージ（住所は空欄固定）→ 承認済み書類取得（§2.1）→ 各画像を `supabase.storage.from('identity-documents').download(path)` で Blob 取得（部分失敗は継続）→ CSV（§5.2）+ PDF（§5.4）生成 → `jszip` を **dynamic import** して `会員名簿.csv` + `本人確認書類.pdf` を ZIP 化 → ローカル保存 → 監査ログ INSERT（§3、実含有集合で記録）。進捗（取得済み / 対象数）と結果（含めた書類数 / 名簿会員数 / 承認済みなし会員 / 失敗書類）を Result で返す
+- [x] 5.5 一括ダウンロードのオーケストレーション composable を実装: 選択 member id → 名簿フィールド取得（§2.3 `fetchMembersForExport`）→ admin 確認済み電話番号をマージ（住所は空欄固定）→ 承認済み書類取得（§2.1）→ 各画像を `supabase.storage.from('identity-documents').download(path)` で Blob 取得（部分失敗は継続）→ CSV（§5.2）+ PDF（§5.4）生成 → `jszip` を **dynamic import** して `会員名簿.csv` + `本人確認書類.pdf` を ZIP 化 → ローカル保存 → 監査ログ INSERT（§3、実含有集合で記録）。進捗（取得済み / 対象数）と結果（含めた書類数 / 名簿会員数 / 承認済みなし会員 / 失敗書類）を Result で返す
 - [x] 5.6 `jszip` と `pdf-lib` を `apps/admin/package.json` に依存追加（dynamic import 前提）
-- [ ] 5.7 オーケストレーションの unit test: approved のみ抽出 / NULL 書類除外 / 部分失敗で成功分のみ PDF・監査ログ対象が実含有集合に一致 / 全画像失敗でも CSV 出力 / 承認済み 0 件会員は CSV に載るが PDF 対象外 / 監査ログ INSERT 失敗時の警告分岐
+- [x] 5.7 オーケストレーションの unit test: approved のみ抽出 / NULL 書類除外 / 部分失敗で成功分のみ PDF・監査ログ対象が実含有集合に一致 / 全画像失敗でも CSV 出力 / 承認済み 0 件会員は CSV に載るが PDF 対象外 / 監査ログ INSERT 失敗時の警告分岐
 - [ ] 5.8 一括アクションツールバー UI（選択件数 / 「会員名簿と本人確認書類をダウンロード」ボタン / 「選択を解除」、取得中は disabled + `aria-busy`）を実装
 - [ ] 5.9 エクスポート準備ダイアログ UI（選択会員一覧、氏名=読み取り専用 / 電話番号=DB プリフィル編集可、**住所入力欄は設けない**、電話番号は `shared/ui/FormField` でラップ・初期赤枠なし、「ダウンロード」で §5.5 起動）を実装
 - [ ] 5.10 結果ダイアログ UI（含めた書類数 / 名簿会員数 / 承認済みなしで PDF 対象外の会員 / 取得失敗書類、エラー時 `role="alert"` + 再試行）を実装。`features/identity-document-bulk-export/index.ts` で公開
