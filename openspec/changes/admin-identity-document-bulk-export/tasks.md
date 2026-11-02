@@ -7,10 +7,10 @@
 
 ## 2. entities: 承認済み書類の取得 + 会員名簿フィールドの取得
 
-- [ ] 2.1 承認済み書類を会員 id 群で取得するクエリを追加（`status = 'approved'` + `member_id in (...)`、`storage_path_front`/`storage_path_back` がともに NULL の行は除外）。取得列: `id, member_id, document_type, status, uploaded_at, storage_path_front, storage_path_back, member:members(last_name, first_name, display_name, email)`。Supabase の暗黙 join で 1 クエリ。`Result<T>` を返す
-- [ ] 2.2 上記クエリの API layer test（Vitest + Supabase mock）: WHERE（approved + member_id in）/ NULL 書類除外 / members join を検証。`entities/identity-document/index.ts` に公開 API を追加
-- [ ] 2.3 `entities/member` に名簿エクスポート用クエリ `fetchMembersForExport(memberIds)` を追加。`members` テーブルから `id, last_name, first_name, phone, birthday` を `id in (...)` で取得（`member_list_view` には phone/birthday/姓名が無いため実テーブル参照）。`Result<MemberExportRow[], FetchError>` を返す。DTO 型 `MemberExportRow`（`MemberId` / last_name / first_name / phone: string \| null / birthday: string \| null）を `model` に追加し `entities/member/index.ts` で公開
-- [ ] 2.4 `fetchMembersForExport` の API layer test（Vitest + Supabase mock）: `id in` の WHERE 組み立て / 取得列 / 成功・失敗の Result 分岐 / phone・birthday が NULL の行の扱い
+- [x] 2.1 承認済み書類を会員 id 群で取得するクエリを追加（`status = 'approved'` + `member_id in (...)`、`storage_path_front`/`storage_path_back` がともに NULL の行は除外）。取得列: `id, member_id, document_type, status, uploaded_at, storage_path_front, storage_path_back, member:members(last_name, first_name, display_name, email)`。Supabase の暗黙 join で 1 クエリ。`Result<T>` を返す
+- [x] 2.2 上記クエリの API layer test（Vitest + Supabase mock）: WHERE（approved + member_id in）/ NULL 書類除外 / members join を検証。`entities/identity-document/index.ts` に公開 API を追加
+- [x] 2.3 `entities/member` に名簿エクスポート用クエリ `fetchMembersForExport(memberIds)` を追加。`members` テーブルから `id, last_name, first_name, phone, birthday` を `id in (...)` で取得（`member_list_view` には phone/birthday/姓名が無いため実テーブル参照）。`Result<MemberExportRow[], FetchError>` を返す。DTO 型 `MemberExportRow`（`MemberId` / last_name / first_name / phone: string \| null / birthday: string \| null）を `model` に追加し `entities/member/index.ts` で公開
+- [x] 2.4 `fetchMembersForExport` の API layer test（Vitest + Supabase mock）: `id in` の WHERE 組み立て / 取得列 / 成功・失敗の Result 分岐 / phone・birthday が NULL の行の扱い
 
 ## 3. entities/identity-document-download: 監査ログ entity
 

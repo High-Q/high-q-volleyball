@@ -9,6 +9,7 @@ import {
 import type { MemberId } from "@high-q/shared";
 import { getSupabase } from "@/shared/api/supabase";
 import type {
+  MemberExportRow,
   MemberHistoryRow,
   MemberListRow,
   MemberSummary,
@@ -293,6 +294,46 @@ export async function fetchMemberListRowById(
       return err({ code: classifyError(error), message: error.message });
     }
     return ok((data ?? null) as MemberListRow | null);
+  } catch (cause) {
+    if (cause instanceof TypeError) {
+      return err({ code: "NETWORK_ERROR", message: cause.message });
+    }
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return err({ code: "SERVER_ERROR", message });
+  }
+}
+
+// =============================================================================
+// fetchMembersForExport
+// =============================================================================
+
+/**
+ * #172 役所提出用一括エクスポート: 選択会員の名簿フィールドを取得する。
+ *
+ * `member_list_view` は phone / birthday / 姓名を持たないため `members` 実テーブルを
+ * `id in (選択会員)` で参照する。admin は RLS により全 member 行を読める。
+ *
+ * 関連:
+ *   openspec/changes/admin-identity-document-bulk-export/specs/admin-identity-document-export/spec.md
+ *   同 tasks.md (2.3)
+ */
+export async function fetchMembersForExport(
+  memberIds: MemberId[],
+): Promise<Result<MemberExportRow[], FetchError>> {
+  if (memberIds.length === 0) {
+    return ok([]);
+  }
+
+  const supabase = getSupabase();
+  try {
+    const { data, error } = await supabase
+      .from("members")
+      .select("id, last_name, first_name, phone, birthday")
+      .in("id", memberIds as unknown as string[]);
+    if (error) {
+      return err({ code: classifyError(error), message: error.message });
+    }
+    return ok((data ?? []) as MemberExportRow[]);
   } catch (cause) {
     if (cause instanceof TypeError) {
       return err({ code: "NETWORK_ERROR", message: cause.message });

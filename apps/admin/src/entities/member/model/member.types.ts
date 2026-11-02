@@ -43,6 +43,19 @@ export interface MemberListRow {
 }
 
 /**
+ * #172 役所提出用一括エクスポート: 名簿 CSV 生成に必要な会員フィールドの DTO。
+ * `member_list_view` に無い `phone` / `birthday` / 姓名を `members` 実テーブルから取得する。
+ */
+export interface MemberExportRow {
+  id: MemberId;
+  last_name: string | null;
+  first_name: string | null;
+  phone: string | null;
+  /** ISO 8601 date。年齢算出の元。未設定はありうる。 */
+  birthday: string | null;
+}
+
+/**
  * `member_history_view` の DTO。詳細 sheet の参加履歴 1 行。
  * cancelled は view 側で除外済み。
  */
