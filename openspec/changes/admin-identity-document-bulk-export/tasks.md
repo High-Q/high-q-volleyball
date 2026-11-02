@@ -19,8 +19,8 @@
 
 ## 4. shared/ui: Checkbox プリミティブ
 
-- [ ] 4.1 `apps/admin/src/shared/ui/Checkbox.*` を shadcn-vue（radix-vue）から copy-paste 取り込み。HQ デザイントークン（tailwind preset utility / `var(--hq-*)`）で着色。`checked` / `indeterminate` / `disabled` / v-model 対応。`apps/admin/src/shared/ui/index.ts` に公開
-- [ ] 4.2 Checkbox の component test（checked / indeterminate / disabled / v-model トグル / `aria-label` 伝播）
+- [x] 4.1 `apps/admin/src/shared/ui/Checkbox.*` を shadcn-vue（radix-vue）から copy-paste 取り込み。HQ デザイントークン（tailwind preset utility / `var(--hq-*)`）で着色。`checked` / `indeterminate` / `disabled` / v-model 対応。`apps/admin/src/shared/ui/index.ts` に公開
+- [x] 4.2 Checkbox の component test（checked / indeterminate / disabled / v-model トグル / `aria-label` 伝播）
 
 ## 5. features/identity-document-bulk-export: 選択・生成ロジック
 
