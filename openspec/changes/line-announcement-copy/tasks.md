@@ -111,6 +111,14 @@
 - [x] 7.1 `e2e/admin/announcement-template.e2e.ts`: 未認証で `/announcement-template` → `/login` にリダイレクト（新ルートのガード統合）。編集・保存・告知文ダイアログは component test で担保
 - [x] 7.2 `e2e/reservation/line-announcement-link.e2e.ts`: 未認証で `/events/<id>?book=1&openExternalBrowser=1` → `/login?next=` にクエリごと保持 → メール送信時の `redirect_to` が `/auth/callback?next=<告知リンクのパス>` になる。認証後の自動オープン判定・クエリ除去は `EventDetailPage.spec.ts` で担保
 
+## 9. X チャネル対応（Apply 中の追加要望、design D10〜D12）
+
+- [ ] 9.1 migration `supabase/migrations/20261103000000_announcement_templates_add_x.sql`: CHECK 制約を `channel in ('line', 'x')` に張り替え + X 初期テンプレート投入（`on conflict do nothing`）+ `-- ROLLBACK:`。静的チェック 3 本 → dev へ `db push` → `verify_announcement_templates_rls.sql` に x 行の確認を追加して実行
+- [ ] 9.2 entities（TDD）: `AnnouncementChannel = "line" | "x"` / `ANNOUNCEMENT_CHANNELS`（表示名）/ `DEFAULT_TEMPLATES`（チャネル別、migration と一致検査）/ `buildBookingLink` に `openExternalBrowser` 指定 / `{紹介ページリンク}`（`shared/lib/externalLinks.ts` に LP トップ URL を追加）/ `countXWeightedLength` + `X_MAX_WEIGHTED = 280`
+- [ ] 9.3 告知文ダイアログ: LINE / X 切り替え（tablist）・チャネル別の取得・「予約リンクをコピー」「紹介ページリンクをコピー」・X の文字数表示と 280 超の注意・「テンプレートを編集」で選択中チャネルへ。テスト更新
+- [ ] 9.4 告知テンプレート画面: LINE / X 切り替え（`?channel=` 同期）・チャネル別の初期テンプレート・X の文字数表示と 280 超の注意。テスト更新
+- [ ] 9.5 全体テスト / typecheck / lint / build を再実行
+
 ## 8. 最終確認
 
 - [x] 8.1 `pnpm -r test` / lint / typecheck / stylelint / dependency-cruiser / admin・reservation の build を実行し全て緑

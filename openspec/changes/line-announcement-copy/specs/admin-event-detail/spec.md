@@ -7,7 +7,7 @@
 - **タイトル**: `events.name`
 - **パンくず**: 「イベント」/ 開催日（`MM/DD (曜)` フォーマット）
 - **サブタイトル**: `YYYY/MM/DD (曜) · HH:mm – HH:mm · 会場名`
-- **アクション**: 「告知文をコピー」CTA（押下で告知文ダイアログを開く。挙動は `admin-line-announcement` spec「告知文ダイアログ」に従う）と「編集」CTA（押下で `/events/:id/edit` へ遷移）
+- **アクション**: 「告知文をコピー」CTA（押下で告知文ダイアログを開く。挙動は `admin-announcement` spec「告知文ダイアログ」に従う）と「編集」CTA（押下で `/events/:id/edit` へ遷移）
 
 CSV エクスポート / 一括メールの CTA は MVP1 では **表示しない**（MVP2）。
 
