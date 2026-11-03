@@ -215,12 +215,13 @@ a11y は MUST WCAG 2.1 AA を満たす SHALL:
   - 結果ダイアログの「含めた件数 / 承認済みなし会員 / 失敗書類」表示
   - チェックボックスクリックで行クリック（詳細 sheet）が発火しない（イベント分離）
 - **E2E**（Playwright、本 change で 1 件）:
-  - happy path: 認証済み admin で `/members` を開く → 複数会員を選択 → 一括ダウンロード起動 → ダウンロード → 結果ダイアログが表示される
+  - auth guard: 未認証で `/members`（一括ダウンロード機能の入口）にアクセスすると `/login` へリダイレクトされ、機能に到達できない。
+  - 補足: admin は AAL2 + MFA 必須で認証済みセッションの E2E 再現が重いため（既存 `e2e/admin/members-list.e2e.ts` と同方針）、選択 → ダウンロード → 結果表示の happy path は component test + 手動確認（dev）で担保する。
 
 #### Scenario: ユニット / コンポーネントテストの網羅
 - **WHEN** `pnpm --filter @high-q/admin test` を実行する
 - **THEN** 選択 composable / 各クエリ / CSV ビルダ / 画像判定 / ツールバー / 準備ダイアログ / 結果ダイアログ / イベント分離のテストがすべて pass する
 
-#### Scenario: E2E の通過
-- **WHEN** `pnpm --filter @high-q/e2e test` を admin プロジェクトで実行する
-- **THEN** 「`/members` で複数選択 → 一括ダウンロード → ZIP 生成」の happy path が pass する
+#### Scenario: E2E の通過（auth guard）
+- **WHEN** 未認証で `/members` にアクセスする
+- **THEN** `/login` へリダイレクトされ、一括ダウンロード機能（ツールバー / ダイアログ）に到達できない

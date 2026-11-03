@@ -3,7 +3,7 @@
 - [x] 1.1 `supabase/templates/new_table.sql` を出発点に `supabase/migrations/<YYYYMMDDHHMMSS>_create_identity_document_downloads.sql` を作成。列: `id uuid pk default gen_random_uuid()` / `downloaded_by uuid references members(id) on delete set null` / `downloaded_at timestamptz not null default now()` / `member_ids uuid[] not null` / `document_ids uuid[] not null` / `member_count int not null` / `document_count int not null` / `note text`。`comment on table` を付与
 - [x] 1.2 RLS 有効化 + ポリシー: SELECT / INSERT は `is_admin()` のみ（INSERT は WITH CHECK で `is_admin()`）。UPDATE / DELETE ポリシーは作らない（追記専用）
 - [x] 1.3 GRANT 3 ロール明示: anon は付与しない / authenticated は `select, insert` / service_role は全権。末尾に `-- ROLLBACK:` コメント（revoke + drop policy + drop table）を実テーブル名で記述
-- [ ] 1.4 dev へ適用（レムが `pnpm db:push` 実行）→ `supabase db query --linked --file supabase/tests/verify_grants.sql` で 3 ロール GRANT 状態を確認。CI `migration-safety`（RLS 網羅 / my-number / rollback コメント）が緑であることを確認
+- [x] 1.4 dev へ適用（レムが `pnpm db:push` 実行）→ `supabase db query --linked --file supabase/tests/verify_grants.sql` で 3 ロール GRANT 状態を確認。CI `migration-safety`（RLS 網羅 / my-number / rollback コメント）が緑であることを確認
 
 ## 2. entities: 承認済み書類の取得 + 会員名簿フィールドの取得
 
@@ -43,6 +43,6 @@
 
 ## 7. 最終確認（UI 一括検証）
 
-- [ ] 7.1 E2E（Playwright, admin, 1 件）: 認証済み admin で `/members` → 複数会員選択 → ダウンロード起動 → ダウンロード → 結果ダイアログ表示の happy path
+- [x] 7.1 E2E（Playwright, admin, 1 件）: 未認証で `/members`（一括 DL 機能の入口）→ `/login` リダイレクトの auth guard を確認（既存 admin E2E と同方針で AAL2 happy path は component test + 手動確認に委譲）
 - [x] 7.2 `pnpm exec vitest run` / `pnpm --filter @high-q/admin lint`（boundaries / no-restricted-imports / stylelint）/ `pnpm build`（admin）をまとめて実行し緑を確認。マジックナンバー grep（`#[0-9a-f]{3,6}` / `\[\d+px\]`）が新規コンポーネントで 0 件
 - [ ] 7.3 ローカル動作確認の案内（`verify-locally`）を作成し翔太郎くんに提示（dev passwordless login + admin `/members` の URL・主要シナリオ・4 状態 + a11y + モバイル + 権限・生成 ZIP の中身確認）
