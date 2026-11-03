@@ -45,4 +45,4 @@
 
 - [x] 7.1 E2E（Playwright, admin, 1 件）: 未認証で `/members`（一括 DL 機能の入口）→ `/login` リダイレクトの auth guard を確認（既存 admin E2E と同方針で AAL2 happy path は component test + 手動確認に委譲）
 - [x] 7.2 `pnpm exec vitest run` / `pnpm --filter @high-q/admin lint`（boundaries / no-restricted-imports / stylelint）/ `pnpm build`（admin）をまとめて実行し緑を確認。マジックナンバー grep（`#[0-9a-f]{3,6}` / `\[\d+px\]`）が新規コンポーネントで 0 件
-- [ ] 7.3 ローカル動作確認の案内（`verify-locally`）を作成し翔太郎くんに提示（dev passwordless login + admin `/members` の URL・主要シナリオ・4 状態 + a11y + モバイル + 権限・生成 ZIP の中身確認）
+- [x] 7.3 ローカル動作確認の案内（`verify-locally`）を作成し翔太郎くんに提示（dev passwordless login + admin `/members` の URL・主要シナリオ・4 状態 + a11y + モバイル + 権限・生成 ZIP の中身確認）
