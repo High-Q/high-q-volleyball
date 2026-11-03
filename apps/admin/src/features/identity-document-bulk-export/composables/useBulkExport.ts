@@ -37,8 +37,6 @@ export type ExportPhase = "idle" | "running" | "done" | "error";
 
 export interface BulkExportInput {
   selectedIds: MemberId[];
-  /** ダイアログで確認・編集した電話番号（member id → 値）。未指定は DB 値を使う。 */
-  phoneOverrides?: Record<string, string | null>;
   adminMemberId: MemberId;
   note?: string | null;
 }
@@ -187,20 +185,13 @@ export function useBulkExport(): UseBulkExport {
         : [{ documentTypeLabel: "No approved documents", images: [] }];
     const pdfBytes = await buildIdentityDocumentsPdf(pdfPages);
 
-    // 6. CSV 生成（住所は空欄、年齢は birthday から自動、電話は確認値）
-    const csvMembers: CsvMemberInput[] = rosterOrdered.map((m) => {
-      const key = m.id as unknown as string;
-      const phone =
-        input.phoneOverrides && key in input.phoneOverrides
-          ? input.phoneOverrides[key]
-          : m.phone;
-      return {
-        last_name: m.last_name,
-        first_name: m.first_name,
-        birthday: m.birthday,
-        phone: phone ?? null,
-      };
-    });
+    // 6. CSV 生成（住所は空欄、年齢は birthday から自動、電話は DB 値をそのまま）
+    const csvMembers: CsvMemberInput[] = rosterOrdered.map((m) => ({
+      last_name: m.last_name,
+      first_name: m.first_name,
+      birthday: m.birthday,
+      phone: m.phone ?? null,
+    }));
     const csv = buildMembersCsv(csvMembers, asOf);
 
     // 7. ZIP 化してローカル保存

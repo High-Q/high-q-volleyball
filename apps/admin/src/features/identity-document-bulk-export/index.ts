@@ -21,6 +21,4 @@ export {
 } from "./composables/useBulkExport";
 
 export { default as BulkExportToolbar } from "./ui/BulkExportToolbar.vue";
-export { default as ExportPrepDialog } from "./ui/ExportPrepDialog.vue";
 export { default as ExportResultDialog } from "./ui/ExportResultDialog.vue";
-export type { ExportDialogMember } from "./model/dialog.types";

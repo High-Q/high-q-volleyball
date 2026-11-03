@@ -1,25 +1,18 @@
 ## ADDED Requirements
 
-### Requirement: エクスポート準備ダイアログ（会員確認 / 電話番号）
+### Requirement: ダウンロードは選択から直接実行（準備ダイアログなし）
 
-`/members` で会員を選択し一括アクションの「会員名簿と本人確認書類をダウンロード」を起動すると、システムは MUST **エクスポート準備ダイアログ**を表示する SHALL。ダイアログは選択会員を一覧し、会員ごとに以下を表示する:
+`/members` で会員を選択し一括アクションツールバーの「会員名簿と本人確認書類をダウンロード」を押すと、システムは MUST 準備ダイアログを挟まずに CSV / PDF / ZIP の生成を直接開始する SHALL。
 
-- **氏名**: `last_name + ' ' + first_name`（読み取り専用）
-- **電話番号**: DB の `phone` をプリフィルし、admin が編集可能。NULL のときは空欄
+電話番号は MUST DB の `phone` をそのまま CSV に出力する SHALL（アプリ上で確認・編集はさせない）。住所も MUST アプリで入力・OCR せず、CSV に空欄列として出力しエクスポート後に補記する SHALL（SOP §3・費用ゼロ方針に照らしアプリへ OCR / 外部送信を組み込まない）。これにより admin の操作は「会員を選ぶ → ダウンロード」の 2 ステップに閉じる。
 
-ダイアログは MUST 住所の入力欄を持たない SHALL。住所はアプリで扱わず、CSV に空欄列として出力しエクスポート後に補記する（SOP §3・費用ゼロ方針に照らしアプリへ OCR / 外部送信を組み込まない）。admin が「ダウンロード」を押すと CSV / PDF / ZIP の生成を開始する。
+#### Scenario: 選択から直接ダウンロード
+- **WHEN** 会員を 3 名選択してツールバーの「会員名簿と本人確認書類をダウンロード」を押す
+- **THEN** 準備ダイアログは表示されず、ただちに ZIP 生成が始まり、完了後に結果ダイアログが表示される
 
-#### Scenario: ダイアログに選択会員が並ぶ
-- **WHEN** 会員を 3 名選択して一括ダウンロードを起動する
-- **THEN** エクスポート準備ダイアログに 3 名分の 氏名 / 電話番号（DB 値プリフィル）が表示され、住所の入力欄は存在しない
-
-#### Scenario: 電話番号のプリフィルと編集
-- **WHEN** DB の `phone` が登録済みの会員行を表示する
-- **THEN** 電話番号フィールドにその値がプリフィルされ、admin が編集できる
-
-#### Scenario: 住所の入力欄が無い
-- **WHEN** エクスポート準備ダイアログを表示する
-- **THEN** 住所の入力フィールドは存在せず、`members` テーブルへの UPDATE も発行されない
+#### Scenario: 電話番号は DB 値をそのまま出力
+- **WHEN** `phone` が登録済みの会員を含めてダウンロードする
+- **THEN** CSV の当該行の電話番号列に DB の値がそのまま出力される（アプリ上での編集 UI は存在しない）
 
 ### Requirement: 承認済み書類のみの抽出
 
@@ -52,7 +45,7 @@ ZIP は MUST `会員名簿.csv` を 1 ファイル同梱する SHALL。CSV は�
 - 氏名 = `last_name + ' ' + first_name`（本名）。
 - 住所 = **常に空欄で出力する**（アプリは住所を入力させない。エクスポート後にオーナーが本人確認書類 PDF と突合して手で補記する）。
 - 年齢 = DB の `birthday` から**エクスポート実行日時点の満年齢を自動計算**した整数（admin 入力なし）。`birthday` が未設定・算出不能な場合は MUST 空欄とする SHALL。
-- 電話番号 = ダイアログで確認・編集した値（未入力 / NULL は空欄）。
+- 電話番号 = DB の `phone` をそのまま出力（NULL は空欄。アプリ上での編集はしない）。
 - CSV は MUST UTF-8 BOM 付きで出力し、Excel で日本語が文字化けしないようにする SHALL。
 - 行は選択した全会員を対象とする（承認済み書類の有無に関わらず名簿に載せる）。
 
@@ -73,7 +66,7 @@ ZIP は MUST `会員名簿.csv` を 1 ファイル同梱する SHALL。CSV は�
 - **THEN** 氏名・住所などの日本語が文字化けせず表示される
 
 #### Scenario: 電話番号 NULL は空欄
-- **WHEN** `phone` が NULL かつダイアログでも未入力の会員
+- **WHEN** `phone` が NULL の会員
 - **THEN** CSV の当該行の電話番号列は空欄になる
 
 ### Requirement: 本人確認書類 PDF（1 ファイル集約・会員ごとページ）
@@ -167,7 +160,7 @@ ZIP は MUST `本人確認書類.pdf` を 1 ファイル同梱する SHALL。PDF
 
 本機能は MUST 以下の FSD 配置に従う SHALL:
 
-- `apps/admin/src/features/identity-document-bulk-export/` — 選択状態 composable・エクスポート準備ダイアログ・一括ダウンロードのオーケストレーション・一括アクションツールバー UI・結果ダイアログ
+- `apps/admin/src/features/identity-document-bulk-export/` — 選択状態 composable・一括ダウンロードのオーケストレーション・一括アクションツールバー UI・結果ダイアログ
 - `apps/admin/src/entities/identity-document/` — 承認済み書類を会員 ID 群で取得するクエリ（既存 entity に追加）
 - `apps/admin/src/entities/member/` — 選択会員の名簿フィールド（`last_name` / `first_name` / `phone` / `birthday`）を `members` テーブルから会員 ID 群で取得するクエリ（既存 entity に追加。`member_list_view` に無いため実テーブル参照）
 - `apps/admin/src/entities/identity-document-download/` — 監査ログテーブルの DTO + INSERT クエリ
@@ -185,17 +178,12 @@ ZIP は MUST `本人確認書類.pdf` を 1 ファイル同梱する SHALL。PDF
 
 a11y は MUST WCAG 2.1 AA を満たす SHALL:
 - 各チェックボックスは関連ラベル（`aria-label` 等）を持つ。
-- エクスポート準備ダイアログの 電話番号 入力は `shared/ui/FormField` でラップし、ラベルと関連付ける（初期表示で赤枠を出さない）。
-- 一括アクションツールバー / 各ダイアログはキーボード操作可能で、ダイアログはフォーカストラップ + ESC で閉じる。
+- 一括アクションツールバー / 結果ダイアログはキーボード操作可能で、ダイアログはフォーカストラップ + ESC で閉じる。
 - 取得中のボタンは `aria-busy="true"`、エラーは `role="alert"`。
 
 #### Scenario: マジックナンバー検査
 - **WHEN** 本機能のコンポーネントを `#[0-9a-f]{3,6}\b` および `\[\d+px\]` で grep する
 - **THEN** マッチが 0 件である
-
-#### Scenario: 電話番号入力のフォーム規約
-- **WHEN** エクスポート準備ダイアログを初期表示する
-- **THEN** 電話番号入力は FormField でラップされ、初期表示で赤枠（invalid 表示）は出ない
 
 ### Requirement: テスト
 
@@ -211,7 +199,6 @@ a11y は MUST WCAG 2.1 AA を満たす SHALL:
   - 部分失敗時に成功分のみで PDF を構成し、監査ログ対象が実含有集合に一致する
 - **Component test**（Vitest + @vue/test-utils）:
   - 一括アクションツールバーの表示条件（1 件以上選択時）と件数表示
-  - エクスポート準備ダイアログの 氏名表示 / 電話プリフィル / 住所入力欄が無いこと
   - 結果ダイアログの「含めた件数 / 承認済みなし会員 / 失敗書類」表示
   - チェックボックスクリックで行クリック（詳細 sheet）が発火しない（イベント分離）
 - **E2E**（Playwright、本 change で 1 件）:
@@ -220,7 +207,7 @@ a11y は MUST WCAG 2.1 AA を満たす SHALL:
 
 #### Scenario: ユニット / コンポーネントテストの網羅
 - **WHEN** `pnpm --filter @high-q/admin test` を実行する
-- **THEN** 選択 composable / 各クエリ / CSV ビルダ / 画像判定 / ツールバー / 準備ダイアログ / 結果ダイアログ / イベント分離のテストがすべて pass する
+- **THEN** 選択 composable / 各クエリ / CSV ビルダ / 画像判定 / ツールバー / 結果ダイアログ / イベント分離のテストがすべて pass する
 
 #### Scenario: E2E の通過（auth guard）
 - **WHEN** 未認証で `/members` にアクセスする

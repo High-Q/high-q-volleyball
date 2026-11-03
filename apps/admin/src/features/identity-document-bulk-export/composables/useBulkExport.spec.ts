@@ -185,16 +185,15 @@ describe("useBulkExport.run", () => {
     expect(pages[0]?.images).toEqual([]);
   });
 
-  it("電話番号の override が CSV に反映される（DB 値を上書き）", async () => {
+  it("DB の電話番号がそのまま CSV に出力される", async () => {
     h.fetchApprovedDocumentsByMemberIds.mockResolvedValue({ ok: true, value: [] });
     const { useBulkExport } = await import("./useBulkExport");
     await useBulkExport().run({
-      selectedIds: [id("m2")],
+      selectedIds: [id("m1")],
       adminMemberId,
-      phoneOverrides: { m2: "070-9999" },
     });
     const csv = h.zipFiles["会員名簿.csv"] as string;
-    expect(csv).toContain("070-9999");
+    expect(csv).toContain("090-1");
   });
 
   it("監査ログ INSERT 失敗時は auditLogged=false（ダウンロード自体は成立）", async () => {
