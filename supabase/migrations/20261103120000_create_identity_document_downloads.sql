@@ -74,13 +74,21 @@ create policy "identity_document_downloads_insert_admin"
 -- -----------------------------------------------------------------------------
 -- Supabase の Data API 仕様変更に備え、明示 GRANT を書き切る。
 -- 行レベルの可否は RLS の is_admin() で制御する。
+--
+-- 注意: 既存プロジェクト (dev/prd) には public 新規テーブルへ全ロール全権限を
+-- 付与する `alter default privileges` が残っている。GRANT だけでは anon にも
+-- データ権限が残るため、まず revoke で打ち消してから意図した権限のみを付与する。
 
--- 4.1 anon: 監査ログは非公開。GRANT を付与しない。
+-- 4.1 既定付与を打ち消す（anon を完全に締め出し、authenticated を必要分へ絞る）。
+revoke all on public.identity_document_downloads from anon;
+revoke all on public.identity_document_downloads from authenticated;
 
--- 4.2 authenticated: select / insert のみ（RLS で admin 以外は 0 行・INSERT 拒否）。
+-- 4.2 anon: 監査ログは非公開。付与しない（上の revoke で 0 権限）。
+
+-- 4.3 authenticated: select / insert のみ（RLS で admin 以外は 0 行・INSERT 拒否）。
 grant select, insert on public.identity_document_downloads to authenticated;
 
--- 4.3 service_role: 全権限（特権・必須）。
+-- 4.4 service_role: 全権限（特権・必須）。
 grant select, insert, update, delete on public.identity_document_downloads to service_role;
 
 
