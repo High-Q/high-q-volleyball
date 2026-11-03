@@ -41,7 +41,9 @@ permissions:
 jobs:
   crawl:
     name: crawl 江東区スポーツネット → LINE 通知
-    runs-on: ubuntu-latest
+    # #390: ubuntu-latest (= 26.04) は Playwright の Chromium 未対応で install が失敗する。
+    # Playwright が Ubuntu 26.04 に対応したら ubuntu-latest に戻す。
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       # 秘密は GitHub Secrets 由来。コード・ログには出さない（#286 5.2）。
