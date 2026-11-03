@@ -130,5 +130,5 @@
   - admin（5173）: 告知テンプレート画面で編集・保存 → イベント詳細で告知文 / リンクのコピー。スマホ幅も確認
   - ローカル予約サイトに向ける場合は root `.env.local` に `VITE_RESERVATION_URL=http://localhost:5174` を設定する手順を案内（値の設定は翔太郎くんが行う）
   - reservation（5174）: ログイン済み / 未ログイン / 予約済み / 満席 の 4 パターン
-- [ ] 8.3 実機確認（iPhone / Android）: LINE のトーク（可能ならオープンチャット）に `openExternalBrowser=1` 付きリンクを送り、タップで標準ブラウザが開くことを確認。結果を PR 本文に記録
-- [ ] 8.4 PR 作成。Test Plan は「ローカル確認 / Render Preview（予約サイト側）/ マージ後: prd migration 承認 → `verify_grants.sql` → 本番イベントで告知文コピー → LINE 実機」の 3 段
+- [x] 8.3 （**未確認のまま ship**: 翔太郎くんの ship 合図時点で実機結果の報告なし。マージ後に本番イベントで確認する）実機確認（iPhone / Android）: LINE のトーク（可能ならオープンチャット）に `openExternalBrowser=1` 付きリンクを送り、タップで標準ブラウザが開くことを確認。結果を PR 本文に記録
+- [x] 8.4 PR 作成（#389）。Test Plan は「ローカル確認 / Render Preview（予約サイト側）/ マージ後: prd migration 承認 → `verify_grants.sql` → 本番イベントで告知文コピー → LINE 実機」の 3 段
