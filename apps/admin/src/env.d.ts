@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_SENTRY_DSN?: string
   readonly VITE_SENTRY_ENVIRONMENT?: string
+  readonly VITE_RESERVATION_URL?: string
 }
 
 declare module '*.vue' {

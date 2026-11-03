@@ -1,0 +1,53 @@
+import type { AnnouncementChannel } from "./types";
+
+/**
+ * LINE 告知の初期テンプレート。
+ *
+ * `supabase/migrations/20261029000000_announcement_templates.sql` の初期投入と
+ * 同一内容でなければならない（defaultTemplate.spec.ts で一致を検査）。
+ * 字下げの全角スペースは lint (no-irregular-whitespace) 回避のため `\u3000` で表記する。
+ * テンプレート未登録時に編集画面の初期値として使う。
+ */
+export const DEFAULT_LINE_TEMPLATE = `🏐 {イベント名}のお知らせ 🏐
+
+{日付} に{イベント名}を開催します！
+初心者さんも経験者さんも、ゆるっと楽しくボールに触りましょう〜！
+途中参加・途中抜けもOKです🙆
+
+\u3000◾️日時：{日付} {開始時刻}-{終了時刻}
+\u3000◾️場所：{会場}
+
+\u3000-------------------------------
+
+\u3000参加費：{参加費}
+\u3000持ち物：室内用シューズ・運動着・飲み物
+
+\u3000-------------------------------
+
+▼ 予約はこちらから
+{予約リンク}
+
+ご予約お待ちしています！🙌`;
+
+
+/**
+ * X 告知の初期テンプレート（High Q を知らない人向け。リンクは紹介ページ）。
+ *
+ * `supabase/migrations/20261103000000_announcement_templates_add_x.sql` の初期投入と
+ * 同一内容でなければならない（defaultTemplate.spec.ts で一致を検査）。
+ */
+export const DEFAULT_X_TEMPLATE = `🏐{日付} {開始時刻}〜 {会場}でバレーします！
+
+初心者・ひとり参加 大歓迎🙌
+20〜30代中心のゆるい社会人サークルです。
+途中参加・途中抜けOK／参加費{参加費}
+
+気軽にのぞいてみてください👇
+{紹介ページリンク}
+
+#バレーボール #社会人サークル #江東区`;
+
+export const DEFAULT_TEMPLATES: Readonly<Record<AnnouncementChannel, string>> = {
+  line: DEFAULT_LINE_TEMPLATE,
+  x: DEFAULT_X_TEMPLATE,
+};

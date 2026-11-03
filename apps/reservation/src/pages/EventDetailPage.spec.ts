@@ -12,6 +12,7 @@ const eventError: Ref<Error | null> = ref(null);
 const eventNotFound = ref(false);
 const myReservationRef = ref<unknown>(null);
 const selfResolvedRef = ref(false);
+const selfLoadingRef = ref(false);
 
 const Stub = defineComponent({ template: "<div />" });
 
@@ -26,7 +27,7 @@ vi.mock("@/features/event-detail", () => ({
   useMyEventReservation: () => ({
     myReservation: myReservationRef,
     resolved: selfResolvedRef,
-    loading: ref(false),
+    loading: selfLoadingRef,
     reload: vi.fn(),
     setLocal: vi.fn(),
   }),
@@ -88,6 +89,10 @@ beforeEach(() => {
   eventLoading.value = false;
   eventError.value = null;
   eventNotFound.value = false;
+  // 既定: 本人予約状態の取得が成功し、予約なし
+  myReservationRef.value = null;
+  selfResolvedRef.value = true;
+  selfLoadingRef.value = false;
 });
 
 afterEach(() => {
@@ -110,6 +115,61 @@ function sheetOpen(wrapper: { find: (s: string) => { attributes: (a: string) => 
 }
 
 describe("EventDetailPage - 予約 Sheet ディープリンク (?book=1)", () => {
+  // #386 LINE 告知リンク: 予約済み会員には開かない / LINE 用クエリの除去
+  it("予約済み (reserved) の会員には ?book=1 でも Sheet を開かず、book は除去する", async () => {
+    myReservationRef.value = { id: "r-1", status: "reserved", guestCount: 0, note: "" };
+    const { wrapper, router } = await mountPage("?book=1");
+    expect(sheetOpen(wrapper)).toBe("false");
+    expect(router.currentRoute.value.query.book).toBeUndefined();
+  });
+
+  it("キャンセル待ち (waitlist) 登録済みの会員には ?book=1 でも Sheet を開かない", async () => {
+    myReservationRef.value = { id: "r-1", status: "waitlist", guestCount: 0, note: "" };
+    const { wrapper } = await mountPage("?book=1");
+    expect(sheetOpen(wrapper)).toBe("false");
+  });
+
+  it("キャンセル済み (cancelled) の会員には Sheet を開く（再予約導線の維持）", async () => {
+    myReservationRef.value = { id: "r-1", status: "cancelled", guestCount: 0, note: "" };
+    const { wrapper } = await mountPage("?book=1");
+    expect(sheetOpen(wrapper)).toBe("true");
+  });
+
+  it("本人予約状態の取得失敗時は Sheet を開かず、book は除去する", async () => {
+    selfResolvedRef.value = false;
+    const { wrapper, router } = await mountPage("?book=1");
+    expect(sheetOpen(wrapper)).toBe("false");
+    expect(router.currentRoute.value.query.book).toBeUndefined();
+  });
+
+  it("本人予約状態の読み込み完了まで判定を待つ", async () => {
+    selfResolvedRef.value = false;
+    selfLoadingRef.value = true;
+    const { wrapper, router } = await mountPage("?book=1");
+    expect(sheetOpen(wrapper)).toBe("false");
+    // 判定前なのでクエリは残っている
+    expect(router.currentRoute.value.query.book).toBe("1");
+    selfResolvedRef.value = true;
+    selfLoadingRef.value = false;
+    await flushPromises();
+    expect(sheetOpen(wrapper)).toBe("true");
+    expect(router.currentRoute.value.query.book).toBeUndefined();
+  });
+
+  it("?book=1&openExternalBrowser=1 では Sheet を開き、両クエリを除去する", async () => {
+    const { wrapper, router } = await mountPage("?book=1&openExternalBrowser=1");
+    expect(sheetOpen(wrapper)).toBe("true");
+    expect(router.currentRoute.value.query.book).toBeUndefined();
+    expect(router.currentRoute.value.query.openExternalBrowser).toBeUndefined();
+  });
+
+  it("book なしでも openExternalBrowser だけ除去し、他のクエリは残す", async () => {
+    const { wrapper, router } = await mountPage("?openExternalBrowser=1&foo=bar");
+    expect(sheetOpen(wrapper)).toBe("false");
+    expect(router.currentRoute.value.query.openExternalBrowser).toBeUndefined();
+    expect(router.currentRoute.value.query.foo).toBe("bar");
+  });
+
   it("受付可能イベントに ?book=1 で到達すると Sheet が自動オープンする", async () => {
     const { wrapper, router } = await mountPage("?book=1");
     expect(sheetOpen(wrapper)).toBe("true");

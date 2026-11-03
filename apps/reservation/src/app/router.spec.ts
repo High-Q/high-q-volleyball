@@ -246,6 +246,17 @@ describe("auth guard — next クエリ保持 (#229)", () => {
     );
   });
 
+  it("未認証 + LINE 告知リンク (?book=1&openExternalBrowser=1) はクエリごと next に保持 (#386)", async () => {
+    sessionState.status.value = "unauthenticated";
+    const router = await createTestRouter(
+      "/events/11111111-1111-1111-1111-111111111111?book=1&openExternalBrowser=1",
+    );
+    expect(router.currentRoute.value.name).toBe("login");
+    expect(router.currentRoute.value.query.next).toBe(
+      "/events/11111111-1111-1111-1111-111111111111?book=1&openExternalBrowser=1",
+    );
+  });
+
   it("未認証 + 任意の保護ルート (/protected) でも next が付与される", async () => {
     sessionState.status.value = "unauthenticated";
     const router = await createTestRouter("/protected?foo=bar");

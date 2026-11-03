@@ -24,6 +24,7 @@ const { event, loading, error, notFound, reload } = useEventDetail(idRef);
 const {
   myReservation,
   resolved: selfResolved,
+  loading: selfLoading,
   setLocal: setMyReservation,
 } = useMyEventReservation(idRef);
 
@@ -73,26 +74,42 @@ function onSheetSaved(reservation: Reservation): void {
 }
 
 /**
- * 再予約導線（履歴の「再予約する」/ 完了画面の「やっぱり予約する」）の共通着地点。
- * `?book=1` 付きで到達し、対象イベントが受付可能（未開催 × 非満席）なときのみ
- * create モードの予約 Sheet を自動オープンする。受付不可なら開かず通常詳細を見せる。
- * 再オープン（ブラウザ戻る等）を防ぐため、判定後は book クエリを履歴から除去する。
+ * 予約 Sheet のディープリンク起動。再予約導線（履歴の「再予約する」/ 完了画面の
+ * 「やっぱり予約する」）と LINE 告知の予約直行リンク (#386) の共通着地点。
+ *
+ * `?book=1` 付きで到達し、対象イベントが受付可能（未開催 × 非満席）かつ本人に有効な
+ * 予約（予約済み / キャンセル待ち）が無いときのみ create モードの予約 Sheet を自動
+ * オープンする。告知リンクは予約済みの会員もタップするため、本人予約状態の読み込み
+ * 完了まで判定を待ち、取得に失敗した場合は開かない（重複予約に進ませない安全側）。
+ *
+ * 判定後は再オープン（ブラウザ戻る等）を防ぐため book クエリを履歴から除去する。
+ * LINE で標準ブラウザを開かせる `openExternalBrowser` は会員サイトでは意味を持たない
+ * ため、book の有無にかかわらず同時に除去する。
  */
+const ACTIVE_RESERVATION_STATUSES = new Set(["reserved", "waitlist"]);
 let deepLinkHandled = false;
 watch(
-  event,
-  (loaded) => {
-    if (deepLinkHandled || loaded === null) return;
+  [event, selfLoading, selfResolved],
+  ([loaded, reservationLoading]) => {
+    if (deepLinkHandled || loaded === null || reservationLoading) return;
     deepLinkHandled = true;
-    if (route.query.book !== "1") return;
-    const bookable =
-      Date.parse(loaded.startAt) > Date.now() &&
-      !formatAvailability(loaded.availability).isFull;
-    if (bookable) {
-      bookingSheetOpen.value = true;
+    if (route.query.book === "1") {
+      const bookable =
+        Date.parse(loaded.startAt) > Date.now() &&
+        !formatAvailability(loaded.availability).isFull;
+      const hasActiveReservation =
+        myReservation.value !== null &&
+        ACTIVE_RESERVATION_STATUSES.has(myReservation.value.status);
+      if (bookable && selfResolved.value && !hasActiveReservation) {
+        bookingSheetOpen.value = true;
+      }
+    }
+    if (!("book" in route.query) && !("openExternalBrowser" in route.query)) {
+      return;
     }
     const nextQuery = { ...route.query };
     delete nextQuery.book;
+    delete nextQuery.openExternalBrowser;
     void router.replace({ query: nextQuery });
   },
   { immediate: true },

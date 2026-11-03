@@ -50,6 +50,11 @@ const router = createRouter({
       name: "identity-documents",
       component: { template: "<div />" },
     },
+    {
+      path: "/announcement-template",
+      name: "announcement-template",
+      component: { template: "<div />" },
+    },
     { path: "/login", name: "login", component: { template: "<div />" } },
   ],
 });
@@ -68,7 +73,7 @@ beforeEach(() => {
 });
 
 describe("SidebarNavContent", () => {
-  it("実在ルートの 5 ナビ項目を表示し、設定は出さない", async () => {
+  it("実在ルートの 6 ナビ項目を表示し、設定は出さない", async () => {
     router.push("/");
     const w = await mountNav();
     const text = w.text();
@@ -78,6 +83,7 @@ describe("SidebarNavContent", () => {
       "会員",
       "会場",
       "本人確認書類",
+      "告知テンプレート",
     ]) {
       expect(text).toContain(label);
     }
@@ -91,6 +97,15 @@ describe("SidebarNavContent", () => {
       .findAll("a")
       .find((a) => a.attributes("aria-current") === "page");
     expect(active?.text()).toContain("イベント");
+  });
+
+  it("告知テンプレート画面では告知テンプレート項目を点灯 (#386)", async () => {
+    router.push("/announcement-template");
+    const w = await mountNav();
+    const active = w
+      .findAll("a")
+      .find((a) => a.attributes("aria-current") === "page");
+    expect(active?.text()).toContain("告知テンプレート");
   });
 
   it("pending > 0 のとき本人確認書類に Badge を表示", async () => {

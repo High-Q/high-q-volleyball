@@ -12,6 +12,17 @@ vi.mock("@/entities/event-detail", () => ({
   getEventDetail: getEventDetailMock,
 }));
 
+const { fetchAnnouncementTemplateMock } = vi.hoisted(() => ({
+  fetchAnnouncementTemplateMock: vi.fn(),
+}));
+
+vi.mock("@/entities/announcement-template", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/entities/announcement-template")
+  >("@/entities/announcement-template");
+  return { ...actual, fetchAnnouncementTemplate: fetchAnnouncementTemplateMock };
+});
+
 vi.mock("@/entities/reservation", async () => {
   const actual = await vi.importActual<
     typeof import("@/entities/reservation")
@@ -232,5 +243,66 @@ describe("EventDetailWidget — 編集 CTA", () => {
       name: "events-edit",
       params: { id: EVENT_ID },
     });
+  });
+});
+
+describe("EventDetailWidget — 告知文をコピー CTA (#386)", () => {
+  it("TopBar に「告知文をコピー」が表示され、押下で告知文ダイアログが開く", async () => {
+    getEventDetailMock.mockResolvedValue({
+      ok: true,
+      value: {
+        id: EVENT_ID,
+        name: "ゆる練",
+        start_at: "2026-11-14T09:00:00Z",
+        end_at: "2026-11-14T11:00:00Z",
+        venue_name: "有明会場",
+        capacity: null,
+        reserved_count: 0,
+        checked_in_count: 0,
+        first_time_count: 0,
+        waitlist_count: 0,
+        description: null,
+        venue_id: "v",
+        fee: 1000,
+        visibility: "published",
+        status: "scheduled",
+        cancel_deadline: null,
+        vol: 42,
+        created_at: "x",
+        updated_at: "x",
+      },
+    });
+    getEventParticipantsMock.mockResolvedValue({ ok: true, value: [] });
+    fetchAnnouncementTemplateMock.mockResolvedValue({
+      ok: true,
+      value: {
+        channel: "line",
+        body: "{イベント名} {回号}",
+        updatedAt: "x",
+        updatedBy: null,
+      },
+    });
+    const router = buildRouter();
+    await router.push("/events/test");
+    wrapper = mount(EventDetailWidget, {
+      props: { eventId: EVENT_ID },
+      global: { plugins: [router] },
+      attachTo: document.body,
+    });
+    await flushPromises();
+
+    const openBtn = wrapper.find('[data-testid="open-announcement-dialog"]');
+    expect(openBtn.exists()).toBe(true);
+    expect(openBtn.text()).toBe("告知文をコピー");
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+
+    await openBtn.trigger("click");
+    await flushPromises();
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="announcement-preview"]')?.textContent,
+    ).toBe("ゆる練 vol.42");
   });
 });

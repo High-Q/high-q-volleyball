@@ -23,6 +23,7 @@ function makeRow(overrides: Partial<EventDetailRow>): EventDetailRow {
     waitlist_count: 0,
     reserved_member_count: 0,
     checked_in_member_count: 0,
+    vol: null,
     created_at: "2026-04-01T00:00:00Z",
     updated_at: "2026-04-01T00:00:00Z",
     ...overrides,
