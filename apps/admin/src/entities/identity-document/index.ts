@@ -12,6 +12,7 @@
 export type {
   IdentityDocumentListRow,
   IdentityDocumentDetail,
+  ApprovedDocumentRow,
   IdentityDocumentsListFilter,
   IdentityDocumentsListResult,
   StatusFilter,
@@ -28,5 +29,7 @@ export {
   getIdentityDocumentById,
   fetchPendingCount,
 } from "./api/identityDocumentQueries";
+
+export { fetchApprovedDocumentsByMemberIds } from "./api/approvedDocumentQueries";
 
 export { getSignedUrl } from "./api/getSignedUrl";

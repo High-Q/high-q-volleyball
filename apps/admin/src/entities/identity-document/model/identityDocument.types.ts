@@ -49,6 +49,28 @@ export interface IdentityDocumentDetail {
   };
 }
 
+/**
+ * #172 一括エクスポート用: 承認済み書類 1 件分の DTO。
+ * PDF への画像埋め込みに必要な storage path と、ページ氏名ラベル用の member 情報を持つ。
+ * `storage_path_front` / `storage_path_back` がともに NULL の行はクエリ側で除外される。
+ */
+export interface ApprovedDocumentRow {
+  id: IdentityDocumentId;
+  member_id: MemberId;
+  document_type: DocumentType;
+  /** 常に 'approved'（クエリで絞り込み済み）。 */
+  status: IdentityDocumentStatus;
+  uploaded_at: string;
+  storage_path_front: string | null;
+  storage_path_back: string | null;
+  member: {
+    last_name: string | null;
+    first_name: string | null;
+    display_name: string;
+    email: string;
+  };
+}
+
 /** 一覧画面のステータスフィルタ。 */
 export type StatusFilter = "pending" | "approved" | "rejected" | "all";
 

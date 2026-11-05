@@ -1,26 +1,21 @@
-## ADDED Requirements
+# admin-identity-document-export Specification
 
-### Requirement: エクスポート準備ダイアログ（住所 / 電話番号の入力・確認）
+## Purpose
+TBD - created by archiving change admin-identity-document-bulk-export. Update Purpose after archive.
+## Requirements
+### Requirement: ダウンロードは選択から直接実行（準備ダイアログなし）
 
-`/members` で会員を選択し一括アクションの「会員名簿と本人確認書類をダウンロード」を起動すると、システムは MUST **エクスポート準備ダイアログ**を表示する SHALL。ダイアログは選択会員を一覧し、会員ごとに以下を表示する:
+`/members` で会員を選択し一括アクションツールバーの「会員名簿と本人確認書類をダウンロード」を押すと、システムは MUST 準備ダイアログを挟まずに CSV / PDF / ZIP の生成を直接開始する SHALL。
 
-- **氏名**: `last_name + ' ' + first_name`（読み取り専用）
-- **電話番号**: DB の `phone` をプリフィルし、admin が編集可能。NULL のときは空欄
-- **住所**: 空欄の入力フィールド（DB 未収集のため admin がその場で入力）
+電話番号は MUST DB の `phone` をそのまま CSV に出力する SHALL（アプリ上で確認・編集はさせない）。住所も MUST アプリで入力・OCR せず、CSV に空欄列として出力しエクスポート後に補記する SHALL（SOP §3・費用ゼロ方針に照らしアプリへ OCR / 外部送信を組み込まない）。これにより admin の操作は「会員を選ぶ → ダウンロード」の 2 ステップに閉じる。
 
-admin が住所等を入力し「ダウンロード」を押すと CSV / PDF / ZIP の生成を開始する。住所の入力値は MUST DB に保存せず、当該ダウンロードの CSV にのみ反映する SHALL。
+#### Scenario: 選択から直接ダウンロード
+- **WHEN** 会員を 3 名選択してツールバーの「会員名簿と本人確認書類をダウンロード」を押す
+- **THEN** 準備ダイアログは表示されず、ただちに ZIP 生成が始まり、完了後に結果ダイアログが表示される
 
-#### Scenario: ダイアログに選択会員が並ぶ
-- **WHEN** 会員を 3 名選択して一括ダウンロードを起動する
-- **THEN** エクスポート準備ダイアログに 3 名分の 氏名 / 電話番号（DB 値プリフィル）/ 住所（空欄入力）が表示される
-
-#### Scenario: 電話番号のプリフィルと編集
-- **WHEN** DB の `phone` が登録済みの会員行を表示する
-- **THEN** 電話番号フィールドにその値がプリフィルされ、admin が編集できる
-
-#### Scenario: 住所は DB に保存されない
-- **WHEN** admin が住所を入力してダウンロードを実行する
-- **THEN** 住所は当該 CSV にのみ出力され、`members` テーブルへの UPDATE は発行されない
+#### Scenario: 電話番号は DB 値をそのまま出力
+- **WHEN** `phone` が登録済みの会員を含めてダウンロードする
+- **THEN** CSV の当該行の電話番号列に DB の値がそのまま出力される（アプリ上での編集 UI は存在しない）
 
 ### Requirement: 承認済み書類のみの抽出
 
@@ -48,41 +43,46 @@ admin が住所等を入力し「ダウンロード」を押すと CSV / PDF / Z
 
 ### Requirement: 会員名簿 CSV（江東区フォーマット）
 
-ZIP は MUST `会員名簿.csv` を 1 ファイル同梱する SHALL。CSV は江東区登録団体名簿様式に準拠し、MUST 以下の列を持つ: **氏名 / 住所 / 電話番号**。役職名列は MUST 含めない SHALL。
+ZIP は MUST `会員名簿.csv` を 1 ファイル同梱する SHALL。CSV は江東区登録団体名簿様式を基に、MUST 以下の列をこの順で持つ: **氏名 / 住所 / 年齢 / 電話番号**。役職名列は MUST 含めない SHALL。
 
 - 氏名 = `last_name + ' ' + first_name`（本名）。
-- 住所 = エクスポート準備ダイアログで admin が入力した値（未入力は空欄）。
-- 電話番号 = ダイアログで確認・編集した値（未入力 / NULL は空欄）。
+- 住所 = **常に空欄で出力する**（アプリは住所を入力させない。エクスポート後にオーナーが本人確認書類 PDF と突合して手で補記する）。
+- 年齢 = DB の `birthday` から**エクスポート実行日時点の満年齢を自動計算**した整数（admin 入力なし）。`birthday` が未設定・算出不能な場合は MUST 空欄とする SHALL。
+- 電話番号 = DB の `phone` をそのまま出力（NULL は空欄。アプリ上での編集はしない）。
 - CSV は MUST UTF-8 BOM 付きで出力し、Excel で日本語が文字化けしないようにする SHALL。
 - 行は選択した全会員を対象とする（承認済み書類の有無に関わらず名簿に載せる）。
 
 #### Scenario: CSV の列構成
 - **WHEN** エクスポートを実行して ZIP を生成する
-- **THEN** `会員名簿.csv` の列が 氏名 / 住所 / 電話番号 の 3 列であり、役職名列は存在しない
+- **THEN** `会員名簿.csv` の列が 氏名 / 住所 / 年齢 / 電話番号 の 4 列をこの順で持ち、役職名列は存在しない
 
-#### Scenario: admin 入力の住所が反映される
-- **WHEN** ある会員の住所に「東京都江東区…」と入力してダウンロードする
-- **THEN** CSV の当該行の住所列にその値が出力される
+#### Scenario: 年齢の自動計算
+- **WHEN** `birthday` が 2000-01-01 の会員を 2026-11-02 にエクスポートする
+- **THEN** CSV の当該行の年齢列に `26` が出力され、admin は年齢を入力しない
+
+#### Scenario: 住所列は空欄で出力される
+- **WHEN** エクスポートを実行して ZIP を生成する
+- **THEN** `会員名簿.csv` の住所列は全行空欄で、ヘッダ（住所）は存在する
 
 #### Scenario: UTF-8 BOM
 - **WHEN** 生成した `会員名簿.csv` を Excel で開く
 - **THEN** 氏名・住所などの日本語が文字化けせず表示される
 
 #### Scenario: 電話番号 NULL は空欄
-- **WHEN** `phone` が NULL かつダイアログでも未入力の会員
+- **WHEN** `phone` が NULL の会員
 - **THEN** CSV の当該行の電話番号列は空欄になる
 
 ### Requirement: 本人確認書類 PDF（1 ファイル集約・会員ごとページ）
 
 ZIP は MUST `本人確認書類.pdf` を 1 ファイル同梱する SHALL。PDF は選択会員の**承認済み書類画像のみ**を 1 つのファイルに集約する。
 
-- 会員ごとにページを分け、各ページ MUST 上部に**氏名ラベル**（CSV と突合可能）+ 書類種別を記し、その下に表面画像、`storage_path_back` がある場合は続けて裏面画像を配置する SHALL。
-- 1 会員が複数の承認済み書類を持つ場合はページを分ける。
+- 承認済み書類 1 件につき 1 ページとし、各ページ MUST 上部に **ASCII のラベル（通し番号 + 英語の書類種別）** を記し、その下に表面画像、`storage_path_back` がある場合は続けて裏面画像を配置する SHALL。
+- **氏名などの日本語テキストはページに描画しない**（pdf-lib 標準フォントが CJK 非対応のため）。氏名の突合は書類画像自体に写る氏名で行う。ページは MUST CSV の会員行順に並べる SHALL。
 - jpg / png 混在に対応するため、画像は MUST 拡張子またはマジックバイトで判定し、`embedJpg` / `embedPng` を使い分ける SHALL。判定不能・埋め込み失敗の画像は取得失敗として結果サマリに記録する。
 
-#### Scenario: 会員ごとにページが分かれ氏名ラベルが付く
-- **WHEN** 承認済み書類を持つ会員 2 名をエクスポートする
-- **THEN** PDF に各会員のページがあり、各ページ上部に当該会員の氏名ラベルが表示される
+#### Scenario: 書類ごとにページが分かれ ASCII ラベルが付く
+- **WHEN** 承認済み書類を持つ会員 2 名（各 1 件）をエクスポートする
+- **THEN** PDF に 2 ページがあり、各ページ上部に ASCII の通し番号 + 英語書類種別ラベルが表示され、日本語テキストは描画されない
 
 #### Scenario: 表裏 2 画像の配置
 - **WHEN** ある会員の approved 書類が `storage_path_front` と `storage_path_back` の両方を持つ
@@ -163,8 +163,9 @@ ZIP は MUST `本人確認書類.pdf` を 1 ファイル同梱する SHALL。PDF
 
 本機能は MUST 以下の FSD 配置に従う SHALL:
 
-- `apps/admin/src/features/identity-document-bulk-export/` — 選択状態 composable・エクスポート準備ダイアログ・一括ダウンロードのオーケストレーション・一括アクションツールバー UI・結果ダイアログ
+- `apps/admin/src/features/identity-document-bulk-export/` — 選択状態 composable・一括ダウンロードのオーケストレーション・一括アクションツールバー UI・結果ダイアログ
 - `apps/admin/src/entities/identity-document/` — 承認済み書類を会員 ID 群で取得するクエリ（既存 entity に追加）
+- `apps/admin/src/entities/member/` — 選択会員の名簿フィールド（`last_name` / `first_name` / `phone` / `birthday`）を `members` テーブルから会員 ID 群で取得するクエリ（既存 entity に追加。`member_list_view` に無いため実テーブル参照）
 - `apps/admin/src/entities/identity-document-download/` — 監査ログテーブルの DTO + INSERT クエリ
 - `apps/admin/src/shared/ui/Checkbox.*` — shadcn-vue Checkbox プリミティブ（新規取り込み）
 
@@ -180,17 +181,12 @@ ZIP は MUST `本人確認書類.pdf` を 1 ファイル同梱する SHALL。PDF
 
 a11y は MUST WCAG 2.1 AA を満たす SHALL:
 - 各チェックボックスは関連ラベル（`aria-label` 等）を持つ。
-- エクスポート準備ダイアログの 住所 / 電話番号 入力は `shared/ui/FormField` でラップし、ラベルと関連付ける（初期表示で赤枠を出さない）。
-- 一括アクションツールバー / 各ダイアログはキーボード操作可能で、ダイアログはフォーカストラップ + ESC で閉じる。
+- 一括アクションツールバー / 結果ダイアログはキーボード操作可能で、ダイアログはフォーカストラップ + ESC で閉じる。
 - 取得中のボタンは `aria-busy="true"`、エラーは `role="alert"`。
 
 #### Scenario: マジックナンバー検査
 - **WHEN** 本機能のコンポーネントを `#[0-9a-f]{3,6}\b` および `\[\d+px\]` で grep する
 - **THEN** マッチが 0 件である
-
-#### Scenario: 住所入力のフォーム規約
-- **WHEN** エクスポート準備ダイアログを初期表示する
-- **THEN** 住所 / 電話番号入力は FormField でラップされ、初期表示で赤枠（invalid 表示）は出ない
 
 ### Requirement: テスト
 
@@ -199,22 +195,24 @@ a11y は MUST WCAG 2.1 AA を満たす SHALL:
 - **Composable / unit test**（Vitest）:
   - 選択状態 composable（追加 / 解除 / ページまたぎ保持 / 現ページ全選択 / indeterminate 判定 / 全解除）
   - 承認済み書類取得クエリが `status = 'approved'` と選択 member id 群で WHERE を組み立て、NULL 書類を除外する
+  - 名簿フィールド取得クエリ（`fetchMembersForExport`）が選択 member id 群で `id in` を組み立て、`last_name` / `first_name` / `phone` / `birthday` を取得する
   - 監査ログ INSERT クエリが `downloaded_by` / `document_ids` / `member_ids` / 件数を組み立てる
-  - 会員名簿 CSV ビルダの列（氏名 / 住所 / 電話番号）・admin 入力住所の反映・UTF-8 BOM・役職名を含まないこと
+  - 会員名簿 CSV ビルダの列順（氏名 / 住所 / 年齢 / 電話番号）・住所列が常に空欄であること・`birthday` からの満年齢算出（基準日と誕生日前後の境界 / 未設定空欄）・UTF-8 BOM・役職名を含まないこと
   - 画像形式判定（jpg / png）と PDF 埋め込み関数の選択
   - 部分失敗時に成功分のみで PDF を構成し、監査ログ対象が実含有集合に一致する
 - **Component test**（Vitest + @vue/test-utils）:
   - 一括アクションツールバーの表示条件（1 件以上選択時）と件数表示
-  - エクスポート準備ダイアログの 氏名表示 / 電話プリフィル / 住所入力 / 住所未保存
   - 結果ダイアログの「含めた件数 / 承認済みなし会員 / 失敗書類」表示
   - チェックボックスクリックで行クリック（詳細 sheet）が発火しない（イベント分離）
 - **E2E**（Playwright、本 change で 1 件）:
-  - happy path: 認証済み admin で `/members` を開く → 複数会員を選択 → 一括ダウンロード起動 → 住所入力 → ダウンロード → 結果ダイアログが表示される
+  - auth guard: 未認証で `/members`（一括ダウンロード機能の入口）にアクセスすると `/login` へリダイレクトされ、機能に到達できない。
+  - 補足: admin は AAL2 + MFA 必須で認証済みセッションの E2E 再現が重いため（既存 `e2e/admin/members-list.e2e.ts` と同方針）、選択 → ダウンロード → 結果表示の happy path は component test + 手動確認（dev）で担保する。
 
 #### Scenario: ユニット / コンポーネントテストの網羅
 - **WHEN** `pnpm --filter @high-q/admin test` を実行する
-- **THEN** 選択 composable / 各クエリ / CSV ビルダ / 画像判定 / ツールバー / 準備ダイアログ / 結果ダイアログ / イベント分離のテストがすべて pass する
+- **THEN** 選択 composable / 各クエリ / CSV ビルダ / 画像判定 / ツールバー / 結果ダイアログ / イベント分離のテストがすべて pass する
 
-#### Scenario: E2E の通過
-- **WHEN** `pnpm --filter @high-q/e2e test` を admin プロジェクトで実行する
-- **THEN** 「`/members` で複数選択 → 住所入力 → 一括ダウンロード → ZIP 生成」の happy path が pass する
+#### Scenario: E2E の通過（auth guard）
+- **WHEN** 未認証で `/members` にアクセスする
+- **THEN** `/login` へリダイレクトされ、一括ダウンロード機能（ツールバー / ダイアログ）に到達できない
+

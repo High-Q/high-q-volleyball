@@ -122,6 +122,96 @@ describe("MembersListTable incomplete signup badge (#293)", () => {
   });
 });
 
+describe("MembersListTable 選択列 (#172)", () => {
+  const SELECT_ROWS = [
+    {
+      ...BASE_ROW,
+      id: "22222222-aaaa-4aaa-8aaa-aaaaaaaaaa01" as unknown as MemberId,
+      correction_request_count: 0,
+      has_identity_document: true,
+    },
+    {
+      ...BASE_ROW,
+      id: "22222222-aaaa-4aaa-8aaa-aaaaaaaaaa02" as unknown as MemberId,
+      display_name: "佐藤 健太",
+      correction_request_count: 0,
+      has_identity_document: false,
+    },
+  ];
+
+  it("showSelection=false（既定）では選択チェックボックスを出さない", () => {
+    const wrapper = mount(MembersListTable, {
+      props: { rows: SELECT_ROWS, sort: "last_attended_at", dir: "desc" },
+    });
+    expect(wrapper.find("[role='checkbox']").exists()).toBe(false);
+  });
+
+  it("showSelection=true で行チェックボックスとヘッダ全選択を表示する", () => {
+    const wrapper = mount(MembersListTable, {
+      props: {
+        rows: SELECT_ROWS,
+        sort: "last_attended_at",
+        dir: "desc",
+        showSelection: true,
+        selectedIds: new Set<string>(),
+      },
+    });
+    // ヘッダ全選択 + 行ぶん（デスクトップ + モバイルカードで重複する点に注意し存在のみ検証）
+    expect(wrapper.findAll("[role='checkbox']").length).toBeGreaterThan(0);
+  });
+
+  it("書類未提出（has_identity_document=false）の行は disabled", () => {
+    const wrapper = mount(MembersListTable, {
+      props: {
+        rows: SELECT_ROWS,
+        sort: "last_attended_at",
+        dir: "desc",
+        showSelection: true,
+        selectedIds: new Set<string>(),
+      },
+    });
+    const disabled = wrapper
+      .findAll("[role='checkbox']")
+      .filter((c) => c.attributes("disabled") !== undefined || c.attributes("data-disabled") !== undefined);
+    expect(disabled.length).toBeGreaterThan(0);
+  });
+
+  it("チェックボックスクリックで toggle-select を emit し click-row は発火しない", async () => {
+    const wrapper = mount(MembersListTable, {
+      props: {
+        rows: [SELECT_ROWS[0]!],
+        sort: "last_attended_at",
+        dir: "desc",
+        showSelection: true,
+        selectedIds: new Set<string>(),
+      },
+    });
+    // ヘッダ全選択ではなく「◯◯ を選択」の行チェックボックスをクリックする
+    const rowCheckbox = wrapper
+      .findAll("[role='checkbox']")
+      .find((c) => c.attributes("aria-label")?.endsWith("を選択") && c.attributes("aria-label") !== "現ページを全選択");
+    await rowCheckbox?.trigger("click");
+    expect(wrapper.emitted("toggle-select")).toBeTruthy();
+    expect(wrapper.emitted("click-row")).toBeFalsy();
+  });
+
+  it("indeterminate=true でヘッダ全選択が mixed", () => {
+    const wrapper = mount(MembersListTable, {
+      props: {
+        rows: SELECT_ROWS,
+        sort: "last_attended_at",
+        dir: "desc",
+        showSelection: true,
+        selectedIds: new Set<string>([SELECT_ROWS[0]!.id as unknown as string]),
+        indeterminate: true,
+      },
+    });
+    // 最初の checkbox = ヘッダ全選択
+    const header = wrapper.find("[role='checkbox']");
+    expect(header.attributes("aria-checked")).toBe("mixed");
+  });
+});
+
 describe("MembersListTable モバイルカード (#155)", () => {
   it("Table は hidden md:block、カードリストは md:hidden で出し分ける", () => {
     const wrapper = mount(MembersListTable, {

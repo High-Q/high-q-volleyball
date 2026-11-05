@@ -7,6 +7,7 @@
 
 export type {
   MemberListRow,
+  MemberExportRow,
   MemberHistoryRow,
   MemberSummary,
 } from "./model/member.types";
@@ -18,6 +19,7 @@ export {
   fetchMemberHistory,
   fetchMemberListRowById,
   fetchMemberCorrectionRequests,
+  fetchMembersForExport,
   updateMemberAdminNote,
   type ExperienceFilter,
   type AttendedRange,
