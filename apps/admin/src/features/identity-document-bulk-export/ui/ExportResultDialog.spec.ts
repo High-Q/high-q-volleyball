@@ -18,7 +18,10 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-async function mountOpen(props: Record<string, unknown>) {
+async function mountOpen(props: {
+  result: BulkExportResult | null;
+  errorMessage?: string | null;
+}) {
   const wrapper = mount(ExportResultDialog, {
     props: { open: true, ...props },
     attachTo: document.body,
