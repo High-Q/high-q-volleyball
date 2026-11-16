@@ -55,6 +55,7 @@ const router = createRouter({
       name: "announcement-template",
       component: { template: "<div />" },
     },
+    { path: "/settings", name: "settings", component: { template: "<div />" } },
     { path: "/login", name: "login", component: { template: "<div />" } },
   ],
 });
@@ -73,7 +74,7 @@ beforeEach(() => {
 });
 
 describe("SidebarNavContent", () => {
-  it("実在ルートの 6 ナビ項目を表示し、設定は出さない", async () => {
+  it("実在ルートの 7 ナビ項目を表示する（運営設定を含む）", async () => {
     router.push("/");
     const w = await mountNav();
     const text = w.text();
@@ -84,10 +85,10 @@ describe("SidebarNavContent", () => {
       "会場",
       "本人確認書類",
       "告知テンプレート",
+      "運営設定",
     ]) {
       expect(text).toContain(label);
     }
-    expect(text).not.toContain("設定");
   });
 
   it("現在ルートに対応する項目を aria-current=page で点灯 (子ルートでも前方一致)", async () => {

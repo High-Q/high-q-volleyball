@@ -97,6 +97,13 @@ const routes: RouteRecordRaw[] = [
     component: () => import("@/pages/AnnouncementTemplatePage.vue"),
     meta: { title: "告知テンプレート" },
   },
+  // member-registration-toggle 運営設定（新規会員登録の受付トグル）
+  {
+    path: "/settings",
+    name: "settings",
+    component: () => import("@/pages/SettingsPage.vue"),
+    meta: { title: "運営設定" },
+  },
   {
     path: "/login",
     name: "login",

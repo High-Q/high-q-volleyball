@@ -29,6 +29,9 @@ export { default as Skeleton } from "./Skeleton.vue";
 // Checkbox (admin-identity-document-bulk-export, #172) — 会員一覧の複数選択
 export { default as Checkbox } from "./Checkbox.vue";
 
+// Switch (member-registration-toggle) — 運営設定の ON/OFF トグル
+export { default as Switch } from "./Switch.vue";
+
 // DataCardList (admin-mobile-responsive, #155) — モバイル時のテーブル→カード縦積み枠
 export { default as DataCardList } from "./DataCardList.vue";
 
