@@ -63,6 +63,8 @@ const codeError = computed<string | null>(() => {
       return "試行回数の上限に達しました。最初からやり直してください。";
     case "not-found":
       return "認証セッションが見つかりません。最初からやり直してください。";
+    case "registration-suspended":
+      return "現在、新規会員登録を一時停止しています。再開まで今しばらくお待ちください。";
     case "session-failed":
       return "認証は成功しましたが、ログインの確立に失敗しました。ログイン画面からお試しください。";
     case "network":

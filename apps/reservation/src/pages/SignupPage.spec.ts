@@ -9,6 +9,8 @@ const errorCode = ref<string | null>(null);
 const fieldErrors = ref<Record<string, string>>({});
 const expiresAt = ref<string | null>(null);
 const retryAfterSec = ref<number | null>(null);
+const registrationState = ref<"checking" | "open" | "suspended">("open");
+const checkMock = vi.fn();
 
 vi.mock("@/features/auth", () => ({
   useRequestSignupCode: () => ({
@@ -19,6 +21,10 @@ vi.mock("@/features/auth", () => ({
     retryAfterSec,
     submit: submitMock,
     reset: vi.fn(),
+  }),
+  useRegistrationStatus: () => ({
+    state: registrationState,
+    check: checkMock,
   }),
 }));
 
@@ -38,6 +44,7 @@ beforeEach(() => {
   fieldErrors.value = {};
   expiresAt.value = null;
   retryAfterSec.value = null;
+  registrationState.value = "open";
   submitMock.mockResolvedValue(true);
 });
 
@@ -199,5 +206,28 @@ describe("SignupPage (#189)", () => {
     expect(link.exists()).toBe(true);
     expect(link.attributes("target")).toBe("_blank");
     expect(link.attributes("href")).toContain("/privacy");
+  });
+
+  describe("受付停止中 (member-registration-toggle)", () => {
+    it("suspended のときフォームを出さず案内と /login 導線を表示する", async () => {
+      registrationState.value = "suspended";
+      const { wrapper } = await mountPage();
+      expect(wrapper.find('[data-testid="signup-suspended"]').exists()).toBe(true);
+      // フォーム（メール入力）と送信 CTA は出ない
+      expect(wrapper.find('input[type="email"]').exists()).toBe(false);
+      expect(
+        wrapper.findAll("button").some((b) => b.text().includes("認証コードを送信する")),
+      ).toBe(false);
+      const loginLink = wrapper.find('[data-testid="signup-suspended-login-link"]');
+      expect(loginLink.exists()).toBe(true);
+    });
+
+    it("送信時に 503 (registration-suspended) を受けたら案内に切り替える", async () => {
+      // 初期 open でフォーム表示 → submit で errorCode が registration-suspended
+      const { wrapper } = await mountPage();
+      errorCode.value = "registration-suspended";
+      await flushPromises();
+      expect(wrapper.find('[data-testid="signup-suspended"]').exists()).toBe(true);
+    });
   });
 });

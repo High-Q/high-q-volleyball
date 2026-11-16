@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive } from "vue";
+import { computed, onMounted, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Button, Kicker } from "@high-q/ui";
 import FormField from "@/shared/ui/FormField.vue";
@@ -7,7 +7,7 @@ import Input from "@/shared/ui/Input.vue";
 import PolicyFooter from "@/shared/ui/PolicyFooter.vue";
 import { PRIVACY_POLICY_URL } from "@/shared/lib/externalLinks";
 import { safeNextPath } from "@/shared/lib/safeNextPath";
-import { useRequestSignupCode } from "@/features/auth";
+import { useRequestSignupCode, useRegistrationStatus } from "@/features/auth";
 
 /**
  * Issue #189 ゼロ滞留 signup フローの段階 1。
@@ -25,6 +25,18 @@ const route = useRoute();
 const router = useRouter();
 const { status, errorCode, fieldErrors, retryAfterSec, submit } =
   useRequestSignupCode();
+
+// member-registration-toggle: 受付可否を初回に確認し、停止中は案内に切り替える。
+// 読取失敗はフェイルオープン（フォーム表示）。送信時のサーバー側ゲートが権威判定。
+const { state: registrationState, check: checkRegistration } =
+  useRegistrationStatus();
+const isChecking = computed(() => registrationState.value === "checking");
+const isSuspended = computed(
+  () =>
+    registrationState.value === "suspended" ||
+    errorCode.value === "registration-suspended",
+);
+onMounted(checkRegistration);
 
 // #229: LP からのイベント指定遷移を受けるための next クエリ持ち回し。
 const nextPath = computed<string | null>(() => safeNextPath(route.query.next));
@@ -111,6 +123,44 @@ async function onSubmit() {
 <template>
   <main class="flex min-h-screen flex-col bg-paper text-ink font-jp">
     <div class="mx-auto flex w-full max-w-md flex-1 flex-col gap-hq-6 px-hq-6 py-hq-10">
+      <!-- 受付可否の確認中 -->
+      <p
+        v-if="isChecking"
+        data-testid="signup-checking"
+        class="py-hq-10 text-center text-sm text-muted"
+      >
+        読み込んでいます…
+      </p>
+
+      <!-- 受付停止中の案内 -->
+      <template v-else-if="isSuspended">
+        <Kicker>— Sign up</Kicker>
+        <h1 class="font-jp-display text-2xl text-ink leading-snug">
+          現在、新規会員登録を<br />一時停止しています。
+        </h1>
+        <div
+          data-testid="signup-suspended"
+          class="rounded-md border border-hairline bg-paper-warm px-hq-4 py-hq-4 text-sm text-ink leading-relaxed"
+        >
+          <p>
+            ただいま運営の都合により、新規の会員登録の受付を一時的に停止しています。再開まで今しばらくお待ちください。
+          </p>
+          <p class="mt-hq-3 text-muted">
+            既にご登録済みの方は、引き続きログインしてご利用いただけます。
+          </p>
+        </div>
+        <router-link
+          :to="{ name: 'login', query: nextPath ? { next: nextPath } : {} }"
+          class="text-sm text-accent underline"
+          data-testid="signup-suspended-login-link"
+        >
+          ログイン画面へ
+        </router-link>
+        <PolicyFooter :lead="profileLead" />
+      </template>
+
+      <!-- 受付中: 通常の登録フォーム -->
+      <template v-else>
       <Kicker>— Sign up · Step 1 / 3</Kicker>
       <h1 class="font-jp-display text-2xl text-ink leading-snug">
         会員登録を<br />はじめましょう。
@@ -303,8 +353,12 @@ async function onSubmit() {
       </form>
 
       <PolicyFooter :lead="profileLead" />
+      </template>
     </div>
-    <div class="border-t border-hairline bg-paper px-hq-6 py-hq-3">
+    <div
+      v-if="!isChecking && !isSuspended"
+      class="border-t border-hairline bg-paper px-hq-6 py-hq-3"
+    >
       <div class="mx-auto w-full max-w-md">
         <Button
           type="button"

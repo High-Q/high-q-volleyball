@@ -10,6 +10,7 @@ export type VerifyErrorCode =
   | "expired"
   | "attempt-exceeded"
   | "not-found"
+  | "registration-suspended"
   | "session-failed"
   | "network"
   | "unknown";
@@ -77,6 +78,12 @@ export function useVerifySignupCode() {
         if (detail?.error === "not-found") {
           status.value = "error";
           errorCode.value = "not-found";
+          return false;
+        }
+        if (detail?.error === "registration-suspended") {
+          // 進行中コードの検証中に受付が停止された。会員は作られない。
+          status.value = "error";
+          errorCode.value = "registration-suspended";
           return false;
         }
         if (/network|fetch|failed to fetch/i.test(error.message ?? "")) {

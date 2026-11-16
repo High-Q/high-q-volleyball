@@ -12,4 +12,6 @@ export type {
 } from "./composables/useRequestSignupCode";
 export { useVerifySignupCode } from "./composables/useVerifySignupCode";
 export type { VerifyErrorCode } from "./composables/useVerifySignupCode";
+export { useRegistrationStatus } from "./composables/useRegistrationStatus";
+export type { RegistrationAvailability } from "./composables/useRegistrationStatus";
 export type { AuthStatus, AuthError } from "./types";
