@@ -42,6 +42,7 @@ export type SignupErrorCode =
   | "validation"
   | "already-registered"
   | "rate-limited"
+  | "registration-suspended"
   | "network"
   | "mail-send-failed"
   | "unknown";
@@ -173,6 +174,12 @@ export function useRequestSignupCode() {
           status.value = "error";
           errorCode.value = "rate-limited";
           retryAfterSec.value = detail.retryAfter ?? 60;
+          return false;
+        }
+        if (detail?.error === "registration-suspended") {
+          // 受付停止中（サーバー側ゲートが権威判定）。UI は停止案内に切り替える。
+          status.value = "error";
+          errorCode.value = "registration-suspended";
           return false;
         }
         if (detail?.error === "validation-error" && detail.fieldErrors) {

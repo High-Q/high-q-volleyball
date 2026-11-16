@@ -26,6 +26,7 @@ import {
   sendMail,
 } from "../_shared/mailer.ts";
 import { validateSignupPayload } from "../_shared/validation.ts";
+import { isRegistrationOpen } from "../_shared/registration-gate.ts";
 
 const RESEND_COOLDOWN_MS = 60_000; // 60 秒以内の再送は拒否
 const TTL_MS = 30 * 60_000; // 30 分
@@ -54,6 +55,18 @@ export async function handleRequestSignup(req: Request): Promise<Response> {
   const payload = validation.payload;
 
   const supabase = createServiceClient();
+
+  // 受付可否ゲート: 停止中はコード発行・メール送信を行わず拒否する（多層防御の前段）。
+  // 読取失敗はフェイルクローズ（停止扱い）。design.md D3 / D4。
+  const gate = await isRegistrationOpen(supabase);
+  if (gate.readFailed) {
+    console.error(
+      "[request-signup] operational_settings 読取失敗につき停止扱い（フェイルクローズ）",
+    );
+  }
+  if (!gate.open) {
+    return jsonResponse({ error: "registration-suspended" }, { status: 503 });
+  }
 
   // 既登録チェック: members に同 email 行があれば既登録とみなす
   const { data: existingMember, error: memberErr } = await supabase

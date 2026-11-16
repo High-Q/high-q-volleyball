@@ -25,6 +25,7 @@ import { handlePreflight, jsonResponse } from "../_shared/cors.ts";
 import { createServiceClient } from "../_shared/supabase.ts";
 import { verifyCode } from "../_shared/code.ts";
 import { validateVerifyPayload } from "../_shared/validation.ts";
+import { isRegistrationOpen } from "../_shared/registration-gate.ts";
 
 const ATTEMPT_LIMIT = 5;
 
@@ -52,6 +53,19 @@ export async function handleVerifySignup(req: Request): Promise<Response> {
   const { email, code } = validation;
 
   const supabase = createServiceClient();
+
+  // 受付可否ゲート（会員作成の絶対防衛線）: 停止中は auth.users / members を
+  // 作らず拒否する。進行中コードでの完了もここで止める。読取失敗はフェイル
+  // クローズ（停止扱い）。design.md D3 / D4。
+  const gate = await isRegistrationOpen(supabase);
+  if (gate.readFailed) {
+    console.error(
+      "[verify-signup] operational_settings 読取失敗につき停止扱い（フェイルクローズ）",
+    );
+  }
+  if (!gate.open) {
+    return jsonResponse({ error: "registration-suspended" }, { status: 503 });
+  }
 
   const { data: pending, error: selectErr } = await supabase
     .from("signup_pending")
