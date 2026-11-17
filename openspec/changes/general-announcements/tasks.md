@@ -5,7 +5,7 @@
 
 ## 進捗
 
-- 完了: 21 / 26 タスク
+- 完了: 24 / 26 タスク
 
 ---
 
@@ -60,9 +60,9 @@
 
 ### 5. 予約: 会員ホーム表示
 
-- [ ] **5.1** `apps/reservation/src/entities/announcement/`: `model`（型）+ `api/announcement-client.ts`（自前 fetch 関数・`audience in ('members','all')`・掲載期間は RLS 担保・掲載開始降順）+ `index.ts`。`entities/event` を手本に（TanStack 不使用）。
-- [ ] **5.2** `apps/reservation/src/widgets/home-announcements/`（`ui/HomeAnnouncements.vue` + composable: ref + reload + `index.ts`）: 対象 0 件・エラーは非描画。`white-space: pre-wrap`。`widgets/correction-request-panel` を手本に。
-- [ ] **5.3** `pages/EventsListPage.vue` の `HomeHeader` 直下に `HomeAnnouncements` を `CorrectionRequestPanel` と同列の `<section>` で差す。
+- [x] **5.1** `apps/reservation/src/entities/announcement/`: `model`（型）+ `api/announcement-client.ts`（自前 fetch 関数・`audience in ('members','all')`・掲載期間は RLS 担保・掲載開始降順）+ `index.ts`。`entities/event` を手本に（TanStack 不使用）。
+- [x] **5.2** `apps/reservation/src/widgets/home-announcements/`（`ui/HomeAnnouncements.vue` + composable: ref + reload + `index.ts`）: 対象 0 件・エラーは非描画。`white-space: pre-wrap`。`widgets/correction-request-panel` を手本に。
+- [x] **5.3** `pages/EventsListPage.vue` の `HomeHeader` 直下に `HomeAnnouncements` を `CorrectionRequestPanel` と同列の `<section>` で差す。
 
 ---
 

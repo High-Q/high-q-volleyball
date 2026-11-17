@@ -9,6 +9,7 @@ import {
 import { HomeHeader } from "@/widgets/home-header";
 import { HomeNextCard } from "@/widgets/home-next-card";
 import { CorrectionRequestPanel } from "@/widgets/correction-request-panel";
+import { HomeAnnouncements } from "@/widgets/home-announcements";
 import { useAuthSession } from "@/features/auth";
 import { resolveMemberDisplayName } from "@/entities/member";
 
@@ -72,6 +73,8 @@ async function reloadAll(): Promise<void> {
 <template>
   <main class="min-h-screen bg-paper text-ink font-jp flex flex-col">
     <HomeHeader :member="memberForHeader" />
+
+    <HomeAnnouncements />
 
     <section
       v-if="correctionRequests.length > 0"
