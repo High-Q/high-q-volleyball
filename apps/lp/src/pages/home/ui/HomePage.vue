@@ -21,6 +21,7 @@
     </Teleport>
 
     <HeroFirst />
+    <AnnouncementBanner />
     <NextSessionStrip />
     <ReassuranceStrip />
     <MetaStrip />
@@ -39,6 +40,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
 import { HeroFirst } from "@widgets/hero-first";
+import { AnnouncementBanner } from "@widgets/announcement-banner";
 import { NextSessionStrip } from "@widgets/next-session-strip";
 import { ReassuranceStrip } from "@widgets/reassurance-strip";
 import { MetaStrip } from "@widgets/meta-strip";

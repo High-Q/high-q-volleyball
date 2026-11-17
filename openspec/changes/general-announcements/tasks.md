@@ -5,7 +5,7 @@
 
 ## 進捗
 
-- 完了: 18 / 26 タスク
+- 完了: 21 / 26 タスク
 
 ---
 
@@ -52,9 +52,9 @@
 
 ### 4. LP: 公開トップ表示
 
-- [ ] **4.1** `apps/lp/src/entities/announcement/`: `model`（型）+ `api/announcementQueries.ts`（`queryOptions`・`audience in ('public','all')` を anon select・掲載期間は RLS 側で担保、クライアントは並び順＝掲載開始降順）+ `index.ts`。`entities/event` を手本に。
-- [ ] **4.2** `apps/lp/src/widgets/announcement-banner/`（`ui/AnnouncementBanner.vue` + `model/useAnnouncements.ts` + `index.ts`）: `useQuery` で 4 状態。対象 0 件・エラーは**非描画**（本体優先）。`white-space: pre-wrap`。`event-list` を手本に。
-- [ ] **4.3** `pages/home/ui/HomePage.vue` 最上部（Hero 近辺）に `AnnouncementBanner` を 1 行追加。
+- [x] **4.1** `apps/lp/src/entities/announcement/`: `model`（型）+ `api/announcementQueries.ts`（`queryOptions`・`audience in ('public','all')` を anon select・掲載期間は RLS 側で担保、クライアントは並び順＝掲載開始降順）+ `index.ts`。`entities/event` を手本に。
+- [x] **4.2** `apps/lp/src/widgets/announcement-banner/`（`ui/AnnouncementBanner.vue` + `model/useAnnouncements.ts` + `index.ts`）: `useQuery` で 4 状態。対象 0 件・エラーは**非描画**（本体優先）。`white-space: pre-wrap`。`event-list` を手本に。
+- [x] **4.3** `pages/home/ui/HomePage.vue` 最上部（Hero 近辺）に `AnnouncementBanner` を 1 行追加。
 
 ---
 
