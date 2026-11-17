@@ -18,6 +18,7 @@ export type MemberId = Brand<string, "MemberId">;
 export type ReservationId = Brand<string, "ReservationId">;
 export type VenueId = Brand<string, "VenueId">;
 export type IdentityDocumentId = Brand<string, "IdentityDocumentId">;
+export type AnnouncementId = Brand<string, "AnnouncementId">;
 
 /**
  * UUID v4 を含む UUID 全般を許容する正規表現。
@@ -56,6 +57,8 @@ export const createReservationId =
 export const createVenueId = makeIdConstructor<VenueId>("VenueId");
 export const createIdentityDocumentId =
   makeIdConstructor<IdentityDocumentId>("IdentityDocumentId");
+export const createAnnouncementId =
+  makeIdConstructor<AnnouncementId>("AnnouncementId");
 
 /**
  * 信頼できるソース（DB から取得直後など）から型変換するための **unsafe** ヘルパー。
@@ -68,3 +71,5 @@ export const unsafeReservationId = (value: string): ReservationId =>
 export const unsafeVenueId = (value: string): VenueId => value as VenueId;
 export const unsafeIdentityDocumentId = (value: string): IdentityDocumentId =>
   value as IdentityDocumentId;
+export const unsafeAnnouncementId = (value: string): AnnouncementId =>
+  value as AnnouncementId;

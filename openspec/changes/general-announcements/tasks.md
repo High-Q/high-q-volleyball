@@ -5,7 +5,7 @@
 
 ## 進捗
 
-- 完了: 8 / 26 タスク
+- 完了: 12 / 26 タスク
 
 ---
 
@@ -32,10 +32,10 @@
 
 ### 2. admin: entity（TDD）
 
-- [ ] **2.1** `apps/admin/src/entities/announcement/model/types.ts`: `Announcement`（camelCase・`publishStart`/`publishEnd` は ISO string|null・`audience` union）+ 一覧用の掲載状態導出関数の型。
-- [ ] **2.2** `apps/admin/src/entities/announcement/api/announcementQueries.ts`（TDD・`announcementQueries.spec.ts` 先行）: `fetchAnnouncements()` / `createAnnouncement(input, createdBy)` / `updateAnnouncement(id, input)` / `deleteAnnouncement(id)`。すべて `Promise<Result<_, FetchError>>`。行→camelCase 変換、`classifyError`（42501→PERMISSION_DENIED 等）、COLUMNS 明示 SELECT。`operationalSettingsQueries.ts` を手本に。
-- [ ] **2.3** `apps/admin/src/entities/announcement/lib`（TDD）: 掲載状態導出（予定/掲載中/終了）と、入力日付→JST 境界の timestamptz 変換（開始=当日 JST 00:00 / 終了=翌日 JST 00:00 排他）。端末 TZ=UTC でも JST 基準になることを UT で固定。
-- [ ] **2.4** `apps/admin/src/entities/announcement/index.ts`（Public API: 型・関数・lib を re-export、`FetchError` 別名 export）
+- [x] **2.1** `apps/admin/src/entities/announcement/model/types.ts`: `Announcement`（camelCase・`publishStart`/`publishEnd` は ISO string|null・`audience` union）+ 一覧用の掲載状態導出関数の型。
+- [x] **2.2** `apps/admin/src/entities/announcement/api/announcementQueries.ts`（TDD・`announcementQueries.spec.ts` 先行）: `fetchAnnouncements()` / `createAnnouncement(input, createdBy)` / `updateAnnouncement(id, input)` / `deleteAnnouncement(id)`。すべて `Promise<Result<_, FetchError>>`。行→camelCase 変換、`classifyError`（42501→PERMISSION_DENIED 等）、COLUMNS 明示 SELECT。`operationalSettingsQueries.ts` を手本に。
+- [x] **2.3** `apps/admin/src/entities/announcement/lib`（TDD）: 掲載状態導出（予定/掲載中/終了）と、入力日付→JST 境界の timestamptz 変換（開始=当日 JST 00:00 / 終了=翌日 JST 00:00 排他）。端末 TZ=UTC でも JST 基準になることを UT で固定。
+- [x] **2.4** `apps/admin/src/entities/announcement/index.ts`（Public API: 型・関数・lib を re-export、`FetchError` 別名 export）
 
 ---
 
