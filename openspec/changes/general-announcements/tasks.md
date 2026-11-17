@@ -5,7 +5,7 @@
 
 ## 進捗
 
-- 完了: 12 / 26 タスク
+- 完了: 18 / 26 タスク
 
 ---
 
@@ -41,12 +41,12 @@
 
 ### 3. admin: UI（一覧＋フォーム＋削除）
 
-- [ ] **3.1** `features/announcement-delete`（`ui/AnnouncementDeleteDialog.vue` + `composables/useAnnouncementDelete.ts`）: AlertDialog 確認→`deleteAnnouncement`→Toast→reload。`features/event-delete` を手本に。
-- [ ] **3.2** `widgets/announcements-master-detail`（`ui/AnnouncementsMasterDetail.vue` + `composables/useAnnouncementsMaster.ts` + `model/announcementDraft.ts`）: 左=一覧（掲載状態バッジ・モバイルは `DataCardList`）/ 右=作成・編集フォーム。`widgets/venues-master-detail` を手本に。
-- [ ] **3.3** フォーム: `FormField` でラップした タイトル(`Input`) / 本文(`Textarea` + 文字数カウンタ) / 出す相手(`Select`) / 掲載開始(`Input type=date`) / 掲載終了(`Input type=date` 任意)。バリデーション（空・終了<開始）。`announcement-template-edit` / `event-form` を手本に。
-- [ ] **3.4** `pages/AnnouncementsPage.vue`: PageBreadcrumb + header(h1 + 説明) + master-detail widget。`SettingsPage.vue` を雛形に。`session.user.id` を `createdBy` に渡す。
-- [ ] **3.5** `app/router.ts` に `/announcements`（name: announcements・lazy import・meta.title）追加 + `router.spec.ts` 件数テスト更新（15→16・paths 配列更新）。
-- [ ] **3.6** `widgets/admin-shell/model/navItems.ts` に「お知らせ」導線追加（必要なら `ShellIcon.vue` と icon union に新アイコン追加）+ `SidebarNavContent.spec.ts` 件数テスト更新（7→8・ラベル配列・テスト router routes 更新）。
+- [x] **3.1** `features/announcement-delete`（`ui/AnnouncementDeleteDialog.vue` + `composables/useAnnouncementDelete.ts`）: AlertDialog 確認→`deleteAnnouncement`→Toast→reload。`features/event-delete` を手本に。
+- [x] **3.2** `widgets/announcements-master-detail`（`ui/AnnouncementsMasterDetail.vue` + `composables/useAnnouncementsMaster.ts` + `model/announcementDraft.ts`）: 左=一覧（掲載状態バッジ・モバイルは `DataCardList`）/ 右=作成・編集フォーム。`widgets/venues-master-detail` を手本に。
+- [x] **3.3** フォーム: `FormField` でラップした タイトル(`Input`) / 本文(`Textarea` + 文字数カウンタ) / 出す相手(`Select`) / 掲載開始(`Input type=date`) / 掲載終了(`Input type=date` 任意)。バリデーション（空・終了<開始）。`announcement-template-edit` / `event-form` を手本に。
+- [x] **3.4** `pages/AnnouncementsPage.vue`: PageBreadcrumb + header(h1 + 説明) + master-detail widget。`SettingsPage.vue` を雛形に。`session.user.id` を `createdBy` に渡す。
+- [x] **3.5** `app/router.ts` に `/announcements`（name: announcements・lazy import・meta.title）追加 + `router.spec.ts` 件数テスト更新（15→16・paths 配列更新）。
+- [x] **3.6** `widgets/admin-shell/model/navItems.ts` に「お知らせ」導線追加（必要なら `ShellIcon.vue` と icon union に新アイコン追加）+ `SidebarNavContent.spec.ts` 件数テスト更新（7→8・ラベル配列・テスト router routes 更新）。
 
 ---
 
@@ -76,6 +76,8 @@
 ---
 
 ## 備考・ブロッカー
+
+- 【T-3.1 調整】削除は独立 feature(features/announcement-delete)にせず、master-detail widget 内に AlertDialog 確認として統合した(venues 型 master-detail に素直に収めるため)。設計 D5 の「AlertDialog で確認」の意図は満たす。
 
 - Open Questions（design.md 末尾の 4 点: audience 既定値 / 期間粒度 / 種別装飾 / 表示件数）は Apply 前に確定する。
 - prd 反映は migration 承認ゲート（environment prd-db-push）を ship 時に見届ける。
