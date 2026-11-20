@@ -17,6 +17,7 @@ export interface AdminNavItem {
     | "pin"
     | "document"
     | "message"
+    | "megaphone"
     | "settings";
   /** 現在ルート名がこの文字列で始まればアクティブ */
   readonly activePrefix: string;
@@ -61,6 +62,12 @@ export const ADMIN_NAV_ITEMS: ReadonlyArray<AdminNavItem> = [
     label: "告知テンプレート",
     icon: "message",
     activePrefix: "announcement-template",
+  },
+  {
+    routeName: "announcements",
+    label: "お知らせ",
+    icon: "megaphone",
+    activePrefix: "announcements",
   },
   {
     routeName: "settings",

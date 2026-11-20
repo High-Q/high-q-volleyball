@@ -1,0 +1,25 @@
+# reservation-announcements Specification
+
+## Purpose
+TBD - created by archiving change general-announcements. Update Purpose after archive.
+## Requirements
+### Requirement: 会員ホームのお知らせ表示
+
+予約サイトのログイン後ホーム（`/events`）は、出す相手が「会員（members / all）」かつ掲載期間内のお知らせを表示する SHALL。表示はログイン中の会員（authenticated）で行い、掲載開始前・掲載終了後・公開専用のお知らせを表示してはならない MUST。複数掲載中の場合は掲載開始の新しい順に表示する SHALL。本文の改行は保持し、HTML は解釈しない MUST。お知らせ表示は既存メンバー動線（ログイン・予約・退会）に影響しない MUST。
+
+#### Scenario: 掲載中の会員お知らせが出る
+- **WHEN** 会員（members / all）かつ掲載期間内のお知らせがある状態で会員が `/events` を開く
+- **THEN** そのお知らせが掲載開始の新しい順に、ホーム上部に表示される
+
+#### Scenario: 公開専用は出ない
+- **WHEN** 出す相手が public のお知らせだけがある状態で会員が `/events` を開く
+- **THEN** お知らせは表示されない
+
+#### Scenario: 掲載対象が無いときは何も出さない
+- **WHEN** 掲載期間内の会員お知らせが 0 件の状態で `/events` を開く
+- **THEN** お知らせ領域は描画されず、ホームの他の内容（イベント一覧等）のレイアウトは崩れない
+
+#### Scenario: 取得失敗でもホームは壊れない
+- **WHEN** お知らせ取得が失敗する
+- **THEN** お知らせ領域は描画されず、イベント一覧など他の機能は通常どおり動作する（失敗は記録される）
+

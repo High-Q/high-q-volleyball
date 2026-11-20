@@ -55,6 +55,11 @@ const router = createRouter({
       name: "announcement-template",
       component: { template: "<div />" },
     },
+    {
+      path: "/announcements",
+      name: "announcements",
+      component: { template: "<div />" },
+    },
     { path: "/settings", name: "settings", component: { template: "<div />" } },
     { path: "/login", name: "login", component: { template: "<div />" } },
   ],
@@ -74,7 +79,7 @@ beforeEach(() => {
 });
 
 describe("SidebarNavContent", () => {
-  it("実在ルートの 7 ナビ項目を表示する（運営設定を含む）", async () => {
+  it("実在ルートの 8 ナビ項目を表示する（お知らせ・運営設定を含む）", async () => {
     router.push("/");
     const w = await mountNav();
     const text = w.text();
@@ -85,6 +90,7 @@ describe("SidebarNavContent", () => {
       "会場",
       "本人確認書類",
       "告知テンプレート",
+      "お知らせ",
       "運営設定",
     ]) {
       expect(text).toContain(label);

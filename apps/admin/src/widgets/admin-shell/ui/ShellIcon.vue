@@ -11,6 +11,7 @@ interface Props {
     | "pin"
     | "document"
     | "message"
+    | "megaphone"
     | "settings"
     | "menu"
     | "logout";
@@ -55,6 +56,10 @@ withDefaults(defineProps<Props>(), { size: 18 });
     <template v-else-if="name === 'message'">
       <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V6a1 1 0 0 1 1-1Z" />
       <path d="M8 10h8M8 13h5" />
+    </template>
+    <template v-else-if="name === 'megaphone'">
+      <path d="M3 11v2a1 1 0 0 0 1 1h2l10 5V6L6 11H4a1 1 0 0 0-1 0Z" />
+      <path d="M16 6l4-2v16l-4-2M7 14v4a1 1 0 0 0 1 1h2" />
     </template>
     <template v-else-if="name === 'settings'">
       <circle cx="12" cy="12" r="3" />
