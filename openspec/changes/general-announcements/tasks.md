@@ -5,7 +5,7 @@
 
 ## 進捗
 
-- 完了: 27 / 28 タスク（6.4 はローカル実機確認待ち）
+- 完了: 28 / 28 タスク
 
 ---
 
@@ -71,7 +71,7 @@
 - [x] **6.1** `pnpm -r test` 全パス（admin / lp / reservation / shared の件数更新込み）
 - [x] **6.2** typecheck clean / lint・stylelint・dependency-cruiser エラー 0 / admin・lp・reservation 本番ビルド成功
 - [x] **6.3** 既存メンバー動線（ログイン・予約・退会）回帰無しをテストで確認。お知らせ widget 非表示時にページが壊れないこと。
-- [ ] **6.4** dev 実機往復（翔太郎くんのローカル確認）: admin で作成（public / members / all・掲載期間前後）→ LP と予約で出し分け・期間内外の出し入れを確認。`verify-locally` で案内生成（dev パスワードレスログイン手順併記）。
+- [x] **6.4** dev 実機往復（翔太郎くんのローカル確認）: admin で作成（public / members / all・掲載期間前後）→ LP と予約で出し分け・期間内外の出し入れを確認。`verify-locally` で案内生成（dev パスワードレスログイン手順併記）。
 
 ---
 
