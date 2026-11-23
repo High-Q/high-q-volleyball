@@ -54,17 +54,7 @@
       "Edit(.env.development.*)",
       "Edit(.env.staging)",
       "Edit(.env.staging.*)",
-      "Edit(*.env)",
-      "Write(.env)",
-      "Write(.env.local)",
-      "Write(.env.local.*)",
-      "Write(.env.production)",
-      "Write(.env.production.*)",
-      "Write(.env.development)",
-      "Write(.env.development.*)",
-      "Write(.env.staging)",
-      "Write(.env.staging.*)",
-      "Write(*.env)"
+      "Edit(*.env)"
     ]
   }
 }
